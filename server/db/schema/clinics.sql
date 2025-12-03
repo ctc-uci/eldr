@@ -1,4 +1,4 @@
-CREATE TYPE experience_level_enum AS ENUM('beginner', 'intermediate', 'experience');
+CREATE TYPE experience_level_enum AS ENUM('beginner', 'intermediate', 'expert');
 
 CREATE TABLE clinics (
     id SERIAL PRIMARY KEY,
