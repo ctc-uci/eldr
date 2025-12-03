@@ -9,5 +9,5 @@ CREATE TABLE clinics (
     date DATE,
     attendees INTEGER,
     experience_level experience_level_enum,
-    parking TEXT;
-)
+    parking TEXT
+);
