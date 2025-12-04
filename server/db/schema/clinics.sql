@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS clinics CASCADE;
+DROP TYPE IF EXISTS experience_level_enum;
+
 CREATE TYPE experience_level_enum AS ENUM('beginner', 'intermediate', 'expert');
 
 CREATE TABLE clinics (
