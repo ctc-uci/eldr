@@ -15,8 +15,8 @@ CREATE TABLE clinic_areas_of_interest (
     PRIMARY KEY (clinic_id, area_of_interest_id)
 );
 
-CREATE TABLE worksop_areas_of_interest (
+CREATE TABLE workshop_areas_of_interest (
     workshop_id INTEGER REFERENCES workshops(id),
     area_of_interest_id INTEGER REFERENCES areas_of_interest(id),
-    PRIMARY KEY (clinic_id, area_of_interest_id)
+    PRIMARY KEY (workshop_id, area_of_interest_id)
 );
