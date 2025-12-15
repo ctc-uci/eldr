@@ -5,6 +5,6 @@ CREATE TABLE admins (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   email TEXT NOT NULL,
-  calendar_email TEXT NOT NULL,
+  calendar_email TEXT,
   firebase_uid TEXT NOT NULL
 );
