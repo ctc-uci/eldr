@@ -1,6 +1,6 @@
 -- Table: public.volunteer_Tags
 
-CREATE TABLE IF NOT EXISTS public.volunteer_Tags
+CREATE TABLE IF NOT EXISTS public.volunteer_tags
 (
     id SERIAL PRIMARY KEY,
     volunteer_id INT,
