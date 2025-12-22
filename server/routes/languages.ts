@@ -7,13 +7,14 @@ export const languagesRouter = Router();
 // Post a language
 languagesRouter.post("/", async (req, res) => {
     try {
-        const { name } = req.body;
-        const language = await db.query(
-            "INSERT INTO languages (name) VALUES ($1) RETURNING *",
-            [name]
+        console.log("Request Body:", req.body); // Debugging line
+        const { language } = req.body;
+        const languageResult = await db.query(
+            "INSERT INTO languages (language) VALUES ($1) RETURNING *",
+            [language]
         );
 
-        res.status(200).json(keysToCamel(language.rows[0]));
+        res.status(200).json(keysToCamel(languageResult));
     } catch (err) {
         res.status(400).send(err.message);
     }
