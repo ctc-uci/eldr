@@ -21,7 +21,7 @@ languagesRouter.post("/", async (req, res) => {
 });
 
 // Get all langauges
-languagesRouter.get("/", async (req, res) => {
+languagesRouter.get("/", async (_, res) => {
     try {
         const languages = await db.query(`SELECT * FROM languages ORDER BY id ASC`);
 
@@ -31,3 +31,42 @@ languagesRouter.get("/", async (req, res) => {
     }
 });
 
+// Get a language by ID
+languagesRouter.get("/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const language = await db.query(`SELECT * FROM languages WHERE id = $1`, [id]);
+
+        res.status(200).json(keysToCamel(language));
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+// Update a language by ID
+languagesRouter.put("/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { language } = req.body;
+        const updatedLanguage = await db.query(
+            `UPDATE languages SET language = $1 WHERE id = $2 RETURNING *`,
+            [language, id]
+        );
+
+        res.status(200).json(keysToCamel(updatedLanguage));
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+// Delete a language by ID
+languagesRouter.delete("/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const language = await db.query(`DELETE FROM languages WHERE id = $1`, [id]);
+
+        res.status(200).json(keysToCamel(language));
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
