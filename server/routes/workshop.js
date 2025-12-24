@@ -29,12 +29,14 @@ workshopRouter.get('/', async (req, res) => {
   }
 });
 
-// Get a workshop by id
 // Get a single workshop
 workshopRouter.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const workshop = await db.query("SELECT * FROM workshops WHERE id = $1", [id]);
+    if (workshop.length === 0) {
+      return res.status(404).json({ message: "Workshop not found" });
+    }
     res.status(200).json(keysToCamel(workshop[0]));
   } catch (err) {
     res.status(500).send(err.message);
