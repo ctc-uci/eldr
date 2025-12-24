@@ -46,8 +46,15 @@ workshopRouter.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, location, time, date, attendees, language, experience_level, parking } = req.body;
-    const workshop = await db.query("UPDATE workshops SET name = $1, description = $2, location = $3, time = $4, date = $5, attendees = $6, language = $7, experience_level = $8, parking = $9 WHERE id = $10", [name, description, location, time, date, attendees, language, experience_level, parking, id]);
-    res.status(200).json({ message: "Workshop updated successfully" });
+    const workshop = await db.query(
+      `UPDATE workshops SET name = $1, description = $2, location = $3, time = $4, date = $5, attendees = $6, language = $7, experience_level = $8, parking = $9 
+       WHERE id = $10 RETURNING *`,
+      [name, description, location, time, date, attendees, language, experience_level, parking, id]
+    );
+    if (workshop.length === 0) {
+      return res.status(404).json({ message: "Workshop not found" });
+    }
+    res.status(200).json(keysToCamel(workshop[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -57,8 +64,11 @@ workshopRouter.put('/:id', async (req, res) => {
 workshopRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const workshop = await db.query("DELETE FROM workshops WHERE id = $1", [id]);
-    res.status(200).json({ message: "Workshop deleted successfully" });
+    const workshop = await db.query("DELETE FROM workshops WHERE id = $1 RETURNING *", [id]);
+    if (workshop.length === 0) {
+      return res.status(404).json({ message: "Workshop not found" });
+    }
+    res.status(200).json(keysToCamel(workshop[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
