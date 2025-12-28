@@ -89,8 +89,11 @@ workshopRouter.post('/:workshopId/languages', async (req, res) => {
       [workshopId, languageId]
     );
 
-    res.status(201).json(result[0]);
+    res.status(201).json(keysToCamel(result[0]));
   } catch (err) {
+    if (err.code === '23505') { // PostgreSQL unique violation
+      return res.status(409).json({ message: "Language already assigned to this workshop" });
+    }
     res.status(500).send(err.message);
   }
 });
@@ -111,7 +114,7 @@ workshopRouter.delete('/:workshopId/languages/:languageId', async (req, res) => 
       return res.status(404).json({ message: "Language not assigned to this workshop" });
     }
 
-    res.status(200).json(result[0]);
+    res.status(200).json(keysToCamel(result[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
