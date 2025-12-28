@@ -75,3 +75,63 @@ workshopRouter.delete('/:id', async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+// Assign a language to a workshop
+workshopRouter.post('/:workshopId/languages', async (req, res) => {
+  try {
+    const { workshopId } = req.params;
+    const { languageId } = req.body;
+
+    const result = await db.query(
+      `INSERT INTO workshop_languages (workshop_id, language_id)
+       VALUES ($1, $2)
+       RETURNING *`,
+      [workshopId, languageId]
+    );
+
+    res.status(201).json(result[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Remove a language from a workshop
+workshopRouter.delete('/:workshopId/languages/:languageId', async (req, res) => {
+  try {
+    const { workshopId, languageId } = req.params;
+
+    const result = await db.query(
+      `DELETE FROM workshop_languages
+       WHERE workshop_id = $1 AND language_id = $2
+       RETURNING *`,
+      [workshopId, languageId]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Language not assigned to this workshop" });
+    }
+
+    res.status(200).json(result[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// List all languages for a workshop
+workshopRouter.get('/:workshopId/languages', async (req, res) => {
+  try {
+    const { workshopId } = req.params;
+
+    const languages = await db.query(
+      `SELECT l.*
+       FROM languages l
+       JOIN workshop_languages wl ON wl.language_id = l.id
+       WHERE wl.workshop_id = $1`,
+      [workshopId]
+    );
+
+    res.status(200).json(keysToCamel(languages));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
