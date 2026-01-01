@@ -21,17 +21,17 @@ casesRouter.post("/:caseId/languages", async (req, res) => {
   }
 });
 
-// Remove a language from a case
+// Delete a language from a case
 casesRouter.delete("/:caseId/languages/:languageId", async (req, res) => {
   try {
     const { caseId, languageId } = req.params;
 
-    const caseLanguage = await db.query(
+    await db.query(
       "DELETE FROM case_languages WHERE case_id = $1 AND language_id = $2",
       [caseId, languageId]
     );
 
-    res.status(200).json(keysToCamel(caseLanguage));
+    res.status(200).send(`Language ${languageId} deleted from case ${caseId} successfully`);
   } catch (err) {
     res.status(400).send(err.message);
   }

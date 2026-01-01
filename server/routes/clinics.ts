@@ -21,17 +21,17 @@ clinicsRouter.post("/:clinicId/languages", async (req, res) => {
   }
 });
 
-// Remove a language from a clinic
+// Delete a language from a clinic
 clinicsRouter.delete("/:clinicId/languages/:languageId", async (req, res) => {
   try {
     const { clinicId, languageId } = req.params;
 
-    const clinicLanguage = await db.query(
+    await db.query(
       "DELETE FROM clinic_languages WHERE clinic_id = $1 AND language_id = $2",
       [clinicId, languageId]
     );
 
-    res.status(200).json(keysToCamel(clinicLanguage));
+    res.status(200).send(`Language ${languageId} deleted from clinic ${clinicId} successfully`);
   } catch (err) {
     res.status(400).send(err.message);
   }

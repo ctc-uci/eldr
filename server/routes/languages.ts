@@ -63,9 +63,9 @@ languagesRouter.put("/:id", async (req, res) => {
 languagesRouter.delete("/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const language = await db.query(`DELETE FROM languages WHERE id = $1`, [id]);
+        await db.query(`DELETE FROM languages WHERE id = $1`, [id]);
 
-        res.status(200).json(keysToCamel(language));
+        res.status(200).send(`Language ${id} deleted successfully`);
     } catch (err) {
         res.status(400).send(err.message);
     }
