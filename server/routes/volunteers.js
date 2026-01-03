@@ -16,8 +16,11 @@ volunteerRouter.post("/:volunteerId/languages", async (req, res) => {
              RETURNING *`,
              [volunteerId, languageId]
         );
-    res.status(201).json(result[0]);
+        res.status(201).json(keysToCamel(result[0]));
     } catch (err) {
+        if (err.code === '23505') { // PostgreSQL unique violation
+            return res.status(409).json({ message: "Language already assigned to this volunteer" });
+        }
         res.status(500).send(err.message);
     }
 });
@@ -40,7 +43,7 @@ volunteerRouter.delete("/:volunteerId/languages/:languageId", async (req, res) =
         .json({ message: "Language not assigned to this volunteer" });
     }
 
-    res.status(200).json(result[0]);
+    res.status(200).json(keysToCamel(result[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
