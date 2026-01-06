@@ -7,7 +7,6 @@ export const languagesRouter = Router();
 // Post a language
 languagesRouter.post("/", async (req, res) => {
     try {
-        console.log("Request Body:", req.body); // Debugging line
         const { language } = req.body;
         const languageResult = await db.query(
             "INSERT INTO languages (language) VALUES ($1) RETURNING *",
