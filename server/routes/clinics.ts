@@ -15,7 +15,7 @@ clinicsRouter.post("/:clinicId/languages", async (req, res) => {
       [clinicId, languageId]
     );
 
-    res.status(200).json(keysToCamel(clinicLanguage));
+    res.status(201).json(keysToCamel(clinicLanguage));
   } catch (err) {
     res.status(500).send(err.message);
   }

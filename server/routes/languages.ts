@@ -13,7 +13,7 @@ languagesRouter.post("/", async (req, res) => {
             [language]
         );
 
-        res.status(200).json(keysToCamel(languageResult));
+        res.status(201).json(keysToCamel(languageResult));
     } catch (err) {
         res.status(400).send(err.message);
     }

@@ -15,7 +15,7 @@ casesRouter.post("/:caseId/languages", async (req, res) => {
       [caseId, languageId]
     );
 
-    res.status(200).json(keysToCamel(caseLanguage));
+    res.status(201).json(keysToCamel(caseLanguage));
   } catch (err) {
     res.status(500).send(err.message);
   }
