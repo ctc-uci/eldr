@@ -1,5 +1,3 @@
-// TODO: delete sample router file
-
 import { keysToCamel } from "@/common/utils";
 import express from "express";
 import { db } from "@/db/db-pgp";
@@ -7,6 +5,7 @@ import { db } from "@/db/db-pgp";
 const workshopsRouter = express.Router();
 workshopsRouter.use(express.json());
 
+// WorkshopAttendance (Volunteer ↔ Workshop)
 workshopsRouter.get("/:workshopId/attendees", async (req, res) => {
   try {
     const { workshopId } = req.params;

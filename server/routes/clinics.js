@@ -1,5 +1,3 @@
-// TODO: delete sample router file
-
 import { keysToCamel } from "@/common/utils";
 import express from "express";
 import { db } from "@/db/db-pgp";
@@ -7,6 +5,71 @@ import { db } from "@/db/db-pgp";
 const clinicsRouter = express.Router();
 clinicsRouter.use(express.json());
 
+// ClinicTable
+clinicsRouter.post("/", async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      location,
+      time,
+      date,
+      experienceLevel,
+      parking
+    } = req.body
+    
+    const data = await db.query(
+      `
+      INSERT INTO clinics(name, description, location, time, date, experience_level, parking)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+      `, [name, description, location, time, date, experienceLevel, parking]
+    );
+    res.status(200).json(keysToCamel(data));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+clinicsRouter.get("/", async (req, res) => {
+  try {
+    const data = await db.query(
+      `
+      SELECT *
+      FROM clinics
+      ORDER BY date, time;
+      `
+    )
+
+    res.status(200).json(keysToCamel(data));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+clinicsRouter.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const data = await db.query(
+      `
+      SELECT *
+      FROM clinics
+      WHERE id = $1;
+      `, [id]
+    )
+
+    if (!data.rows.length) {
+      return res.status(404).send("Clinic not found")
+    }
+
+    res.status(200).json(keysToCamel(data));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// ClinicAttendance (Volunteer ↔ Clinic)
 clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   try {
     const { clinicId } = req.params;
