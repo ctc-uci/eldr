@@ -17,7 +17,7 @@ clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
         FROM clinics c
         JOIN clinic_attendance ca ON ca.clinic_id = c.id
         JOIN volunteers v ON v.id = ca.volunteer_id
-        WHERE w.id = $1;
+        WHERE c.id = $1;
         `, [clinicId]
     );
 

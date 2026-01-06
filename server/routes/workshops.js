@@ -38,13 +38,6 @@ workshopsRouter.post("/:workshopId/attendees", async (req, res) => {
         RETURNING *;
         `, [volunteerId, workshopId]
     )
-    await db.query(
-        `
-        UPDATE workshops
-        SET attendees = attendees + 1
-        WHERE id = $1;
-        `, [workshopId]
-    )
 
     res.status(200).json(keysToCamel(data));
   } catch (err) {
@@ -61,13 +54,6 @@ workshopsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) =
             WHERE workshop_id = $1 AND volunteer_id = $2
             RETURNING *
             `, [workshopId, volunteerId]
-        )
-        await db.query(
-            `
-            UPDATE workshops
-            SET attendees = attendees - 1
-            WHERE id = $1;
-            `, [workshopId]
         )
 
         res.status(200).json(keysToCamel(data));
