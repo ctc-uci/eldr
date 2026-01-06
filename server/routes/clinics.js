@@ -7,18 +7,18 @@ import { db } from "@/db/db-pgp";
 const clinicsRouter = express.Router();
 clinicsRouter.use(express.json());
 
-clinicsRouter.get("/:workshopId/attendees", async (req, res) => {
+clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { clinicId } = req.params;
     const data = await db.query(
         `
         SELECT 
             v.*
-        FROM workshops w
-        JOIN workshop_attendance wa ON wa.workshop_id = w.id
-        JOIN volunteers v ON v.id = wa.volunteer_id
+        FROM clinics c
+        JOIN clinic_attendance ca ON ca.clinic_id = c.id
+        JOIN volunteers v ON v.id = ca.volunteer_id
         WHERE w.id = $1;
-        `, [workshopId]
+        `, [clinicId]
     );
 
     res.status(200).json(keysToCamel(data));
@@ -27,23 +27,23 @@ clinicsRouter.get("/:workshopId/attendees", async (req, res) => {
   }
 });
 
-clinicsRouter.post("/:workshopId/attendees", async (req, res) => {
+clinicsRouter.post("/:clinicId/attendees", async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { clinicId } = req.params;
     const { volunteerId } = req.body;
     const data = await db.query(
         `
-        INSERT INTO workshop_attendance (volunteer_id, workshop_id)
+        INSERT INTO clinic_attendance (volunteer_id, clinic_id)
         VALUES ($1, $2)
         RETURNING *;
-        `, [volunteerId, workshopId]
+        `, [volunteerId, clinicId]
     )
     await db.query(
         `
-        UPDATE workshops
+        UPDATE clinics
         SET attendees = attendees + 1
         WHERE id = $1;
-        `, [workshopId]
+        `, [clinicId]
     )
 
     res.status(200).json(keysToCamel(data));
@@ -52,22 +52,22 @@ clinicsRouter.post("/:workshopId/attendees", async (req, res) => {
   }
 });
 
-clinicsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) => {
+clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
     try{
-        const { workshopId, volunteerId } = req.params;
+        const { clinicId, volunteerId } = req.params;
         const data = await db.query(
             `
-            DELETE FROM workshop_attendance
-            WHERE workshop_id = $1 AND volunteer_id = $2
+            DELETE FROM clinic_attendance
+            WHERE clinic_id = $1 AND volunteer_id = $2
             RETURNING *
-            `, [workshopId, volunteerId]
+            `, [clinicId, volunteerId]
         )
         await db.query(
             `
-            UPDATE workshops
+            UPDATE clinics
             SET attendees = attendees - 1
             WHERE id = $1;
-            `, [workshopId]
+            `, [clinicId]
         )
 
         res.status(200).json(keysToCamel(data));
