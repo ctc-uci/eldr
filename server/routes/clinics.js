@@ -59,7 +59,7 @@ clinicsRouter.get("/:id", async (req, res) => {
       `, [id]
     )
 
-    if (!data.rows.length) {
+    if (data.length === 0) {
       return res.status(404).send("Clinic not found")
     }
 
@@ -91,7 +91,7 @@ clinicsRouter.put("/:id", async (req, res) => {
       `, [name, description, location, time, date, experienceLevel, parking, id]
     )
 
-    if (!data.rows.length) {
+    if (data.length === 0) {
       return res.status(404).send("Clinic not found")
     }
 
@@ -112,7 +112,7 @@ clinicsRouter.delete("/:id", async (req, res) => {
       `, [id]
     )
 
-    if (!data.rows.length) {
+    if (data.length === 0) {
       return res.status(404).send("Clinic not found")
     }
 
