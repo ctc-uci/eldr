@@ -55,6 +55,10 @@ workshopsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) =
             `, [workshopId, volunteerId]
         )
 
+        if (!data.length) {
+          return res.status(404).send("Volunteer not found for this workshop")
+        }
+
         res.status(200).json(keysToCamel(data));
     } catch (err) {
         res.status(500).send(err.message);

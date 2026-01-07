@@ -172,6 +172,10 @@ clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
             `, [clinicId, volunteerId]
         )
 
+        if (!data.length) {
+          return res.status(404).send("Volunteer not found for this clinic")
+        }
+
         res.status(200).json(keysToCamel(data));
     } catch (err) {
         res.status(500).send(err.message);
