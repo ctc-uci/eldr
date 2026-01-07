@@ -69,6 +69,59 @@ clinicsRouter.get("/:id", async (req, res) => {
   }
 });
 
+clinicsRouter.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      location,
+      time,
+      date,
+      experienceLevel,
+      parking
+    } = req.body;
+
+    const data = await db.query(
+      `
+      UPDATE clinics
+      SET name = $1, description = $2, location = $3, time = $4, date = $5, experience_level = $6, parking = $7
+      WHERE id = $8
+      RETURNING *;
+      `, [name, description, location, time, date, experienceLevel, parking, id]
+    )
+
+    if (!data.rows.length) {
+      return res.status(404).send("Clinic not found")
+    }
+
+    res.status(200).json(keysToCamel(data));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+clinicsRouter.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const data = await db.query(
+      `
+      DELETE FROM clinics WHERE id = $1
+      RETURNING *;
+      `, [id]
+    )
+
+    if (!data.rows.length) {
+      return res.status(404).send("Clinic not found")
+    }
+
+    res.status(200).json(keysToCamel(data));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // ClinicAttendance (Volunteer ↔ Clinic)
 clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   try {
