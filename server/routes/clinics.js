@@ -154,13 +154,6 @@ clinicsRouter.post("/:clinicId/attendees", async (req, res) => {
         RETURNING *;
         `, [volunteerId, clinicId]
     )
-    await db.query(
-        `
-        UPDATE clinics
-        SET attendees = attendees + 1
-        WHERE id = $1;
-        `, [clinicId]
-    )
 
     res.status(200).json(keysToCamel(data));
   } catch (err) {
@@ -177,13 +170,6 @@ clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
             WHERE clinic_id = $1 AND volunteer_id = $2
             RETURNING *
             `, [clinicId, volunteerId]
-        )
-        await db.query(
-            `
-            UPDATE clinics
-            SET attendees = attendees - 1
-            WHERE id = $1;
-            `, [clinicId]
         )
 
         res.status(200).json(keysToCamel(data));
