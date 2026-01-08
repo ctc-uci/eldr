@@ -158,9 +158,10 @@ volunteersRouter.get("/:volunteerId/tags", async(req, res) => {
         const { volunteerId } = req.params;
         const volunteerResult = await db.query(
             `
-            SELECT *
-            FROM volunteer_tags
-            WHERE volunteer_id = $1;
+            SELECT t.id, t.tag
+            FROM volunteer_tags vt
+            JOIN tags t ON t.id = vt.tag_id 
+            WHERE vt.volunteer_id = $1;
             `, 
             [volunteerId]
         );
