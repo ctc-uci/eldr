@@ -2,11 +2,11 @@ import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 
-export const WorkshopRouter = Router();
+export const workshopsRouter = Router();
 
 // POST: assign an area to a workshop
 // /workshops/{workshopId}/areas-of-interest
-WorkshopRouter.post("/:workshopId/areas-of-interest", async (req, res) => {
+workshopsRouter.post("/:workshopId/areas-of-interest", async (req, res) => {
     try {
         const {areaOfInterestID} = req.body; // get JSON body
         const { workshopId } = req.params; // get URL parameters
@@ -28,7 +28,7 @@ WorkshopRouter.post("/:workshopId/areas-of-interest", async (req, res) => {
 
 // DELETE: remove an area from a workshop
 // /workshops/{workshopId}/areas-of-interest/{areaId}
-WorkshopRouter.delete("/:workshopId/areas-of-interest/:areaId", async(req, res) => {
+workshopsRouter.delete("/:workshopId/areas-of-interest/:areaId", async(req, res) => {
     try {
         const { workshopId, areaId } = req.params;
 
@@ -49,7 +49,7 @@ WorkshopRouter.delete("/:workshopId/areas-of-interest/:areaId", async(req, res) 
 
 // GET: list all areas for a workshop
 // /workshops/{workshopId}/areas-of-interest
-WorkshopRouter.get("/:workshopId/areas-of-interest", async(req, res) => {
+workshopsRouter.get("/:workshopId/areas-of-interest", async(req, res) => {
     try {
         const { workshopId } = req.params;
 

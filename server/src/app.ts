@@ -1,6 +1,8 @@
 import { verifyToken } from "@/middleware";
 import { areasOfInterestRouter } from "@/routes/areasOfInterest";
 import { clinicsRouter } from "@/routes/clinics";
+import { caseRouter } from "@/routes/case";
+import { workshopsRouter } from "@/routes/workshops";
 import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
 import { usersRouter } from "@/routes/users";
 import cookieParser from "cookie-parser";
@@ -36,6 +38,8 @@ app.use("/", sampleRouter); // TODO: delete sample endpoint
 app.use("/users", usersRouter);
 app.use("/areas-of-interest", areasOfInterestRouter);
 app.use("/clinics", clinicsRouter);
+app.use("/workshops", workshopsRouter);
+app.use("/cases", caseRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
