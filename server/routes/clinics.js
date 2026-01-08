@@ -10,6 +10,7 @@ clinicsRouter.get("/:id/areas-of-interest", async (req, res) => {
     try {
         const { id } = req.params;
         const areasOfInterest = await db.query("SELECT * FROM clinic_areas_of_interest WHERE clinic_id = $1", [id]);
+
         res.status(200).json(keysToCamel(areasOfInterest));
     } catch (err) {
         res.status(500).send(err.message);
@@ -32,7 +33,12 @@ clinicsRouter.post("/:id/areas-of-interest", async (req, res) => {
             "INSERT INTO clinic_areas_of_interest (clinic_id, area_of_interest_id) VALUES ($1, $2) RETURNING *",
             [id, areaOfInterestId]
         );
-        
+
+        // check to see if area of interest was created and returned
+        if (areaOfInterest.length === 0) {
+            return res.status(404).json({ message: "Area of interest not created" });
+        }
+
         res.status(200).json(keysToCamel(areaOfInterest));
     } catch (err) {
         res.status(500).send(err.message);

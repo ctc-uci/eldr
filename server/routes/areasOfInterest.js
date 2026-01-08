@@ -21,6 +21,12 @@ areasOfInterestRouter.get("/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const areaOfInterest = await db.query("SELECT * FROM areas_of_interest WHERE id = $1", [id]);
+
+        // check to see if area of interest was found and returned
+        if (areaOfInterest.length === 0) {
+            return res.status(404).json({ message: "Area of interest not found" });
+        }
+
         res.status(200).json(keysToCamel(areaOfInterest));
     } catch (err) {
         res.status(500).send(err.message);
@@ -42,6 +48,12 @@ areasOfInterestRouter.post("/", async (req, res) => {
             "INSERT INTO areas_of_interest (areas_of_interest) VALUES ($1) RETURNING *",
             [areaOfInterest]
         );
+
+        // check to see if area of interest was created and returned
+        if (newAreaOfInterest.length === 0) {
+            return res.status(404).json({ message: "Area of interest not created" });
+        }
+
         res.status(200).json(keysToCamel(newAreaOfInterest));
     } catch (err) {
         res.status(500).send(err.message);
@@ -76,6 +88,11 @@ areasOfInterestRouter.delete("/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const deletedAreaOfInterest = await db.query("DELETE FROM areas_of_interest WHERE id = $1 RETURNING *", [id]);
+
+        // check to see if area of interest was deleted and returned
+        if (deletedAreaOfInterest.length === 0) {
+            return res.status(404).json({ message: "Area of interest not found" });
+        }
 
         res.status(200).json(keysToCamel(deletedAreaOfInterest));
     } catch (err) {
