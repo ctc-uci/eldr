@@ -16,7 +16,7 @@ areasOfInterestRouter.get("/", async (req, res) => {
 });
 
 // GET: get an area of interest by id
-// {port}}/areas-of-interest/:id
+// {port}/areas-of-interest/:id
 areasOfInterestRouter.get("/:id", async (req, res) => {
     try {
         const { id } = req.params;
