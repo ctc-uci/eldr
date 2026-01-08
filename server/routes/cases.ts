@@ -51,7 +51,7 @@ casesRouter.post("/create", async (req, res) => {
     const { id, title, description, email_contact } = req.body;
 
     const createdCase = await db.query(
-      "INSERT INTO cases (id, title, description, email_contact) VALUES ($1, $2, $3, $4) RETURNING *",
+      `INSERT INTO cases (id, title, description, email_contact) VALUES ($1, $2, $3, $4) RETURNING *`,
       [id, title, description, email_contact]
     );
 
@@ -64,14 +64,19 @@ casesRouter.post("/create", async (req, res) => {
 //PUT /cases/{id} -  Update a single case by id
 casesRouter.put("/update", async (req, res) => {
   try {
-    const { id, title, description, email_contact } = req.body;
+    const { id, title, description } = req.body;
+
+    const emailContact =
+      req.body.emailContact ?? req.body.email_contact;
 
     const updatedCase = await db.query(
-      `UPDATE users SET title = $1,
-            description = $2,
-            email_contact = $3,
-        WHERE id = $4 RETURNING *`,
-      [id, title, description, email_contact]
+      `UPDATE cases
+       SET title = $1,
+           description = $2,
+           email_contact = $3
+       WHERE id = $4
+       RETURNING *`,
+      [title, description ?? null, emailContact, id]
     );
 
     res.status(200).json(keysToCamel(updatedCase));
@@ -79,4 +84,3 @@ casesRouter.put("/update", async (req, res) => {
     res.status(400).send(err.message);
   }
 });
-
