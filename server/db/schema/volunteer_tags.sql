@@ -1,4 +1,4 @@
--- Table: public.volunteer_Tags
+-- Table: public.volunteer_tags
 
 CREATE TABLE IF NOT EXISTS public.volunteer_tags
 (
