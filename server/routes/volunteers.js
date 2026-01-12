@@ -7,14 +7,36 @@ export const volunteersRouter = Router();
 // Create a new volunteer
 volunteersRouter.post("/", async(req, res) => {
     try {
-        const { first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality } = req.body;
+        const { 
+            first_name, 
+            last_name, 
+            email, 
+            phone_number, 
+            is_notary, 
+            role, 
+            experience_level, 
+            form_completed, 
+            form_link, 
+            is_signed_confidentiality 
+        } = req.body;
         const volunteerResult = await db.query(
             `
             INSERT INTO volunteers (first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
             RETURNING *;
             `, 
-            [first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality]
+            [
+                first_name, 
+                last_name, 
+                email, 
+                phone_number, 
+                is_notary, 
+                role, 
+                experience_level, 
+                form_completed, 
+                form_link, 
+                is_signed_confidentiality
+            ]
         );
 
         res.status(201).json(keysToCamel(volunteerResult));
@@ -64,7 +86,18 @@ volunteersRouter.get("/:id", async(req, res) => {
 volunteersRouter.put("/:id", async(req, res) => {
     try {
         const { id } = req.params;
-        const { first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality } = req.body;
+        const { 
+            first_name, 
+            last_name, 
+            email, 
+            phone_number, 
+            is_notary, 
+            role, 
+            experience_level, 
+            form_completed, 
+            form_link, 
+            is_signed_confidentiality 
+        } = req.body;
         await db.query(
             `
             UPDATE volunteers
@@ -80,7 +113,19 @@ volunteersRouter.put("/:id", async(req, res) => {
                 is_signed_confidentiality = $11
             WHERE id = $1;
             `,
-            [id, first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality]
+            [
+                id, 
+                first_name, 
+                last_name, 
+                email, 
+                phone_number, 
+                is_notary, 
+                role, 
+                experience_level, 
+                form_completed, 
+                form_link, 
+                is_signed_confidentiality
+            ]
         )
 
         res.status(200).send(`Volunteer ${id} updated successfully`);
