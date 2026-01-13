@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Flex } from "@chakra-ui/react";
+import { Button, Flex } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
@@ -12,6 +12,16 @@ const LoginStep = ({ onNext }: Props) => {
       w="100%"
       h="100%"
     >
+      <Button
+        position="absolute"
+        top={4}
+        right={4}
+        zIndex={10}
+        colorScheme="blue"
+        onClick={onNext}
+      >
+        Continue
+      </Button>
       LoginStep
     </Flex>
   );

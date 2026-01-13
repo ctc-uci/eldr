@@ -12,6 +12,16 @@ const WelcomeStep = ({ onNext }: Props) => {
       w="100%"
       h="100%"
     >
+      <Button
+        position="absolute"
+        top={4}
+        right={4}
+        zIndex={10}
+        colorScheme="blue"
+        onClick={onNext}
+      >
+        Continue
+      </Button>
       <Center
         bg="#E8E8E8"
         w="631px"

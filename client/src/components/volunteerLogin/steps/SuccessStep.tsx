@@ -10,7 +10,7 @@ const SuccessStep = (props: Props) => {
       w="100%"
       h="100%"
     >
-      LoginStep
+      SuccessStep
     </Flex>
   );
 };
