@@ -2,11 +2,11 @@ import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 
-export const caseRouter = Router();
+export const casesRouter = Router();
 
 // POST: assign an area to a case
 // /cases/{caseId}/areas-of-interest
-caseRouter.post("/:caseId/areas-of-interest", async (req, res) => {
+casesRouter.post("/:caseId/areas-of-interest", async (req, res) => {
     try {
         const {areaOfInterestID} = req.body; // get JSON body
         const { caseId } = req.params; // get URL parameters
@@ -28,7 +28,7 @@ caseRouter.post("/:caseId/areas-of-interest", async (req, res) => {
 
 // DELETE: remove an area from a case
 // /cases/{caseId}/areas-of-interest/{areaId}
-caseRouter.delete("/:caseId/areas-of-interest/:areaId", async(req, res) => {
+casesRouter.delete("/:caseId/areas-of-interest/:areaId", async(req, res) => {
     try {
         const { caseId, areaId } = req.params;
 
@@ -49,7 +49,7 @@ caseRouter.delete("/:caseId/areas-of-interest/:areaId", async(req, res) => {
 
 // GET: list all areas for a case
 // /cases/{caseId}/areas-of-interest
-caseRouter.get("/:caseId/areas-of-interest", async(req, res) => {
+casesRouter.get("/:caseId/areas-of-interest", async(req, res) => {
     try {
         const { caseId } = req.params;
 
