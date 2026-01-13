@@ -7,7 +7,6 @@ import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
 import { tagsRouter } from "@/routes/tags";
 import { usersRouter } from "@/routes/users";
 import { volunteersRouter } from "@/routes/volunteers";
-import { casesRouter } from "@/routes/cases";
 import { adminsRouter } from "@/routes/admins";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -17,7 +16,7 @@ import schedule from "node-schedule"; // TODO: Keep only if scheduling cronjobs
 
 dotenv.config();
 
-schedule.scheduleJob("0 0 0 0 0", () => console.info("Hello Cron Job!")); // TODO: delete sample cronjob
+// schedule.scheduleJob("0 0 0 0 0", () => console.info("Hello Cron Job!")); // TODO: delete sample cronjob
 
 const CLIENT_HOSTNAME =
   process.env.NODE_ENV === "development"
