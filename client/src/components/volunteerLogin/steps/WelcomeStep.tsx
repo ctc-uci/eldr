@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Button } from "@chakra-ui/react";
+import { Button, Center, Flex, HStack, Text } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
@@ -8,15 +8,20 @@ type Props = {
 
 const WelcomeStep = ({ onNext }: Props) => {
   return (
-    <div>
-      WelcomeStep
-      <Button
-        colorScheme="blue"
-        onClick={onNext}
+    <Flex
+      w="100%"
+      h="100%"
+    >
+      <Center
+        bg="#E8E8E8"
+        w="631px"
       >
-        Continue
-      </Button>
-    </div>
+        <Text>box 1</Text>
+      </Center>
+      <Center>
+        <Text>box 1</Text>
+      </Center>
+    </Flex>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Box } from "@chakra-ui/react";
+import { Box, Flex } from "@chakra-ui/react";
 
 import AboutYouStep from "./steps/AboutYouStep";
 import CreateAccountStep from "./steps/CreateAccountStep";
@@ -16,9 +16,9 @@ const VolunteerLogin = () => {
   const next = () => setStepIndex((i) => i + 1);
 
   return (
-    <Box
-      w="100%"
-      maxW="480px"
+    <Flex
+      w="100vw"
+      h="100vh"
     >
       {stepIndex === 0 && <WelcomeStep onNext={next} />}
       {stepIndex === 1 && <LoginStep onNext={next} />}
@@ -27,7 +27,7 @@ const VolunteerLogin = () => {
       {stepIndex === 4 && <AboutYouStep onNext={next} />}
       {stepIndex === 5 && <InterestsStep onNext={next} />}
       {stepIndex === 6 && <SuccessStep />}
-    </Box>
+    </Flex>
   );
 };
 

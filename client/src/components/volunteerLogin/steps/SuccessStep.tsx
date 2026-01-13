@@ -1,9 +1,18 @@
 import React from "react";
 
+import { Flex } from "@chakra-ui/react";
+
 type Props = {};
 
 const SuccessStep = (props: Props) => {
-  return <div>SuccessStep</div>;
+  return (
+    <Flex
+      w="100%"
+      h="100%"
+    >
+      LoginStep
+    </Flex>
+  );
 };
 
 export default SuccessStep;
