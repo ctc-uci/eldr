@@ -1,4 +1,8 @@
 import { verifyToken } from "@/middleware";
+import { areasOfInterestRouter } from "@/routes/areasOfInterest";
+import { clinicsRouter } from "@/routes/clinics";
+import { casesRouter } from "@/routes/cases";
+import { workshopsRouter } from "@/routes/workshops";
 import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
 import { tagsRouter } from "@/routes/tags";
 import { usersRouter } from "@/routes/users";
@@ -36,6 +40,10 @@ if (process.env.NODE_ENV === "production") {
 
 app.use("/", sampleRouter); // TODO: delete sample endpoint
 app.use("/users", usersRouter);
+app.use("/areas-of-interest", areasOfInterestRouter);
+app.use("/clinics", clinicsRouter);
+app.use("/workshops", workshopsRouter);
+app.use("/cases", casesRouter);
 app.use("/volunteers", volunteersRouter);
 app.use("/tags", tagsRouter);
 app.use("/cases", casesRouter);
