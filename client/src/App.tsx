@@ -15,6 +15,8 @@ import {
   Routes,
 } from "react-router-dom";
 
+import VolunteerLogin from "./components/volunteerLogin/volunteerLogin";
+
 const App = () => {
   return (
     <CookiesProvider>
@@ -56,6 +58,10 @@ const App = () => {
                 <Route
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
+                />
+                <Route
+                  path="/volunteerLogin"
+                  element={<VolunteerLogin />}
                 />
               </Routes>
             </Router>
