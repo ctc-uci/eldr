@@ -12,5 +12,6 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     experience_level experience_level NOT NULL,
     form_completed BOOLEAN,
     form_link TEXT,
-    is_signed_confidentiality TIMESTAMP
+    is_signed_confidentiality TIMESTAMP,
+    FOREIGN KEY (id) REFERENCES users(id)
 );
