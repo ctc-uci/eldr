@@ -67,7 +67,7 @@ export const EventManagement = () => {
                                 border="2px solid black"
                                 maxW="10%"
                                 bg = "white"
-                                >
+                            >
                                 <option value="priority">Priority (highest to lowest)</option>
                                 <option value="date">Date (newest to oldest)</option>
                                 <option value="etc">etc.</option>
