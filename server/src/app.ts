@@ -1,4 +1,5 @@
 import { verifyToken } from "@/middleware";
+import { languagesRouter } from "@/routes/languages";
 import { areasOfInterestRouter } from "@/routes/areasOfInterest";
 import { clinicsRouter } from "@/routes/clinics";
 import { casesRouter } from "@/routes/cases";
@@ -37,8 +38,8 @@ if (process.env.NODE_ENV === "production") {
   app.use(verifyToken);
 }
 
-app.use("/", sampleRouter); // TODO: delete sample endpoint
 app.use("/users", usersRouter);
+app.use("/languages", languagesRouter);
 app.use("/areas-of-interest", areasOfInterestRouter);
 app.use("/clinics", clinicsRouter);
 app.use("/workshops", workshopsRouter);
@@ -47,7 +48,6 @@ app.use("/volunteers", volunteersRouter);
 app.use("/tags", tagsRouter);
 app.use("/cases", casesRouter);
 app.use("/admins", adminsRouter);
-
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
