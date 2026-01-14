@@ -5,7 +5,7 @@ CREATE TABLE workshops (
     name TEXT NOT NULL,
     description TEXT,
     location TEXT,
-    time TIMESTAMPZ NOT NULL,
+    time TIMESTAMPTZ NOT NULL,
     date DATE NOT NULL,
     attendees INT NOT NULL DEFAULT 0 CHECK (attendees >= 0),
     language TEXT,
