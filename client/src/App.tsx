@@ -5,6 +5,7 @@ import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
+import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
@@ -63,6 +64,15 @@ const App = () => {
                   element={
                     <ProtectedRoute
                       element={<EventManagement />}
+                      allowedRoles={["admin"]}
+                    />
+                  }
+                />
+                <Route
+                  path = "/events/:id"
+                  element={
+                    <ProtectedRoute
+                      element={<EventDetail />}
                       allowedRoles={["admin"]}
                     />
                   }
