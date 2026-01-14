@@ -46,7 +46,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
         >
           ELDR Volunteer Portal
         </Heading>
-        <VStack>
+        <VStack spacing="10px">
           <Input
             placeholder="Enter first name"
             w="704px"

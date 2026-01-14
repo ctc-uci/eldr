@@ -29,11 +29,11 @@ const WelcomeStep = ({ onNext }: Props) => {
         <Heading
           fontWeight={500}
           fontSize="50px"
-          mb="200px"
+          mb="150px"
         >
           Welcome ELDR!
         </Heading>
-        <VStack>
+        <VStack spacing="20px">
           <Button
             bg="#FAFAFA"
             w="300px"
