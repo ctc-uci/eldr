@@ -5,7 +5,8 @@ import {
     ModalCloseButton,
     ModalBody,
     ModalFooter,
-    VStack
+    VStack,
+    Flex
 } from "@chakra-ui/react";
 
 import { FaArrowCircleLeft } from "react-icons/fa";
