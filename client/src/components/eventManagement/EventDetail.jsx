@@ -22,7 +22,7 @@ import {
 } from "@chakra-ui/react";
 
 import { CgCalendarDates, CgProfile } from "react-icons/cg";
-import { CiClock1, CiMapPin, CiUser,CiSearch } from "react-icons/ci";
+import { CiClock1, CiMapPin, CiSearch, CiUser } from "react-icons/ci";
 import { HiMiniPlusCircle } from "react-icons/hi2";
 import { useParams } from "react-router-dom";
 
@@ -181,6 +181,32 @@ export const EventDetail = () => {
                   </Grid>
                 </VStack>
               </HStack>
+
+              {/* event details / volunteer list / email notification timeline tabs */}
+              <Tabs
+                isFitted
+                w="100%"
+                h="100%"
+                mt={10}
+                variant="enclosed"
+              >
+                <TabList>
+                  <Tab bg="#E8E8E8" roundedTop="xl">Event Details</Tab>
+                  <Tab bg="#D9D9D9" roundedTop="xl">Volunteer List</Tab>
+                  <Tab bg="#CECECE" roundedTop="xl">Email Notification Timeline</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel bg="#E8E8E8">
+                    <p>one!</p>
+                  </TabPanel>
+                  <TabPanel bg="#D9D9D9">
+                    <p>two!</p>
+                  </TabPanel>
+                  <TabPanel bg="#CECECE">
+                    <p>three!</p>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             </VStack>
           </TabPanel>
           <TabPanel>
