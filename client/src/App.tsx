@@ -1,10 +1,10 @@
 import { Admin } from "@/components/admin/Admin";
+import AdminProfile from "@/components/adminProfile/adminProfile";
 import { CatchAll } from "@/components/CatchAll";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
-// import {adminProfile} from "@components/adminProfile/adminProfile";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
@@ -53,6 +53,10 @@ const App = () => {
                       replace
                     />
                   }
+                />
+                <Route
+                  path="/admin-profile"
+                  element={<AdminProfile />}
                 />
                 <Route
                   path="*"
