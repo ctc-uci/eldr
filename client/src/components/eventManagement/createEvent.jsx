@@ -1,22 +1,42 @@
 import {
-    VStack,
-    Box,
-    Text,
-    Card,
-    Button
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    VStack
 } from "@chakra-ui/react";
 
+import { FaArrowCircleLeft } from "react-icons/fa";
 
-
-export const createEvent = () => {
+export const CreateEvent = ({isOpen, onClose}) => {
     return (
-        <VStack>
-            {/*
-            skeleton for future implementation
-            */}
-            <Card>
-                HELLO!
-            </Card>
-        </VStack>
-    );
-};
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton 
+            top="8px" 
+            left="8px" 
+            right="auto" 
+            children={<FaArrowCircleLeft size = {20}/>}
+          />
+          <ModalBody>
+            <VStack>
+                <Flex>
+
+                </Flex>
+                <Flex>
+
+                </Flex>
+                <Flex>
+
+                </Flex>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+  );
+}
