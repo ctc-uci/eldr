@@ -8,7 +8,8 @@ import {
     VStack,
     HStack,
     Flex,
-    IconButton
+    IconButton,
+    Grid
 } from "@chakra-ui/react";
 
 import { FaArrowCircleLeft } from "react-icons/fa";
@@ -31,6 +32,12 @@ export const CreateEvent = ({isOpen, onClose}) => {
                 </HStack>
             <ModalBody>
                 <VStack>
+                    <Text 
+                        fontWeight = "bold" 
+                        fontSize = "lg"
+                    > 
+                        Create New Event
+                    </Text>
                     <Flex 
                         w = "80%"
                         bg = "grey"
