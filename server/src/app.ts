@@ -1,8 +1,14 @@
 import { verifyToken } from "@/middleware";
-import { casesRouter } from "@/routes/cases";
-import { clinicsRouter } from "@/routes/clinics";
 import { languagesRouter } from "@/routes/languages";
+import { areasOfInterestRouter } from "@/routes/areasOfInterest";
+import { clinicsRouter } from "@/routes/clinics";
+import { casesRouter } from "@/routes/cases";
+import { workshopsRouter } from "@/routes/workshops";
+import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
+import { tagsRouter } from "@/routes/tags";
 import { usersRouter } from "@/routes/users";
+import { volunteersRouter } from "@/routes/volunteers";
+import { adminsRouter } from "@/routes/admins";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -11,7 +17,7 @@ import schedule from "node-schedule"; // TODO: Keep only if scheduling cronjobs
 
 dotenv.config();
 
-schedule.scheduleJob("0 0 0 0 0", () => console.info("Hello Cron Job!")); // TODO: delete sample cronjob
+// schedule.scheduleJob("0 0 0 0 0", () => console.info("Hello Cron Job!")); // TODO: delete sample cronjob
 
 const CLIENT_HOSTNAME =
   process.env.NODE_ENV === "development"
@@ -34,8 +40,14 @@ if (process.env.NODE_ENV === "production") {
 
 app.use("/users", usersRouter);
 app.use("/languages", languagesRouter);
-app.use("/cases", casesRouter);
+app.use("/areas-of-interest", areasOfInterestRouter);
 app.use("/clinics", clinicsRouter);
+app.use("/workshops", workshopsRouter);
+app.use("/cases", casesRouter);
+app.use("/volunteers", volunteersRouter);
+app.use("/tags", tagsRouter);
+app.use("/cases", casesRouter);
+app.use("/admins", adminsRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
