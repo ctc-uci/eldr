@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Center,
-  Divider,
   Flex,
   Heading,
   Input,
@@ -88,6 +87,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           h="49px"
           borderWidth="3px"
           borderColor="black"
+          onClick={onNext}
         >
           Create Account
         </Button>
