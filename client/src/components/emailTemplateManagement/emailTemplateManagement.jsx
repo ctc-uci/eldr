@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Text,
@@ -13,7 +13,8 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  Button
+  Button,
+  Select,
 } from "@chakra-ui/react";
 import {
   EmailIcon, SearchIcon,
@@ -21,8 +22,10 @@ import {
 import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers } from "react-icons/fa";
 
 export const EmailTemplateManagement = () => {
-    return (
-      <Flex minH="100vh" bg="gray.100">
+  const [activeSection, setActiveSection] = useState("welcome");
+
+  return (
+    <Flex minH="100vh" bg="gray.100">
       {/* Sidebar */}
       <Sidebar />
 
@@ -36,11 +39,16 @@ export const EmailTemplateManagement = () => {
           </InputLeftElement>
           <Input placeholder="Search" />
         </InputGroup>
-        <WelcomeSection />
+
+        {/* Conditionally render sections */}
+        {activeSection === "welcome" && (
+          <WelcomeSection setActiveSection={setActiveSection} />
+        )}
+        {activeSection === "newTemplate" && <NewTemplateSection />}
       </Box>
     </Flex>
-    );
-  };
+  );
+};
   
 
 const Sidebar = () => (
@@ -78,7 +86,7 @@ const NavItem = ({ icon, label, active = false }) => (
   </HStack>
 );
 
-const WelcomeSection = () => (
+const WelcomeSection = ({ setActiveSection }) => (
   <Box>
     <Flex justify="space-between">
     <Text fontSize="3xl" fontWeight="bold" mb={4}>
@@ -91,7 +99,9 @@ const WelcomeSection = () => (
       </MenuButton>
       <MenuList>
         <MenuItem>New folder</MenuItem>
-        <MenuItem>New template</MenuItem>
+        <MenuItem onClick={() => setActiveSection("newTemplate")}>
+          New template
+        </MenuItem>
       </MenuList>
     </Menu>
     </Flex>
@@ -140,5 +150,39 @@ const TemplateCard = () => (
   <Box bg="gray.300" p={4} borderRadius="md">
     <Input placeholder="Template Name" bg="white" mb={3} border="2px solid black"/>
     <Box h="120px" bg="gray.100" borderRadius="md" />
+  </Box>
+);
+
+const NewTemplateSection = () => (
+  <Box>
+    <Text fontSize="5xl" mb={4}>
+      Template Name
+    </Text>
+
+    <Text fontSize="2xl" mb={4}>
+      Templates
+    </Text>
+
+    <HStack spacing={3} mb={6} b>
+      <Button bg="white" border="2px solid black">Add Notification</Button>
+      <Button bg="white" border="2px solid black">Delete Draft</Button>
+      <Select placeholder="Select Folder" w="200px" borderRadius="md" size="md" bg="white" border="1px solid black">
+        <option value="folder1">Folder 1</option>
+        <option value="folder2">Folder 2</option>
+        <option value="folder3">Folder 3</option>
+      </Select>
+    </HStack>
+
+    {/* Template Content */}
+    <Box w="100%" mb={4}>
+      <Box bg="white" border="1px solid black" p={2} mb={5}>
+        B I U
+      </Box>
+
+      <Box bg="gray.300" border="2px solid black" minH="350px" />
+    </Box>
+
+
+    <Button bg="white" border="2px solid black">Save</Button>
   </Box>
 );
