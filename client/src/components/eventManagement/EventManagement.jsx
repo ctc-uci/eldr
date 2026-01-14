@@ -28,12 +28,13 @@ export const EventManagement = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (
-        <VStack>
+        <VStack w="100%" h="100%" minH={"100vh"} bg="#E8E8E8">
             <Flex w="100%" align="center" px="2%" py="2%">
                 <Text fontWeight="bold" fontSize="xl">ELDR</Text>
                 <InputGroup 
                     maxW="70%" 
-                    mx="auto" 
+                    mx="auto"
+                    bg="white"
                 >
                     {/* Search bar */}
                     <InputLeftElement pointerEvents="none">
@@ -53,7 +54,7 @@ export const EventManagement = () => {
                     </TabList>
                 </Flex>
                 <TabPanels>
-                    <TabPanel>
+                    <TabPanel p={0}>
                         <Flex 
                             bg = "grey" 
                             h = "100" 
