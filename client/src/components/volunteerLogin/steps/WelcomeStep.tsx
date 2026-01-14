@@ -1,6 +1,4 @@
-import React from "react";
-
-import { Button, Center, Flex, HStack, Text } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, Heading, VStack } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
@@ -12,25 +10,51 @@ const WelcomeStep = ({ onNext }: Props) => {
       w="100%"
       h="100%"
     >
-      <Button
-        position="absolute"
-        top={4}
-        right={4}
-        zIndex={10}
-        colorScheme="blue"
-        onClick={onNext}
-      >
-        Continue
-      </Button>
       <Center
         bg="#E8E8E8"
-        w="631px"
+        w="43%"
       >
-        <Text>box 1</Text>
+        <Box
+          w="323px"
+          h="294px"
+          bg="#D9D9D9"
+        ></Box>
       </Center>
-      <Center>
-        <Text>box 1</Text>
-      </Center>
+      <Flex
+        flex="1"
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Heading
+          fontWeight={500}
+          fontSize="50px"
+          mb="200px"
+        >
+          Welcome ELDR!
+        </Heading>
+        <VStack>
+          <Button
+            bg="#FAFAFA"
+            w="300px"
+            h="80px"
+            borderWidth="3px"
+            borderColor="black"
+          >
+            Staff
+          </Button>
+          <Button
+            bg="#FAFAFA"
+            w="300px"
+            h="80px"
+            borderWidth="3px"
+            borderColor="black"
+            onClick={onNext}
+          >
+            Volunteer
+          </Button>
+        </VStack>
+      </Flex>
     </Flex>
   );
 };
