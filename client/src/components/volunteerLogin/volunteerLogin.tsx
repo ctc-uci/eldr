@@ -14,6 +14,7 @@ const VolunteerLogin = () => {
   const [stepIndex, setStepIndex] = useState(0);
 
   const next = () => setStepIndex((i) => i + 1);
+  const back = () => setStepIndex((i) => i - 1);
 
   return (
     <Flex
@@ -21,8 +22,18 @@ const VolunteerLogin = () => {
       h="100vh"
     >
       {stepIndex === 0 && <WelcomeStep onNext={next} />}
-      {stepIndex === 1 && <LoginStep onNext={next} />}
-      {stepIndex === 2 && <CreateAccountStep onNext={next} />}
+      {stepIndex === 1 && (
+        <LoginStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
+      {stepIndex === 2 && (
+        <CreateAccountStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
       {stepIndex === 3 && <GetStartedStep onNext={next} />}
       {stepIndex === 4 && <AboutYouStep onNext={next} />}
       {stepIndex === 5 && <InterestsStep onNext={next} />}

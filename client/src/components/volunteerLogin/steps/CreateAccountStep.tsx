@@ -4,9 +4,10 @@ import { Button, Flex } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
+  onBack: () => void;
 };
 
-const CreateAccountStep = ({ onNext }: Props) => {
+const CreateAccountStep = ({ onNext, onBack }: Props) => {
   return (
     <Flex
       w="100%"
