@@ -26,11 +26,13 @@ import { HiMiniPlusCircle } from "react-icons/hi2";
 import { CgProfile } from "react-icons/cg";
 import { IoCalendarSharp, IoPersonSharp } from "react-icons/io5";
 import { FaLocationDot } from "react-icons/fa6";
+import { useNavigate } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
 
 export const EventManagement = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const navigate = useNavigate();
 
     return (
         <VStack 
@@ -84,7 +86,7 @@ export const EventManagement = () => {
                             Clinics & Workshops 
                         </Tab>
                         <Tab 
-                            fonSize = "lg" 
+                            fontSize = "lg" 
                             fontWeight = "bold"
                         > 
                             Cases 
@@ -227,6 +229,7 @@ export const EventManagement = () => {
                                                         px = "4%" 
                                                         borderRadius="lg" 
                                                         ml = "auto"
+                                                        onClick={() => navigate(`/events/event1`)}
                                                     >
                                                         View Event
                                                     </Button>
