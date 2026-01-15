@@ -51,8 +51,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                     </Flex>
                 </HStack>
             <ModalBody>
-                <VStack
-                >
+                <VStack align = "start">
                     <Text 
                         fontWeight = "bold" 
                         fontSize = "lg"
@@ -70,7 +69,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             columnGap = {10}
                         >
                             <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
                                     fontSize = "lg"
                                     fontWeight="bold"
@@ -86,7 +85,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 </VStack>
                             </GridItem>
                             <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
                                     fontSize = "lg"
                                     fontWeight="bold"
@@ -104,7 +103,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 </VStack>
                             </GridItem>
                             <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
                                     fontSize = "lg"
                                     fontWeight="bold"
@@ -135,7 +134,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 </VStack>
                             </GridItem>
                             <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
                                     fontSize = "lg"
                                     fontWeight="bold"
@@ -186,7 +185,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             columnGap = {10}
                         >
                             <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
                                         fontSize = "lg"
                                         fontWeight="bold"
@@ -217,24 +216,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 </VStack>
                             </GridItem>
                             <GridItem>
-                                <VStack>
-                                    <Text
-                                        fontWeight = "bold"
-                                        fontSize = "lg"
-                                    >
-                                        Maximum Cap of Volunteers
-                                    </Text>
-                                    <Input 
-                                        placeholder = "Input number"
-                                        bg = "#D9D9D9"
-                                        borderRadius="lg"
-                                    >
-                                    </Input>
-                                </VStack>
-                                
-                            </GridItem>
-                            <GridItem>
-                                <VStack>
+                                <VStack align = "start">
                                     <HStack>
                                         <Text
                                             fontWeight = "bold"
@@ -255,30 +237,50 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         bg = "#D9D9D9"
                                         borderRadius="lg"
                                     >
-                                        <option value = "workshop"> 1 PM </option>
-                                        <option value = "clinic"> 2 PM </option>
+                                        <option value = "workshop"> workshop </option>
+                                        <option value = "clinic"> clinic </option>
                                     </Select>
                                 </VStack>
                             </GridItem>
+                            <GridItem>
+                                <VStack align = "start">
+                                    <Text
+                                        fontWeight = "bold"
+                                        fontSize = "sm"
+                                    >
+                                        Maximum Cap of Volunteers
+                                    </Text>
+                                    <Input 
+                                        placeholder = "Input number"
+                                        bg = "#D9D9D9"
+                                        borderRadius="lg"
+                                    >
+                                    </Input>
+                                </VStack>
+                            </GridItem>
                         </Grid>
-
                     </Flex>
                     <Flex
                         w = "80%"
                         bg = "#EDEDED"
                         p = {8}
                     >
-                        <VStack>
-                            <Text>
+                        <VStack align = "start">
+                            <Text
+                                fontSize = "lg"
+                                fontWeight = "bold"
+                            >
                                 Email Reminder Timeline
                             </Text>
-                            <Text>
+                            <Text
+                                fontSize = "md"
+                            >
                                 Your settings for this can be changed later down the line!
                             </Text>
                             <HStack>
                                 {/* checkbox */}
                                 <Text
-                                    fontSize = "lg"
+                                    fontSize = "md"
                                     fontWeight = "bold"
                                 >
                                     One week before event date
@@ -294,7 +296,7 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             <HStack>
                                 {/* checkbox */}
                                 <Text
-                                    fontSize = "lg"
+                                    fontSize = "md"
                                     fontWeight = "bold"
                                 >
                                     Three days before event date
@@ -309,22 +311,20 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             </HStack>
                             <HStack>
                                 {/* checkbox */}
-                                <VStack>
+                                <VStack align = "start">
                                     <Text
-                                    fontSize = "lg"
+                                    fontSize = "md"
                                     fontWeight = "bold"
                                     >
                                         One day before event date*
                                     </Text>
                                     <Text fontSize = "small"> Mandatory! </Text>
                                 </VStack>
-                                
                                 <Select
                                     placeholder = "Select email template"
                                     bg = "#D9D9D9"
                                     borderRadius="lg"
                                 >
-
                                 </Select>
                             </HStack>
                         </VStack>
