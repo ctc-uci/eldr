@@ -16,13 +16,26 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  Tag,
+  TagLabel,
   Text,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 
-import { CgCalendarDates, CgProfile } from "react-icons/cg";
-import { CiClock1, CiMapPin, CiSearch, CiUser } from "react-icons/ci";
+import {
+  CgCalendarDates,
+  CgProfile,
+  CgSandClock,
+  CgUser,
+} from "react-icons/cg";
+import {
+  CiCircleCheck,
+  CiClock1,
+  CiMapPin,
+  CiSearch,
+  CiUser,
+} from "react-icons/ci";
 import { HiMiniPlusCircle } from "react-icons/hi2";
 import { useParams } from "react-router-dom";
 
@@ -191,19 +204,356 @@ export const EventDetail = () => {
                 variant="enclosed"
               >
                 <TabList>
-                  <Tab bg="#E8E8E8" roundedTop="xl">Event Details</Tab>
-                  <Tab bg="#D9D9D9" roundedTop="xl">Volunteer List</Tab>
-                  <Tab bg="#CECECE" roundedTop="xl">Email Notification Timeline</Tab>
+                  <Tab
+                    _selected={{ fontWeight: "bold", color: "black" }}
+                    bg="#E8E8E8"
+                    border="0px"
+                    roundedTop="xl"
+                    justifyContent="start"
+                    fontSize="lg"
+                  >
+                    Event Details
+                  </Tab>
+                  <Tab
+                    _selected={{ fontWeight: "bold", color: "black" }}
+                    bg="#D9D9D9"
+                    border="0px"
+                    roundedTop="xl"
+                    justifyContent="start"
+                    fontSize="lg"
+                  >
+                    Volunteer List
+                  </Tab>
+                  <Tab
+                    _selected={{ fontWeight: "bold", color: "black" }}
+                    bg="#CECECE"
+                    border="0px"
+                    roundedTop="xl"
+                    justifyContent="start"
+                    fontSize="lg"
+                  >
+                    Email Notification Timeline
+                  </Tab>
                 </TabList>
                 <TabPanels>
+                  {/* event details tab */}
                   <TabPanel bg="#E8E8E8">
-                    <p>one!</p>
+                    <VStack gap={16}>
+                      {/* description */}
+                      <VStack
+                        align="left"
+                        gap={2}
+                      >
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                        >
+                          Description
+                        </Text>
+                        <Text fontSize="md">
+                          Lorem ipsum dolor sit amet consectetur adipiscing elit
+                          Ut et massa mi. Aliquam in hendrerit urna.
+                          Pellentesque sit amet sapien fringilla, mattis ligula
+                          consectetur, ultrices mauris. Maecenas vitae mattis
+                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
+                          ornare leo, non suscipit magna interdum eu.
+                        </Text>
+                      </VStack>
+                      {/* parking */}
+                      <VStack
+                        align="left"
+                        gap={2}
+                      >
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                        >
+                          Parking
+                        </Text>
+                        <Text fontSize="md">
+                          Lorem ipsum dolor sit amet consectetur adipiscing elit
+                          Ut et massa mi. Aliquam in hendrerit urna.
+                          Pellentesque sit amet sapien fringilla, mattis ligula
+                          consectetur, ultrices mauris. Maecenas vitae mattis
+                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
+                          ornare leo, non suscipit magna interdum eu.
+                        </Text>
+                      </VStack>
+                    </VStack>
                   </TabPanel>
+
+                  {/* volunteers list tab */}
                   <TabPanel bg="#D9D9D9">
-                    <p>two!</p>
+                    <Grid templateColumns="1fr 2fr">
+                      {/* action column */}
+                      <GridItem>
+                        <VStack
+                          gap={8}
+                          w="80%"
+                          justifyContent="center"
+                          alignItems="center"
+                          mx="auto"
+                        >
+                          {/* download */}
+                          <Button
+                            border="2px solid black"
+                            borderRadius="sm"
+                            bg="white"
+                            w="100%"
+                          >
+                            Download CSV of Volunteers
+                          </Button>
+
+                          {/* search bar */}
+                          <InputGroup
+                            w="100%"
+                            mx="auto"
+                            bg="white"
+                            borderRadius="md"
+                          >
+                            {/* Search bar */}
+                            <InputLeftElement pointerEvents="none">
+                              <CiSearch
+                                color="black"
+                                size="80%"
+                              />
+                            </InputLeftElement>
+                            <Input
+                              borderRadius="md"
+                              border="2px solid black"
+                              placeholder="Search Volunteer List"
+                            />
+                          </InputGroup>
+
+                          {/* filter by */}
+                          <VStack
+                            gap={2}
+                            w="100%"
+                            alignItems="left"
+                          >
+                            <Text fontSize="lg">Filter By:</Text>
+                            <Select
+                              bg="white"
+                              placeholder="Select Filter"
+                              borderRadius="md"
+                              border="2px solid black"
+                            >
+                              <option value="all">All</option>
+                            </Select>
+                          </VStack>
+                        </VStack>
+                      </GridItem>
+
+                      {/* volunteer list */}
+                      <GridItem>
+                        <Grid
+                          templateColumns="1fr 1fr"
+                          columnGap={4}
+                        >
+                          <GridItem>
+                            <HStack gap={4}>
+                              <CgUser size={32} />
+                              <Text
+                                as="u"
+                                textUnderlineOffset={4}
+                                fontSize="lg"
+                              >
+                                Gibby Gibson
+                              </Text>
+                            </HStack>
+                          </GridItem>
+                          <GridItem>
+                            <HStack gap={4}>
+                              <CgUser size={32} />
+                              <Text
+                                as="u"
+                                textUnderlineOffset={4}
+                                fontSize="lg"
+                              >
+                                Gibby Gibson
+                              </Text>
+                            </HStack>
+                          </GridItem>
+                          <GridItem>
+                            <HStack gap={4}>
+                              <CgUser size={32} />
+                              <Text
+                                as="u"
+                                textUnderlineOffset={4}
+                                fontSize="lg"
+                              >
+                                Freddie Benson
+                              </Text>
+                            </HStack>
+                          </GridItem>
+                          <GridItem>
+                            <HStack gap={4}>
+                              <CgUser size={32} />
+                              <Text
+                                as="u"
+                                textUnderlineOffset={4}
+                                fontSize="lg"
+                              >
+                                Freddie Benson
+                              </Text>
+                            </HStack>
+                          </GridItem>
+                        </Grid>
+                      </GridItem>
+                    </Grid>
                   </TabPanel>
+
+                  {/* email notification timeline tab */}
                   <TabPanel bg="#CECECE">
-                    <p>three!</p>
+                    <VStack
+                      align="stretch"
+                      gap={6}
+                    >
+                      <Grid
+                        templateColumns="120px 2fr 2fr auto"
+                        rowGap={4}
+                        columnGap={8}
+                        alignItems="center"
+                      >
+                        {/* header row */}
+                        <Text
+                          fontWeight="normal"
+                          fontSize="md"
+                        >
+                          Status
+                        </Text>
+                        <Text
+                          fontWeight="normal"
+                          fontSize="md"
+                        >
+                          Timeframe
+                        </Text>
+                        <Text
+                          fontWeight="normal"
+                          fontSize="md"
+                        >
+                          Email Template
+                        </Text>
+                        <Flex justify="flex-end">
+                          <Button
+                            leftIcon={
+                              <Icon
+                                as={HiMiniPlusCircle}
+                                boxSize={5}
+                              />
+                            }
+                            borderRadius="sm"
+                            border="2px solid black"
+                            bg="white"
+                            _hover={{ bg: "gray.100" }}
+                          >
+                            Add Notification
+                          </Button>
+                        </Flex>
+
+                        {/* row 1 */}
+                        <HStack spacing={2}>
+                          <Icon
+                            as={CiCircleCheck}
+                            boxSize={6}
+                          />
+                        </HStack>
+                        <Box>
+                          <Text
+                            fontWeight="bold"
+                            fontSize="lg"
+                          >
+                            1 week before event date
+                          </Text>
+                        </Box>
+                        <Tag
+                          size="lg"
+                          borderRadius="full"
+                          px={6}
+                          py={2}
+                          bg="#E4E4E4"
+                        >
+                          <TagLabel
+                            as="i"
+                            fontSize="sm"
+                          >
+                            T-1 Week Email Reminder Template
+                          </TagLabel>
+                        </Tag>
+                        <Box />
+
+                        {/* row 2 */}
+                        <HStack spacing={2}>
+                          <Icon
+                            as={CiCircleCheck}
+                            boxSize={6}
+                          />
+                        </HStack>
+                        <Box>
+                          <Text
+                            fontWeight="bold"
+                            fontSize="lg"
+                          >
+                            3 days before event date
+                          </Text>
+                        </Box>
+                        <Tag
+                          size="lg"
+                          borderRadius="full"
+                          px={6}
+                          py={2}
+                          bg="#E4E4E4"
+                        >
+                          <TagLabel
+                            as="i"
+                            fontSize="sm"
+                          >
+                            T-1 Week Email Reminder Template
+                          </TagLabel>
+                        </Tag>
+                        <Box />
+
+                        {/* row 3 */}
+                        <HStack
+                          spacing={2}
+                          align="center"
+                        >
+                          <Icon
+                            as={CgSandClock}
+                            boxSize={6}
+                          />
+                        </HStack>
+                        <Box>
+                          <Text
+                            fontWeight="bold"
+                            fontSize="lg"
+                          >
+                            One day before event date
+                          </Text>
+                          <Text
+                            fontSize="sm"
+                            fontWeight="normal"
+                          >
+                            Mandatory!
+                          </Text>
+                        </Box>
+                        <Tag
+                          size="lg"
+                          borderRadius="full"
+                          px={6}
+                          py={2}
+                          bg="#E4E4E4"
+                        >
+                          <TagLabel
+                            as="i"
+                            fontSize="sm"
+                          >
+                            T-1 Day Email Reminder Template
+                          </TagLabel>
+                        </Tag>
+                        <Box />
+                      </Grid>
+                    </VStack>
                   </TabPanel>
                 </TabPanels>
               </Tabs>
