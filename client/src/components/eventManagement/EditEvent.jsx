@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import {
   Box,
   Button,
@@ -13,6 +11,7 @@ import {
   InputGroup,
   InputLeftElement,
   Select,
+  Textarea,
   Tab,
   TabList,
   TabPanel,
@@ -38,20 +37,15 @@ import {
   CiSearch,
   CiUser,
 } from "react-icons/ci";
-import { FaArchive } from "react-icons/fa";
-import { FaPencil } from "react-icons/fa6";
+import { FaTrashCan, FaXmark } from "react-icons/fa6";
 import { HiMiniPlusCircle } from "react-icons/hi2";
-import { useParams } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
-import { EditEvent } from "./EditEvent.jsx";
 
-export const EventDetail = () => {
-  const { id } = useParams();
+export const EditEvent = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [isEditing, setIsEditing] = useState(false);
 
-  return !isEditing ? (
+  return (
     <VStack
       w="100%"
       h="100%"
@@ -132,102 +126,6 @@ export const EventDetail = () => {
               p={4}
               bg="white"
             >
-              {/* header + description + event buttons */}
-              <HStack
-                w="100%"
-                justifyContent="space-between"
-              >
-                <VStack gap={4}>
-                  <Text
-                    fontSize="2xl"
-                    fontWeight="bold"
-                    align="left"
-                    w="100%"
-                  >
-                    Workshop Name
-                  </Text>
-                  {/* event details */}
-                  <Grid
-                    templateRows="repeat(2, 1fr)"
-                    templateColumns="repeat(2, 1fr)"
-                    rowGap={2}
-                    columnGap={20}
-                  >
-                    <GridItem>
-                      <HStack gap={2}>
-                        <CgCalendarDates size={32} />
-                        <Text
-                          fontSize="lg"
-                          fontWeight="medium"
-                        >
-                          Month Day, Year
-                        </Text>
-                      </HStack>
-                    </GridItem>
-                    <GridItem>
-                      <HStack gap={2}>
-                        <CiMapPin size={32} />
-                        <Text
-                          fontSize="lg"
-                          fontWeight="medium"
-                        >
-                          Location of event
-                        </Text>
-                      </HStack>
-                    </GridItem>
-                    <GridItem>
-                      <HStack gap={2}>
-                        <CiClock1 size={32} />
-                        <Text
-                          fontSize="lg"
-                          fontWeight="medium"
-                        >
-                          Timeframe of Event
-                        </Text>
-                      </HStack>
-                    </GridItem>
-                    <GridItem>
-                      <HStack gap={2}>
-                        <CiUser size={32} />
-                        <Text
-                          fontSize="lg"
-                          fontWeight="medium"
-                        >
-                          Capacity
-                        </Text>
-                      </HStack>
-                    </GridItem>
-                  </Grid>
-                </VStack>
-
-                {/* buttons */}
-                <VStack gap={4}>
-                  <Button
-                    w="100%"
-                    borderRadius="sm"
-                    border="2px solid black"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Icon
-                      as={FaPencil}
-                      mr="5%"
-                    />
-                    Edit Event
-                  </Button>
-                  <Button
-                    w="100%"
-                    borderRadius="sm"
-                    border="2px solid black"
-                  >
-                    <Icon
-                      as={FaArchive}
-                      mr="5%"
-                    />
-                    Archive Event
-                  </Button>
-                </VStack>
-              </HStack>
-
               {/* event details / volunteer list / email notification timeline tabs */}
               <Tabs
                 isFitted
@@ -272,45 +170,238 @@ export const EventDetail = () => {
                   {/* event details tab */}
                   <TabPanel bg="#E8E8E8">
                     <VStack gap={16}>
+                      {/* top two rows + buttons */}
+                      <Grid
+                        templateColumns="5fr 1fr"
+                        w="100%"
+                      >
+                        {/* description inputs */}
+                        <GridItem maxW="90%">
+                          <VStack gap={4}>
+                            {/* event title */}
+                            <VStack
+                              gap={2}
+                              align="start"
+                              w="100%"
+                            >
+                              <Text
+                                fontWeight="bold"
+                                fontSize="sm"
+                              >
+                                Event Title
+                              </Text>
+                              <Input
+                                bg="white"
+                                border="2px solid black"
+                                borderRadius="md"
+                                w="100%"
+                              />
+                            </VStack>
+
+                            {/* row */}
+                            <Grid
+                              templateColumns="repeat(5, 1fr)"
+                              columnGap={12}
+                              justifyContent="space-between"
+                              w="100%"
+                            >
+                              {/* date */}
+                              <VStack
+                                gap={2}
+                                align="start"
+                                w="100%"
+                              >
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                >
+                                  Date
+                                </Text>
+                                <Input
+                                  bg="white"
+                                  border="2px solid black"
+                                  borderRadius="md"
+                                  w="100%"
+                                />
+                              </VStack>
+
+                              {/* start time */}
+                              <VStack
+                                gap={2}
+                                align="start"
+                                w="100%"
+                              >
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                >
+                                  Start Time
+                                </Text>
+                                <Input
+                                  bg="white"
+                                  border="2px solid black"
+                                  borderRadius="md"
+                                  w="100%"
+                                />
+                              </VStack>
+
+                              {/* end time */}
+                              <VStack
+                                gap={2}
+                                align="start"
+                                w="100%"
+                              >
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                >
+                                  End Time
+                                </Text>
+                                <Input
+                                  bg="white"
+                                  border="2px solid black"
+                                  borderRadius="md"
+                                  w="100%"
+                                />
+                              </VStack>
+
+                              {/* location */}
+                              <VStack
+                                gap={2}
+                                align="start"
+                                w="100%"
+                              >
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                >
+                                  Location
+                                </Text>
+                                <Input
+                                  bg="white"
+                                  border="2px solid black"
+                                  borderRadius="md"
+                                  w="100%"
+                                />
+                              </VStack>
+
+                              {/* capacity */}
+                              <VStack
+                                gap={2}
+                                align="start"
+                                w="100%"
+                              >
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                >
+                                  Capacity
+                                </Text>
+                                <Input
+                                  bg="white"
+                                  border="2px solid black"
+                                  borderRadius="md"
+                                  w="100%"
+                                />
+                              </VStack>
+                            </Grid>
+                          </VStack>
+                        </GridItem>
+
+                        {/* buttons */}
+                        <GridItem>
+                          <VStack
+                            gap={4}
+                            maxW="80%"
+                            ml="auto"
+                          >
+                            {/* save edits */}
+                            <Button
+                              w="100%"
+                              borderRadius="sm"
+                              border="2px solid green"
+                              bg="white"
+                              justifyContent="space-between"
+                            >
+                              <Icon
+                                as={FaTrashCan}
+                                mr="5%"
+                              />
+                              Save Edits
+                            </Button>
+
+                            {/* discard edits */}
+                            <Button
+                              w="100%"
+                              borderRadius="sm"
+                              border="2px solid black"
+                              bg="white"
+                              justifyContent="space-between"
+                            >
+                              <Icon
+                                as={FaXmark}
+                                mr="5%"
+                              />
+                              Discard Event
+                            </Button>
+
+                            {/* delete event */}
+                            <Button
+                              w="100%"
+                              borderRadius="sm"
+                              border="2px solid red"
+                              bg="white"
+                              justifyContent="space-between"
+                            >
+                              <Icon
+                                as={FaTrashCan}
+                                mr="5%"
+                              />
+                              Delete Event
+                            </Button>
+                          </VStack>
+                        </GridItem>
+                      </Grid>
+
                       {/* description */}
                       <VStack
-                        align="left"
                         gap={2}
+                        align="start"
+                        w="100%"
                       >
                         <Text
-                          fontSize="lg"
                           fontWeight="bold"
+                          fontSize="sm"
                         >
                           Description
                         </Text>
-                        <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
-                        </Text>
+                        <Textarea
+                          bg="white"
+                          border="2px solid black"
+                          borderRadius="md"
+                          w="100%"
+                        />
                       </VStack>
+
                       {/* parking */}
                       <VStack
-                        align="left"
                         gap={2}
+                        align="start"
+                        w="100%"
                       >
                         <Text
-                          fontSize="lg"
                           fontWeight="bold"
+                          fontSize="sm"
                         >
                           Parking
                         </Text>
-                        <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
-                        </Text>
+                        <Textarea
+                          bg="white"
+                          border="2px solid black"
+                          borderRadius="md"
+                          w="100%"
+                          lineHeight={3}
+                        />
                       </VStack>
                     </VStack>
                   </TabPanel>
@@ -594,13 +685,11 @@ export const EventDetail = () => {
           </TabPanel>
           <TabPanel>
             {/* 
-                      Figure out what to do with Cases here
-                      */}
+                        Figure out what to do with Cases here
+                        */}
           </TabPanel>
         </TabPanels>
       </Tabs>
     </VStack>
-  ) : (
-    <EditEvent />
   );
 };
