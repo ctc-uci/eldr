@@ -1,4 +1,5 @@
 import { Box, Flex, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from "@chakra-ui/react";
+import { VolunteerProfilesPanel } from "./VolunteerProfilesPanel";
 
 export const VolunteerTopNav = () => {
   return (
@@ -30,7 +31,7 @@ export const VolunteerTopNav = () => {
 
         <TabPanels>
           <TabPanel>
-            <p>one!</p>
+            <VolunteerProfilesPanel showAdd={true} onAdd={() => console.log("Add clicked")} />
           </TabPanel>
           <TabPanel>
             <p>two!</p>
