@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   Flex,
@@ -8,7 +7,14 @@ import {
   SimpleGrid,
 } from "@chakra-ui/react";
 
-function LabeledBox({ label, width = "100%", value, dropdown = false }) {
+interface LabeledBoxProps {
+  label: string;
+  width?: string;
+  value: string;
+  dropdown?: boolean;
+}
+
+function LabeledBox({ label, width = "100%", value, dropdown = false }: Readonly<LabeledBoxProps>) {
   return (
     <Box>
       <Text fontSize="xs" fontWeight="700" mb={1}>
@@ -34,7 +40,13 @@ function LabeledBox({ label, width = "100%", value, dropdown = false }) {
   );
 }
 
-export default function VolunteerProfilePanel({ variant = "profile", showBack, onBack }) {
+interface VolunteerProfilePanelProps {
+  variant?: string;
+  showBack?: boolean;
+  onBack?: () => void;
+}
+
+export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }: VolunteerProfilePanelProps) => {
   const isNew = variant === "new";
 
   return (

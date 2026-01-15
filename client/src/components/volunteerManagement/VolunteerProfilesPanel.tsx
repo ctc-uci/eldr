@@ -15,7 +15,13 @@ import {
   Td,
 } from "@chakra-ui/react";
 
-export default function VolunteerProfilesPanel({ variant = "list", showAdd, onAdd }) {
+interface VolunteerProfilesPanelProps {
+  variant?: string;
+  showAdd?: boolean;
+  onAdd?: () => void;
+}
+
+export const VolunteerProfilesPanel = ({ variant = "list", showAdd, onAdd }: VolunteerProfilesPanelProps) => {
   return (
     <Box>
       <Heading size="sm" mb={2}>
