@@ -17,12 +17,11 @@ const MobileLayout = ({ children, onBack }: Props) => {
         <MobileNavbar />
         {children}
         <IconButton
-          icon={<ArrowBackIcon />}
+          icon={<ArrowBackIcon boxSize="24px" />}
           aria-label="Go back"
           position="fixed"
-          bottom={4}
-          left={4}
-          size="lg"
+          bottom={2}
+          left={2}
           variant="ghost"
           _hover={{ bg: "transparent" }}
           _active={{ bg: "transparent" }}

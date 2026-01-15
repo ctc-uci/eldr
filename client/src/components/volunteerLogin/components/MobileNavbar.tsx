@@ -1,9 +1,13 @@
-import React from "react";
+import { Box } from "@chakra-ui/react";
 
-type Props = {};
-
-const MobileNavbar = (props: Props) => {
-  return <div>MobileNavbar</div>;
+const MobileNavbar = () => {
+  return (
+    <Box
+      w="100vw"
+      h="140px"
+      bg="#E8E8E8"
+    ></Box>
+  );
 };
 
 export default MobileNavbar;
