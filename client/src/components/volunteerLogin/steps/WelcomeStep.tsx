@@ -5,6 +5,7 @@ import {
   Flex,
   Heading,
   Show,
+  Text,
   VStack,
 } from "@chakra-ui/react";
 
@@ -16,7 +17,42 @@ type Props = {
 };
 
 const MobileWelcome = ({ onNext }: Props) => {
-  return <Box>MobileWelcome</Box>;
+  return (
+    <Flex
+      direction="column"
+      alignItems="center"
+      mt="60px"
+    >
+      <Heading
+        fontWeight={500}
+        fontSize="30px"
+      >
+        Welcome ELDR!
+      </Heading>
+      <Text mb="50px">Please select from the following</Text>
+      <VStack spacing="20px">
+        <Button
+          bg="#FAFAFA"
+          w="300px"
+          h="80px"
+          borderWidth="3px"
+          borderColor="black"
+        >
+          Staff
+        </Button>
+        <Button
+          bg="#FAFAFA"
+          w="300px"
+          h="80px"
+          borderWidth="3px"
+          borderColor="black"
+          onClick={onNext}
+        >
+          Volunteer
+        </Button>
+      </VStack>
+    </Flex>
+  );
 };
 
 const DesktopWelcome = ({ onNext }: Props) => {
