@@ -92,6 +92,7 @@ const WelcomeSection = ({ setActiveSection }) => (
     <Text fontSize="3xl" fontWeight="bold" mb={4}>
       Welcome
     </Text>
+
     {/* Create New Button */}
     <Menu>
       <MenuButton as={Button} leftIcon={<FaEdit />}>
@@ -105,6 +106,7 @@ const WelcomeSection = ({ setActiveSection }) => (
       </MenuList>
     </Menu>
     </Flex>
+    
      {/* Suggested Folders */}
      <Section title="Suggested folders">
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>

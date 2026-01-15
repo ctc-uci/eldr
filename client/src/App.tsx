@@ -34,7 +34,7 @@ const App = () => {
                 />
                 <Route
                   path="/email"
-                  element={<EmailTemplateManagement />}
+                  element={<ProtectedRoute element={<EmailTemplateManagement />} />}
                 />
                 <Route
                   path="/dashboard"
