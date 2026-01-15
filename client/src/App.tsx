@@ -1,6 +1,7 @@
 import { Admin } from "@/components/admin/Admin";
 import { CatchAll } from "@/components/CatchAll";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import VolunteerManagement from "@/components/volunteerManagement/VolunteerManagement";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
@@ -36,11 +37,15 @@ const App = () => {
                   element={<ProtectedRoute element={<Dashboard />} />}
                 />
                 <Route
+                  path="/volunteer-management"
+                  element={<ProtectedRoute element={<VolunteerManagement />} />}
+                />
+                <Route
                   path="/admin"
                   element={
                     <ProtectedRoute
-                      element={<Admin />}
-                      allowedRoles={["admin"]}
+                    element={<Admin />}
+                    allowedRoles={["admin"]}
                     />
                   }
                 />
