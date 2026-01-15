@@ -25,6 +25,10 @@ const App = () => {
             <Router>
               <Routes>
                 <Route
+                  path="/adminLogin"
+                  element={<AdminLogin />}
+                />
+                <Route
                   path="/login"
                   element={<Login />}
                 />
