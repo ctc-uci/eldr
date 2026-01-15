@@ -1,13 +1,14 @@
 import React from "react";
 import { 
   VStack, 
-  HStack, 
+  Stack, 
   Heading, 
-  Select,  
+  Select,   
   Button, 
-  Box,
+  Box, 
   Flex, 
   Progress, 
+  useBreakpointValue
 } from "@chakra-ui/react";
 
 type Props = {
@@ -15,29 +16,65 @@ type Props = {
 };
 
 const GetStartedStep = ({ onNext }: Props) => {
+  const headingText = useBreakpointValue({ 
+    base: "What are your interests?", 
+    md: "What are you interested in?" 
+  });
+
+  const placeholderText = useBreakpointValue({
+    base: "Interest",
+    md: "Primary Area of Interest"
+  });
+
+  const secondaryPlaceholder = useBreakpointValue({
+    base: "Interest",
+    md: "Secondary Area of Interest"
+  });
+
+  const tertiaryPlaceholder = useBreakpointValue({
+    base: "Interest",
+    md: "Tertiary Area of Interest"
+  });
+
   return (
     <Flex 
       w="100%" 
       h="100vh"
       align="center" 
-      justify="center"
+      justify="flex-start"
       direction="column"
     >
-      <VStack spacing={12} width="100%" px={10}>
-          <Heading as="h1" fontSize="50px" fontWeight={500} color="black">
-            What are you interested in?
+      <Box 
+          w="100%" 
+          h={{ base: "134px", md: "106px" }} 
+          bg="#E8E8E8" 
+        />
+      <VStack spacing={{ base: 4, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+          <Heading 
+            as="h1" 
+            fontSize={{ base: "30px", md: "50px" }} 
+            fontWeight={500} 
+            color="black"
+            textAlign="center"
+          >
+            {headingText}
           </Heading>
-          <HStack spacing={4} width="100%" maxW="900px" justify="center">
+
+          <Stack 
+            direction={{ base: "column", md: "row" }} 
+            spacing={0} 
+            width="100%" 
+            maxW="900px" 
+            justify="center"
+            align="center"
+          >
             <Select
-              placeholder="Primary Area of Interest"
-              w="244px"
+              placeholder={placeholderText}
+              w={{ base: "100%", md: "244px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
-              borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderRadius="2px"
               pt="8px"
               pb="8px"
               pl="12px"
@@ -47,40 +84,36 @@ const GetStartedStep = ({ onNext }: Props) => {
             </Select>
 
             <Select 
-              placeholder="Secondary Area of Interest" 
-              w="269px"
+              placeholder={secondaryPlaceholder} 
+              w={{ base: "100%", md: "269px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
-              borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderRadius="2px"
               pt="8px"
               pb="8px"
               pl="12px"
-              pr="6px">
+              pr="6px"
+            >
               <option value="n/a">N/A</option>
             </Select>
 
             <Select 
-              placeholder="Tertiary Area of Interest" 
-              w="244px"
+              placeholder={tertiaryPlaceholder} 
+              w={{ base: "100%", md: "244px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
-              borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderRadius="2px"
               pt="8px"
               pb="8px"
               pl="12px"
-              pr="6px">
+              pr="6px"
+            >
               <option value="n/a">N/A</option>
             </Select>
+          </Stack>
 
-          </HStack>
           <VStack spacing={6}>
               <Button
                 w="102px"
@@ -91,7 +124,7 @@ const GetStartedStep = ({ onNext }: Props) => {
                 borderRadius="2px"
                 px={10}
                 bg="#FAFAFA"
-                >
+              >
                 Continue
               </Button>
               <Box width="200px">

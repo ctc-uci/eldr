@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   VStack, 
-  HStack, 
+  Stack, 
   Heading, 
   Select, 
   Input, 
@@ -21,24 +21,34 @@ const GetStartedStep = ({ onNext }: Props) => {
       w="100%" 
       h="100vh"
       align="center" 
-      justify="center"
+      justify="flex-start"
       direction="column"
     >
-      <VStack spacing={12} width="100%" px={10}>
-          <Heading as="h1" fontSize="50px" fontWeight={500} color="black">
+      <Box 
+        w="100%" 
+        h={{ base: "134px", md: "106px" }} 
+        bg="#E8E8E8" 
+      />
+      <VStack spacing={{ base: 8, md: 12}} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+          <Heading as="h1" fontSize={{ base: "30px",md: "50px"}} fontWeight={500} color="black">
             Let's get started!
           </Heading>
-          <HStack spacing={4} width="100%" maxW="900px">
+          <Stack spacing={{ base: 4, md: "-2px" }} 
+                 width="100%" 
+                 maxW="1029px" 
+                 direction={{ base: "column", md: "row" }}
+                 align="center"
+                 >
             <Select
               placeholder="Select Occupation"
-              w="343px"
+              w={{ base: "100%", md: "343px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
               borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderBottomLeftRadius="4px"
+              borderTopRightRadius={{ base: "4px", md: "0px" }}
+              borderBottomRightRadius={{ base: "4px", md: "0px" }}
               pt="8px"
               pb="8px"
               pl="12px"
@@ -49,14 +59,15 @@ const GetStartedStep = ({ onNext }: Props) => {
 
             <Select 
               placeholder="Select Notary Status" 
-              w="343px"
+              w={{ base: "100%", md: "343px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
-              borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderTopLeftRadius={{ base: "4px", md: "0px" }}
+              borderTopRightRadius={{ base: "4px", md: "0px" }}
+              borderBottomRightRadius={{ base: "4px", md: "0px" }}
+              borderBottomLeftRadius={{ base: "4px", md: "0px" }}
+              ml={{ base: 0, md: "-2px" }}
               pt="8px"
               pb="8px"
               pl="12px"
@@ -65,22 +76,22 @@ const GetStartedStep = ({ onNext }: Props) => {
             </Select>
 
             <Input
-              ml="10px"
               placeholder="Enter Affiliated Institution"
-              w="343px"
+              w={{ base: "100%", md: "343px" }}
               h="40px"
               borderWidth="2px"
               borderColor="black"
-              borderTopLeftRadius="4px"
-              borderTopRightRadius="2px"
-              borderBottomRightRadius="2px"
-              borderBottomLeftRadius="2px"
+              borderTopLeftRadius={{ base: "4px", md: "0px" }}
+              borderTopRightRadius="4px"
+              borderBottomRightRadius="4px"
+              borderBottomLeftRadius={{ base: "4px", md: "0px" }}
+              ml={{ base: 0, md: "-2px" }}
               pt="8px"
               pb="8px"
               pl="12px"
               pr="12px"
               />
-          </HStack>
+          </Stack>
           <VStack spacing={6}>
               <Button
                 w="102px"
