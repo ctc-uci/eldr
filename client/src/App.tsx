@@ -1,6 +1,7 @@
 import { Admin } from "@/components/admin/Admin";
 import AdminProfile from "@/components/adminProfile/adminProfile";
 import { CatchAll } from "@/components/CatchAll";
+import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -24,6 +25,10 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
+                <Route
+                  path="/adminLogin"
+                  element={<AdminLogin />}
+                />
                 <Route
                   path="/login"
                   element={<Login />}
