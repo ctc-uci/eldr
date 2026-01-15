@@ -6,16 +6,23 @@ import {
   Flex,
   Heading,
   Input,
+  Show,
   Text,
   VStack,
 } from "@chakra-ui/react";
+
+import MobileLayout from "../layouts/MobileLayout";
 
 type Props = {
   onNext: () => void;
   onBack: () => void;
 };
 
-const WelcomeStep = ({ onNext, onBack }: Props) => {
+const MobileLogin = ({ onNext }: Props) => {
+  return <Box>MobileLogin</Box>;
+};
+
+const DesktopLogin = ({ onNext, onBack }: Props) => {
   return (
     <Flex
       w="100%"
@@ -133,6 +140,28 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
         </VStack>
       </Flex>
     </Flex>
+  );
+};
+
+const WelcomeStep = ({ onNext, onBack }: Props) => {
+  return (
+    <>
+      <Show below="md">
+        <MobileLayout onBack={onBack}>
+          <MobileLogin
+            onNext={onNext}
+            onBack={onBack}
+          />
+        </MobileLayout>
+      </Show>
+
+      <Show above="md">
+        <DesktopLogin
+          onNext={onNext}
+          onBack={onBack}
+        />
+      </Show>
+    </>
   );
 };
 

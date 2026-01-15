@@ -21,7 +21,12 @@ const VolunteerLogin = () => {
       w="100vw"
       h="100vh"
     >
-      {stepIndex === 0 && <WelcomeStep onNext={next} />}
+      {stepIndex === 0 && (
+        <WelcomeStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
       {stepIndex === 1 && (
         <LoginStep
           onNext={next}
@@ -34,10 +39,25 @@ const VolunteerLogin = () => {
           onBack={back}
         />
       )}
-      {stepIndex === 3 && <GetStartedStep onNext={next} />}
-      {stepIndex === 4 && <AboutYouStep onNext={next} />}
-      {stepIndex === 5 && <InterestsStep onNext={next} />}
-      {stepIndex === 6 && <SuccessStep />}
+      {stepIndex === 3 && (
+        <GetStartedStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
+      {stepIndex === 4 && (
+        <AboutYouStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
+      {stepIndex === 5 && (
+        <InterestsStep
+          onNext={next}
+          onBack={back}
+        />
+      )}
+      {stepIndex === 6 && <SuccessStep onBack={back} />}
     </Flex>
   );
 };

@@ -5,16 +5,23 @@ import {
   Flex,
   Heading,
   Input,
+  Show,
   Text,
   VStack,
 } from "@chakra-ui/react";
+
+import MobileLayout from "../layouts/MobileLayout";
 
 type Props = {
   onNext: () => void;
   onBack: () => void;
 };
 
-const CreateAccountStep = ({ onNext, onBack }: Props) => {
+const MobileCreateAccount = ({ onNext }: Props) => {
+  return <Box>MobileCreateAccount</Box>;
+};
+
+const DesktopCreateAccount = ({ onNext, onBack }: Props) => {
   return (
     <Flex
       w="100%"
@@ -93,6 +100,28 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         </Button>
       </Flex>
     </Flex>
+  );
+};
+
+const CreateAccountStep = ({ onNext, onBack }: Props) => {
+  return (
+    <>
+      <Show below="md">
+        <MobileLayout onBack={onBack}>
+          <MobileCreateAccount
+            onNext={onNext}
+            onBack={onBack}
+          />
+        </MobileLayout>
+      </Show>
+
+      <Show above="md">
+        <DesktopCreateAccount
+          onNext={onNext}
+          onBack={onBack}
+        />
+      </Show>
+    </>
   );
 };
 

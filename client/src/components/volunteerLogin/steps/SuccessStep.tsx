@@ -1,6 +1,24 @@
-import { Box, Button, Flex, Heading, Progress, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Progress,
+  Show,
+  VStack,
+} from "@chakra-ui/react";
 
-const SuccessStep = () => {
+import MobileLayout from "../layouts/MobileLayout";
+
+type Props = {
+  onBack: () => void;
+};
+
+const MobileSuccess = ({ onBack }: Props) => {
+  return <Box>MobileSuccess</Box>;
+};
+
+const DesktopSuccess = ({ onBack }: Props) => {
   return (
     <Flex
       w="100%"
@@ -53,6 +71,22 @@ const SuccessStep = () => {
         </VStack>
       </VStack>
     </Flex>
+  );
+};
+
+const SuccessStep = ({ onBack }: Props) => {
+  return (
+    <>
+      <Show below="md">
+        <MobileLayout onBack={onBack}>
+          <MobileSuccess onBack={onBack} />
+        </MobileLayout>
+      </Show>
+
+      <Show above="md">
+        <DesktopSuccess onBack={onBack} />
+      </Show>
+    </>
   );
 };
 

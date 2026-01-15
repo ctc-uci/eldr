@@ -6,14 +6,22 @@ import {
   HStack,
   Progress,
   Select,
+  Show,
   VStack,
 } from "@chakra-ui/react";
 
+import MobileLayout from "../layouts/MobileLayout";
+
 type Props = {
   onNext: () => void;
+  onBack: () => void;
 };
 
-const AboutYouStep = ({ onNext }: Props) => {
+const MobileAboutYou = ({ onNext }: Props) => {
+  return <Box>MobileAboutYou</Box>;
+};
+
+const DesktopAboutYou = ({ onNext }: Props) => {
   return (
     <Flex
       w="100%"
@@ -179,6 +187,28 @@ const AboutYouStep = ({ onNext }: Props) => {
         </VStack>
       </VStack>
     </Flex>
+  );
+};
+
+const AboutYouStep = ({ onNext, onBack }: Props) => {
+  return (
+    <>
+      <Show below="md">
+        <MobileLayout onBack={onBack}>
+          <MobileAboutYou
+            onNext={onNext}
+            onBack={onBack}
+          />
+        </MobileLayout>
+      </Show>
+
+      <Show above="md">
+        <DesktopAboutYou
+          onNext={onNext}
+          onBack={onBack}
+        />
+      </Show>
+    </>
   );
 };
 
