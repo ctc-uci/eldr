@@ -1,4 +1,4 @@
-import { VolunteerTopNav } from "./VolunterTopNav.tsx";
+import { VolunteerTopNav } from "./VolunteerTopNav.tsx";
 
 export const VolunteerManagement = () => {
     return (

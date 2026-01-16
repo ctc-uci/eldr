@@ -102,11 +102,7 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }:
         <SimpleGrid columns={isNew ? 3 : 2} spacing={6} maxW={isNew ? "720px" : "760px"}>
           <LabeledBox label="First Name" value={isNew ? "" : "Peter"} width={isNew ? "160px" : "100%"} />
           <LabeledBox label="Last Name" value={isNew ? "" : "Anteater"} width={isNew ? "160px" : "100%"} />
-          {isNew ? (
-            <LabeledBox label="Role" value="" width="120px" dropdown />
-          ) : (
-            <Box />
-          )}
+
 
           <LabeledBox label="Email Address" value={isNew ? "" : "peteranteater@uci.edu"} width={isNew ? "220px" : "100%"} />
           <LabeledBox label="Phone Number" value={isNew ? "" : "621-438-3991"} width={isNew ? "160px" : "100%"} />
