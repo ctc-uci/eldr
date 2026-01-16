@@ -54,9 +54,9 @@ export const EventDetail = () => {
   return !isEditing ? (
     <VStack
       w="100%"
-      h="100%"
-      minH={"100vh"}
+      h="100vh"
       bg="#E8E8E8"
+      spacing={0}
     >
       <Flex
         w="100%"
@@ -94,21 +94,38 @@ export const EventDetail = () => {
           />
         </Box>
       </Flex>
-      <Tabs w="100%">
+      <Tabs
+        w="100%"
+        display="flex"
+        flexDirection="column"
+        flex={1}
+        overflow="hidden"
+      >
         <Flex justifyContent="center">
           <TabList gap={4}>
             <Tab>Clinics & Workshops</Tab>
             <Tab>Cases</Tab>
           </TabList>
         </Flex>
-        <TabPanels>
-          <TabPanel p={0}>
+        <TabPanels
+          flex={1}
+          display="flex"
+          overflow="hidden"
+        >
+          <TabPanel
+            p={0}
+            display="flex"
+            flexDirection="column"
+            flex={1}
+            overflow="hidden"
+          >
             <Flex
               bg="grey"
               h="100"
               align="center"
               p="2%"
               gap="2%"
+              flexShrink={0}
             >
               <Button
                 ml="auto"
@@ -131,6 +148,10 @@ export const EventDetail = () => {
               mt={"2%"}
               p={4}
               bg="white"
+              flex={1}
+              display="flex"
+              overflow="hidden"
+              align="stretch"
             >
               {/* header + description + event buttons */}
               <HStack
@@ -232,11 +253,14 @@ export const EventDetail = () => {
               <Tabs
                 isFitted
                 w="100%"
-                h="100%"
+                flex={1}
                 mt={10}
                 variant="enclosed"
+                display="flex"
+                flexDirection="column"
+                overflow="hidden"
               >
-                <TabList>
+                <TabList flexShrink={0}>
                   <Tab
                     _selected={{ fontWeight: "bold", color: "black" }}
                     bg="#E8E8E8"
@@ -268,10 +292,24 @@ export const EventDetail = () => {
                     Email Notification Timeline
                   </Tab>
                 </TabList>
-                <TabPanels>
+                <TabPanels
+                  flex={1}
+                  display="flex"
+                  overflow="hidden"
+                >
                   {/* event details tab */}
-                  <TabPanel bg="#E8E8E8">
-                    <VStack gap={16}>
+                  <TabPanel
+                    bg="#E8E8E8"
+                    flex={1}
+                    display="flex"
+                    overflow="auto"
+                    p={4}
+                  >
+                    <VStack
+                      gap={16}
+                      w="100%"
+                      align="stretch"
+                    >
                       {/* description */}
                       <VStack
                         align="left"
@@ -316,8 +354,18 @@ export const EventDetail = () => {
                   </TabPanel>
 
                   {/* volunteers list tab */}
-                  <TabPanel bg="#D9D9D9">
-                    <Grid templateColumns="1fr 2fr">
+                  <TabPanel
+                    bg="#D9D9D9"
+                    flex={1}
+                    display="flex"
+                    overflow="auto"
+                    p={4}
+                  >
+                    <Grid
+                      templateColumns="1fr 2fr"
+                      w="100%"
+                      h="fit-content"
+                    >
                       {/* action column */}
                       <GridItem>
                         <VStack
@@ -437,10 +485,17 @@ export const EventDetail = () => {
                   </TabPanel>
 
                   {/* email notification timeline tab */}
-                  <TabPanel bg="#CECECE">
+                  <TabPanel
+                    bg="#CECECE"
+                    flex={1}
+                    display="flex"
+                    overflow="auto"
+                    p={4}
+                  >
                     <VStack
                       align="stretch"
                       gap={6}
+                      w="100%"
                     >
                       <Grid
                         templateColumns="120px 2fr 2fr auto"
@@ -592,7 +647,11 @@ export const EventDetail = () => {
               </Tabs>
             </VStack>
           </TabPanel>
-          <TabPanel>
+          <TabPanel
+            flex={1}
+            display="flex"
+            overflow="auto"
+          >
             {/* 
                       Figure out what to do with Cases here
                       */}
@@ -601,6 +660,6 @@ export const EventDetail = () => {
       </Tabs>
     </VStack>
   ) : (
-    <EditEvent />
+    <EditEvent setIsEditing={setIsEditing} />
   );
 };
