@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile"
 import {
   Navigate,
   Route,
@@ -26,6 +27,10 @@ const App = () => {
                 <Route
                   path="/login"
                   element={<Login />}
+                />
+                <Route
+                  path="/volunteerProfile"
+                  element={<VolunteerProfile />}
                 />
                 <Route
                   path="/signup"
