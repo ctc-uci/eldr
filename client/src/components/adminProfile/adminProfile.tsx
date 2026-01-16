@@ -30,7 +30,7 @@ const mockProfileData = {
   lawSchoolCompany: "UCI Law",
 };
 
-const AdminProfile = () => {
+export const AdminProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState(mockProfileData);
 

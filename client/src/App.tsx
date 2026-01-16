@@ -1,5 +1,5 @@
 import { Admin } from "@/components/admin/Admin";
-import AdminProfile from "@/components/adminProfile/adminProfile";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { CatchAll } from "@/components/CatchAll";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -61,12 +61,7 @@ const App = () => {
                 />
                 <Route
                   path="/admin-profile"
-                  element={
-                    <ProtectedRoute
-                      element={<AdminProfile />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
+                  element={<AdminProfile />}
                 />
                 <Route
                   path="*"
