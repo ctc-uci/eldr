@@ -9,7 +9,6 @@ import {
   Input,
 } from "@chakra-ui/react";
 
-import { VolunteerAddProfile } from "./VolunteerAddProfile";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 import { VolunteerProfilesPanel } from "./VolunteerProfilesPanel";
 
@@ -138,7 +137,9 @@ export const VolunteerManagementView = () => {
             pl={viewMode === "split" ? 6 : 0}
           >
             {isAdding ? (
-              <VolunteerAddProfile
+              <VolunteerProfilePanel
+                variant="new"
+                showBack
                 onBack={() => setIsAdding(false)}
                 onConfirm={(data) => {
                   console.log("New Profile Data:", data);

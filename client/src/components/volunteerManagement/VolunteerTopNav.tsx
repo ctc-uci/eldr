@@ -1,6 +1,4 @@
 import { Box, Flex, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from "@chakra-ui/react";
-import { VolunteerProfilesPanel } from "./VolunteerProfilesPanel";
-import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 import { VolunteerManagementView } from "./VolunteerManagementView";
 
 export const VolunteerTopNav = () => {

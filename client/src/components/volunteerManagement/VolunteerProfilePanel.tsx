@@ -5,13 +5,24 @@ import {
   Text,
   Button,
   SimpleGrid,
+  Input,
+  Select,
 } from "@chakra-ui/react";
+import { useForm } from "react-hook-form";
 
 interface LabeledBoxProps {
   label: string;
   width?: string;
   value: string;
   dropdown?: boolean;
+}
+
+interface VolunteerProfileFormData {
+  firstName: string;
+  lastName: string;
+  role: string;
+  email: string;
+  phoneNumber: string;
 }
 
 function LabeledBox({ label, width = "100%", value, dropdown = false }: Readonly<LabeledBoxProps>) {
@@ -44,10 +55,16 @@ interface VolunteerProfilePanelProps {
   variant?: string;
   showBack?: boolean;
   onBack?: () => void;
+  onConfirm?: (data: VolunteerProfileFormData) => void;
 }
 
-export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }: VolunteerProfilePanelProps) => {
+export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, onConfirm }: VolunteerProfilePanelProps) => {
   const isNew = variant === "new";
+  const { register, handleSubmit } = useForm<VolunteerProfileFormData>();
+
+  const onSubmit = (data: VolunteerProfileFormData) => {
+    if (onConfirm) onConfirm(data);
+  };
 
   return (
     <Box>
@@ -91,7 +108,7 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }:
       )}
 
       {/* Main form container */}
-      <Box bg="gray.50" borderWidth="0px" p={6}>
+      <Box bg="gray.50" borderWidth="0px" p={6} as="form" onSubmit={isNew ? handleSubmit(onSubmit) : undefined}>
         {!isNew && (
           <Heading size="sm" mb={4}>
             Background Information
@@ -100,17 +117,105 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }:
 
         {/* Profile or New Profile fields */}
         <SimpleGrid columns={isNew ? 3 : 2} spacing={6} maxW={isNew ? "720px" : "760px"}>
-          <LabeledBox label="First Name" value={isNew ? "" : "Peter"} width={isNew ? "160px" : "100%"} />
-          <LabeledBox label="Last Name" value={isNew ? "" : "Anteater"} width={isNew ? "160px" : "100%"} />
+          <Box w={isNew ? "160px" : "100%"}>
+            {isNew ? (
+              <>
+                <Text fontSize="xs" fontWeight="700" mb={1}>First Name</Text>
+                <Input
+                  h="34px"
+                  fontSize="xs"
+                  bg="white"
+                  borderRadius="sm"
+                  borderColor="gray.500"
+                  {...register("firstName")}
+                />
+              </>
+            ) : (
+              <LabeledBox label="First Name" value="Peter" />
+            )}
+          </Box>
 
+          <Box w={isNew ? "160px" : "100%"}>
+            {isNew ? (
+              <>
+                <Text fontSize="xs" fontWeight="700" mb={1}>Last Name</Text>
+                <Input
+                  h="34px"
+                  fontSize="xs"
+                  bg="white"
+                  borderRadius="sm"
+                  borderColor="gray.500"
+                  {...register("lastName")}
+                />
+              </>
+            ) : (
+              <LabeledBox label="Last Name" value="Anteater" />
+            )}
+          </Box>
+          
+          {isNew && (
+             <Box w="120px">
+                <Text fontSize="xs" fontWeight="700" mb={1} >Role</Text>
+                <Select
+                  h="34px"
+                  fontSize="xs"
+                  bg="white"
+                  borderRadius="sm"
+                  borderColor="gray.500"
+                  iconColor="black"
+                  {...register("role")}
+                >
+                  <option value="volunteer">Volunteer</option>
+                  <option value="admin">Admin</option>
+                  <option value="staff">Staff</option>
+                </Select>
+             </Box>
+          )}
 
-          <LabeledBox label="Email Address" value={isNew ? "" : "peteranteater@uci.edu"} width={isNew ? "220px" : "100%"} />
-          <LabeledBox label="Phone Number" value={isNew ? "" : "621-438-3991"} width={isNew ? "160px" : "100%"} />
+          <Box w={isNew ? "220px" : "100%"}>
+             {isNew ? (
+               <>
+                 <Text fontSize="xs" fontWeight="700" mb={1}>Email Address</Text>
+                 <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    {...register("email")}
+                 />
+               </>
+             ) : (
+               <LabeledBox label="Email Address" value="peteranteater@uci.edu" />
+             )}
+          </Box>
+
+          <Box w={isNew ? "160px" : "100%"}>
+             {isNew ? (
+               <>
+                 <Text fontSize="xs" fontWeight="700" mb={1}>Phone Number</Text>
+                 <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    {...register("phoneNumber")}
+                 />
+               </>
+             ) : (
+               <LabeledBox label="Phone Number" value="621-438-3991" />
+             )}
+          </Box>
 
           {!isNew && (
             <>
-              <LabeledBox label="Birthday" value="02/14/1999" width="120px" dropdown />
-              <LabeledBox label="Role" value="Volunteer" width="120px" />
+              <Box w="120px">
+                <LabeledBox label="Birthday" value="02/14/1999" dropdown />
+              </Box>
+              <Box w="120px">
+                <LabeledBox label="Role" value="Volunteer" />
+              </Box>
             </>
           )}
         </SimpleGrid>

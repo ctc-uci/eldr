@@ -2,7 +2,6 @@ import {
   Box,
   Flex,
   Text,
-  Divider,
   Table,
   Thead,
   Tbody,
