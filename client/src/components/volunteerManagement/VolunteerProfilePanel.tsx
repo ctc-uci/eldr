@@ -165,7 +165,7 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack }:
                   borderColor="gray.500"
                   borderRadius="sm"
                   p={2}
-                  w="160px"
+                  w="fit-content"
                   gap={2}
                 >
                   <Box px={3} py={1} bg="gray.200" borderRadius="full" fontSize="xs">

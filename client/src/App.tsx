@@ -1,7 +1,7 @@
 import { Admin } from "@/components/admin/Admin";
 import { CatchAll } from "@/components/CatchAll";
 import { Dashboard } from "@/components/dashboard/Dashboard";
-import { VolunteerManagement } from "./components/volunteerManagement/volunteerManagement";
+import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
