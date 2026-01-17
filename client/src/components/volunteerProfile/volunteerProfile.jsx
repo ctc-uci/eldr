@@ -31,7 +31,7 @@ import dashboardEventExpand from "../profilePage/dashboardEventExpand.png"
 
 const InfoManagement = () => {
   return (
-    <SimpleGrid width="50%" columns={2} spacingX={20} spacingY={10}>
+    <SimpleGrid width="80%" columns={2} spacingX={20} spacingY={10}>
         <FormControl>
           <FormLabel fontWeight="bold">
             First Name
@@ -56,7 +56,7 @@ const InfoManagement = () => {
           <FormLabel fontWeight="bold">
             Specialization(s)
           </FormLabel>
-          <Flex width="60%" minHeight="64px" p={2} borderWidth="2px" borderColor="black" borderRadius="md" align="center" justify="space-between">
+          <Flex width="60%" minWidth="fit-content" minHeight="64px" p={2} borderWidth="2px" borderColor="black" borderRadius="md" align="center" justify="space-between">
             <Image src={specializationsHighlights} height="29px"/>
             <IconButton icon={<Image src={specializationsPlus} boxSize="24px"/>} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
           </Flex>
@@ -84,9 +84,10 @@ const InfoManagement = () => {
   )
 }
 
+
 const AccountManagement = () => {
   return (
-    <SimpleGrid width="50%" columns={2} spacingX={20} spacingY={10} mb={20}>
+    <SimpleGrid width="80%" columns={2} spacingX={20} spacingY={10} mb={20}>
       <FormControl>
         <FormLabel fontWeight="bold">
           Email Address
@@ -114,9 +115,10 @@ const AccountManagement = () => {
   )
 }
 
+
 const DashboardManagement = () => {
   return (
-    <SimpleGrid width="60%" columns={2} spacing={6} mb={10}>
+    <SimpleGrid width="80%" columns={2} spacing={6} mb={10}>
        
        <Box p={6} borderRadius="2xl">
           <Flex justify="space-between" align="center" mb={6} width="80%">
@@ -143,7 +145,7 @@ const DashboardManagement = () => {
 
             <Divider orientation="vertical" height="40px" borderColor="#000000" mr={8}/> {/* Divider for Data */}
 
-            <Flex width="100%" gap={6}>
+            <Flex width="80%" gap={6}>
               <VStack align="start" spacing={0}>
                   <Text fontSize="12px" color="#757575" fontWeight="bold" mb={1}>
                       Case
@@ -225,35 +227,60 @@ const DashboardManagement = () => {
   )
 }
 
+
+const Sidebar = () => {
+  return (
+    <VStack align="start" spacing={10} width="259px" pt={2} mr={10} position="sticky" top="40px" height="fit-content">
+      <Text fontWeight="bold" fontSize="20px" cursor="pointer">
+        About
+      </Text>
+      <Text fontSize="20px" fontWeight="medium" cursor="pointer">
+        Background
+      </Text>
+      <Text fontSize="20px" fontWeight="medium" cursor="pointer">
+        Activity History
+      </Text>
+      <Text fontSize="20px" fontWeight="medium" cursor="pointer">
+        Account Settings
+      </Text>
+    </VStack>
+  )
+}
+
+
 const profileManagement = () => {
   return (
-    <Box>
-      <Flex justify="space-between" align="center">
-        <Heading fontSize="32px">
-          Profile Management
-        </Heading>
-        <Flex gap={3}>
-          <Button width="66px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px" rightIcon={<Image src={buttonArrow} boxSize="12px"/>}>
-            <Flex gap="1" align="center">
-              Edit
-            </Flex>
-          </Button>
-          <Button width="55px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px">
-            Save
-          </Button>
+    <Flex p={10} align="start">
+      <Sidebar />
+
+      <Box flex="1">
+        <Flex justify="space-between" align="center">
+          <Heading fontSize="32px">
+            Profile Management
+          </Heading>
+          <Flex gap={3}>
+            <Button width="66px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px" rightIcon={<Image src={buttonArrow} boxSize="12px"/>}>
+              <Flex gap="1" align="center">
+                Edit
+              </Flex>
+            </Button>
+            <Button width="55px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px">
+              Save
+            </Button>
+          </Flex>
         </Flex>
-      </Flex>
 
-      <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
+        <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
 
-      <InfoManagement />
+        <InfoManagement />
 
-      <Box></Box> {/* empty Box to reset column span*/}
+        <Box></Box> {/* empty Box to reset column span*/}
 
-      <DashboardManagement />
+        <DashboardManagement />
 
-      <AccountManagement />
-    </Box>
+        <AccountManagement />
+      </Box>
+    </Flex>
   )
 }
 
