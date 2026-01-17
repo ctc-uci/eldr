@@ -28,47 +28,83 @@ import languagesHighlights from "../profilePage/languagesHighlights.png";
 import passwordEye from "../profilePage/passwordEye.png";
 import dashboardClock from "../profilePage/dashboardClock.png";
 import dashboardEventExpand from "../profilePage/dashboardEventExpand.png"
+import logo_eldr from "../profilePage/logo_eldr.png"
+import default_profile_picture from "../profilePage/default_profile_picture.png"
 
 const InfoManagement = () => {
   return (
-    <SimpleGrid width="80%" columns={2} spacingX={20} spacingY={10}>
+    <SimpleGrid width={{base: "40%", md: "80%"}}
+      columns={{base: 1, md: 2}}
+      spacingX={{base: 8, md: 20}}
+      spacingY={10}>
         <FormControl>
           <FormLabel fontWeight="bold">
             First Name
           </FormLabel>
-          <Input type="text" defaultValue="Peter" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+          <Input type="text"
+            defaultValue="Peter"
+            borderWidth="2px"
+            borderColor="#000000"
+            _hover={{borderColor: "#000000"}}/>
         </FormControl>
         <FormControl>
           <FormLabel fontWeight="bold">
             Last Name
           </FormLabel>
-          <Input type="text" defaultValue="Anteater" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+          <Input type="text"
+            defaultValue="Anteater"
+            borderWidth="2px"
+            borderColor="#000000"
+            _hover={{borderColor: "#000000"}}/>
         </FormControl>
         <FormControl>
           <FormLabel fontWeight="bold">
             Phone Number
           </FormLabel>
-        <Input type="text" defaultValue="621-438-3991" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+        <Input type="text"
+          defaultValue="621-438-3991"
+          borderWidth="2px"
+          borderColor="#000000"
+          _hover={{ borderColor: "#000000" }}/>
       </FormControl>
 
-      <GridItem colSpan={2}>
+      <GridItem colSpan={{base: 1, md: 2}}>
         <FormControl>
           <FormLabel fontWeight="bold">
             Specialization(s)
           </FormLabel>
-          <Flex width="60%" minWidth="fit-content" minHeight="64px" p={2} borderWidth="2px" borderColor="black" borderRadius="md" align="center" justify="space-between">
+          <Flex width={{base: "100%", md: "60%"}}
+            minWidth="fit-content"
+            minHeight="64px"
+            p={2}
+            borderWidth="2px"
+            borderColor="black"
+            borderRadius="md"
+            align="center"
+            justify="space-between">
+            
             <Image src={specializationsHighlights} height="29px"/>
-            <IconButton icon={<Image src={specializationsPlus} boxSize="24px"/>} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
+            <IconButton icon={<Image src={specializationsPlus} boxSize="24px"/>}
+              variant="ghost" _hover={{bg: "transparent"}}
+              isRound={true} _active={{transform: "scale(0.9)"}}
+              display={{base:"none", md:"flex"}}/>
           </Flex>
         </FormControl>
       </GridItem>
 
-      <GridItem colSpan={2}>
+      <GridItem colSpan={{base: 1, md: 2}}>
         <FormControl>
           <FormLabel fontWeight="bold">
             Languages(s)
           </FormLabel>
-          <Flex width="35%" minHeight="64px" p={2} borderWidth="2px" borderColor="black" borderRadius="md" align="center" justify="space-between">
+          <Flex width={{base: "100%", md: "35%"}}
+            minHeight="64px"
+            p={2}
+            borderWidth="2px"
+            borderColor="black"
+            borderRadius="md"
+            align="center"
+            justify="space-between">
             <Image src={languagesHighlights} height="29px"/>
           </Flex>
         </FormControl>
@@ -78,7 +114,10 @@ const InfoManagement = () => {
         <FormLabel fontWeight="bold">
           Law School & Company
         </FormLabel>
-        <Input type="text" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+        <Input type="text"
+          borderWidth="2px"
+          borderColor="#000000"
+          _hover="#000000"/>
       </FormControl>
     </SimpleGrid>
   )
@@ -87,12 +126,20 @@ const InfoManagement = () => {
 
 const AccountManagement = () => {
   return (
-    <SimpleGrid width="80%" columns={2} spacingX={20} spacingY={10} mb={20}>
+    <SimpleGrid width={{base:"40%", md:"80%"}}
+      columns={{base: 1, md: 2}}
+      spacingX={20}
+      spacingY={10}
+      mb={20}>
       <FormControl>
         <FormLabel fontWeight="bold">
           Email Address
         </FormLabel>
-        <Input type="text" defaultValue="user@uci.edu" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+        <Input type="text"
+          defaultValue="user@uci.edu"
+          borderWidth="2px"
+          borderColor="#000000"
+          _hover="#000000"/>
       </FormControl>
       <FormControl>
         <FormLabel fontWeight="bold">
@@ -101,12 +148,22 @@ const AccountManagement = () => {
 
         <Flex align="center" gap={3}>
           <InputGroup flex="1">
-            <Input type="password" defaultValue="thisismypassword" borderWidth="2px" borderColor="#000000" _hover="#000000"/>
+            <Input type="password"
+              defaultValue="thisismypassword"
+              borderWidth="2px"
+              borderColor="#000000"
+              _hover="#000000"/>
             <InputRightElement>
-              <IconButton icon={<Image src={passwordEye} boxSize="24px"/>} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
+              <IconButton icon={<Image src={passwordEye} boxSize="24px"/>}
+                variant="ghost" _hover={{bg: "transparent"}}
+                isRound={true} _active={{transform: "scale(0.9)"}}/>
             </InputRightElement>
           </InputGroup>
-          <Link color="#2E52D6" fontSize="14px" fontWeight="semibold" textDecoration="underline" whiteSpace="nowrap">
+          <Link color="#2E52D6"
+            fontSize="14px"
+            fontWeight="semibold"
+            textDecoration="underline"
+            whiteSpace="nowrap">
             Reset Password
           </Link>
         </Flex>
@@ -118,10 +175,10 @@ const AccountManagement = () => {
 
 const DashboardManagement = () => {
   return (
-    <SimpleGrid width="80%" columns={2} spacing={6} mb={10}>
+    <SimpleGrid width={{base: "100%", md: "80%"}} columns={{base: 1, md: 2}} spacing={6} mb={10}>
        
        <Box p={6} borderRadius="2xl">
-          <Flex justify="space-between" align="center" mb={6} width="80%">
+          <Flex justify="space-between" align="center" mb={6} width={{base: "100%", md: "80%"}}>
             <Text fontWeight="bold" fontSize="18px">
               Volunteer Hours
             </Text>
@@ -145,7 +202,7 @@ const DashboardManagement = () => {
 
             <Divider orientation="vertical" height="40px" borderColor="#000000" mr={8}/> {/* Divider for Data */}
 
-            <Flex width="80%" gap={6}>
+            <Flex width={{base: "100%", md: "80%"}} gap={6}>
               <VStack align="start" spacing={0}>
                   <Text fontSize="12px" color="#757575" fontWeight="bold" mb={1}>
                       Case
@@ -178,7 +235,7 @@ const DashboardManagement = () => {
                 </Text>
                 <Text fontSize="12px">9</Text>
             </Flex>
-            <Flex justify="flex-end" width="115%">
+            <Flex justify="flex-end" width={{base: "100%", md: "115%"}}>
               <IconButton icon={<Image src={dashboardEventExpand} boxSize="24px"/>} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
             </Flex>
           </VStack>
@@ -248,44 +305,85 @@ const Sidebar = () => {
 }
 
 
-const profileManagement = () => {
+const NavBar = () => {
   return (
-    <Flex p={10} align="start">
-      <Sidebar />
-
-      <Box flex="1">
-        <Flex justify="space-between" align="center">
-          <Heading fontSize="32px">
-            Profile Management
-          </Heading>
-          <Flex gap={3}>
-            <Button width="66px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px" rightIcon={<Image src={buttonArrow} boxSize="12px"/>}>
-              <Flex gap="1" align="center">
-                Edit
-              </Flex>
-            </Button>
-            <Button width="55px" height="28px" color="212121" backgroundColor="#D9D9D9" variant="outline" borderColor="#212121" borderWidth="1px">
-              Save
-            </Button>
-          </Flex>
-        </Flex>
-
-        <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
-
-        <InfoManagement />
-
-        <Box></Box> {/* empty Box to reset column span*/}
-
-        <DashboardManagement />
-
-        <AccountManagement />
+    <Flex justify="space-between" align="center" p={4}>
+      <Box>
+        <Image src={logo_eldr} height="60px"/>
       </Box>
+      <Flex align="center" gap={{base: 4, md: 20}}>
+        <Link fontWeight="medium">
+          Cases
+        </Link>
+        <Link fontWeight="medium">
+          Workshops & Clinics
+        </Link>
+        <Image src={default_profile_picture} height="60px"/>
+      </Flex>
     </Flex>
+  )
+}
+
+
+const ProfileManagement = () => {
+  return (
+    <Box>
+      <NavBar />
+      <Flex p={{ base: 4, md: 10 }} align="start" direction={{base:"column", md:"row"}}>
+        <Box display={{ base: "none", md: "block" }}>
+          <Sidebar />
+        </Box>
+
+        <Box flex="1" width="100%">
+          <Flex justify="space-between" align="center">
+            <Heading fontSize={{base: "24px", md: "32px"}}>
+              Profile Management
+            </Heading>
+            <Flex gap={3}>
+              <Box display={{base:"none", md:"flex"}}>
+                <Button width="66px"
+                  height="28px"
+                  color="212121"
+                  backgroundColor="#D9D9D9"
+                  variant="outline"
+                  borderColor="#212121"
+                  borderWidth="1px"
+                  rightIcon={<Image src={buttonArrow}
+                    boxSize="12px" />}>
+                  <Flex gap={1} align="center">
+                    Edit
+                  </Flex>
+                </Button>
+              </Box>
+              <Button width="55px"
+                height="28px"
+                color="212121"
+                backgroundColor="#D9D9D9"
+                variant="outline"
+                borderColor="#212121"
+                borderWidth="1px">
+                Save
+              </Button>
+            </Flex>
+          </Flex>
+
+          <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
+
+          <InfoManagement />
+
+          <Box></Box> {/* empty Box to reset column span*/}
+
+          <DashboardManagement />
+
+          <AccountManagement />
+        </Box>
+      </Flex>
+    </Box>
   )
 }
 
 export const VolunteerProfile = () => {
   return (
-    profileManagement()
+    <ProfileManagement />
   );
 };
