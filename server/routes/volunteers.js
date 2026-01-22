@@ -270,13 +270,13 @@ volunteersRouter.get("/:volunteerId/tags", async(req, res) => {
 volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     try {
         const { volunteerId } = req.params;
-        const { languageId } = req.body;
+        const { languageId, proficiency } = req.body;
 
         const result = await db.query(
-            `INSERT INTO volunteer_language (volunteer_id, language_id)
+            `INSERT INTO volunteer_language (volunteer_id, language_id, proficiency)
              VALUES($1, $2)
              RETURNING *`,
-             [volunteerId, languageId]
+             [volunteerId, languageId, proficiency]
         );
         res.status(201).json(keysToCamel(result[0]));
     } catch (err) {
@@ -290,25 +290,18 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
 // Remove a language from a volunteer
 volunteersRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
   try {
-    const { volunteerId, languageId } = req.params;
+    const { volunteerId, languageId, proficiency } = req.params;
 
     const result = await db.query(
       `DELETE FROM volunteer_language
-       WHERE volunteer_id = $1 AND language_id = $2
+       WHERE volunteer_id = $1 AND language_id = $2 AND proficiency = $3
        RETURNING *`,
-      [volunteerId, languageId]
+      [volunteerId, languageId, proficiency]
     );
-
-    if (result.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Language not assigned to this volunteer" });
+        res.status(200).json(keysToCamel(result[0]));
+    } catch(e) {
+        res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(result[0]));
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
 });
 
 // List all languages for a volunteer

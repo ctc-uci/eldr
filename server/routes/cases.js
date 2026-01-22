@@ -8,11 +8,11 @@ export const casesRouter = Router();
 casesRouter.post("/:caseId/languages", async (req, res) => {
   try {
     const { caseId } = req.params;
-    const { languageId } = req.body;
+    const { languageId, proficiency } = req.body;
 
     const caseLanguage = await db.query(
-      "INSERT INTO case_languages (case_id, language_id) VALUES ($1, $2) RETURNING *",
-      [caseId, languageId]
+      "INSERT INTO case_languages (case_id, language_id, proficiency) VALUES ($1, $2, $3) RETURNING *",
+      [caseId, languageId, proficiency]
     );
 
     res.status(201).json(keysToCamel(caseLanguage));
@@ -24,16 +24,16 @@ casesRouter.post("/:caseId/languages", async (req, res) => {
 // Delete a language from a case
 casesRouter.delete("/:caseId/languages/:languageId", async (req, res) => {
   try {
-    const { caseId, languageId } = req.params;
+    const { caseId, languageId, proficiency } = req.params;
 
-    await db.query(
-      "DELETE FROM case_languages WHERE case_id = $1 AND language_id = $2",
-      [caseId, languageId]
+    const deletedLanguage = await db.query(
+      "DELETE FROM case_languages WHERE case_id = $1 AND language_id = $2 AND proficiency = $3 RETURNING *",
+      [caseId, languageId, proficiency]
     );
 
-    res.status(200).send(`Language ${languageId} deleted from case ${caseId} successfully`);
-  } catch (err) {
-    res.status(500).send(err.message);
+    res.status(200).json(keysToCamel(deletedLanguage[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -43,8 +43,8 @@ casesRouter.get("/", async (req, res) => {
     const cases = await db.query(`SELECT * FROM cases ORDER BY id ASC`);
 
     res.status(200).json(keysToCamel(cases));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -58,8 +58,8 @@ casesRouter.get("/:id", async (req, res) => {
     ]);
 
     res.status(200).json(keysToCamel(oneCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -73,8 +73,8 @@ casesRouter.delete("/:id", async (req, res) => {
     ]);
 
     res.status(200).json(keysToCamel(deletedCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -84,13 +84,16 @@ casesRouter.get("/:caseId/languages", async (req, res) => {
     const { caseId } = req.params;
 
     const caseLanguages = await db.query(
-      "SELECT * FROM case_languages WHERE case_id = $1",
+      `SELECT l.* 
+       FROM languages l 
+        JOIN case_languages cl ON cl.language_id = l.id 
+      WHERE cl.case_id = $1`,
       [caseId]
     );
 
     res.status(200).json(keysToCamel(caseLanguages));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -105,8 +108,8 @@ casesRouter.post("/create", async (req, res) => {
     );
 
     res.status(200).json(keysToCamel(createdCase));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -129,8 +132,8 @@ casesRouter.put("/update", async (req, res) => {
     );
 
     res.status(200).json(keysToCamel(updatedCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -151,8 +154,8 @@ casesRouter.post("/:caseId/areas-of-interest", async (req, res) => {
         );
 
         res.status(200).json(keysToCamel(newRelationship));
-    } catch (err){
-        res.status(500).send(err.message);
+    } catch (e){
+        res.status(500).send(e.message);
     }
 });
 
@@ -172,8 +175,8 @@ casesRouter.delete("/:caseId/areas-of-interest/:areaId", async(req, res) => {
         }
 
         res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (err) {
-        res.status(500).send(err.message);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 });
 
@@ -192,7 +195,7 @@ casesRouter.get("/:caseId/areas-of-interest", async(req, res) => {
         );
 
         res.status(200).json(keysToCamel(listAll));
-    } catch (err) {
-        res.status(500).send(err.message);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 });

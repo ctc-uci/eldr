@@ -7,15 +7,15 @@ export const workshopsRouter = Router();
 // Create a workshop
 workshopsRouter.post("/", async (req, res) => {
   try {
-    const { name, description, location, time, date, attendees, language, experience_level, parking } = req.body;
+    const { name, description, location, time, date, attendees, experience_level, parking } = req.body;
     const workshop = await db.query(
-      `INSERT INTO workshops (name, description, location, time, date, attendees, language, experience_level, parking) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [name, description, location, time, date, attendees, language, experience_level, parking]
+      `INSERT INTO workshops (name, description, location, time, date, attendees, experience_level, parking) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [name, description, location, time, date, attendees, experience_level, parking]
     );
     res.status(201).json(keysToCamel(workshop[0]));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -24,8 +24,8 @@ workshopsRouter.get('/', async (req, res) => {
   try {
     const workshops = await db.query("SELECT * FROM workshops");
     res.status(200).json(keysToCamel(workshops));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -38,8 +38,8 @@ workshopsRouter.get('/:id', async (req, res) => {
       return res.status(404).json({ message: "Workshop not found" });
     }
     res.status(200).json(keysToCamel(workshop[0]));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -81,13 +81,13 @@ workshopsRouter.delete('/:id', async (req, res) => {
 workshopsRouter.post('/:workshopId/languages', async (req, res) => {
   try {
     const { workshopId } = req.params;
-    const { languageId } = req.body;
+    const { languageId, proficiency } = req.body;
 
     const result = await db.query(
-      `INSERT INTO workshop_languages (workshop_id, language_id)
-       VALUES ($1, $2)
+      `INSERT INTO workshop_languages (workshop_id, language_id, proficiency)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [workshopId, languageId]
+      [workshopId, languageId, proficiency]
     );
 
     res.status(201).json(keysToCamel(result[0]));
@@ -102,19 +102,12 @@ workshopsRouter.post('/:workshopId/languages', async (req, res) => {
 // Remove a language from a workshop
 workshopsRouter.delete('/:workshopId/languages/:languageId', async (req, res) => {
   try {
-    const { workshopId, languageId } = req.params;
-
+    const { workshopId, languageId, proficiency } = req.params;
     const result = await db.query(
       `DELETE FROM workshop_languages
-       WHERE workshop_id = $1 AND language_id = $2
-       RETURNING *`,
-      [workshopId, languageId]
+       WHERE workshop_id = $1 AND language_id = $2 AND proficiency = $3
+       RETURNING *`, [workshopId, languageId, proficiency]
     );
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: "Language not assigned to this workshop" });
-    }
-
     res.status(200).json(keysToCamel(result[0]));
   } catch (err) {
     res.status(500).send(err.message);
