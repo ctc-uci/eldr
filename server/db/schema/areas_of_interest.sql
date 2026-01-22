@@ -4,19 +4,19 @@ CREATE TABLE areas_of_interest (
 );
 
 CREATE TABLE case_areas_of_interest (
-    case_id INTEGER REFERENCES cases(id),
-    area_of_interest_id INTEGER REFERENCES areas_of_interest(id),
+    case_id INTEGER REFERENCES cases(id) ON DELETE CASCADE,
+    area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
     PRIMARY KEY (case_id, area_of_interest_id)
 );
 
 CREATE TABLE clinic_areas_of_interest (
-    clinic_id INTEGER REFERENCES clinics(id),
-    area_of_interest_id INTEGER REFERENCES areas_of_interest(id),
+    clinic_id INTEGER REFERENCES clinics(id) ON DELETE CASCADE,
+    area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
     PRIMARY KEY (clinic_id, area_of_interest_id)
 );
 
 CREATE TABLE workshop_areas_of_interest (
-    workshop_id INTEGER REFERENCES workshops(id),
-    area_of_interest_id INTEGER REFERENCES areas_of_interest(id),
+    workshop_id INTEGER REFERENCES workshops(id) ON DELETE CASCADE,
+    area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
     PRIMARY KEY (workshop_id, area_of_interest_id)
 );

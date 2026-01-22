@@ -4,7 +4,7 @@ CREATE TABLE roles (
 )
 
 CREATE TABLE volunteer_roles (
-    volunteer_id INT REFERENCES public.volunteers(id),
-    role_id INT REFERENCES roles(id),
+    volunteer_id INT REFERENCES public.volunteers(id) ON DELETE CASCADE,
+    role_id INT REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (volunteer_id, role_id)
 );
