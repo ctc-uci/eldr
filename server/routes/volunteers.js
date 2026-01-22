@@ -2,10 +2,10 @@ import { db } from "@/db/db-pgp";
 import { keysToCamel } from "@/common/utils";
 import { Router } from "express";
 
-export const volunteerRouter = Router();
+export const volunteersRouter = Router();
 
 // Assign a language to a volunteer
-volunteerRouter.post("/:volunteerId/languages", async (req, res) => {
+volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     try {
         const { volunteerId } = req.params;
         const { languageId } = req.body;
@@ -26,7 +26,7 @@ volunteerRouter.post("/:volunteerId/languages", async (req, res) => {
 });
 
 // Remove a language from a volunteer
-volunteerRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
+volunteersRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
   try {
     const { volunteerId, languageId } = req.params;
 
@@ -50,7 +50,7 @@ volunteerRouter.delete("/:volunteerId/languages/:languageId", async (req, res) =
 });
 
 // List all languages for a volunteer
-volunteerRouter.get("/:volunteerId/languages", async (req, res) => {
+volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
