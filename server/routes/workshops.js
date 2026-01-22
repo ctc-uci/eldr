@@ -91,26 +91,31 @@ workshopsRouter.post('/:workshopId/languages', async (req, res) => {
     );
 
     res.status(201).json(keysToCamel(result[0]));
-  } catch (err) {
-    if (err.code === '23505') { // PostgreSQL unique violation
-      return res.status(409).json({ message: "Language already assigned to this workshop" });
-    }
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
 // Remove a language from a workshop
 workshopsRouter.delete('/:workshopId/languages/:languageId', async (req, res) => {
   try {
-    const { workshopId, languageId, proficiency } = req.params;
+    const { workshopId, languageId } = req.params;
     const result = await db.query(
       `DELETE FROM workshop_languages
-       WHERE workshop_id = $1 AND language_id = $2 AND proficiency = $3
-       RETURNING *`, [workshopId, languageId, proficiency]
+       WHERE workshop_id = $1 AND language_id = $2
+       RETURNING *`,
+      [workshopId, languageId]
     );
+
+    if (!result.length) {
+      return res
+        .status(404)
+        .json({ message: "Language not assigned to this workshop" });
+    }
+
     res.status(200).json(keysToCamel(result[0]));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -120,7 +125,7 @@ workshopsRouter.get('/:workshopId/languages', async (req, res) => {
     const { workshopId } = req.params;
 
     const languages = await db.query(
-      `SELECT l.*
+      `SELECT l.*, wl.proficiency
        FROM languages l
        JOIN workshop_languages wl ON wl.language_id = l.id
        WHERE wl.workshop_id = $1`,
@@ -128,8 +133,8 @@ workshopsRouter.get('/:workshopId/languages', async (req, res) => {
     );
 
     res.status(200).json(keysToCamel(languages));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 

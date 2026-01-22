@@ -274,34 +274,38 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
 
         const result = await db.query(
             `INSERT INTO volunteer_language (volunteer_id, language_id, proficiency)
-             VALUES($1, $2)
+             VALUES($1, $2, $3)
              RETURNING *`,
              [volunteerId, languageId, proficiency]
         );
         res.status(201).json(keysToCamel(result[0]));
-    } catch (err) {
-        if (err.code === '23505') { // PostgreSQL unique violation
-            return res.status(409).json({ message: "Language already assigned to this volunteer" });
-        }
-        res.status(500).send(err.message);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 });
 
 // Remove a language from a volunteer
 volunteersRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
   try {
-    const { volunteerId, languageId, proficiency } = req.params;
+    const { volunteerId, languageId } = req.params;
 
     const result = await db.query(
       `DELETE FROM volunteer_language
-       WHERE volunteer_id = $1 AND language_id = $2 AND proficiency = $3
+       WHERE volunteer_id = $1 AND language_id = $2
        RETURNING *`,
-      [volunteerId, languageId, proficiency]
+      [volunteerId, languageId]
     );
-        res.status(200).json(keysToCamel(result[0]));
-    } catch(e) {
-        res.status(500).send(e.message);
+
+    if (!result.length) {
+      return res
+        .status(404)
+        .json({ message: "Language not assigned to this volunteer" });
     }
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
 // List all languages for a volunteer
@@ -310,15 +314,14 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
     const { volunteerId } = req.params;
 
     const languages = await db.query(
-      `SELECT l.*
-       FROM languages l
-       JOIN volunteer_language vl ON vl.language_id = l.id
+      `SELECT l.*, vl.proficiency
+       FROM languages l 
+        JOIN volunteer_language vl ON vl.language_id = l.id 
        WHERE vl.volunteer_id = $1`,
       [volunteerId]
     );
-
     res.status(200).json(keysToCamel(languages));
-  } catch (err) {
-    res.status(500).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
