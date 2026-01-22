@@ -3,7 +3,6 @@ import { languagesRouter } from "@/routes/languages";
 import { areasOfInterestRouter } from "@/routes/areasOfInterest";
 import { clinicsRouter } from "@/routes/clinics";
 import { casesRouter } from "@/routes/cases";
-import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
 import { tagsRouter } from "@/routes/tags";
 import { usersRouter } from "@/routes/users";
 import { workshopsRouter } from "@/routes/workshops";
