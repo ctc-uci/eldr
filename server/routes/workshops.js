@@ -76,6 +76,7 @@ workshopsRouter.delete('/:id', async (req, res) => {
   }
 });
 
+// Workshop Languages Routes
 // Assign a language to a workshop
 workshopsRouter.post('/:workshopId/languages', async (req, res) => {
   try {
@@ -139,6 +140,7 @@ workshopsRouter.get('/:workshopId/languages', async (req, res) => {
   }
 });
 
+// Workshop Attendance Routes
 // WorkshopAttendance (Volunteer ↔ Workshop)
 workshopsRouter.get("/:workshopId/attendees", async (req, res) => {
   try {
@@ -199,6 +201,7 @@ workshopsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) =
     }
 });
 
+// Workshop Areas of Interest Routes
 // POST: assign an area to a workshop
 // /workshops/{workshopId}/areas-of-interest
 workshopsRouter.post("/:workshopId/areas-of-interest", async (req, res) => {

@@ -257,6 +257,10 @@ volunteersRouter.get("/:volunteerId/tags", async(req, res) => {
         res.status(200).json(keysToCamel(volunteerResult));
         
     } catch(e) {
+        // Volunteer does not exist
+        if (e.code === '23505') {
+            return res.status(404).json({ message: "Volunteer not found" });
+        }
         res.status(500).send(e.message);
     }
 });

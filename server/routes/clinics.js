@@ -121,6 +121,7 @@ clinicsRouter.delete("/:id", async (req, res) => {
   }
 });
 
+// Clinic Attendance Routes
 // ClinicAttendance (Volunteer ↔ Clinic)
 clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   try {
@@ -181,6 +182,7 @@ clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
     }
 });
 
+// Clinic Areas of Interest Routes
 // GET: list all areas for a clinic
 // {port}/clinics/{clinicId}/areas-of-interest
 clinicsRouter.get("/:id/areas-of-interest", async (req, res) => {
@@ -243,6 +245,7 @@ clinicsRouter.delete("/:id/areas-of-interest/:areaId", async (req, res) => {
     }
 })
 
+// Clinic Languages Routes
 // Assign a language to a clinic
 clinicsRouter.post("/:clinicId/languages", async (req, res) => {
   try {
