@@ -22,14 +22,51 @@ adminsRouter.post("/create", async (req, res) => {
       lastName,
       email,
       calendarEmail,
+      firebaseUid,
     } = req.body;
+
+    if (!firebaseUid || !email) {
+      return res.status(400).send("firebaseUid and email are required");
+    }
+
+    // Create or reuse a base user with admin role
+    let userId;
+    try {
+      const userResult = await db.query(
+        `INSERT INTO users (email, firebase_uid, role)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [email, firebaseUid, "admin"]
+      );
+
+      userId = userResult[0].id;
+    } catch (err) {
+      if (err.code === "23505") {
+        const existingUser = await db.query(
+          `
+          SELECT id
+          FROM users
+          WHERE email = $1;
+          `,
+          [email]
+        );
+
+        if (!existingUser.length) {
+          throw err;
+        }
+
+        userId = existingUser[0].id;
+      } else {
+        throw err;
+      }
+    }
 
     const admin = await db.query(
       `INSERT INTO admins 
-        (first_name, last_name, email, calendar_email)
-       VALUES ($1, $2, $3, $4)
+        (id, first_name, last_name, email, calendar_email)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [firstName, lastName, email, calendarEmail]
+      [userId, firstName, lastName, email, calendarEmail]
     );
 
     res.status(200).json(keysToCamel(admin));
