@@ -3,7 +3,7 @@ CREATE TABLE roles (
     role_name TEXT UNIQUE NOT NULL
 )
 
-CREATE TABLE volunter_roles (
+CREATE TABLE volunteer_roles (
     volunteer_id INT REFERENCES public.volunteers(id),
     role_id INT REFERENCES roles(id),
     PRIMARY KEY (volunteer_id, role_id)
