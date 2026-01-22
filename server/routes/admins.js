@@ -1,6 +1,5 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
-import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const adminsRouter = Router();
@@ -16,22 +15,21 @@ adminsRouter.get("/", async (req, res) => {
 });
 
 // POST /admins - create admin
-adminsRouter.post("/create", verifyRole("admin"), async (req, res) => {
+adminsRouter.post("/create", async (req, res) => {
   try {
     const {
       firstName,
       lastName,
       email,
       calendarEmail,
-      firebaseUid,
     } = req.body;
 
     const admin = await db.query(
       `INSERT INTO admins 
-        (first_name, last_name, email, calendar_email, firebase_uid)
-       VALUES ($1, $2, $3, $4, $5)
+        (first_name, last_name, email, calendar_email)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [firstName, lastName, email, calendarEmail, firebaseUid]
+      [firstName, lastName, email, calendarEmail]
     );
 
     res.status(200).json(keysToCamel(admin));
@@ -40,44 +38,66 @@ adminsRouter.post("/create", verifyRole("admin"), async (req, res) => {
   }
 });
 
-// PUT /admin - update all admins
-adminsRouter.put("/update", verifyRole("admin"), async (req, res) => {
+// PUT /admins/:id - update admin
+adminsRouter.put("/:id", async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      email,
-      calendarEmail,
-      firebaseUid,
-    } = req.body;
+    const adminId = Number(req.params.id);
+    if (!Number.isInteger(adminId)) {
+      return res.status(400).send("Invalid admin id");
+    }
 
-    const admin = await db.query(
+    const { firstName, lastName, email, calendarEmail } = req.body;
+
+    const result = await db.query(
       `UPDATE admins
        SET first_name = $1,
            last_name = $2,
            email = $3,
            calendar_email = $4
-       WHERE firebase_uid = $5
+       WHERE id = $5
        RETURNING *`,
-      [firstName, lastName, email, calendarEmail, firebaseUid]
+      [firstName, lastName, email, calendarEmail, adminId]
     );
 
-    res.status(200).json(keysToCamel(admin));
+    if (result.rowCount === 0) {
+      return res.status(404).send("Admin not found");
+    }
+
+    res.status(200).json(keysToCamel(result));
   } catch (err) {
-    res.status(400).send(err.message);
+    res.status(500).send(err.message);
   }
 });
 
-// GET - all admins (admin-only)
-adminsRouter.get("/admin/all", verifyRole("admin"), async (req, res) => {
+// DELETE /admins/:id - delete admin
+adminsRouter.delete("/:id", async (req, res) => {
   try {
-    const admins = await db.query(`SELECT * FROM admins`);
+    const adminId = Number(req.params.id);
+    if (!Number.isInteger(adminId)) {
+      return res.status(400).send("Invalid admin id");
+    }
 
-    res.status(200).json(keysToCamel(admins));
+    const result = await db.query(
+      `DELETE FROM admins
+       WHERE id = $1
+       RETURNING *`,
+      [adminId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).send("Admin not found");
+    }
+
+    res.status(200).json({
+      message: "Admin deleted successfully",
+      admin: keysToCamel(result),
+    });
   } catch (err) {
-    res.status(400).send(err.message);
+    res.status(500).send(err.message);
   }
 });
+
+// TD NOTE: The below routes are probably not needed as firebase UID is never publicly exposed  
 
 // GET /admins/:firebaseUid - get admin by Firebase UID
 adminsRouter.get("/:firebaseUid", async (req, res) => {
@@ -110,7 +130,3 @@ adminsRouter.delete("/:firebaseUid", async (req, res) => {
     res.status(400).send(err.message);
   }
 });
-
-
-
-
