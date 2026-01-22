@@ -1,8 +1,12 @@
+CREATE TYPE PROFICIENCY_LEVEL AS ENUM ('basic', 'conversational', 'fluent', 'native');
+
 CREATE TABLE IF NOT EXISTS public.languages
 (
     id serial,
     language TEXT NOT NULL UNIQUE,
+    proficiency PROFICIENCY_LEVEL NOT NULL,
     PRIMARY KEY (id)
+
 );
 
 CREATE TABLE IF NOT EXISTS public.case_languages

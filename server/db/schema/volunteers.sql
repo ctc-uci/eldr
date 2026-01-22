@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     email TEXT NOT NULL,
     phone_number TEXT NOT NULL,
     is_notary BOOLEAN,
-    role TEXT,
+    is_attorney BOOLEAN,
     experience_level experience_level NOT NULL,
     form_completed BOOLEAN,
     form_link TEXT,
