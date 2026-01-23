@@ -1,9 +1,13 @@
+// =================================================================== //
+// NOTE TO SELF: CLINICS.JS WILL BE ABOLISHED IN FAVOR OF WORKSHOPS.JS //
+//               SO STOP WORKING ON THIS FILE!!!!!! SORRRY!!!!!!       //
+// =================================================================== //
+
 import { keysToCamel } from "@/common/utils";
 import express from "express";
 import { db } from "@/db/db-pgp";
 
-const clinicsRouter = express.Router();
-clinicsRouter.use(express.json());
+export const clinicsRouter = express.Router();
 
 // ClinicTable
 clinicsRouter.post("/", async (req, res) => {
@@ -122,6 +126,7 @@ clinicsRouter.delete("/:id", async (req, res) => {
   }
 });
 
+// Clinic Attendance Routes
 // ClinicAttendance (Volunteer ↔ Clinic)
 clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   try {
@@ -182,6 +187,7 @@ clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
     }
 });
 
+// Clinic Areas of Interest Routes
 // GET: list all areas for a clinic
 // {port}/clinics/{clinicId}/areas-of-interest
 clinicsRouter.get("/:id/areas-of-interest", async (req, res) => {
@@ -243,4 +249,56 @@ clinicsRouter.delete("/:id/areas-of-interest/:areaId", async (req, res) => {
         res.status(500).send(err.message);
     }
 })
-export { clinicsRouter };
+
+// Clinic Languages Routes
+// Assign a language to a clinic
+clinicsRouter.post("/:clinicId/languages", async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+    const { languageId, proficiency } = req.body;
+
+    const clinicLanguage = await db.query(
+      "INSERT INTO clinic_languages (clinic_id, language_id, proficiency) VALUES ($1, $2, $3) RETURNING *",
+      [clinicId, languageId, proficiency]
+    );
+
+    res.status(201).json(keysToCamel(clinicLanguage));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Delete a language from a clinic
+clinicsRouter.delete("/:clinicId/languages/:languageId", async (req, res) => {
+  try {
+    const { clinicId, languageId, proficiency } = req.params;
+
+    await db.query(
+      "DELETE FROM clinic_languages WHERE clinic_id = $1 AND language_id = $2 AND proficiency = $3",
+      [clinicId, languageId, proficiency]
+    );
+
+    res.status(200).send(`Language ${languageId} deleted from clinic ${clinicId} successfully`);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Get all languages for a clinic
+clinicsRouter.get("/:clinicId/languages", async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+
+    const clinicLanguages = await db.query(
+      `SELECT l.* 
+       FROM languages l 
+        JOIN clinic_languages cl ON cl.language_id = l.id 
+      WHERE cl.clinic_id = $1`,
+      [clinicId]
+    );
+
+    res.status(200).json(keysToCamel(clinicLanguages));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});

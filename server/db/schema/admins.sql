@@ -6,5 +6,5 @@ CREATE TABLE admins (
   last_name TEXT NOT NULL,
   email TEXT NOT NULL,
   calendar_email TEXT,
-  firebase_uid TEXT NOT NULL
+  FOREIGN KEY (id) REFERENCES users(id)
 );
