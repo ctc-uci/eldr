@@ -243,18 +243,22 @@ eventsRouter.delete("/:eventId/areas-of-interest/:areaId", async(req, res) => {
     }
 });
 
-// GET: list all areas for a workshop
-// /workshops/{workshopId}/areas-of-interest
-eventsRouter.get("/:eventId/areas-of-interest", async(req, res) => {
-    try {
-        const { eventId } = req.params;
+// GET: list all areas for an event, including area IDs and text
+// /events/{eventId}/areas-of-interest
+eventsRouter.get("/:eventId/areas-of-interest", async (req, res) => {
+  try {
+    const { eventId } = req.params;
 
-        const listAll = await db.query(
-            "SELECT * FROM event_areas_of_interest WHERE event_id = $1", [eventId]
-        );
+    const listAll = await db.query(
+      `SELECT ai.id, ai.areas_of_interest
+       FROM event_areas_of_interest eai
+       JOIN areas_of_interest ai ON eai.area_of_interest_id = ai.id
+       WHERE eai.event_id = $1`,
+      [eventId]
+    );
 
-        res.status(200).json(keysToCamel(listAll));
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
+    res.status(200).json(keysToCamel(listAll));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
