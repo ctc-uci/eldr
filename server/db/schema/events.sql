@@ -1,6 +1,6 @@
 CREATE TYPE experience_level AS ENUM ('beginner', 'intermediate', 'advanced');
 
-CREATE TABLE workshops (
+CREATE TABLE events (
     id serial PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -13,8 +13,8 @@ CREATE TABLE workshops (
     parking TEXT
 );
 
-CREATE TABLE workshop_attendance (
+CREATE TABLE event_attendance (
     volunteer_id INTEGER REFERENCES volunteers(id) ON DELETE CASCADE,
-    workshop_id INTEGER REFERENCES workshops(id) ON DELETE CASCADE,
-    PRIMARY KEY (volunteer_id, workshop_id)
+    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+    PRIMARY KEY (volunteer_id, event_id)
 );

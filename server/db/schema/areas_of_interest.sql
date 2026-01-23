@@ -15,8 +15,8 @@ CREATE TABLE clinic_areas_of_interest (
     PRIMARY KEY (clinic_id, area_of_interest_id)
 );
 
-CREATE TABLE workshop_areas_of_interest (
-    workshop_id INTEGER REFERENCES workshops(id) ON DELETE CASCADE,
+CREATE TABLE event_areas_of_interest (
+    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
     area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
-    PRIMARY KEY (workshop_id, area_of_interest_id)
+    PRIMARY KEY (event_id, area_of_interest_id)
 );

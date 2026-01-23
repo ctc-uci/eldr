@@ -27,13 +27,13 @@ CREATE TABLE IF NOT EXISTS public.clinic_languages
     FOREIGN KEY (language_id) REFERENCES public.languages(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS public.workshop_languages
+CREATE TABLE IF NOT EXISTS public.event_languages
 (
-    workshop_id INT NOT NULL,
+    event_id INT NOT NULL,
     language_id INT NOT NULL,
     proficiency PROFICIENCY_LEVEL NOT NULL,
-    PRIMARY KEY (workshop_id, language_id),
-    FOREIGN KEY (workshop_id) REFERENCES public.workshops(id) ON DELETE CASCADE,
+    PRIMARY KEY (event_id, language_id),
+    FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE,
     FOREIGN KEY (language_id) REFERENCES public.languages(id) ON DELETE CASCADE
 );
 

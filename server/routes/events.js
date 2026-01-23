@@ -2,75 +2,75 @@ import { db } from "@/db/db-pgp";
 import { keysToCamel } from "@/common/utils";
 import { Router } from "express";
 
-export const workshopsRouter = Router();
+export const eventsRouter = Router();
 
 // Create a workshop
-workshopsRouter.post("/", async (req, res) => {
+eventsRouter.post("/", async (req, res) => {
   try {
     const { name, description, location, time, date, attendees, experience_level, parking } = req.body;
-    const workshop = await db.query(
-      `INSERT INTO workshops (name, description, location, time, date, attendees, experience_level, parking) 
+    const event = await db.query(
+      `INSERT INTO events (name, description, location, time, date, attendees, experience_level, parking) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [name, description, location, time, date, attendees, experience_level, parking]
     );
-    res.status(201).json(keysToCamel(workshop[0]));
+    res.status(201).json(keysToCamel(event[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
 // Get all workshops
-workshopsRouter.get('/', async (req, res) => {
+eventsRouter.get('/', async (req, res) => {
   try {
-    const workshops = await db.query("SELECT * FROM workshops");
-    res.status(200).json(keysToCamel(workshops));
+    const events = await db.query("SELECT * FROM events");
+    res.status(200).json(keysToCamel(events));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
 // Get a single workshop
-workshopsRouter.get('/:id', async (req, res) => {
+eventsRouter.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const workshop = await db.query("SELECT * FROM workshops WHERE id = $1", [id]);
-    if (workshop.length === 0) {
-      return res.status(404).json({ message: "Workshop not found" });
+    const event = await db.query("SELECT * FROM events WHERE id = $1", [id]);
+    if (event.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
     }
-    res.status(200).json(keysToCamel(workshop[0]));
+    res.status(200).json(keysToCamel(event[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
 // Update a workshop
-workshopsRouter.put('/:id', async (req, res) => {
+eventsRouter.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, location, time, date, attendees, language, experience_level, parking } = req.body;
-    const workshop = await db.query(
-      `UPDATE workshops SET name = $1, description = $2, location = $3, time = $4, date = $5, attendees = $6, language = $7, experience_level = $8, parking = $9 
+    const event = await db.query(
+      `UPDATE events SET name = $1, description = $2, location = $3, time = $4, date = $5, attendees = $6, language = $7, experience_level = $8, parking = $9 
        WHERE id = $10 RETURNING *`,
       [name, description, location, time, date, attendees, language, experience_level, parking, id]
     );
-    if (workshop.length === 0) {
-      return res.status(404).json({ message: "Workshop not found" });
+    if (event.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
     }
-    res.status(200).json(keysToCamel(workshop[0]));
+    res.status(200).json(keysToCamel(event[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
 
 // Delete a workshop
-workshopsRouter.delete('/:id', async (req, res) => {
+eventsRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const workshop = await db.query("DELETE FROM workshops WHERE id = $1 RETURNING *", [id]);
-    if (workshop.length === 0) {
-      return res.status(404).json({ message: "Workshop not found" });
+    const event = await db.query("DELETE FROM events WHERE id = $1 RETURNING *", [id]);
+    if (event.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
     }
-    res.status(200).json(keysToCamel(workshop[0]));
+    res.status(200).json(keysToCamel(event[0]));
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -78,16 +78,16 @@ workshopsRouter.delete('/:id', async (req, res) => {
 
 // Workshop Languages Routes
 // Assign a language to a workshop
-workshopsRouter.post('/:workshopId/languages', async (req, res) => {
+eventsRouter.post('/:eventId/languages', async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { eventId } = req.params;
     const { languageId, proficiency } = req.body;
 
     const result = await db.query(
-      `INSERT INTO workshop_languages (workshop_id, language_id, proficiency)
+      `INSERT INTO event_languages (event_id, language_id, proficiency)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [workshopId, languageId, proficiency]
+      [eventId, languageId, proficiency]
     );
 
     res.status(201).json(keysToCamel(result[0]));
@@ -97,20 +97,20 @@ workshopsRouter.post('/:workshopId/languages', async (req, res) => {
 });
 
 // Remove a language from a workshop
-workshopsRouter.delete('/:workshopId/languages/:languageId', async (req, res) => {
+eventsRouter.delete('/:eventId/languages/:languageId', async (req, res) => {
   try {
-    const { workshopId, languageId } = req.params;
+    const { eventId, languageId } = req.params;
     const result = await db.query(
-      `DELETE FROM workshop_languages
-       WHERE workshop_id = $1 AND language_id = $2
+      `DELETE FROM event_languages
+       WHERE event_id = $1 AND language_id = $2
        RETURNING *`,
-      [workshopId, languageId]
+      [eventId, languageId]
     );
 
     if (!result.length) {
       return res
         .status(404)
-        .json({ message: "Language not assigned to this workshop" });
+        .json({ message: "Language not assigned to this event" });
     }
 
     res.status(200).json(keysToCamel(result[0]));
@@ -120,16 +120,16 @@ workshopsRouter.delete('/:workshopId/languages/:languageId', async (req, res) =>
 });
 
 // List all languages for a workshop
-workshopsRouter.get('/:workshopId/languages', async (req, res) => {
+eventsRouter.get('/:eventId/languages', async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { eventId } = req.params;
 
     const languages = await db.query(
       `SELECT l.*, wl.proficiency
        FROM languages l
-       JOIN workshop_languages wl ON wl.language_id = l.id
-       WHERE wl.workshop_id = $1`,
-      [workshopId]
+       JOIN event_languages wl ON wl.language_id = l.id
+       WHERE wl.event_id = $1`,
+      [eventId]
     );
 
     res.status(200).json(keysToCamel(languages));
@@ -140,18 +140,18 @@ workshopsRouter.get('/:workshopId/languages', async (req, res) => {
 
 // Workshop Attendance Routes
 // WorkshopAttendance (Volunteer ↔ Workshop)
-workshopsRouter.get("/:workshopId/attendees", async (req, res) => {
+eventsRouter.get("/:eventId/attendees", async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { eventId } = req.params;
     const data = await db.query(
         `
         SELECT 
             v.*
-        FROM workshops w
-        JOIN workshop_attendance wa ON wa.workshop_id = w.id
+        FROM events e
+        JOIN event_attendance wa ON wa.event_id = e.id
         JOIN volunteers v ON v.id = wa.volunteer_id
-        WHERE w.id = $1;
-        `, [workshopId]
+        WHERE e.id = $1;
+        `, [eventId]
     );
 
     res.status(200).json(keysToCamel(data));
@@ -160,16 +160,16 @@ workshopsRouter.get("/:workshopId/attendees", async (req, res) => {
   }
 });
 
-workshopsRouter.post("/:workshopId/attendees", async (req, res) => {
+eventsRouter.post("/:eventId/attendees", async (req, res) => {
   try {
-    const { workshopId } = req.params;
+    const { eventId } = req.params;
     const { volunteerId } = req.body;
     const data = await db.query(
         `
-        INSERT INTO workshop_attendance (volunteer_id, workshop_id)
+        INSERT INTO event_attendance (volunteer_id, event_id)
         VALUES ($1, $2)
         RETURNING *;
-        `, [volunteerId, workshopId]
+        `, [volunteerId, eventId]
     )
 
     res.status(200).json(keysToCamel(data));
@@ -178,19 +178,19 @@ workshopsRouter.post("/:workshopId/attendees", async (req, res) => {
   }
 });
 
-workshopsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) => {
+eventsRouter.delete("/:eventId/attendees/:volunteerId", async (req, res) => {
     try {
-        const { workshopId, volunteerId } = req.params;
+        const { eventId, volunteerId } = req.params;
         const data = await db.query(
             `
-            DELETE FROM workshop_attendance
-            WHERE workshop_id = $1 AND volunteer_id = $2
+            DELETE FROM event_attendance
+            WHERE event_id = $1 AND volunteer_id = $2
             RETURNING *
-            `, [workshopId, volunteerId]
+            `, [eventId, volunteerId]
         )
 
         if (!data.length) {
-          return res.status(404).send("Volunteer not found for this workshop")
+          return res.status(404).send("Volunteer not found for this event")
         }
 
         res.status(200).json(keysToCamel(data));
@@ -202,18 +202,18 @@ workshopsRouter.delete("/:workshopId/attendees/:volunteerId", async (req, res) =
 // Workshop Areas of Interest Routes
 // POST: assign an area to a workshop
 // /workshops/{workshopId}/areas-of-interest
-workshopsRouter.post("/:workshopId/areas-of-interest", async (req, res) => {
+eventsRouter.post("/:eventId/areas-of-interest", async (req, res) => {
     try {
         const {areaOfInterestID} = req.body; // get JSON body
-        const { workshopId } = req.params; // get URL parameters
+        const { eventId } = req.params; // get URL parameters
 
         if (!areaOfInterestID){
             return res.status(400).json({ message: "Area of interest is required" });
         }
 
         const newRelationship = await db.query(
-            "INSERT INTO workshop_areas_of_interest (workshop_id, area_of_interest_id) VALUES ($1, $2) RETURNING *",
-            [workshopId, areaOfInterestID]
+            "INSERT INTO event_areas_of_interest (event_id, area_of_interest_id) VALUES ($1, $2) RETURNING *",
+            [eventId, areaOfInterestID]
         );
 
         res.status(200).json(keysToCamel(newRelationship));
@@ -224,13 +224,13 @@ workshopsRouter.post("/:workshopId/areas-of-interest", async (req, res) => {
 
 // DELETE: remove an area from a workshop
 // /workshops/{workshopId}/areas-of-interest/{areaId}
-workshopsRouter.delete("/:workshopId/areas-of-interest/:areaId", async(req, res) => {
+eventsRouter.delete("/:eventId/areas-of-interest/:areaId", async(req, res) => {
     try {
-        const { workshopId, areaId } = req.params;
+        const { eventId, areaId } = req.params;
 
         const deletedRelationship = await db.query(
-            "DELETE FROM workshop_areas_of_interest WHERE workshop_id = $1 AND area_of_interest_id = $2 RETURNING *",
-            [workshopId, areaId]
+            "DELETE FROM event_areas_of_interest WHERE event_id = $1 AND area_of_interest_id = $2 RETURNING *",
+            [eventId, areaId]
         );
 
         if (deletedRelationship.length === 0) {
@@ -245,12 +245,12 @@ workshopsRouter.delete("/:workshopId/areas-of-interest/:areaId", async(req, res)
 
 // GET: list all areas for a workshop
 // /workshops/{workshopId}/areas-of-interest
-workshopsRouter.get("/:workshopId/areas-of-interest", async(req, res) => {
+eventsRouter.get("/:eventId/areas-of-interest", async(req, res) => {
     try {
-        const { workshopId } = req.params;
+        const { eventId } = req.params;
 
         const listAll = await db.query(
-            "SELECT * FROM workshop_areas_of_interest WHERE workshop_id = $1", [workshopId]
+            "SELECT * FROM event_areas_of_interest WHERE event_id = $1", [eventId]
         );
 
         res.status(200).json(keysToCamel(listAll));
