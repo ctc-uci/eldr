@@ -45,29 +45,35 @@ casesRouter.delete("/:id", async (req, res) => {
   }
 });
 
-//POST /cases - Create case
-casesRouter.post("/create", async (req, res) => {
+// POST /cases - Create case
+casesRouter.post("/", async (req, res) => {
   try {
-    const { id, title, description, email_contact } = req.body;
+    const { title, description, emailContact } = req.body;
+
+    if (!title || !emailContact) {
+      return res
+        .status(400)
+        .json({ message: "title and emailContact are required" });
+    }
 
     const createdCase = await db.query(
-      `INSERT INTO cases (id, title, description, email_contact) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [id, title, description, email_contact]
+      `INSERT INTO cases (title, description, email_contact)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [title, description ?? null, emailContact]
     );
 
-    res.status(200).json(keysToCamel(createdCase));
+    res.status(201).json(keysToCamel(createdCase));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-//PUT /cases/{id} -  Update a single case by id
-casesRouter.put("/update", async (req, res) => {
+// PUT /cases/:id - Update a single case by id
+casesRouter.put("/:id", async (req, res) => {
   try {
-    const { id, title, description } = req.body;
-
-    const emailContact =
-      req.body.emailContact ?? req.body.email_contact;
+    const { id } = req.params;
+    const { title, description, emailContact } = req.body;
 
     const updatedCase = await db.query(
       `UPDATE cases
@@ -78,6 +84,10 @@ casesRouter.put("/update", async (req, res) => {
        RETURNING *`,
       [title, description ?? null, emailContact, id]
     );
+
+    if (!updatedCase.length) {
+      return res.status(404).json({ message: "Case not found" });
+    }
 
     res.status(200).json(keysToCamel(updatedCase));
   } catch (e) {
