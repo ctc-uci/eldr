@@ -12,3 +12,9 @@ CREATE TABLE workshops (
     experience_level experience_level NOT NULL,
     parking TEXT
 );
+
+CREATE TABLE workshop_attendance (
+    volunteer_id INTEGER REFERENCES volunteers(id) ON DELETE CASCADE,
+    workshop_id INTEGER REFERENCES workshops(id) ON DELETE CASCADE,
+    PRIMARY KEY (volunteer_id, workshop_id)
+);
