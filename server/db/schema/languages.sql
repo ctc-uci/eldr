@@ -27,16 +27,6 @@ CREATE TABLE IF NOT EXISTS public.clinic_languages
     FOREIGN KEY (language_id) REFERENCES public.languages(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS public.event_languages
-(
-    event_id INT NOT NULL,
-    language_id INT NOT NULL,
-    proficiency PROFICIENCY_LEVEL NOT NULL,
-    PRIMARY KEY (event_id, language_id),
-    FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE,
-    FOREIGN KEY (language_id) REFERENCES public.languages(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS public.volunteer_language
 (
     volunteer_id INT NOT NULL,
