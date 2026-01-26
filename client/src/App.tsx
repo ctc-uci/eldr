@@ -20,6 +20,8 @@ import {
   Routes,
 } from "react-router-dom";
 
+import VolunteerLogin from "./components/volunteerLogin/VolunteerLogin";
+
 const App = () => {
   return (
     <CookiesProvider>
@@ -91,6 +93,10 @@ const App = () => {
                       allowedRoles={["admin"]}
                     />
                   }
+                />
+                <Route
+                  path="/volunteerLogin"
+                  element={<VolunteerLogin />}
                 />
               </Routes>
             </Router>
