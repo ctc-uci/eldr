@@ -99,10 +99,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await backend.post("/users/create", {
               email: result.user.email,
               firebaseUid: result.user.uid,
-            })
-            .catch((e) => {
-              console.warn("Skipping /users/create (DB not ready):", e?.message || e);
-
             });
           } catch (e) {
             await backend.delete(`/users/${result.user.uid}`);
