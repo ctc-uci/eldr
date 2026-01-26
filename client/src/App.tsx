@@ -6,6 +6,7 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
+import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -38,6 +39,10 @@ const App = () => {
                 <Route
                   path="/signup"
                   element={<Signup />}
+                />
+                <Route
+                  path="/email"
+                  element={<ProtectedRoute element={<EmailTemplateManagement />} />}
                 />
                 <Route
                   path="/dashboard"
