@@ -1,10 +1,14 @@
 import { Admin } from "@/components/admin/Admin";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { CatchAll } from "@/components/CatchAll";
+import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
+import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
+import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
@@ -24,6 +28,10 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
+                <Route
+                  path="/adminLogin"
+                  element={<AdminLogin />}
+                />
                 <Route
                   path="/login"
                   element={<Login />}
@@ -59,8 +67,30 @@ const App = () => {
                   }
                 />
                 <Route
+                  path="/admin-profile"
+                  element={<AdminProfile />}
+                />
+                <Route
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
+                />
+                <Route
+                  path = "/events"
+                  element={
+                    <ProtectedRoute
+                      element={<EventManagement />}
+                      allowedRoles={["admin"]}
+                    />
+                  }
+                />
+                <Route
+                  path = "/events/:id"
+                  element={
+                    <ProtectedRoute
+                      element={<EventDetail />}
+                      allowedRoles={["admin"]}
+                    />
+                  }
                 />
               </Routes>
             </Router>

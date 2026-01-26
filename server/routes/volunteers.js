@@ -1,6 +1,6 @@
 import { db } from "@/db/db-pgp";
-import { Router } from "express";
 import { keysToCamel } from "@/common/utils";
+import { Router } from "express";
 
 export const volunteersRouter = Router();
 
@@ -8,34 +8,76 @@ export const volunteersRouter = Router();
 volunteersRouter.post("/", async(req, res) => {
     try {
         const { 
+            firebaseUid,
             first_name, 
             last_name, 
             email, 
-            phone_number, 
-            is_notary, 
-            role, 
+            phone_number,  
             experience_level, 
             form_completed, 
             form_link, 
-            is_signed_confidentiality 
+            is_signed_confidentiality,
+            is_attorney,
+            is_notary
         } = req.body;
+
+        if (!firebaseUid || !email) {
+            return res.status(400).send("firebaseUid and email are required");
+        }
+
+        // Create the base user first (volunteer role defaults to 'user')
+        let userId;
+        try {
+            const userResult = await db.query(
+                `
+                INSERT INTO users (email, firebase_uid)
+                VALUES ($1, $2)
+                RETURNING *;
+                `,
+                [email, firebaseUid]
+            );
+
+            userId = userResult[0].id;
+        } catch (err) {
+            // If the user already exists (unique violation), reuse their ID
+            if (err.code === "23505") {
+                const existingUser = await db.query(
+                    `
+                    SELECT id
+                    FROM users
+                    WHERE email = $1;
+                    `,
+                    [email]
+                );
+
+                if (!existingUser.length) {
+                    throw err;
+                }
+
+                userId = existingUser[0].id;
+            } else {
+                throw err;
+            }
+        }
+
         const volunteerResult = await db.query(
             `
-            INSERT INTO volunteers (first_name, last_name, email, phone_number, is_notary, role, experience_level, form_completed, form_link, is_signed_confidentiality)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+            INSERT INTO volunteers (id, first_name, last_name, email, phone_number, experience_level, form_completed, form_link, is_signed_confidentiality, is_attorney, is_notary)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
             RETURNING *;
             `, 
             [
+                userId,
                 first_name, 
                 last_name, 
                 email, 
                 phone_number, 
-                is_notary, 
-                role, 
                 experience_level, 
                 form_completed, 
                 form_link, 
-                is_signed_confidentiality
+                is_signed_confidentiality,
+                is_attorney,
+                is_notary
             ]
         );
 
@@ -91,12 +133,12 @@ volunteersRouter.put("/:id", async(req, res) => {
             last_name, 
             email, 
             phone_number, 
-            is_notary, 
-            role, 
             experience_level, 
             form_completed, 
             form_link, 
-            is_signed_confidentiality 
+            is_signed_confidentiality,
+            is_attorney,
+            is_notary
         } = req.body;
         await db.query(
             `
@@ -105,12 +147,12 @@ volunteersRouter.put("/:id", async(req, res) => {
                 last_name = $3,
                 email = $4,
                 phone_number = $5,
-                is_notary = $6,
-                role = $7,
-                experience_level = $8,
-                form_completed = $9,
-                form_link = $10,
-                is_signed_confidentiality = $11
+                experience_level = $6,
+                form_completed = $7,
+                form_link = $8,
+                is_signed_confidentiality = $9,
+                is_attorney = $10,
+                is_notary = $11
             WHERE id = $1;
             `,
             [
@@ -119,12 +161,12 @@ volunteersRouter.put("/:id", async(req, res) => {
                 last_name, 
                 email, 
                 phone_number, 
-                is_notary, 
-                role, 
                 experience_level, 
                 form_completed, 
                 form_link, 
-                is_signed_confidentiality
+                is_signed_confidentiality,
+                is_attorney,
+                is_notary
             ]
         )
 
@@ -155,6 +197,7 @@ volunteersRouter.delete("/:id", async(req, res) => {
     }
 });
 
+// Volunteer Tags Routes
 // Assign volunteer a tag
 volunteersRouter.post("/:volunteerId/tags", async(req, res) => {
     try {
@@ -214,6 +257,71 @@ volunteersRouter.get("/:volunteerId/tags", async(req, res) => {
         res.status(200).json(keysToCamel(volunteerResult));
         
     } catch(e) {
+        // Volunteer does not exist
+        if (e.code === '23505') {
+            return res.status(404).json({ message: "Volunteer not found" });
+        }
         res.status(500).send(e.message);
     }
+});
+
+// Volunteer Languages Routes
+// Assign a language to a volunteer
+volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
+    try {
+        const { volunteerId } = req.params;
+        const { languageId, proficiency } = req.body;
+
+        const result = await db.query(
+            `INSERT INTO volunteer_language (volunteer_id, language_id, proficiency)
+             VALUES($1, $2, $3)
+             RETURNING *`,
+             [volunteerId, languageId, proficiency]
+        );
+        res.status(201).json(keysToCamel(result[0]));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+// Remove a language from a volunteer
+volunteersRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
+  try {
+    const { volunteerId, languageId } = req.params;
+
+    const result = await db.query(
+      `DELETE FROM volunteer_language
+       WHERE volunteer_id = $1 AND language_id = $2
+       RETURNING *`,
+      [volunteerId, languageId]
+    );
+
+    if (!result.length) {
+      return res
+        .status(404)
+        .json({ message: "Language not assigned to this volunteer" });
+    }
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// List all languages for a volunteer
+volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
+  try {
+    const { volunteerId } = req.params;
+
+    const languages = await db.query(
+      `SELECT l.*, vl.proficiency
+       FROM languages l 
+        JOIN volunteer_language vl ON vl.language_id = l.id 
+       WHERE vl.volunteer_id = $1`,
+      [volunteerId]
+    );
+    res.status(200).json(keysToCamel(languages));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });

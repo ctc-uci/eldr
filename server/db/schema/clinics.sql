@@ -1,16 +1,20 @@
-DROP TABLE IF EXISTS clinics CASCADE;
-DROP TYPE IF EXISTS experience_level_enum;
-
-CREATE TYPE experience_level AS ENUM('beginner', 'intermediate', 'advanced');
+CREATE TYPE experience_level AS ENUM ('beginner', 'intermediate', 'advanced');
 
 CREATE TABLE clinics (
-    id SERIAL PRIMARY KEY,
+    id serial PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     location TEXT,
     time TIMESTAMPTZ NOT NULL,
     date DATE NOT NULL,
-    attendees INTEGER NOT NULL DEFAULT 0 CHECK (attendees >= 0),
+    attendees INT NOT NULL DEFAULT 0 CHECK (attendees >= 0),
+    language TEXT,
     experience_level experience_level NOT NULL,
     parking TEXT
+);
+
+CREATE TABLE clinic_attendance (
+    volunteer_id INTEGER REFERENCES volunteers(id) ON DELETE CASCADE,
+    clinic_id INTEGER REFERENCES clinics(id) ON DELETE CASCADE,
+    PRIMARY KEY (volunteer_id, clinic_id)
 );
