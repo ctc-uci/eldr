@@ -10,7 +10,7 @@ import LoginStep from "./steps/LoginStep";
 import SuccessStep from "./steps/SuccessStep";
 import WelcomeStep from "./steps/WelcomeStep";
 
-const VolunteerLogin = () => {
+export const VolunteerLogin = () => {
   const [stepIndex, setStepIndex] = useState(0);
 
   const next = () => setStepIndex((i) => i + 1);
@@ -41,5 +41,3 @@ const VolunteerLogin = () => {
     </Flex>
   );
 };
-
-export default VolunteerLogin;

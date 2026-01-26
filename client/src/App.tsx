@@ -1,15 +1,21 @@
+// Login + Auth Components (Don't Touch!)
 import { Admin } from "@/components/admin/Admin";
-import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { CatchAll } from "@/components/CatchAll";
-import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { Dashboard } from "@/components/dashboard/Dashboard";
-import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 import { Login } from "@/components/login/Login";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Signup } from "@/components/signup/Signup";
+
+// Dev-made Components!
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
+import { AdminLogin } from "@/components/adminProfile/adminLogin";
+import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
+
+// Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
@@ -21,7 +27,6 @@ import {
   Routes,
 } from "react-router-dom";
 
-import VolunteerLogin from "./components/volunteerLogin/VolunteerLogin";
 
 const App = () => {
   return (
@@ -31,6 +36,7 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
+                {/* Dev-made Routes! */}
                 <Route
                   path="/adminLogin"
                   element={<AdminLogin />}
@@ -56,32 +62,6 @@ const App = () => {
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
                 />
                 <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute
-                    element={<Admin />}
-                    allowedRoles={["admin"]}
-                    />
-                  }
-                />
-                <Route
-                  path="/"
-                  element={
-                    <Navigate
-                      to="/login"
-                      replace
-                    />
-                  }
-                />
-                <Route
-                  path="/admin-profile"
-                  element={<AdminProfile />}
-                />
-                <Route
-                  path="*"
-                  element={<ProtectedRoute element={<CatchAll />} />}
-                />
-                <Route
                   path = "/events"
                   element={
                     <ProtectedRoute
@@ -103,6 +83,36 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
+                <Route
+                  path="/admin-profile"
+                  element={<AdminProfile />}
+                />
+
+                {/* Core Routes (Don't Touch!) */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute
+                    element={<Admin />}
+                    allowedRoles={["admin"]}
+                    />
+                  }
+                />
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      to="/login"
+                      replace
+                    />
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={<ProtectedRoute element={<CatchAll />} />}
+                />
+
               </Routes>
             </Router>
           </RoleProvider>
