@@ -10,8 +10,8 @@ casesRouter.get("/", async (req, res) => {
     const cases = await db.query(`SELECT * FROM cases ORDER BY id ASC`);
 
     res.status(200).json(keysToCamel(cases));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -25,8 +25,8 @@ casesRouter.get("/:id", async (req, res) => {
     ]);
 
     res.status(200).json(keysToCamel(oneCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -40,34 +40,40 @@ casesRouter.delete("/:id", async (req, res) => {
     ]);
 
     res.status(200).json(keysToCamel(deletedCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
-//POST /cases - Create case
-casesRouter.post("/create", async (req, res) => {
+// POST /cases - Create case
+casesRouter.post("/", async (req, res) => {
   try {
-    const { id, title, description, email_contact } = req.body;
+    const { title, description, emailContact } = req.body;
+
+    if (!title || !emailContact) {
+      return res
+        .status(400)
+        .json({ message: "title and emailContact are required" });
+    }
 
     const createdCase = await db.query(
-      `INSERT INTO cases (id, title, description, email_contact) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [id, title, description, email_contact]
+      `INSERT INTO cases (title, description, email_contact)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [title, description ?? null, emailContact]
     );
 
-    res.status(200).json(keysToCamel(createdCase));
-  } catch (err) {
-    res.status(500).send(err.message);
+    res.status(201).json(keysToCamel(createdCase));
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
-//PUT /cases/{id} -  Update a single case by id
-casesRouter.put("/update", async (req, res) => {
+// PUT /cases/:id - Update a single case by id
+casesRouter.put("/:id", async (req, res) => {
   try {
-    const { id, title, description } = req.body;
-
-    const emailContact =
-      req.body.emailContact ?? req.body.email_contact;
+    const { id } = req.params;
+    const { title, description, emailContact } = req.body;
 
     const updatedCase = await db.query(
       `UPDATE cases
@@ -79,12 +85,17 @@ casesRouter.put("/update", async (req, res) => {
       [title, description ?? null, emailContact, id]
     );
 
+    if (!updatedCase.length) {
+      return res.status(404).json({ message: "Case not found" });
+    }
+
     res.status(200).json(keysToCamel(updatedCase));
-  } catch (err) {
-    res.status(400).send(err.message);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
+// Areas of Interest Routes
 // POST: assign an area to a case
 // /cases/{caseId}/areas-of-interest
 casesRouter.post("/:caseId/areas-of-interest", async (req, res) => {
@@ -102,8 +113,8 @@ casesRouter.post("/:caseId/areas-of-interest", async (req, res) => {
         );
 
         res.status(200).json(keysToCamel(newRelationship));
-    } catch (err){
-        res.status(500).send(err.message);
+    } catch (e){
+        res.status(500).send(e.message);
     }
 });
 
@@ -123,8 +134,8 @@ casesRouter.delete("/:caseId/areas-of-interest/:areaId", async(req, res) => {
         }
 
         res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (err) {
-        res.status(500).send(err.message);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 });
 
@@ -143,7 +154,66 @@ casesRouter.get("/:caseId/areas-of-interest", async(req, res) => {
         );
 
         res.status(200).json(keysToCamel(listAll));
-    } catch (err) {
-        res.status(500).send(err.message);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
+});
+
+// Case Languages Routes
+// Assign a language to a case
+casesRouter.post("/:caseId/languages", async (req, res) => {
+  try {
+    const { caseId } = req.params;
+    const { languageId, proficiency } = req.body;
+
+    const caseLanguage = await db.query(
+      "INSERT INTO case_languages (case_id, language_id, proficiency) VALUES ($1, $2, $3) RETURNING *",
+      [caseId, languageId, proficiency]
+    );
+
+    res.status(201).json(keysToCamel(caseLanguage));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Delete a language from a case
+casesRouter.delete("/:caseId/languages/:languageId", async (req, res) => {
+  try {
+    const { caseId, languageId } = req.params;
+
+    const deletedLanguage = await db.query(
+      "DELETE FROM case_languages WHERE case_id = $1 AND language_id = $2 RETURNING *",
+      [caseId, languageId]
+    );
+
+    if (!deletedLanguage.length) {
+      return res
+        .status(404)
+        .json({ message: "Language not assigned to this case" });
+    }
+
+    res.status(200).json(keysToCamel(deletedLanguage[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Get all languages for a case
+casesRouter.get("/:caseId/languages", async (req, res) => {
+  try {
+    const { caseId } = req.params;
+
+    const caseLanguages = await db.query(
+      `SELECT l.*, cl.proficiency
+       FROM languages l 
+        JOIN case_languages cl ON cl.language_id = l.id 
+      WHERE cl.case_id = $1`,
+      [caseId]
+    );
+
+    res.status(200).json(keysToCamel(caseLanguages));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
