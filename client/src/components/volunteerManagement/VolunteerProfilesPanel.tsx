@@ -1,24 +1,51 @@
+import { useEffect, useState } from "react";
+
 import {
   Box,
   Flex,
-  Text,
   Table,
-  Thead,
   Tbody,
-  Tr,
-  Th,
   Td,
+  Text,
+  Th,
+  Thead,
+  Tr,
 } from "@chakra-ui/react";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 interface VolunteerProfilesPanelProps {
-  variant?: string;
+  variant?: "list" | "table";
 }
 
-export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPanelProps) => {
+export const VolunteerProfilesPanel = ({
+  variant = "list",
+}: VolunteerProfilesPanelProps) => {
+  type Volunteer = {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const { backend } = useBackendContext();
+
+  useEffect(() => {
+    (async () => {
+      const res = await backend.get<Volunteer[]>("/volunteers");
+      setVolunteers(res.data);
+    })();
+  }, [backend]);
+
   return (
     <Box>
       {variant === "list" && (
-        <Box mt={4} borderWidth="1px" borderColor="gray.200">
+        <Box
+          mt={4}
+          borderWidth="1px"
+          borderColor="gray.200"
+        >
           <Table size="md">
             <Thead>
               <Tr>
@@ -26,8 +53,8 @@ export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPa
               </Tr>
             </Thead>
             <Tbody>
-              {Array.from({ length: 12 }).map((_, i) => (
-                <Tr key={i}>
+              {volunteers.map((volunteer) => (
+                <Tr key={volunteer.id}>
                   <Td>
                     <Flex align="center">
                       <Box
@@ -38,11 +65,17 @@ export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPa
                         borderRadius="full"
                         mr={3}
                       />
-                      <Text fontSize="sm" flex="1">
-                        [Username]
+                      <Text
+                        fontSize="sm"
+                        flex="1"
+                      >
+                        {volunteer.firstName} {volunteer.lastName}
                       </Text>
-                      <Text fontSize="sm" color="gray.700">
-                        {i % 3 === 0 ? "Staff" : "Volunteer"}
+                      <Text
+                        fontSize="sm"
+                        color="gray.700"
+                      >
+                        Volunteer
                       </Text>
                     </Flex>
                   </Td>
@@ -54,22 +87,29 @@ export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPa
       )}
 
       {variant === "table" && (
-        <Box mt={4} borderWidth="1px" borderColor="gray.200">
+        <Box
+          mt={4}
+          borderWidth="1px"
+          borderColor="gray.200"
+        >
           <Table size="md">
             <Thead>
               <Tr>
                 <Th fontSize="xs">Name</Th>
                 <Th fontSize="xs">Role</Th>
-                <Th fontSize="xs">Join Date</Th>
+                <Th fontSize="xs">Email</Th>
                 <Th fontSize="xs">Active Date</Th>
                 <Th />
               </Tr>
             </Thead>
             <Tbody>
-              {Array.from({ length: 11 }).map((_, i) => (
-                <Tr key={i}>
+              {volunteers.map((volunteer) => (
+                <Tr key={volunteer.id}>
                   <Td>
-                    <Flex align="center" gap={3}>
+                    <Flex
+                      align="center"
+                      gap={3}
+                    >
                       <Box
                         w="24px"
                         h="24px"
@@ -77,13 +117,18 @@ export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPa
                         borderColor="gray.400"
                         borderRadius="full"
                       />
-                      <Text fontSize="sm">[Username]</Text>
+                      <Text fontSize="sm">
+                        {volunteer.firstName} {volunteer.lastName}
+                      </Text>
                     </Flex>
                   </Td>
-                  <Td fontSize="sm">{i % 4 === 0 ? "Staff" : "Volunteer"}</Td>
-                  <Td fontSize="sm">February 10, 2025</Td>
+                  <Td fontSize="sm">Volunteer</Td>
+                  <Td fontSize="sm">{volunteer.email}</Td>
                   <Td fontSize="sm">-------------</Td>
-                  <Td textAlign="right" fontSize="18px">
+                  <Td
+                    textAlign="right"
+                    fontSize="18px"
+                  >
                     🗑️
                   </Td>
                 </Tr>
@@ -94,4 +139,4 @@ export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPa
       )}
     </Box>
   );
-}
+};
