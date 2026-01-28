@@ -14,20 +14,28 @@ import {
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-interface VolunteerProfilesPanelProps {
+export type Volunteer = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  role?: string;
+  specializations?: string[];
+  languages?: string[];
+};
+
+interface VolunteerListProps {
   variant?: "list" | "table";
+  onSelect?: (volunteer: Volunteer) => void;
+  selectedId?: number;
 }
 
-export const VolunteerProfilesPanel = ({
+export const VolunteerList = ({
   variant = "list",
-}: VolunteerProfilesPanelProps) => {
-  type Volunteer = {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-
+  onSelect,
+  selectedId,
+}: VolunteerListProps) => {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const { backend } = useBackendContext();
 
@@ -35,7 +43,12 @@ export const VolunteerProfilesPanel = ({
     (async () => {
       const res = await backend.get<Volunteer[]>("/volunteers");
       setVolunteers(res.data);
+      const firstVolunteer = res.data[0];
+      if (firstVolunteer && !selectedId && onSelect) {
+        onSelect(firstVolunteer);
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend]);
 
   return (
@@ -54,7 +67,15 @@ export const VolunteerProfilesPanel = ({
             </Thead>
             <Tbody>
               {volunteers.map((volunteer) => (
-                <Tr key={volunteer.id}>
+                <Tr
+                  key={volunteer.id}
+                  onClick={() => onSelect?.(volunteer)}
+                  bg={selectedId === volunteer.id ? "blue.50" : undefined}
+                  _hover={{
+                    bg: selectedId === volunteer.id ? "blue.100" : "gray.50",
+                    cursor: "pointer",
+                  }}
+                >
                   <Td>
                     <Flex align="center">
                       <Box
@@ -104,7 +125,15 @@ export const VolunteerProfilesPanel = ({
             </Thead>
             <Tbody>
               {volunteers.map((volunteer) => (
-                <Tr key={volunteer.id}>
+                <Tr
+                  key={volunteer.id}
+                  onClick={() => onSelect?.(volunteer)}
+                  bg={selectedId === volunteer.id ? "blue.50" : undefined}
+                  _hover={{
+                    bg: selectedId === volunteer.id ? "blue.100" : "gray.50",
+                    cursor: "pointer",
+                  }}
+                >
                   <Td>
                     <Flex
                       align="center"

@@ -10,13 +10,16 @@ import {
 } from "@chakra-ui/react";
 
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
-import { VolunteerProfilesPanel } from "./VolunteerProfilesPanel";
+import { VolunteerList, type Volunteer } from "./VolunteerList";
 
 type ViewMode = "list" | "split" | "profile";
 
 export const VolunteerManagementView = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
+    null
+  );
 
   const handleAddClick = () => {
     setIsAdding(true);
@@ -121,8 +124,10 @@ export const VolunteerManagementView = () => {
             h="100%"
             overflowY="auto"
           >
-            <VolunteerProfilesPanel
+            <VolunteerList
               variant={viewMode === "list" ? "table" : "list"}
+              onSelect={setSelectedVolunteer}
+              selectedId={selectedVolunteer?.id}
             />
           </Box>
         )}
@@ -150,6 +155,7 @@ export const VolunteerManagementView = () => {
               <VolunteerProfilePanel
                 showBack={viewMode === "profile"}
                 onBack={() => setViewMode("list")}
+                volunteer={selectedVolunteer}
               />
             )}
           </Box>

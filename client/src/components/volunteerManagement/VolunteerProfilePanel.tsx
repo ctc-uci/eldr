@@ -9,6 +9,8 @@ import {
   Select,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { Volunteer } from "./VolunteerList";
 
 interface LabeledBoxProps {
   label: string;
@@ -56,20 +58,50 @@ interface VolunteerProfilePanelProps {
   showBack?: boolean;
   onBack?: () => void;
   onConfirm?: (data: VolunteerProfileFormData) => void;
+  volunteer?: Volunteer | null;
 }
 
-export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, onConfirm }: VolunteerProfilePanelProps) => {
+export const VolunteerProfilePanel = ({
+  variant = "profile",
+  showBack,
+  onBack,
+  onConfirm,
+  volunteer,
+}: VolunteerProfilePanelProps) => {
   const isNew = variant === "new";
-  const { register, handleSubmit } = useForm<VolunteerProfileFormData>();
+  const { register, handleSubmit, reset } = useForm<VolunteerProfileFormData>();
+
+  useEffect(() => {
+    if (volunteer) {
+      reset({
+        firstName: volunteer.firstName,
+        lastName: volunteer.lastName,
+        email: volunteer.email,
+        phoneNumber: volunteer.phoneNumber || "",
+        role: volunteer.role || "volunteer",
+      });
+    }
+  }, [volunteer, reset]);
 
   const onSubmit = (data: VolunteerProfileFormData) => {
     if (onConfirm) onConfirm(data);
   };
 
+  if (!isNew && !volunteer) {
+    return (
+      <Box p={6}>
+        <Text>Please select a volunteer from the list.</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       {/* Header row */}
-      <Flex align="center" mb={4}>
+      <Flex
+        align="center"
+        mb={4}
+      >
         {showBack && (
           <Box
             as="button"
@@ -82,7 +114,9 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
         )}
 
         <Heading size="md">
-          {isNew ? "New Profile" : "[Volunteer Name] Profile"}
+          {isNew
+            ? "New Profile"
+            : `${volunteer?.firstName} ${volunteer?.lastName}`}
         </Heading>
 
         <Box flex="1" />
@@ -131,14 +165,23 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                 />
               </>
             ) : (
-              <LabeledBox label="First Name" value="Peter" />
+              <LabeledBox
+                label="First Name"
+                value={volunteer?.firstName || ""}
+              />
             )}
           </Box>
 
           <Box w={isNew ? "160px" : "100%"}>
             {isNew ? (
               <>
-                <Text fontSize="xs" fontWeight="700" mb={1}>Last Name</Text>
+                <Text
+                  fontSize="xs"
+                  fontWeight="700"
+                  mb={1}
+                >
+                  Last Name
+                </Text>
                 <Input
                   h="34px"
                   fontSize="xs"
@@ -149,7 +192,10 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                 />
               </>
             ) : (
-              <LabeledBox label="Last Name" value="Anteater" />
+              <LabeledBox
+                label="Last Name"
+                value={volunteer?.lastName || ""}
+              />
             )}
           </Box>
           
@@ -186,14 +232,23 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                  />
                </>
              ) : (
-               <LabeledBox label="Email Address" value="peteranteater@uci.edu" />
+               <LabeledBox
+                 label="Email Address"
+                 value={volunteer?.email || ""}
+               />
              )}
           </Box>
 
           <Box w={isNew ? "160px" : "100%"}>
              {isNew ? (
                <>
-                 <Text fontSize="xs" fontWeight="700" mb={1}>Phone Number</Text>
+                 <Text
+                   fontSize="xs"
+                   fontWeight="700"
+                   mb={1}
+                 >
+                   Phone Number
+                 </Text>
                  <Input
                     h="34px"
                     fontSize="xs"
@@ -204,17 +259,27 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                  />
                </>
              ) : (
-               <LabeledBox label="Phone Number" value="621-438-3991" />
+               <LabeledBox
+                 label="Phone Number"
+                 value={volunteer?.phoneNumber || ""}
+               />
              )}
           </Box>
 
           {!isNew && (
             <>
               <Box w="120px">
-                <LabeledBox label="Birthday" value="02/14/1999" dropdown />
+                <LabeledBox
+                  label="Birthday"
+                  value=""
+                  dropdown
+                />
               </Box>
               <Box w="120px">
-                <LabeledBox label="Role" value="Volunteer" />
+                <LabeledBox
+                  label="Role"
+                  value={volunteer?.role || "Volunteer"}
+                />
               </Box>
             </>
           )}
