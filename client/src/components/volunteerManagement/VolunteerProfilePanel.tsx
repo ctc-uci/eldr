@@ -11,6 +11,7 @@ import {
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { Volunteer } from "./VolunteerList";
+import { ChevronLeftIcon } from '@chakra-ui/icons'
 
 interface LabeledBoxProps {
   label: string;
@@ -106,10 +107,13 @@ export const VolunteerProfilePanel = ({
           <Box
             as="button"
             onClick={onBack}
-            style={{ fontSize: 22, marginRight: 12 }}
             aria-label="Back"
+            marginRight={2}
+            _hover={{
+              bg: "gray.200",
+            }}
           >
-            ‹
+            <ChevronLeftIcon />
           </Box>
         )}
 

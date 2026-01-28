@@ -43,12 +43,7 @@ export const VolunteerList = ({
     (async () => {
       const res = await backend.get<Volunteer[]>("/volunteers");
       setVolunteers(res.data);
-      const firstVolunteer = res.data[0];
-      if (firstVolunteer && !selectedId && onSelect) {
-        onSelect(firstVolunteer);
-      }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend]);
 
   return (
