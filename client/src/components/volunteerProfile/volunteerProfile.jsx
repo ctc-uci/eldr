@@ -18,18 +18,17 @@ import {
   Link,
   Text,
   VStack,
-  Stack
+  Stack,
+  Tag,
+  HStack
 } from "@chakra-ui/react";
 
-import buttonArrow from "../profilePage/buttonArrow.png";
-import specializationsPlus from "../profilePage/specializationsPlus.png";
-import specializationsHighlights from "../profilePage/specializationsHighlights.png";
-import languagesHighlights from "../profilePage/languagesHighlights.png";
-import passwordEye from "../profilePage/passwordEye.png";
-import dashboardClock from "../profilePage/dashboardClock.png";
-import dashboardEventExpand from "../profilePage/dashboardEventExpand.png"
+import { IoPencil, IoAdd } from "react-icons/io5";
+import { FaRegEye } from "react-icons/fa";
+import { BsClockHistory, BsBoxArrowUpRight } from "react-icons/bs";
+import { RxAvatar } from "react-icons/rx";
+
 import logo_eldr from "../profilePage/logo_eldr.png"
-import default_profile_picture from "../profilePage/default_profile_picture.png"
 
 const InfoManagement = () => {
   return (
@@ -83,8 +82,16 @@ const InfoManagement = () => {
             align="center"
             justify="space-between">
             
-            <Image src={specializationsHighlights} height="29px"/>
-            <IconButton icon={<Image src={specializationsPlus} boxSize="24px"/>}
+            <HStack spacing={2}>
+              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+              </Tag>
+              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+              </Tag>
+              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+              </Tag>
+            </HStack>
+            
+            <IconButton icon={<IoAdd size="24"/>}
               variant="ghost" _hover={{bg: "transparent"}}
               isRound={true} _active={{transform: "scale(0.9)"}}
               display={{base:"none", md:"flex"}}/>
@@ -105,7 +112,15 @@ const InfoManagement = () => {
             borderRadius="md"
             align="center"
             justify="space-between">
-            <Image src={languagesHighlights} height="29px"/>
+            
+            <HStack spacing={2}>
+              <Tag size="md" borderRadius="full" bg="#E8E8E8" color="black">
+                English
+              </Tag>
+              <Tag size="md" borderRadius="full" bg="#E8E8E8" color="black">
+                Japanese
+              </Tag>
+            </HStack>
           </Flex>
         </FormControl>
       </GridItem>
@@ -154,7 +169,7 @@ const AccountManagement = () => {
               borderColor="#000000"
               _hover="#000000"/>
             <InputRightElement>
-              <IconButton icon={<Image src={passwordEye} boxSize="24px"/>}
+              <IconButton icon={<FaRegEye size="20"/>}
                 variant="ghost" _hover={{bg: "transparent"}}
                 isRound={true} _active={{transform: "scale(0.9)"}}/>
             </InputRightElement>
@@ -190,7 +205,7 @@ const DashboardManagement = () => {
           </Flex>
 
           <Flex align="center">
-            <Image src={dashboardClock} boxSize="24px" mr={2}/>
+            <BsClockHistory size="25" />
             <VStack spacing={0} mr={6} align="center" width="60px">
                <Text fontSize="12px" color="#757575" fontWeight="bold">
                 Total
@@ -236,7 +251,7 @@ const DashboardManagement = () => {
                 <Text fontSize="12px">9</Text>
             </Flex>
             <Flex justify="flex-end" width={{base: "100%", md: "115%"}}>
-              <IconButton icon={<Image src={dashboardEventExpand} boxSize="24px"/>} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
+              <IconButton icon={<BsBoxArrowUpRight size="20" />} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
             </Flex>
           </VStack>
        </Box>
@@ -318,7 +333,7 @@ const NavBar = () => {
         <Link fontWeight="medium">
           Workshops & Clinics
         </Link>
-        <Image src={default_profile_picture} height="60px"/>
+        <RxAvatar size="50" style={{ marginRight: '20px' }}/>
       </Flex>
     </Flex>
   )
@@ -348,8 +363,7 @@ const ProfileManagement = () => {
                   variant="outline"
                   borderColor="#212121"
                   borderWidth="1px"
-                  rightIcon={<Image src={buttonArrow}
-                    boxSize="12px" />}>
+                  rightIcon={<IoPencil />}>
                   <Flex gap={1} align="center">
                     Edit
                   </Flex>
