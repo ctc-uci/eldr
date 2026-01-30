@@ -1,14 +1,12 @@
 import { verifyToken } from "@/middleware";
 import { languagesRouter } from "@/routes/languages";
 import { areasOfInterestRouter } from "@/routes/areasOfInterest";
-import { clinicsRouter } from "@/routes/clinics";
 import { casesRouter } from "@/routes/cases";
-import { sampleRouter } from "@/routes/sample"; // TODO: delete sample router
 import { tagsRouter } from "@/routes/tags";
 import { usersRouter } from "@/routes/users";
-import { workshopsRouter } from "@/routes/workshops";
 import { volunteersRouter } from "@/routes/volunteers";
 import { adminsRouter } from "@/routes/admins";
+import { clinicsRouter } from "@/routes/clinics";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -42,7 +40,6 @@ app.use("/users", usersRouter);
 app.use("/languages", languagesRouter);
 app.use("/areas-of-interest", areasOfInterestRouter);
 app.use("/clinics", clinicsRouter);
-app.use("/workshops", workshopsRouter);
 app.use("/cases", casesRouter);
 app.use("/volunteers", volunteersRouter);
 app.use("/tags", tagsRouter);

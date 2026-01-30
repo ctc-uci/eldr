@@ -1,0 +1,190 @@
+import React, { useState } from "react";
+import {
+  Box,
+  Text,
+  VStack,
+  HStack,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  SimpleGrid,
+  Flex,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Button,
+  Select,
+} from "@chakra-ui/react";
+import {
+  EmailIcon, SearchIcon,
+  ChevronDownIcon} from "@chakra-ui/icons";
+import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers } from "react-icons/fa";
+
+export const EmailTemplateManagement = () => {
+  const [activeSection, setActiveSection] = useState("welcome");
+
+  return (
+    <Flex minH="100vh" bg="gray.100">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main content */}
+      <Box flex="1" p={6} >
+
+        {/* Search Bar */}
+        <InputGroup mb={6} >
+          <InputLeftElement pointerEvents="none" >
+            <SearchIcon color='gray.300' />
+          </InputLeftElement>
+          <Input placeholder="Search" />
+        </InputGroup>
+
+        {/* Conditionally render sections */}
+        {activeSection === "welcome" && (
+          <WelcomeSection setActiveSection={setActiveSection} />
+        )}
+        {activeSection === "newTemplate" && <NewTemplateSection />}
+      </Box>
+    </Flex>
+  );
+};
+  
+
+const Sidebar = () => (
+  <Box
+    w="300px"
+    bg="gray.200"
+    p={10}
+    minH="100vh"
+  >
+    <Text fontSize="2xl" fontWeight="bold" mb={8}>
+      ELDR
+    </Text>
+
+    <VStack align="stretch" spacing={2}>
+      <NavItem icon={<FaUser />} label="Profile" />
+      <NavItem icon={<FaUsers />} label="Volunteer Management" />
+      <NavItem icon={<EmailIcon />} label="Email Management" active />
+      <NavItem icon={<FaClipboard />} label="Clinics" />
+      <NavItem icon={<FaBriefcase />} label="Cases" />
+    </VStack>
+  </Box>
+);
+
+const NavItem = ({ icon, label, active = false }) => (
+  <HStack
+    spacing={3}
+    p={2}
+    borderRadius="md"
+    bg={active ? "gray.300" : "transparent"}
+    cursor="pointer"
+    _hover={{ bg: "gray.300" }}
+  >
+    {icon}
+    <Text>{label}</Text>
+  </HStack>
+);
+
+const WelcomeSection = ({ setActiveSection }) => (
+  <Box>
+    <Flex justify="space-between">
+    <Text fontSize="3xl" fontWeight="bold" mb={4}>
+      Welcome
+    </Text>
+
+    {/* Create New Button */}
+    <Menu>
+      <MenuButton as={Button} leftIcon={<FaEdit />}>
+        Create New
+      </MenuButton>
+      <MenuList>
+        <MenuItem>New folder</MenuItem>
+        <MenuItem onClick={() => setActiveSection("newTemplate")}>
+          New template
+        </MenuItem>
+      </MenuList>
+    </Menu>
+    </Flex>
+    
+     {/* Suggested Folders */}
+     <Section title="Suggested folders">
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+        <FolderCard />
+        <FolderCard />
+        <FolderCard />
+        <FolderCard />
+      </SimpleGrid>
+    </Section>
+
+    {/* Suggested Templates */}
+    <Section title="Suggested templates">
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <TemplateCard />
+        <TemplateCard />
+        <TemplateCard />
+        <TemplateCard />
+      </SimpleGrid>
+    </Section>
+  </Box>
+);
+
+const Section = ({ title, children }) => (
+  <Box mb={8}>
+    <HStack mb={4}>
+      <ChevronDownIcon />
+      <Text fontSize="lg" fontWeight="semibold">
+        {title}
+      </Text>
+    </HStack>
+    {children}
+  </Box>
+);
+
+const FolderCard = () => (
+  <HStack bg="gray.300" p={4} borderRadius="md" spacing={3}>
+    <FaFolder size={20} color="black" />
+    <Input placeholder="Folder Name" bg="white" border="2px solid black"/>
+  </HStack>
+);
+
+const TemplateCard = () => (
+  <Box bg="gray.300" p={4} borderRadius="md">
+    <Input placeholder="Template Name" bg="white" mb={3} border="2px solid black"/>
+    <Box h="120px" bg="gray.100" borderRadius="md" />
+  </Box>
+);
+
+const NewTemplateSection = () => (
+  <Box>
+    <Text fontSize="5xl" mb={4}>
+      Template Name
+    </Text>
+
+    <Text fontSize="2xl" mb={4}>
+      Templates
+    </Text>
+
+    <HStack spacing={3} mb={6} b>
+      <Button bg="white" border="2px solid black">Add Notification</Button>
+      <Button bg="white" border="2px solid black">Delete Draft</Button>
+      <Select placeholder="Select Folder" w="200px" borderRadius="md" size="md" bg="white" border="1px solid black">
+        <option value="folder1">Folder 1</option>
+        <option value="folder2">Folder 2</option>
+        <option value="folder3">Folder 3</option>
+      </Select>
+    </HStack>
+
+    {/* Template Content */}
+    <Box w="100%" mb={4}>
+      <Box bg="white" border="1px solid black" p={2} mb={5}>
+        B I U
+      </Box>
+
+      <Box bg="gray.300" border="2px solid black" minH="350px" />
+    </Box>
+
+
+    <Button bg="white" border="2px solid black">Save</Button>
+  </Box>
+);
