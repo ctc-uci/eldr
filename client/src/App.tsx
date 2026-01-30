@@ -10,6 +10,7 @@ import { Signup } from "@/components/signup/Signup";
 import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile"
 import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
@@ -20,7 +21,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
-import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile"
 import {
   Navigate,
   Route,
