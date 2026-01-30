@@ -14,6 +14,7 @@ import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
+import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -52,6 +53,10 @@ const App = () => {
                 <Route
                   path="/email"
                   element={<ProtectedRoute element={<EmailTemplateManagement />} />}
+                />
+                <Route
+                  path="/catalog"
+                  element={<CaseCatalog />}
                 />
                 <Route
                   path="/dashboard"
