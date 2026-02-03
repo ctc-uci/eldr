@@ -1,38 +1,56 @@
+import { useState } from "react";
+
 import {
   Button,
   Flex,
-  FormControl,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useDisclosure,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  VStack,
 } from "@chakra-ui/react";
 
-import CreateCase from "./views/CreateCase";
+import CaseView from "./views/CaseView";
+import CreateView from "./views/CreateView";
+import ListView from "./views/ListView";
+import SendView from "./views/SendView";
 
-type Props = {};
-
-export const CaseManagement = (props: Props) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+export const CaseManagement = () => {
+  // Options: 'list', 'create', 'view-case', 'sending'
+  const [view, setView] = useState("list");
 
   return (
-    <Flex>
-      <Button onClick={onOpen}>Create new case</Button>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
+    <Tabs
+      isFitted
+      h="100vh"
+      display="flex"
+      flexDirection="column"
+    >
+      <TabList>
+        <Tab>Cases</Tab>
+        <Tab>Clinics & Workshops</Tab>
+      </TabList>
+
+      <TabPanels
+        bg="#D2CFCF"
+        flex="1"
       >
-        <ModalOverlay />
-        <ModalContent>
-          <CreateCase />
-        </ModalContent>
-      </Modal>
-    </Flex>
+        <TabPanel>
+          {view === "list" && (
+            <ListView onCreateClick={() => setView("create")} />
+          )}
+
+          {view === "create" && <CreateView />}
+
+          {view === "view-case" && <CaseView />}
+
+          {view === "sending" && <SendView />}
+        </TabPanel>
+        <TabPanel>
+          <p>clinic & workshop stuffs</p>
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
   );
 };
