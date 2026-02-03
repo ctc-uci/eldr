@@ -1,23 +1,15 @@
 import { useState } from "react";
 
-import {
-  Button,
-  Flex,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  VStack,
-} from "@chakra-ui/react";
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 
 import CaseView from "./views/CaseView";
 import CreateView from "./views/CreateView";
+import EditView from "./views/EditView";
 import ListView from "./views/ListView";
 import SendView from "./views/SendView";
 
 export const CaseManagement = () => {
-  // Options: 'list', 'create', 'view-case', 'sending'
+  // Options: 'list', 'create', 'edit', 'view-case', 'send'
   const [view, setView] = useState("list");
 
   return (
@@ -36,16 +28,35 @@ export const CaseManagement = () => {
         bg="#D2CFCF"
         flex="1"
       >
-        <TabPanel>
+        <TabPanel
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          w="100%"
+          h="100%"
+        >
           {view === "list" && (
-            <ListView onCreateClick={() => setView("create")} />
+            <ListView
+              onCreateClick={() => setView("create")}
+              onEditClick={() => setView("edit")}
+              onCaseClick={() => setView("view-case")}
+            />
           )}
 
           {view === "create" && <CreateView />}
 
-          {view === "view-case" && <CaseView />}
+          {view === "edit" && <EditView />}
 
-          {view === "sending" && <SendView />}
+          {view === "view-case" && (
+            <CaseView
+              onEditClick={() => setView("edit")}
+              onSendClick={() => setView("send")}
+            />
+          )}
+
+          {view === "send" && (
+            <SendView onCaseClick={() => setView("view-case")} />
+          )}
         </TabPanel>
         <TabPanel>
           <p>clinic & workshop stuffs</p>

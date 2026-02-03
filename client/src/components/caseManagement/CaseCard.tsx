@@ -1,28 +1,24 @@
-import {
-  Flex,
-  HStack,
-  IconButton,
-  Modal,
-  ModalContent,
-  ModalOverlay,
-  Text,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { Flex, HStack, IconButton, Text } from "@chakra-ui/react";
 
 import { FiArrowRight, FiEdit3, FiTrash2 } from "react-icons/fi";
-
-import Case from "./views/CaseView";
 
 type Props = {
   title: string;
   assignee: string;
   description: string;
   tags: string[];
+  onEditClick: () => void;
+  onCaseClick: () => void;
 };
 
-const CaseCard = ({ title, assignee, description, tags }: Props) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-
+const CaseCard = ({
+  title,
+  assignee,
+  description,
+  tags,
+  onEditClick,
+  onCaseClick,
+}: Props) => {
   return (
     <Flex
       bg="white"
@@ -54,6 +50,7 @@ const CaseCard = ({ title, assignee, description, tags }: Props) => {
           variant="ghost"
           colorScheme="gray"
           size="lg"
+          onClick={onEditClick}
         />
         <IconButton
           aria-label="View case"
@@ -61,17 +58,8 @@ const CaseCard = ({ title, assignee, description, tags }: Props) => {
           variant="ghost"
           colorScheme="blue"
           size="lg"
-          onClick={onOpen}
+          onClick={onCaseClick}
         />
-        <Modal
-          isOpen={isOpen}
-          onClose={onClose}
-        >
-          <ModalOverlay />
-          <ModalContent>
-            <Case />
-          </ModalContent>
-        </Modal>
       </HStack>
     </Flex>
   );

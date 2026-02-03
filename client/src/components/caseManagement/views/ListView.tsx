@@ -29,13 +29,17 @@ const caseCards = [
 
 type Props = {
   onCreateClick: () => void;
+  onEditClick: () => void;
+  onCaseClick: () => void;
 };
 
-const ListView = ({ onCreateClick }: Props) => {
+const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
   return (
     <Flex
       direction="column"
       align="center"
+      w="100%"
+      h="100%"
     >
       <Flex
         w="95%"
@@ -65,6 +69,8 @@ const ListView = ({ onCreateClick }: Props) => {
               assignee={assignee}
               description={description}
               tags={tags}
+              onEditClick={onEditClick}
+              onCaseClick={onCaseClick}
             />
           ))}
         </VStack>

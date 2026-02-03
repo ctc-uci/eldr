@@ -1,8 +1,10 @@
 import { Box } from "@chakra-ui/react";
 
-type Props = {};
+type Props = {
+  onCaseClick: () => void;
+};
 
-const SendView = (props: Props) => {
+const SendView = ({ onCaseClick }: Props) => {
   return <Box>SendView</Box>;
 };
 
