@@ -1,5 +1,11 @@
+import { Button, Flex } from "@chakra-ui/react";
+
 type Props = {};
 
 export const CaseManagement = (props: Props) => {
-  return <div>CaseManagement</div>;
+  return (
+    <Flex>
+      <Button>Create new case</Button>
+    </Flex>
+  );
 };
