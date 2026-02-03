@@ -36,8 +36,8 @@ const CreateView = (props: Props) => {
 
   return (
     <Box
-      maxW="800px"
-      mx="auto"
+      bg="white"
+      w="100%"
       p={8}
     >
       <Link
@@ -52,19 +52,20 @@ const CreateView = (props: Props) => {
         <ArrowBackIcon mr={2} />
         Back to ELDR Case Catalog
       </Link>
+      
+      <Heading
+        as="h1"
+        size="lg"
+        mb={6}
+      >
+        Create New Case
+      </Heading>
+
       <Box
-        bg="gray"
-        p={8}
+        bg="#F0EFEF"
+        p={6}
         borderRadius="md"
       >
-        <Heading
-          as="h1"
-          size="lg"
-          mb={6}
-        >
-          Create New Case
-        </Heading>
-
         <VStack
           spacing={6}
           align="stretch"
@@ -88,7 +89,7 @@ const CreateView = (props: Props) => {
               <Select
                 bg="white"
                 value={formData.practiceArea}
-                placeholder="Slect..."
+                placeholder="Select..."
                 onChange={(e) =>
                   setFormData({ ...formData, practiceArea: e.target.value })
                 }
@@ -142,16 +143,21 @@ const CreateView = (props: Props) => {
           >
             <Button
               variant="outline"
-              onClick={handleCancel}
-            >
-              CANCEL
-            </Button>
-            <Button
-              colorScheme="gray"
-              bg="gray.700"
+              bg="transparent"
+              borderColor="black"
+              color="black"
               onClick={handleSubmit}
             >
               SAVE
+            </Button>
+            <Button
+              variant="outline"
+              bg="transparent"
+              borderColor="black"
+              color="black"
+              onClick={handleCancel}
+            >
+              CANCEL
             </Button>
           </HStack>
         </VStack>
