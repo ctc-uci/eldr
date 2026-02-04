@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Box,
   Button,
-  Card,
   Flex,
   Grid,
   GridItem,
@@ -46,10 +45,42 @@ import { useParams } from "react-router-dom";
 import { CreateEvent } from "./CreateEvent.jsx";
 import { EditEvent } from "./EditEvent.jsx";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 export const EventDetail = () => {
+  const { backend } = useBackendContext();
+
   const { id } = useParams();
+  const [eventInfo, setEventInfo] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await backend.get(`/clinics/${id}`);
+        setEventInfo(response.data);
+        console.log("Event info:", response.data);
+      } catch (error) {
+        console.error("Error fetching event info:", error);
+      }
+    };
+
+    fetchData();
+  }, [backend, id]);
+
+  const date = new Date(eventInfo.date);
+  const formattedDate = date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const time = new Date(eventInfo.time);
+  const formattedTime = time.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return !isEditing ? (
     <VStack
@@ -165,7 +196,7 @@ export const EventDetail = () => {
                     align="left"
                     w="100%"
                   >
-                    Workshop Name
+                    {eventInfo.name}
                   </Text>
                   {/* event details */}
                   <Grid
@@ -181,7 +212,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Month Day, Year
+                          {formattedDate}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -192,7 +223,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Location of event
+                          {eventInfo.location}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -203,7 +234,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Timeframe of Event
+                          {formattedTime}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -214,7 +245,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Capacity
+                          {eventInfo.attendees} Attendees
                         </Text>
                       </HStack>
                     </GridItem>
@@ -322,12 +353,7 @@ export const EventDetail = () => {
                           Description
                         </Text>
                         <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
+                          {eventInfo.description}
                         </Text>
                       </VStack>
                       {/* parking */}
@@ -342,12 +368,7 @@ export const EventDetail = () => {
                           Parking
                         </Text>
                         <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
+                          {eventInfo.parking}
                         </Text>
                       </VStack>
                     </VStack>
