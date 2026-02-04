@@ -5,16 +5,13 @@ import {
     Input,
     InputGroup,
     InputLeftElement,
-    Select,
-    Stack,
     HStack,
     VStack,
     Tag,
     Flex,
     Button,
     Divider,
-    Spacer,
-    Center
+    Spacer
   } from "@chakra-ui/react";
 
 import { useToast } from "@chakra-ui/react";
@@ -86,35 +83,34 @@ export const CaseCatalog = () => {
 
     {/* Bookmark Toggle */}
     const toggleBookmark = (caseId) => {
+        const wasSaved = savedCaseIds.has(caseId);
+
         setSavedCaseIds((prev) => {
             const next = new Set(prev);
-            const isSaved = next.has(caseId);
-    
-            if (isSaved) {
+            
+            if (wasSaved) {
                 next.delete(caseId);
             } else {
                 next.add(caseId);
             }
-    
+          
             return next;
         });
         
-        if (!savedCaseIds.has(caseId)) {
-            toast({
-              title: "Added to Saved Cases",
-              status: "success",
-              duration: 2000,
-              isClosable: true,
-              position: "bottom-right",
-            });
-        }
+        toast({
+            title: wasSaved
+              ? "Removed from Saved Cases"
+              : "Added to Saved Cases",
+            status: wasSaved ? "error" : "success",
+            duration: 2000,
+            isClosable: true,
+            position: "bottom-right",
+          });
     };
 
     const visibleCases = activeTab === "saved"
         ? mockCases.filter((c) => savedCaseIds.has(c.id))
         : mockCases;
-
-    const savedCases = mockCases.filter((c) => savedCaseIds.has(c.id));
 
     return (
         <Flex minH="100vh" bg="gray.100" direction="column">
@@ -328,32 +324,47 @@ const CaseCard = ({ caseData, onClick}) => (
     </Box>
 );
 
-const CaseDetail = ({ caseData, isSaved, onToggleBookmark }) => (
-    <Box>
-      <Flex justify="space-between" mb={4}>
-        <Text fontSize="xl" fontWeight="bold">
-          {caseData.title}
+const CaseDetail = ({ caseData, isSaved, onToggleBookmark }) => {
+    const toast = useToast();
+
+    return (
+        <Box>
+        <Flex justify="space-between" mb={4}>
+            <Text fontSize="xl" fontWeight="bold">
+            {caseData.title}
+            </Text>
+            
+            <Box cursor="pointer" onClick={() => onToggleBookmark(caseData.id)} >
+                {isSaved ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+            </Box>
+        
+        </Flex>
+        
+        <HStack mb={4}>
+            {caseData.tags.map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+            ))}
+        </HStack>
+        
+        <Divider mb={4} />
+  
+        <Text fontSize="sm" color="gray.700" mb={6}>
+            {caseData.description}
         </Text>
-        
-        <Box cursor="pointer" onClick={() => onToggleBookmark(caseData.id)} >
-            {isSaved ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
-        </Box>
-        
-      </Flex>
   
-      <HStack mb={4}>
-        {caseData.tags.map((tag) => (
-          <Tag key={tag}>{tag}</Tag>
-        ))}
-      </HStack>
-  
-      <Divider mb={4} />
-  
-      <Text fontSize="sm" color="gray.700" mb={6}>
-        {caseData.description}
-      </Text>
-  
-      <Button> Email Supervisor</Button>
+        <Button onClick={() =>
+            toast({
+                title: "Email Copied to Clipboard",
+                status: "success",
+                duration: 2000,
+                isClosable: true,
+                position: "bottom-right"
+            })
+        }> 
+            Email Supervisor
+        </Button>
     </Box>
-);
+
+    )
+};
   
