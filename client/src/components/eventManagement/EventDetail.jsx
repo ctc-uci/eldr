@@ -40,7 +40,7 @@ import {
 import { FaArchive } from "react-icons/fa";
 import { FaPencil } from "react-icons/fa6";
 import { HiMiniPlusCircle } from "react-icons/hi2";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
 import { EditEvent } from "./EditEvent.jsx";
@@ -49,11 +49,21 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 export const EventDetail = () => {
   const { backend } = useBackendContext();
+  const navigate = useNavigate();
 
   const { id } = useParams();
-  const [eventInfo, setEventInfo] = useState([]);
+  const [eventInfo, setEventInfo] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleArchiveEvent = async () => {
+    try {
+      await backend.delete(`/clinics/${id}`);
+      navigate("/events");
+    } catch (error) {
+      console.error("Error archiving event:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,6 +78,22 @@ export const EventDetail = () => {
 
     fetchData();
   }, [backend, id]);
+
+  // when eventInfo is null (loading / error state)
+  if (!eventInfo) {
+    return (
+      <Flex
+        w="100%"
+        h="100vh"
+        align="center"
+        justify="center"
+      >
+        <Text>Error finding event.</Text>
+      </Flex>
+    )
+  }
+
+  
 
   const date = new Date(eventInfo.date);
   const formattedDate = date.toLocaleDateString("en-US", {
@@ -270,6 +296,7 @@ export const EventDetail = () => {
                     w="100%"
                     borderRadius="sm"
                     border="2px solid black"
+                    onClick={handleArchiveEvent}
                   >
                     <Icon
                       as={FaArchive}
