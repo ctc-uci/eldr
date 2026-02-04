@@ -53,6 +53,14 @@ export const EventDetail = () => {
 
   const { id } = useParams();
   const [eventInfo, setEventInfo] = useState(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [capacity, setCapacity] = useState(0);
+  const [parking, setParking] = useState("");
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -65,18 +73,26 @@ export const EventDetail = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await backend.get(`/clinics/${id}`);
-        setEventInfo(response.data);
-        console.log("Event info:", response.data);
-      } catch (error) {
-        console.error("Error fetching event info:", error);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const response = await backend.get(`/clinics/${id}`);
+      setEventInfo(response.data);
+      setName(response.data.name);
+      setDescription(response.data.description);
+      setLocation(response.data.location);
+      setDate(response.data.date);
+      setTime(response.data.time);
+      setCapacity(response.data.attendees);
+      setParking(response.data.parking);
+      console.log("Event info:", response.data);
+    } catch (error) {
+      console.error("Error fetching event info:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend, id]);
 
   // when eventInfo is null (loading / error state)
@@ -93,17 +109,16 @@ export const EventDetail = () => {
     )
   }
 
-  
-
-  const date = new Date(eventInfo.date);
-  const formattedDate = date.toLocaleDateString("en-US", {
+  // to format date and time
+  const selectedDate = new Date(date);
+  const formattedDate = selectedDate.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const time = new Date(eventInfo.time);
-  const formattedTime = time.toLocaleTimeString("en-US", {
+  const startTime = new Date(time);
+  const formattedTime = startTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -222,7 +237,7 @@ export const EventDetail = () => {
                     align="left"
                     w="100%"
                   >
-                    {eventInfo.name}
+                    {name}
                   </Text>
                   {/* event details */}
                   <Grid
@@ -249,7 +264,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          {eventInfo.location}
+                          {location}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -271,7 +286,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          {eventInfo.attendees} Attendees
+                          {capacity} Attendees
                         </Text>
                       </HStack>
                     </GridItem>
@@ -380,7 +395,7 @@ export const EventDetail = () => {
                           Description
                         </Text>
                         <Text fontSize="md">
-                          {eventInfo.description}
+                          {description}
                         </Text>
                       </VStack>
                       {/* parking */}
@@ -395,7 +410,7 @@ export const EventDetail = () => {
                           Parking
                         </Text>
                         <Text fontSize="md">
-                          {eventInfo.parking}
+                          {parking}
                         </Text>
                       </VStack>
                     </VStack>
@@ -708,6 +723,6 @@ export const EventDetail = () => {
       </Tabs>
     </VStack>
   ) : (
-    <EditEvent setIsEditing={setIsEditing} />
+    <EditEvent setIsEditing={setIsEditing} eventInfo={eventInfo} onSave={fetchData} />
   );
 };
