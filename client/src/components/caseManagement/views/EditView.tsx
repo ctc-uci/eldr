@@ -64,7 +64,7 @@ const CreateView = (props: Props) => {
 
         <HStack justify="space-between" align="center" mb={6}>
           <Heading as="h1" size="lg">
-            Create New Case
+            Editting Case
           </Heading>
           <Button
             variant="outline"
