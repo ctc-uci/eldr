@@ -1,5 +1,6 @@
 import {
     Modal,
+    Button,
     ModalOverlay,
     ModalContent,
     Text,
@@ -26,7 +27,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 export const CreateEvent = ({isOpen, onClose}) => {
-    const [startDate, setStartDate] = useState(new Date())
     return (
         <Modal 
             isOpen={isOpen} 
@@ -76,12 +76,12 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                     >
                                         Event Name
                                     </Text>
-                                    <Input 
-                                        placeholder = "Type here..."
-                                        bg = "#D9D9D9"
+                                    <Input
+                                        placeholder="Type here..."
+                                        bg="#D9D9D9"
                                         borderRadius="lg"
-                                    >
-                                    </Input>
+                                        value={name}
+                                    />
                                 </VStack>
                             </GridItem>
                             <GridItem>
@@ -114,8 +114,6 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         Must forward reference to make this functional
                                     */}
                                     <DatePicker
-                                        selected={startDate}
-                                        onChange={(date) => setStartDate(date)}
                                         customInput={
                                             <InputGroup>
                                                 <Input
@@ -329,6 +327,9 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             </HStack>
                         </VStack>
                     </Flex>
+                    <Button onClick={() => handleSubmit()}>
+                        Submit
+                    </Button>
                 </VStack>
                 </ModalBody>
                 <ModalFooter>
