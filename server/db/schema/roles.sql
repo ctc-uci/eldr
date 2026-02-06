@@ -4,13 +4,13 @@ CREATE TABLE roles (
 )
 
 CREATE TABLE volunteer_roles (
-    volunteer_id INT REFERENCES public.volunteers(id) ON DELETE CASCADE,
-    role_id INT REFERENCES roles(id) ON DELETE CASCADE,
+    volunteer_id INT NOT NULL REFERENCES volunteers(id) ON DELETE CASCADE,
+    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (volunteer_id, role_id)
 );
 
 CREATE TABLE clinic_roles (
-    clinic_id INTEGER NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
-    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    clinic_id INT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
+    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (clinic_id, role_id)
 );
