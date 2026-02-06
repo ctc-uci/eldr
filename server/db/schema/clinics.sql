@@ -5,9 +5,12 @@ CREATE TABLE clinics (
     name TEXT NOT NULL,
     description TEXT,
     location TEXT,
-    time TIMESTAMPTZ NOT NULL,
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ NOT NULL,
     date DATE NOT NULL,
     attendees INT NOT NULL DEFAULT 0 CHECK (attendees >= 0),
+    capacity INT NOT NULL CHECK (capacity > 0),
+    max_target_roles INT NOT NULL,
     language TEXT,
     experience_level experience_level NOT NULL,
     parking TEXT
