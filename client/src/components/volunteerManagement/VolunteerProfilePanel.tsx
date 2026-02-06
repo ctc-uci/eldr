@@ -1,17 +1,20 @@
+import { useEffect, useState } from "react";
+
+import { ChevronLeftIcon } from "@chakra-ui/icons";
 import {
   Box,
+  Button,
   Flex,
   Heading,
-  Text,
-  Button,
-  SimpleGrid,
   Input,
   Select,
+  SimpleGrid,
+  Text,
 } from "@chakra-ui/react";
+
 import { useForm, UseFormRegisterReturn } from "react-hook-form";
-import { useEffect, useState } from "react";
+
 import { Volunteer } from "./VolunteerList";
-import { ChevronLeftIcon } from '@chakra-ui/icons'
 
 interface LabeledBoxProps {
   label: string;
@@ -26,12 +29,22 @@ interface VolunteerProfileFormData {
   role: string;
   email: string;
   phoneNumber: string;
+  experienceLevel: string;
 }
 
-function LabeledBox({ label, width = "100%", value, dropdown = false }: Readonly<LabeledBoxProps>) {
+function LabeledBox({
+  label,
+  width = "100%",
+  value,
+  dropdown = false,
+}: Readonly<LabeledBoxProps>) {
   return (
     <Box>
-      <Text fontSize="xs" fontWeight="700" mb={1}>
+      <Text
+        fontSize="xs"
+        fontWeight="700"
+        mb={1}
+      >
         {label}
       </Text>
       <Flex
@@ -45,7 +58,10 @@ function LabeledBox({ label, width = "100%", value, dropdown = false }: Readonly
         justify="space-between"
         bg="white"
       >
-        <Text fontSize="xs" color="gray.700">
+        <Text
+          fontSize="xs"
+          color="gray.700"
+        >
           {value}
         </Text>
         {dropdown && <Text fontSize="xs">▼</Text>}
@@ -64,26 +80,45 @@ interface ProfileFieldProps {
   options?: { value: string; label: string }[];
 }
 
-const ProfileField = ({ label, isEditing, registerProps, value, width = "100%", type = "text", options }: ProfileFieldProps) => {
+const ProfileField = ({
+  label,
+  isEditing,
+  registerProps,
+  value,
+  width = "100%",
+  type = "text",
+  options,
+}: ProfileFieldProps) => {
   return (
     <Box w={width}>
       {isEditing ? (
         <>
-          <Text fontSize="xs" fontWeight="700" mb={1}>
+          <Text
+            fontSize="xs"
+            fontWeight="700"
+            mb={1}
+          >
             {label}
           </Text>
-          {type === 'select' ? (
-             <Select
-                  h="34px"
-                  fontSize="xs"
-                  bg="white"
-                  borderRadius="sm"
-                  borderColor="gray.500"
-                  iconColor="black"
-                  {...registerProps}
+          {type === "select" ? (
+            <Select
+              h="34px"
+              fontSize="xs"
+              bg="white"
+              borderRadius="sm"
+              borderColor="gray.500"
+              iconColor="black"
+              {...registerProps}
+            >
+              {options?.map((opt) => (
+                <option
+                  key={opt.value}
+                  value={opt.value}
                 >
-                  {options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-             </Select>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
           ) : (
             <Input
               h="34px"
@@ -96,7 +131,10 @@ const ProfileField = ({ label, isEditing, registerProps, value, width = "100%", 
           )}
         </>
       ) : (
-        <LabeledBox label={label} value={value || ""} />
+        <LabeledBox
+          label={label}
+          value={value || ""}
+        />
       )}
     </Box>
   );
@@ -106,7 +144,7 @@ interface VolunteerProfilePanelProps {
   variant?: string;
   showBack?: boolean;
   onBack?: () => void;
-  onConfirm?: (data: VolunteerProfileFormData) => void;
+  onConfirm?: (data: VolunteerProfileFormData) => Promise<void> | void;
   volunteer?: Volunteer | null;
 }
 
@@ -133,8 +171,8 @@ export const VolunteerProfilePanel = ({
     }
   }, [volunteer, reset]);
 
-  const onSubmit = (data: VolunteerProfileFormData) => {
-    if (onConfirm) onConfirm(data);
+  const onSubmit = async (data: VolunteerProfileFormData) => {
+    if (onConfirm) await onConfirm(data);
     if (!isNew) setIsEditing(false);
   };
 
@@ -176,7 +214,11 @@ export const VolunteerProfilePanel = ({
         <Box flex="1" />
 
         {!isNew && !isEditing && (
-          <Button size="xs" variant="outline" onClick={() => setIsEditing(true)}>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => setIsEditing(true)}
+          >
             Edit ↗
           </Button>
         )}
@@ -184,27 +226,56 @@ export const VolunteerProfilePanel = ({
 
       {/* little tags row (lofi) */}
       {!isNew && (
-        <Flex gap={2} align="center" mb={6}>
+        <Flex
+          gap={2}
+          align="center"
+          mb={6}
+        >
           <Text fontSize="sm">Volunteer</Text>
-          <Box px={2} py={1} bg="gray.200" borderRadius="full" fontSize="xs">
+          <Box
+            px={2}
+            py={1}
+            bg="gray.200"
+            borderRadius="full"
+            fontSize="xs"
+          >
             Cases
           </Box>
-          <Box px={2} py={1} bg="gray.200" borderRadius="full" fontSize="xs">
+          <Box
+            px={2}
+            py={1}
+            bg="gray.200"
+            borderRadius="full"
+            fontSize="xs"
+          >
             Workshops
           </Box>
         </Flex>
       )}
 
       {/* Main form container */}
-      <Box bg="gray.50" borderWidth="0px" p={6} as="form" onSubmit={(isNew || isEditing) ? handleSubmit(onSubmit) : undefined}>
+      <Box
+        bg="gray.50"
+        borderWidth="0px"
+        p={6}
+        as="form"
+        onSubmit={isNew || isEditing ? handleSubmit(onSubmit) : undefined}
+      >
         {!isNew && (
-          <Heading size="sm" mb={4}>
+          <Heading
+            size="sm"
+            mb={4}
+          >
             Background Information
           </Heading>
         )}
 
         {/* Profile or New Profile fields */}
-        <SimpleGrid columns={isNew ? 3 : 2} spacing={6} maxW={isNew ? "720px" : "760px"}>
+        <SimpleGrid
+          columns={isNew ? 3 : 2}
+          spacing={6}
+          maxW={isNew ? "720px" : "760px"}
+        >
           <ProfileField
             label="First Name"
             isEditing={isNew || isEditing}
@@ -220,24 +291,30 @@ export const VolunteerProfilePanel = ({
             value={volunteer?.lastName}
             width={isNew ? "160px" : "100%"}
           />
-          
+
           {isNew && (
-             <Box w="120px">
-                <Text fontSize="xs" fontWeight="700" mb={1} >Role</Text>
-                <Select
-                  h="34px"
-                  fontSize="xs"
-                  bg="white"
-                  borderRadius="sm"
-                  borderColor="gray.500"
-                  iconColor="black"
-                  {...register("role")}
-                >
-                  <option value="volunteer">Volunteer</option>
-                  <option value="admin">Admin</option>
-                  <option value="staff">Staff</option>
-                </Select>
-             </Box>
+            <Box w="120px">
+              <Text
+                fontSize="xs"
+                fontWeight="700"
+                mb={1}
+              >
+                Role
+              </Text>
+              <Select
+                h="34px"
+                fontSize="xs"
+                bg="white"
+                borderRadius="sm"
+                borderColor="gray.500"
+                iconColor="black"
+                {...register("role")}
+              >
+                <option value="volunteer">Volunteer</option>
+                {/* <option value="admin">Admin</option>
+                  <option value="staff">Staff</option> */}
+              </Select>
+            </Box>
           )}
 
           <ProfileField
@@ -249,11 +326,11 @@ export const VolunteerProfilePanel = ({
           />
 
           <ProfileField
-             label="Phone Number"
-             isEditing={isNew || isEditing}
-             registerProps={register("phoneNumber")}
-             value={volunteer?.phoneNumber || ""}
-             width={isNew ? "160px" : "100%"}
+            label="Phone Number"
+            isEditing={isNew || isEditing}
+            registerProps={register("phoneNumber")}
+            value={volunteer?.phoneNumber || ""}
+            width={isNew ? "160px" : "100%"}
           />
 
           {!isNew && (
@@ -275,7 +352,7 @@ export const VolunteerProfilePanel = ({
                 options={[
                   { value: "volunteer", label: "Volunteer" },
                   { value: "admin", label: "Admin" },
-                  { value: "staff", label: "Staff" }
+                  { value: "staff", label: "Staff" },
                 ]}
               />
             </>
@@ -285,13 +362,23 @@ export const VolunteerProfilePanel = ({
         {!isNew && (
           <>
             <Box h={8} />
-            <Heading size="sm" mb={4}>
+            <Heading
+              size="sm"
+              mb={4}
+            >
               Volunteer Information
             </Heading>
 
-            <Flex gap={8} wrap="wrap">
+            <Flex
+              gap={8}
+              wrap="wrap"
+            >
               <Box>
-                <Text fontSize="xs" fontWeight="700" mb={1}>
+                <Text
+                  fontSize="xs"
+                  fontWeight="700"
+                  mb={1}
+                >
                   Specialization(s)
                 </Text>
                 <Flex
@@ -303,9 +390,24 @@ export const VolunteerProfilePanel = ({
                   gap={2}
                   align="center"
                 >
-                  <Box w="52px" h="16px" bg="gray.300" borderRadius="full" />
-                  <Box w="56px" h="16px" bg="gray.300" borderRadius="full" />
-                  <Box w="62px" h="16px" bg="gray.300" borderRadius="full" />
+                  <Box
+                    w="52px"
+                    h="16px"
+                    bg="gray.300"
+                    borderRadius="full"
+                  />
+                  <Box
+                    w="56px"
+                    h="16px"
+                    bg="gray.300"
+                    borderRadius="full"
+                  />
+                  <Box
+                    w="62px"
+                    h="16px"
+                    bg="gray.300"
+                    borderRadius="full"
+                  />
                   <Box
                     w="18px"
                     h="18px"
@@ -324,7 +426,11 @@ export const VolunteerProfilePanel = ({
 
                 <Box h={4} />
 
-                <Text fontSize="xs" fontWeight="700" mb={1}>
+                <Text
+                  fontSize="xs"
+                  fontWeight="700"
+                  mb={1}
+                >
                   Languages
                 </Text>
                 <Flex
@@ -335,17 +441,33 @@ export const VolunteerProfilePanel = ({
                   w="fit-content"
                   gap={2}
                 >
-                  <Box px={3} py={1} bg="gray.200" borderRadius="full" fontSize="xs">
+                  <Box
+                    px={3}
+                    py={1}
+                    bg="gray.200"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
                     English
                   </Box>
-                  <Box px={3} py={1} bg="gray.200" borderRadius="full" fontSize="xs">
+                  <Box
+                    px={3}
+                    py={1}
+                    bg="gray.200"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
                     Japanese
                   </Box>
                 </Flex>
               </Box>
 
               <Box>
-                <Text fontSize="xs" fontWeight="700" mb={1}>
+                <Text
+                  fontSize="xs"
+                  fontWeight="700"
+                  mb={1}
+                >
                   Law School & Company
                 </Text>
                 <Flex
@@ -357,7 +479,12 @@ export const VolunteerProfilePanel = ({
                   px={3}
                   w="240px"
                 >
-                  <Box w="60px" h="6px" bg="gray.800" borderRadius="sm" />
+                  <Box
+                    w="60px"
+                    h="6px"
+                    bg="gray.800"
+                    borderRadius="sm"
+                  />
                 </Flex>
               </Box>
             </Flex>
@@ -366,8 +493,15 @@ export const VolunteerProfilePanel = ({
 
         {/* Bottom right action */}
         {(isNew || isEditing) && (
-          <Flex mt={10} justify="flex-end">
-            <Button size="sm" variant="outline" type="submit">
+          <Flex
+            mt={10}
+            justify="flex-end"
+          >
+            <Button
+              size="sm"
+              variant="outline"
+              type="submit"
+            >
               {isNew ? "Confirm" : "Save"}
             </Button>
           </Flex>
@@ -375,4 +509,4 @@ export const VolunteerProfilePanel = ({
       </Box>
     </Box>
   );
-}
+};

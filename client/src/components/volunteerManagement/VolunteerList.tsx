@@ -29,12 +29,14 @@ interface VolunteerListProps {
   variant?: "list" | "table";
   onSelect?: (volunteer: Volunteer) => void;
   selectedId?: number;
+  refreshId?: number;
 }
 
 export const VolunteerList = ({
   variant = "list",
   onSelect,
   selectedId,
+  refreshId = 0,
 }: VolunteerListProps) => {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const { backend } = useBackendContext();
@@ -44,16 +46,20 @@ export const VolunteerList = ({
       const res = await backend.get<Volunteer[]>("/volunteers");
       setVolunteers(res.data);
     })();
-  }, [backend]);
+  }, [backend, refreshId]);
+
+  const handleDelete = async (e: React.MouseEvent, volunteerId: number) => {
+    e.stopPropagation();
+
+    await backend.delete(`/volunteers/${volunteerId}`);
+
+    setVolunteers((prev) => prev.filter((v) => v.id !== volunteerId));
+  };
 
   return (
     <Box>
       {variant === "list" && (
-        <Box
-          mt={4}
-          borderWidth="1px"
-          borderColor="gray.200"
-        >
+        <Box mt={4} borderWidth="1px" borderColor="gray.200">
           <Table size="md">
             <Thead>
               <Tr>
@@ -81,16 +87,10 @@ export const VolunteerList = ({
                         borderRadius="full"
                         mr={3}
                       />
-                      <Text
-                        fontSize="sm"
-                        flex="1"
-                      >
+                      <Text fontSize="sm" flex="1">
                         {volunteer.firstName} {volunteer.lastName}
                       </Text>
-                      <Text
-                        fontSize="sm"
-                        color="gray.700"
-                      >
+                      <Text fontSize="sm" color="gray.700">
                         Volunteer
                       </Text>
                     </Flex>
@@ -103,11 +103,7 @@ export const VolunteerList = ({
       )}
 
       {variant === "table" && (
-        <Box
-          mt={4}
-          borderWidth="1px"
-          borderColor="gray.200"
-        >
+        <Box mt={4} borderWidth="1px" borderColor="gray.200">
           <Table size="md">
             <Thead>
               <Tr>
@@ -130,10 +126,7 @@ export const VolunteerList = ({
                   }}
                 >
                   <Td>
-                    <Flex
-                      align="center"
-                      gap={3}
-                    >
+                    <Flex align="center" gap={3}>
                       <Box
                         w="24px"
                         h="24px"
@@ -152,6 +145,8 @@ export const VolunteerList = ({
                   <Td
                     textAlign="right"
                     fontSize="18px"
+                    onClick={(e) => handleDelete(e, volunteer.id)}
+                    _hover={{ opacity: 0.7, cursor: "pointer" }}
                   >
                     🗑️
                   </Td>

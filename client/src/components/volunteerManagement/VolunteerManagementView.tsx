@@ -1,12 +1,8 @@
 import { useState } from "react";
 
-import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Input,
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { VolunteerList, type Volunteer } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
@@ -14,8 +10,10 @@ import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 type ViewMode = "list" | "split";
 
 export const VolunteerManagementView = () => {
+  const backend = useBackendContext();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isAdding, setIsAdding] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
@@ -95,6 +93,7 @@ export const VolunteerManagementView = () => {
         >
           <VolunteerList
             variant={viewMode === "list" ? "table" : "list"}
+            refreshId={refreshTrigger}
             onSelect={(volunteer) => {
               setSelectedVolunteer(volunteer);
               if (viewMode === "list") {
@@ -119,9 +118,26 @@ export const VolunteerManagementView = () => {
                 variant="new"
                 showBack
                 onBack={() => setIsAdding(false)}
-                onConfirm={(data) => {
-                  console.log("New Profile Data:", data);
-                  setIsAdding(false);
+                onConfirm={async (data) => {
+                  try {
+                    const payload = {
+                      firebaseUid: "placeholder-uid6", // TODO: generate dynamically
+                      first_name: data.firstName,
+                      last_name: data.lastName,
+                      email: data.email,
+                      phone_number: data.phoneNumber,
+                      role: data.role,
+                      experience_level: "advanced", //data.experienceLevel
+                    };
+
+                    const res = await backend.backend.post("/volunteers", payload);
+
+                    setIsAdding(false);
+                    setRefreshTrigger((prev) => prev + 1);
+                    setSelectedVolunteer(res.data);
+                  } catch (error) {
+                    console.error("Error creating volunteer:", error);
+                  }
                 }}
               />
             ) : (
@@ -129,6 +145,28 @@ export const VolunteerManagementView = () => {
                 showBack
                 onBack={() => setViewMode("list")}
                 volunteer={selectedVolunteer}
+                onConfirm={async (data) => {
+                  if (!selectedVolunteer) return;
+
+                  await backend.backend.put(
+                    `/volunteers/${selectedVolunteer.id}`,
+                    {
+                      first_name: data.firstName,
+                      last_name: data.lastName,
+                      email: data.email,
+                      phone_number: data.phoneNumber,
+                      role: data.role,
+                      experience_level: "advanced", //data.experienceLevel
+                    }
+                  );
+
+                  // Update local state to reflect changes
+
+                  setSelectedVolunteer((prev) =>
+                    prev ? { ...prev, ...data } : prev
+                  );
+                  setRefreshTrigger((prev) => prev + 1);
+                }}
               />
             )}
           </Box>
