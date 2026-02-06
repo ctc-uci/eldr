@@ -73,6 +73,7 @@ type Props = {
 };
 
 const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [appliedLanguage, setAppliedLanguage] = useState("");
@@ -107,7 +108,12 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
 
     const matchesArea = appliedArea ? c.tags.area === appliedArea : true;
 
-    return matchesLanguage && matchesArea;
+    const matchesSearch = searchQuery
+      ? c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+
+    return matchesLanguage && matchesArea && matchesSearch;
   });
 
   return (
@@ -133,6 +139,8 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
             placeholder="Search a case"
             bg="white"
             border="2px solid black"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             _placeholder={{
               opacity: 1,
               color: "black",
