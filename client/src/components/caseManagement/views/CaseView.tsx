@@ -68,6 +68,7 @@ const CaseView = ({
             bg: "transparent",
           }}
           leftIcon={<IoArrowBackCircleOutline size={34} />}
+          onClick={onBackClick}
         >
           Back to ELDR Case Catalog
         </Button>

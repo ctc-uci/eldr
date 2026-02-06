@@ -1,37 +1,42 @@
 import { useState } from "react";
-import { ArrowBackIcon, SearchIcon, InfoIcon } from "@chakra-ui/icons";
-import { FiSend } from "react-icons/fi";
+
+import { ArrowBackIcon, InfoIcon, SearchIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
+  Checkbox,
   Heading,
   HStack,
   Input,
   InputGroup,
   InputLeftElement,
   Link,
+  Select,
   Table,
+  Tag,
+  TagCloseButton,
+  TagLabel,
   Tbody,
   Td,
   Text,
+  Textarea,
   Th,
   Thead,
   Tr,
   VStack,
-  Checkbox,
-  Select,
-  Textarea,
-  Tag,
-  TagLabel,
-  TagCloseButton,
 } from "@chakra-ui/react";
+
+import { FiSend } from "react-icons/fi";
 
 type Props = {
   onCaseClick: () => void;
+  onBackClick: () => void;
 };
 
-const SendView = ({ onCaseClick }: Props) => {
-  const [selectedVolunteers, setSelectedVolunteers] = useState<string[]>(["Samantha Puckett"]);
+const SendView = ({ onCaseClick, onBackClick }: Props) => {
+  const [selectedVolunteers, setSelectedVolunteers] = useState<string[]>([
+    "Samantha Puckett",
+  ]);
   const [searchQuery, setSearchQuery] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState(
@@ -80,7 +85,11 @@ const SendView = ({ onCaseClick }: Props) => {
   };
 
   return (
-    <Box w="100%" bg="white" p={8}>
+    <Box
+      w="100%"
+      bg="white"
+      p={8}
+    >
       <Link
         href="#"
         display="flex"
@@ -89,116 +98,167 @@ const SendView = ({ onCaseClick }: Props) => {
         fontSize="sm"
         color="black"
         _hover={{ textDecoration: "underline" }}
+        onClick={onBackClick}
       >
         <ArrowBackIcon mr={2} />
         Back to ELDR Case Catalog
       </Link>
 
-      <Heading as="h1" size="lg" mb={6}>
+      <Heading
+        as="h1"
+        size="lg"
+        mb={6}
+      >
         Send Case to Volunteer(s)
       </Heading>
-      <Box w="100%" bg="#F0EFEF" p="8">
-      <Box bg="#F0EFEF" p={6} borderRadius="md" mb={6}>
-        <HStack justify="space-between" align="center" mb={4}>
-          <Box>
-            <Heading as="h2" size="md" mb={2}>
-              Elder Financial Protection - Solar Panel Loan Dispute - PLC 24-0088454
-            </Heading>
-            <Button size="sm" variant="outline" bg="white" borderColor="gray.400">
-              Financial Protection
-            </Button>
-          </Box>
-          <Button
-            variant="outline"
-            bg="white"
-            borderColor="black"
-            color="black"
-            leftIcon={<InfoIcon />}
-            onClick={onCaseClick}
+      <Box
+        w="100%"
+        bg="#F0EFEF"
+        p="8"
+      >
+        <Box
+          bg="#F0EFEF"
+          p={6}
+          borderRadius="md"
+          mb={6}
+        >
+          <HStack
+            justify="space-between"
+            align="center"
+            mb={4}
           >
-            View Case
-          </Button>
-        </HStack>
-      </Box>
-
-      <VStack spacing={6} align="stretch">
-        <HStack spacing={4}>
-          <InputGroup flex={1}>
-            <InputLeftElement pointerEvents="none">
-              <SearchIcon color="gray.400" />
-            </InputLeftElement>
-            <Input
-              placeholder="Search Volunteer"
+            <Box>
+              <Heading
+                as="h2"
+                size="md"
+                mb={2}
+              >
+                Elder Financial Protection - Solar Panel Loan Dispute - PLC
+                24-0088454
+              </Heading>
+              <Button
+                size="sm"
+                variant="outline"
+                bg="white"
+                borderColor="gray.400"
+              >
+                Financial Protection
+              </Button>
+            </Box>
+            <Button
+              variant="outline"
               bg="white"
-              border="1px solid"
               borderColor="black"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </InputGroup>
-          <Select
-            w="150px"
-            bg="white"
-            border="1px solid"
-            borderColor="black"
-            placeholder="Filter"
-          >
-            <option value="available">Available</option>
-            <option value="busy">Busy</option>
-          </Select>
-        </HStack>
-
-        <Box overflowX="auto">
-          <Table variant="simple" bg="white">
-            <Thead bg="gray.200">
-              <Tr>
-                <Th>Volunteer Name</Th>
-                <Th>Availability Status</Th>
-                <Th>Languages</Th>
-                <Th>Specialization</Th>
-                <Th>Select</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {volunteers.map((volunteer) => (
-                <Tr key={volunteer.name}>
-                  <Td>{volunteer.name}</Td>
-                  <Td>{volunteer.status}</Td>
-                  <Td>{volunteer.languages}</Td>
-                  <Td>{volunteer.specialization}</Td>
-                  <Td>
-                    <Checkbox
-                      isChecked={volunteer.selected}
-                      onChange={() => handleVolunteerToggle(volunteer.name)}
-                    />
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+              color="black"
+              leftIcon={<InfoIcon />}
+              onClick={onCaseClick}
+            >
+              View Case
+            </Button>
+          </HStack>
         </Box>
 
-        <Box>
-          <HStack mb={4} align="center">
-            <Heading as="h3" size="md">
-              Compose Email
-            </Heading>
+        <VStack
+          spacing={6}
+          align="stretch"
+        >
+          <HStack spacing={4}>
+            <InputGroup flex={1}>
+              <InputLeftElement pointerEvents="none">
+                <SearchIcon color="gray.400" />
+              </InputLeftElement>
+              <Input
+                placeholder="Search Volunteer"
+                bg="white"
+                border="1px solid"
+                borderColor="black"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
             <Select
-              w="200px"
+              w="150px"
               bg="white"
               border="1px solid"
               borderColor="black"
-              defaultValue="A"
+              placeholder="Filter"
             >
-              <option value="A">Template A</option>
-              <option value="B">Template B</option>
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
             </Select>
           </HStack>
 
-          
-            <VStack spacing={0} align="stretch">
-              <Box bg="#D9D9D9" p={3} borderBottom="1px solid" borderColor="gray.400">
-                <Text fontSize="sm" fontWeight="bold" mb={2}>
+          <Box overflowX="auto">
+            <Table
+              variant="simple"
+              bg="white"
+            >
+              <Thead bg="gray.200">
+                <Tr>
+                  <Th>Volunteer Name</Th>
+                  <Th>Availability Status</Th>
+                  <Th>Languages</Th>
+                  <Th>Specialization</Th>
+                  <Th>Select</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {volunteers.map((volunteer) => (
+                  <Tr key={volunteer.name}>
+                    <Td>{volunteer.name}</Td>
+                    <Td>{volunteer.status}</Td>
+                    <Td>{volunteer.languages}</Td>
+                    <Td>{volunteer.specialization}</Td>
+                    <Td>
+                      <Checkbox
+                        isChecked={volunteer.selected}
+                        onChange={() => handleVolunteerToggle(volunteer.name)}
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+
+          <Box>
+            <HStack
+              mb={4}
+              align="center"
+            >
+              <Heading
+                as="h3"
+                size="md"
+              >
+                Compose Email
+              </Heading>
+              <Select
+                w="200px"
+                bg="white"
+                border="1px solid"
+                borderColor="black"
+                defaultValue="A"
+              >
+                <option value="A">Template A</option>
+                <option value="B">Template B</option>
+              </Select>
+            </HStack>
+
+            <VStack
+              spacing={0}
+              align="stretch"
+            >
+              <Box
+                bg="#D9D9D9"
+                p={3}
+                borderBottom="1px solid"
+                borderColor="gray.400"
+              >
+                <Text
+                  fontSize="sm"
+                  fontWeight="bold"
+                  mb={2}
+                >
                   New Message
                 </Text>
               </Box>
@@ -210,10 +270,17 @@ const SendView = ({ onCaseClick }: Props) => {
                 bg="white"
                 align="center"
               >
-                <Text fontSize="sm" fontWeight="normal" w="40px">
+                <Text
+                  fontSize="sm"
+                  fontWeight="normal"
+                  w="40px"
+                >
                   To
                 </Text>
-                <HStack spacing={2} flexWrap="wrap">
+                <HStack
+                  spacing={2}
+                  flexWrap="wrap"
+                >
                   {selectedVolunteers.map((name) => (
                     <Tag
                       key={name}
@@ -223,7 +290,9 @@ const SendView = ({ onCaseClick }: Props) => {
                       bg="white"
                     >
                       <TagLabel>{name}</TagLabel>
-                      <TagCloseButton onClick={() => handleRemoveRecipient(name)} />
+                      <TagCloseButton
+                        onClick={() => handleRemoveRecipient(name)}
+                      />
                     </Tag>
                   ))}
                 </HStack>
@@ -254,7 +323,11 @@ const SendView = ({ onCaseClick }: Props) => {
                 resize="none"
               />
 
-              <HStack justify="space-between" p={3} bg="white">
+              <HStack
+                justify="space-between"
+                p={3}
+                bg="white"
+              >
                 <Button
                   variant="outline"
                   bg="gray.400"
@@ -277,9 +350,8 @@ const SendView = ({ onCaseClick }: Props) => {
                 </Button>
               </HStack>
             </VStack>
-          
-        </Box>
-      </VStack>
+          </Box>
+        </VStack>
       </Box>
     </Box>
   );

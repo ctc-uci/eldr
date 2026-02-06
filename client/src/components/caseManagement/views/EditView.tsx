@@ -22,9 +22,10 @@ import { Case } from "../types/case";
 
 type Props = {
   caseData: Case | null;
+  onBackClick: () => void;
 };
 
-const CreateView = ({ caseData }: Props) => {
+const EditView = ({ caseData, onBackClick }: Props) => {
   const [formData, setFormData] = useState({
     title: "",
     practiceArea: "",
@@ -34,10 +35,6 @@ const CreateView = ({ caseData }: Props) => {
 
   const handleSubmit = () => {
     console.log("Form data:", formData);
-  };
-
-  const handleCancel = () => {
-    console.log("Cancelled");
   };
 
   const handleDelete = () => {
@@ -68,6 +65,7 @@ const CreateView = ({ caseData }: Props) => {
           fontSize="sm"
           color="black"
           _hover={{ textDecoration: "underline" }}
+          onClick={onBackClick}
         >
           <ArrowBackIcon mr={2} />
           Back to ELDR Case Catalog
@@ -215,7 +213,7 @@ const CreateView = ({ caseData }: Props) => {
                 bg="white"
                 borderColor="black"
                 color="black"
-                onClick={handleCancel}
+                onClick={onBackClick}
               >
                 CANCEL
               </Button>
@@ -226,4 +224,4 @@ const CreateView = ({ caseData }: Props) => {
     </Box>
   );
 };
-export default CreateView;
+export default EditView;

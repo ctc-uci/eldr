@@ -75,9 +75,16 @@ export const CaseManagement = () => {
             />
           )}
 
-          {view === "create" && <CreateView />}
+          {view === "create" && (
+            <CreateView onBackClick={() => setView("list")} />
+          )}
 
-          {view === "edit" && <EditView caseData={selectedCase} />}
+          {view === "edit" && (
+            <EditView
+              caseData={selectedCase}
+              onBackClick={() => setView("list")}
+            />
+          )}
 
           {view === "view-case" && (
             <CaseView
@@ -89,7 +96,10 @@ export const CaseManagement = () => {
           )}
 
           {view === "send" && (
-            <SendView onCaseClick={() => setView("view-case")} />
+            <SendView
+              onCaseClick={() => setView("view-case")}
+              onBackClick={() => setView("list")}
+            />
           )}
         </TabPanel>
         <TabPanel>

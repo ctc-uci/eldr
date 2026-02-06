@@ -16,9 +16,11 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-type Props = {};
+type Props = {
+  onBackClick: () => void;
+};
 
-const CreateView = (props: Props) => {
+const CreateView = ({ onBackClick }: Props) => {
   const [formData, setFormData] = useState({
     title: "",
     practiceArea: "",
@@ -28,10 +30,6 @@ const CreateView = (props: Props) => {
 
   const handleSubmit = () => {
     console.log("Form data:", formData);
-  };
-
-  const handleCancel = () => {
-    console.log("Cancelled");
   };
 
   return (
@@ -48,11 +46,12 @@ const CreateView = (props: Props) => {
         fontSize="sm"
         color="black"
         _hover={{ textDecoration: "underline" }}
+        onClick={onBackClick}
       >
         <ArrowBackIcon mr={2} />
         Back to ELDR Case Catalog
       </Link>
-      
+
       <Heading
         as="h1"
         size="lg"
@@ -155,7 +154,7 @@ const CreateView = (props: Props) => {
               bg="transparent"
               borderColor="black"
               color="black"
-              onClick={handleCancel}
+              onClick={onBackClick}
             >
               CANCEL
             </Button>

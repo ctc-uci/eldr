@@ -40,8 +40,8 @@ const caseCards: Case[] = [
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
-      language: "Spanish",
-      area: "Financial Protection",
+      language: "English",
+      area: "Appeals",
     },
   },
   {
@@ -51,7 +51,7 @@ const caseCards: Case[] = [
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
       language: "Spanish",
-      area: "Financial Protection",
+      area: "Appeals",
     },
   },
   {
@@ -60,8 +60,8 @@ const caseCards: Case[] = [
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
-      language: "Spanish",
-      area: "Financial Protection",
+      language: "French",
+      area: "Debt",
     },
   },
 ];
@@ -99,6 +99,16 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
     setAppliedArea("");
     setSelectedArea("");
   };
+
+  const filteredCases = caseCards.filter((c) => {
+    const matchesLanguage = appliedLanguage
+      ? c.tags.language === appliedLanguage
+      : true;
+
+    const matchesArea = appliedArea ? c.tags.area === appliedArea : true;
+
+    return matchesLanguage && matchesArea;
+  });
 
   return (
     <VStack
@@ -290,8 +300,9 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
           w="full"
           spacing={4}
         >
-          {caseCards.map((c: Case) => (
+          {filteredCases.map((c: Case) => (
             <CaseCard
+              key={c.title}
               caseData={c}
               onEditClick={() => onEditClick(c)}
               onCaseClick={() => onCaseClick(c)}
