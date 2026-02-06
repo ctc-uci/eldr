@@ -53,6 +53,7 @@ export const EventDetail = () => {
 
   const { id } = useParams();
   const [eventInfo, setEventInfo] = useState(null);
+  const [invalidEvent, setInvalidEvent] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -86,6 +87,8 @@ export const EventDetail = () => {
       setParking(response.data.parking);
       console.log("Event info:", response.data);
     } catch (error) {
+      setInvalidEvent(true);
+      console.log("Error archiving event:", error);
       console.error("Error fetching event info:", error);
     }
   };
@@ -94,6 +97,20 @@ export const EventDetail = () => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backend, id]);
+
+  // when event ID is invalid
+  if (invalidEvent) {
+    return (
+      <Flex
+        w="100%"
+        h="100vh"
+        align="center"
+        justify="center"
+      >
+        <Text>Error finding event.</Text>
+      </Flex>
+    )
+  }
 
   // when eventInfo is null (loading / error state)
   if (!eventInfo) {
@@ -104,7 +121,7 @@ export const EventDetail = () => {
         align="center"
         justify="center"
       >
-        <Text>Error finding event.</Text>
+        <Text>Loading event...</Text>
       </Flex>
     )
   }
