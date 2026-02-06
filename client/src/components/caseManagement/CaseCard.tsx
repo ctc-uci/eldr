@@ -2,23 +2,15 @@ import { Flex, HStack, IconButton, Tag, Text, VStack } from "@chakra-ui/react";
 
 import { FiArrowRight, FiEdit3, FiTrash2 } from "react-icons/fi";
 
+import { Case } from "./types/case";
+
 type Props = {
-  title: string;
-  assignee: string;
-  description: string;
-  tags: string[];
+  caseData: Case;
   onEditClick: () => void;
   onCaseClick: () => void;
 };
 
-const CaseCard = ({
-  title,
-  assignee,
-  description,
-  tags,
-  onEditClick,
-  onCaseClick,
-}: Props) => {
+const CaseCard = ({ caseData, onEditClick, onCaseClick }: Props) => {
   return (
     <Flex
       bg="white"
@@ -48,7 +40,7 @@ const CaseCard = ({
             cursor="pointer"
             onClick={onCaseClick}
           >
-            {title}
+            {caseData.title}
           </Text>
           <Text
             fontSize="md"
@@ -57,7 +49,7 @@ const CaseCard = ({
             fontWeight="bold"
             fontStyle="italic"
           >
-            Assigned to: {assignee}
+            Assigned to: {caseData.assignee}
           </Text>
         </VStack>
 
@@ -68,7 +60,7 @@ const CaseCard = ({
           size="16px"
           mb="12px"
         >
-          {description}
+          {caseData.description}
         </Text>
 
         <HStack
@@ -86,16 +78,22 @@ const CaseCard = ({
             spacing={2}
             flexWrap="wrap"
           >
-            {tags.map((tag) => (
-              <Tag
-                key={tag}
-                size="md"
-                bg="#D8D2CF"
-                borderRadius="full"
-              >
-                {tag}
-              </Tag>
-            ))}
+            <Tag
+              key={caseData.tags.area}
+              size="md"
+              bg="#D8D2CF"
+              borderRadius="full"
+            >
+              {caseData.tags.area}
+            </Tag>
+            <Tag
+              key={caseData.tags.language}
+              size="md"
+              bg="#D8D2CF"
+              borderRadius="full"
+            >
+              {caseData.tags.language}
+            </Tag>
           </HStack>
         </HStack>
       </VStack>

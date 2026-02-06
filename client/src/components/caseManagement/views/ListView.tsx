@@ -20,43 +20,56 @@ import { TbXboxX } from "react-icons/tb";
 
 import CaseCard from "../CaseCard";
 import SearchableDropdown from "../SearchableDropdown";
+import { Case } from "../types/case";
 
-const caseCards = [
+const caseCards: Case[] = [
   {
     title:
       "Elder Financial Protection - Solar Panel Loan Dispute - PLC 24-0088454",
     assignee: "Spencer Shay",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
-    tags: ["Financial Protection", "Spanish"],
+    tags: {
+      language: "Spanish",
+      area: "Financial Protection",
+    },
   },
   {
     title: "Case 2",
     assignee: "Spencer Shay",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
-    tags: ["Financial Protection", "Spanish"],
+    tags: {
+      language: "Spanish",
+      area: "Financial Protection",
+    },
   },
   {
     title: "Case 3",
     assignee: "Spencer Shay",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
-    tags: ["Financial Protection", "Spanish"],
+    tags: {
+      language: "Spanish",
+      area: "Financial Protection",
+    },
   },
   {
     title: "Case 4",
     assignee: "Spencer Shay",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
-    tags: ["Financial Protection", "Spanish"],
+    tags: {
+      language: "Spanish",
+      area: "Financial Protection",
+    },
   },
 ];
 
 type Props = {
   onCreateClick: () => void;
-  onEditClick: () => void;
-  onCaseClick: () => void;
+  onEditClick: (c: Case) => void;
+  onCaseClick: (c: Case) => void;
 };
 
 const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
@@ -277,15 +290,11 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
           w="full"
           spacing={4}
         >
-          {caseCards.map(({ title, assignee, description, tags }) => (
+          {caseCards.map((c: Case) => (
             <CaseCard
-              key={title}
-              title={title}
-              assignee={assignee}
-              description={description}
-              tags={tags}
-              onEditClick={onEditClick}
-              onCaseClick={onCaseClick}
+              caseData={c}
+              onEditClick={() => onEditClick(c)}
+              onCaseClick={() => onCaseClick(c)}
             />
           ))}
         </VStack>

@@ -1,7 +1,9 @@
 import { useState } from "react";
 
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, DeleteIcon } from "@chakra-ui/icons";
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   FormControl,
@@ -14,14 +16,15 @@ import {
   Text,
   Textarea,
   VStack,
-  Alert,
-  AlertIcon,
 } from "@chakra-ui/react";
-import { DeleteIcon } from "@chakra-ui/icons";
 
-type Props = {};
+import { Case } from "../types/case";
 
-const CreateView = (props: Props) => {
+type Props = {
+  caseData: Case | null;
+};
+
+const CreateView = ({ caseData }: Props) => {
   const [formData, setFormData] = useState({
     title: "",
     practiceArea: "",
@@ -43,12 +46,20 @@ const CreateView = (props: Props) => {
 
   return (
     <Box w="100%">
-      <Alert status="warning" bg="#F4D03F" color="black">
+      <Alert
+        status="warning"
+        bg="#F4D03F"
+        color="black"
+      >
         <AlertIcon color="black" />
         You are currently editing this case, save your changes before exiting.
       </Alert>
 
-      <Box bg="white" w="100%" p={8}>
+      <Box
+        bg="white"
+        w="100%"
+        p={8}
+      >
         <Link
           href="#"
           display="flex"
@@ -62,8 +73,15 @@ const CreateView = (props: Props) => {
           Back to ELDR Case Catalog
         </Link>
 
-        <HStack justify="space-between" align="center" mb={6}>
-          <Heading as="h1" size="lg">
+        <HStack
+          justify="space-between"
+          align="center"
+          mb={6}
+        >
+          <Heading
+            as="h1"
+            size="lg"
+          >
             Editting Case
           </Heading>
           <Button
@@ -77,11 +95,24 @@ const CreateView = (props: Props) => {
           </Button>
         </HStack>
 
-        <Box bg="#F0EFEF" p={6} borderRadius="md">
-          <VStack spacing={6} align="stretch">
-            <HStack spacing={4} align="start">
+        <Box
+          bg="#F0EFEF"
+          p={6}
+          borderRadius="md"
+        >
+          <VStack
+            spacing={6}
+            align="stretch"
+          >
+            <HStack
+              spacing={4}
+              align="start"
+            >
               <FormControl flex={2}>
-                <FormLabel fontSize="sm" fontWeight="bold">
+                <FormLabel
+                  fontSize="sm"
+                  fontWeight="bold"
+                >
                   Title
                 </FormLabel>
                 <Input
@@ -95,7 +126,10 @@ const CreateView = (props: Props) => {
                 />
               </FormControl>
               <FormControl flex={1}>
-                <FormLabel fontSize="sm" fontWeight="bold">
+                <FormLabel
+                  fontSize="sm"
+                  fontWeight="bold"
+                >
                   Practice Area
                 </FormLabel>
                 <Select
@@ -114,9 +148,15 @@ const CreateView = (props: Props) => {
                 </Select>
               </FormControl>
             </HStack>
-            <HStack spacing={4} align="start">
+            <HStack
+              spacing={4}
+              align="start"
+            >
               <FormControl flex={1}>
-                <FormLabel fontSize="sm" fontWeight="bold">
+                <FormLabel
+                  fontSize="sm"
+                  fontWeight="bold"
+                >
                   Description
                 </FormLabel>
                 <Textarea
@@ -132,9 +172,16 @@ const CreateView = (props: Props) => {
               </FormControl>
 
               <FormControl flex={1}>
-                <FormLabel fontSize="sm" fontWeight="bold">
+                <FormLabel
+                  fontSize="sm"
+                  fontWeight="bold"
+                >
                   Notes{" "}
-                  <Text as="span" fontWeight="normal" fontStyle="italic">
+                  <Text
+                    as="span"
+                    fontWeight="normal"
+                    fontStyle="italic"
+                  >
                     (Only Viewed by You)
                   </Text>
                 </FormLabel>
@@ -150,7 +197,10 @@ const CreateView = (props: Props) => {
                 />
               </FormControl>
             </HStack>
-            <HStack justify="flex-end" spacing={3}>
+            <HStack
+              justify="flex-end"
+              spacing={3}
+            >
               <Button
                 variant="outline"
                 bg="white"

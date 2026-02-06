@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 
+import { Case } from "./types/case";
 import CaseView from "./views/CaseView";
 import CreateView from "./views/CreateView";
 import EditView from "./views/EditView";
@@ -11,6 +12,18 @@ import SendView from "./views/SendView";
 export const CaseManagement = () => {
   // Options: 'list', 'create', 'edit', 'view-case', 'send'
   const [view, setView] = useState("list");
+
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  const handleCaseClick = (caseData: Case) => {
+    setSelectedCase(caseData);
+    setView("view-case");
+  };
+
+  const handleEditClick = (caseData: Case | null) => {
+    setSelectedCase(caseData);
+    setView("edit");
+  };
 
   return (
     <Tabs
@@ -57,19 +70,21 @@ export const CaseManagement = () => {
           {view === "list" && (
             <ListView
               onCreateClick={() => setView("create")}
-              onEditClick={() => setView("edit")}
-              onCaseClick={() => setView("view-case")}
+              onEditClick={handleEditClick}
+              onCaseClick={handleCaseClick}
             />
           )}
 
           {view === "create" && <CreateView />}
 
-          {view === "edit" && <EditView />}
+          {view === "edit" && <EditView caseData={selectedCase} />}
 
           {view === "view-case" && (
             <CaseView
-              onEditClick={() => setView("edit")}
+              caseData={selectedCase}
+              onEditClick={() => handleEditClick(selectedCase)}
               onSendClick={() => setView("send")}
+              onBackClick={() => setView("list")}
             />
           )}
 
