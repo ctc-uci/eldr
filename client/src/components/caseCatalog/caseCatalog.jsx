@@ -156,99 +156,104 @@ export const CaseCatalog = () => {
                 <Input placeholder="Search for a case..." borderRadius="lg" bg="white"/>
             </InputGroup>
         </HStack>
-
+        
         <Flex
             px={{ base: 4, md: 8 }}
             py={4}
-            gap={3}
             bg="#8F8F8F"
-            direction={{ base: "column", md: "row" }}
-            align={{ base: "stretch", md: "center" }}
-            wrap="wrap"
         >
-            <Button leftIcon={<HiOutlineArrowsUpDown/>}
-            colorScheme='gray' variant='outline' size="sm" w={{ base: "100%", md: "120px" }} bg="#EBEBEB"
-            onClick={() => setIsNewest((prev) => !prev)}>
-                {isNewest ? "By Newest" : "By Oldest"}
-            </Button>
+            <Flex
+                display={{ base: "none", md: "flex" }}
+                gap={3}
+                direction={{ base: "column", md: "row" }}
+                align={{ base: "stretch", md: "center" }}
+                wrap="wrap"
+                w="100%"
+            >
+                <Button leftIcon={<HiOutlineArrowsUpDown/>}
+                colorScheme='gray' variant='outline' size="sm" w={{ base: "100%", md: "120px" }} bg="#EBEBEB"
+                onClick={() => setIsNewest((prev) => !prev)}>
+                    {isNewest ? "By Newest" : "By Oldest"}
+                </Button>
 
-            <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
+                <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
 
-            <Box w={{ base: "100%", md: "150px" }}>
-                <ReactSelect
-                    options={languageOptions}
-                    placeholder="Languages"
-                    value={languageFilter}
-                    onChange={setLanguageFilter}
-                    isClearable
-                    isSearchable
-                    styles={{
-                    control: (base) => ({
-                        ...base,
-                        backgroundColor: "white",
-                        minHeight: "32px",
-                        height: "32px",
-                        borderRadius: "6px",
-                        fontSize: "0.875rem",
-                    }),
-                    valueContainer: (base) => ({
-                        ...base,
-                        padding: "0 8px",
-                    }),
-                    indicatorsContainer: (base) => ({
-                        ...base,
-                        height: "32px",
-                    }),
-                    menu: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                    }),
-                    }}
-                />
+                <Box w={{ base: "100%", md: "150px" }}>
+                    <ReactSelect
+                        options={languageOptions}
+                        placeholder="Languages"
+                        value={languageFilter}
+                        onChange={setLanguageFilter}
+                        isClearable
+                        isSearchable
+                        styles={{
+                        control: (base) => ({
+                            ...base,
+                            backgroundColor: "white",
+                            minHeight: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                        }),
+                        valueContainer: (base) => ({
+                            ...base,
+                            padding: "0 8px",
+                        }),
+                        indicatorsContainer: (base) => ({
+                            ...base,
+                            height: "32px",
+                        }),
+                        menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                        }),
+                        }}
+                    />
+                    </Box>
+
+                    <Box w={{ base: "100%", md: "180px" }}>
+                    <ReactSelect
+                        options={interestOptions}
+                        placeholder="Areas of Interest"
+                        value={interestFilter}
+                        onChange={setInterestFilter}
+                        isClearable
+                        isSearchable
+                        styles={{
+                        control: (base) => ({
+                            ...base,
+                            backgroundColor: "white",
+                            minHeight: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                        }),
+                        valueContainer: (base) => ({
+                            ...base,
+                            padding: "0 8px",
+                        }),
+                        indicatorsContainer: (base) => ({
+                            ...base,
+                            height: "32px",
+                        }),
+                        menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                        }),
+                        }}
+                    />
                 </Box>
+                
+                <Spacer display={{ base: "none", md: "block" }} />
+                
+                <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
+                    Apply
+                </Button>
 
-                <Box w={{ base: "100%", md: "180px" }}>
-                <ReactSelect
-                    options={interestOptions}
-                    placeholder="Areas of Interest"
-                    value={interestFilter}
-                    onChange={setInterestFilter}
-                    isClearable
-                    isSearchable
-                    styles={{
-                    control: (base) => ({
-                        ...base,
-                        backgroundColor: "white",
-                        minHeight: "32px",
-                        height: "32px",
-                        borderRadius: "6px",
-                        fontSize: "0.875rem",
-                    }),
-                    valueContainer: (base) => ({
-                        ...base,
-                        padding: "0 8px",
-                    }),
-                    indicatorsContainer: (base) => ({
-                        ...base,
-                        height: "32px",
-                    }),
-                    menu: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                    }),
-                    }}
-                />
-            </Box>
-            
-            <Spacer display={{ base: "none", md: "block" }} />
-            
-            <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                Apply
-            </Button>
-
-            <Button leftIcon={<FaX/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                Clear
-            </Button>
+                <Button leftIcon={<FaX/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
+                    Clear
+                </Button>
+            </Flex>
         </Flex>
 
         {/* Main Content */}
