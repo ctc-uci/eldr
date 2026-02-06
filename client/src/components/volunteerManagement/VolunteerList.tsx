@@ -23,6 +23,7 @@ export type Volunteer = {
   role?: string;
   specializations?: string[];
   languages?: string[];
+  experienceLevel?: string;
 };
 
 interface VolunteerListProps {

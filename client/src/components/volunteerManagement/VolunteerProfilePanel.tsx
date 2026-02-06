@@ -23,7 +23,7 @@ interface LabeledBoxProps {
   dropdown?: boolean;
 }
 
-interface VolunteerProfileFormData {
+export interface VolunteerProfileFormData {
   firstName: string;
   lastName: string;
   role: string;
@@ -167,6 +167,7 @@ export const VolunteerProfilePanel = ({
         email: volunteer.email,
         phoneNumber: volunteer.phoneNumber || "",
         role: volunteer.role || "volunteer",
+        experienceLevel: volunteer.experienceLevel || "beginner",
       });
     }
   }, [volunteer, reset]);
@@ -331,6 +332,20 @@ export const VolunteerProfilePanel = ({
             registerProps={register("phoneNumber")}
             value={volunteer?.phoneNumber || ""}
             width={isNew ? "160px" : "100%"}
+          />
+
+          <ProfileField
+            label="Experience Level"
+            isEditing={isNew || isEditing}
+            registerProps={register("experienceLevel")}
+            value={volunteer?.experienceLevel || "beginner"}
+            width={isNew ? "160px" : "100%"}
+            type="select"
+            options={[
+              { value: "beginner", label: "Beginner" },
+              { value: "intermediate", label: "Intermediate" },
+              { value: "advanced", label: "Advanced" },
+            ]}
           />
 
           {!isNew && (

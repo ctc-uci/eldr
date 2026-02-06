@@ -127,7 +127,7 @@ export const VolunteerManagementView = () => {
                       email: data.email,
                       phone_number: data.phoneNumber,
                       role: data.role,
-                      experience_level: "advanced", //data.experienceLevel
+                      experience_level: data.experienceLevel,
                     };
 
                     const res = await backend.backend.post("/volunteers", payload);
@@ -156,7 +156,7 @@ export const VolunteerManagementView = () => {
                       email: data.email,
                       phone_number: data.phoneNumber,
                       role: data.role,
-                      experience_level: "advanced", //data.experienceLevel
+                      experience_level: data.experienceLevel,
                     }
                   );
 
