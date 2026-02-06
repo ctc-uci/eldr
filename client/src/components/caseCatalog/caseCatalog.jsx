@@ -11,10 +11,10 @@ import {
     Flex,
     Button,
     Divider,
-    Spacer
+    Spacer,
+    useToast
   } from "@chakra-ui/react";
 
-import { useToast } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import { FaCheck } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
@@ -157,104 +157,106 @@ export const CaseCatalog = () => {
             </InputGroup>
         </HStack>
         
-        <Flex
-            px={{ base: 4, md: 8 }}
-            py={4}
-            bg="#8F8F8F"
-        >
+        {activeTab === "all" && (
             <Flex
-                display={{ base: "none", md: "flex" }}
-                gap={3}
-                direction={{ base: "column", md: "row" }}
-                align={{ base: "stretch", md: "center" }}
-                wrap="wrap"
-                w="100%"
+                px={{ base: 4, md: 8 }}
+                py={4}
+                bg="#8F8F8F"
             >
-                <Button leftIcon={<HiOutlineArrowsUpDown/>}
-                colorScheme='gray' variant='outline' size="sm" w={{ base: "100%", md: "120px" }} bg="#EBEBEB"
-                onClick={() => setIsNewest((prev) => !prev)}>
-                    {isNewest ? "By Newest" : "By Oldest"}
-                </Button>
+                <Flex
+                    display={{ base: "none", md: "flex" }}
+                    gap={3}
+                    direction={{ base: "column", md: "row" }}
+                    align={{ base: "stretch", md: "center" }}
+                    wrap="wrap"
+                    w="100%"
+                >
+                    <Button leftIcon={<HiOutlineArrowsUpDown/>}
+                    colorScheme='gray' variant='outline' size="sm" w={{ base: "100%", md: "120px" }} bg="#EBEBEB"
+                    onClick={() => setIsNewest((prev) => !prev)}>
+                        {isNewest ? "By Newest" : "By Oldest"}
+                    </Button>
 
-                <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
+                    <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
 
-                <Box w={{ base: "100%", md: "150px" }}>
-                    <ReactSelect
-                        options={languageOptions}
-                        placeholder="Languages"
-                        value={languageFilter}
-                        onChange={setLanguageFilter}
-                        isClearable
-                        isSearchable
-                        styles={{
-                        control: (base) => ({
-                            ...base,
-                            backgroundColor: "white",
-                            minHeight: "32px",
-                            height: "32px",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                        }),
-                        valueContainer: (base) => ({
-                            ...base,
-                            padding: "0 8px",
-                        }),
-                        indicatorsContainer: (base) => ({
-                            ...base,
-                            height: "32px",
-                        }),
-                        menu: (base) => ({
-                            ...base,
-                            zIndex: 9999,
-                        }),
-                        }}
-                    />
+                    <Box w={{ base: "100%", md: "150px" }}>
+                        <ReactSelect
+                            options={languageOptions}
+                            placeholder="Languages"
+                            value={languageFilter}
+                            onChange={setLanguageFilter}
+                            isClearable
+                            isSearchable
+                            styles={{
+                            control: (base) => ({
+                                ...base,
+                                backgroundColor: "white",
+                                minHeight: "32px",
+                                height: "32px",
+                                borderRadius: "6px",
+                                fontSize: "0.875rem",
+                            }),
+                            valueContainer: (base) => ({
+                                ...base,
+                                padding: "0 8px",
+                            }),
+                            indicatorsContainer: (base) => ({
+                                ...base,
+                                height: "32px",
+                            }),
+                            menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                            }),
+                            }}
+                        />
+                        </Box>
+
+                        <Box w={{ base: "100%", md: "180px" }}>
+                        <ReactSelect
+                            options={interestOptions}
+                            placeholder="Areas of Interest"
+                            value={interestFilter}
+                            onChange={setInterestFilter}
+                            isClearable
+                            isSearchable
+                            styles={{
+                            control: (base) => ({
+                                ...base,
+                                backgroundColor: "white",
+                                minHeight: "32px",
+                                height: "32px",
+                                borderRadius: "6px",
+                                fontSize: "0.875rem",
+                            }),
+                            valueContainer: (base) => ({
+                                ...base,
+                                padding: "0 8px",
+                            }),
+                            indicatorsContainer: (base) => ({
+                                ...base,
+                                height: "32px",
+                            }),
+                            menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                            }),
+                            }}
+                        />
                     </Box>
+                    
+                    <Spacer display={{ base: "none", md: "block" }} />
+                    
+                    <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
+                        Apply
+                    </Button>
 
-                    <Box w={{ base: "100%", md: "180px" }}>
-                    <ReactSelect
-                        options={interestOptions}
-                        placeholder="Areas of Interest"
-                        value={interestFilter}
-                        onChange={setInterestFilter}
-                        isClearable
-                        isSearchable
-                        styles={{
-                        control: (base) => ({
-                            ...base,
-                            backgroundColor: "white",
-                            minHeight: "32px",
-                            height: "32px",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                        }),
-                        valueContainer: (base) => ({
-                            ...base,
-                            padding: "0 8px",
-                        }),
-                        indicatorsContainer: (base) => ({
-                            ...base,
-                            height: "32px",
-                        }),
-                        menu: (base) => ({
-                            ...base,
-                            zIndex: 9999,
-                        }),
-                        }}
-                    />
-                </Box>
-                
-                <Spacer display={{ base: "none", md: "block" }} />
-                
-                <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                    Apply
-                </Button>
-
-                <Button leftIcon={<FaX/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                    Clear
-                </Button>
+                    <Button leftIcon={<FaX/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
+                        Clear
+                    </Button>
+                </Flex>
             </Flex>
-        </Flex>
+        )}
 
         {/* Main Content */}
         <Flex
@@ -265,36 +267,56 @@ export const CaseCatalog = () => {
         gap={6}
         direction={{ base: "column", md: "row" }} // stack on mobile
         >
-        {/* Left: Case List */}
-        <VStack
-            spacing={4}
-            align="stretch"
-            w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
-            overflowY="auto"
-        >
-            {visibleCases.map((c) => (
-            <CaseCard key={c.id} caseData={c} onClick={() => setSelectedCase(c)} />
-            ))}
-        </VStack>
-
-        {/* Right: Case Detail */}
-        {selectedCase && (activeTab === "all" || savedCaseIds.has(selectedCase.id)) && (
-            <Box
-            w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
-            bg="white"
-            p={6}
-            borderRadius="md"
-            overflowY="auto"
+        {activeTab === "saved" && visibleCases.length === 0 ? (
+            <Flex
+                width="100%"
+                justify="center"
+                align="center"
+                direction="column"
+                color="#D4D4D4"
             >
-            <CaseDetail
-                caseData={selectedCase}
-                isSaved={savedCaseIds.has(selectedCase.id)}
-                onToggleBookmark={toggleBookmark}
-            />
-            </Box>
+                <Text mb={10} color="black">No cases currently saved.</Text>
+
+                <Button
+                    size="sm"
+                    onClick={() => setActiveTab("all")}
+                >
+                    Browse All Cases
+                </Button>
+            </Flex>
+        ) : (
+        <>
+        {/* Left: Case List */}
+            <VStack
+                spacing={4}
+                align="stretch"
+                w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
+                overflowY="auto"
+            >
+                {visibleCases.map((c) => (
+                <CaseCard key={c.id} caseData={c} onClick={() => setSelectedCase(c)} />
+                ))}
+            </VStack>
+
+            {/* Right: Case Detail */}
+            {selectedCase && (activeTab === "all" || savedCaseIds.has(selectedCase.id)) && (
+                <Box
+                w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
+                bg="white"
+                p={6}
+                borderRadius="md"
+                overflowY="auto"
+                >
+                <CaseDetail
+                    caseData={selectedCase}
+                    isSaved={savedCaseIds.has(selectedCase.id)}
+                    onToggleBookmark={toggleBookmark}
+                />
+                </Box>
+            )}
+            </>
         )}
         </Flex>
-
         </Flex>
     );
 };
