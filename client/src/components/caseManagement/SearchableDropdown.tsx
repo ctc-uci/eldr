@@ -12,22 +12,21 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-const SearchableDropdown = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOption, setSelectedOption] = useState("");
-  const searchInputRef = useRef(null);
+type Props = {
+  options?: string[];
+  placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+};
 
-  // Your options
-  const options = [
-    "Apple",
-    "Banana",
-    "Cherry",
-    "Date",
-    "Elderberry",
-    "Fig",
-    "Grape",
-    "Honeydew",
-  ];
+function SearchableDropdown({
+  options = [],
+  placeholder = "Select an option",
+  value = "",
+  onChange,
+}: Props) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef(null);
 
   // Filter options based on search term
   const filteredOptions = options.filter((option) =>
@@ -35,8 +34,10 @@ const SearchableDropdown = () => {
   );
 
   const handleSelect = (option: string) => {
-    setSelectedOption(option);
     setSearchTerm("");
+    if (onChange) {
+      onChange(option);
+    }
   };
 
   return (
@@ -44,17 +45,26 @@ const SearchableDropdown = () => {
       closeOnSelect={true}
       onOpen={() => {
         setSearchTerm("");
-        // Focus the search input when menu opens
         setTimeout(() => searchInputRef.current?.focus(), 100);
       }}
     >
       <MenuButton
         as={Button}
-        rightIcon={<ChevronDownIcon />}
+        rightIcon={<ChevronDownIcon boxSize={7} />}
+        bg="#ADADAD"
+        border="2px solid black"
+        px="8px"
+        py="2px"
+        h="auto"
+        borderRadius="2px"
+        textAlign="left"
       >
-        {selectedOption || "Select an option"}
+        {value || placeholder}
       </MenuButton>
-      <MenuList maxH="300px">
+      <MenuList
+        maxH="300px"
+        overflowY="auto"
+      >
         <Box
           px={3}
           pb={2}
@@ -73,36 +83,32 @@ const SearchableDropdown = () => {
             size="sm"
           />
         </Box>
-        <Box
-          overflowY="auto"
-          maxH="200px"
-        >
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
-              <MenuItem
-                key={option}
-                onClick={() => handleSelect(option)}
-              >
-                {option}
-              </MenuItem>
-            ))
-          ) : (
-            <Box
-              px={3}
-              py={2}
+        {filteredOptions.length > 0 ? (
+          filteredOptions.map((option) => (
+            <MenuItem
+              key={option}
+              onClick={() => handleSelect(option)}
+              onMouseEnter={() => searchInputRef.current?.focus()}
             >
-              <Text
-                color="gray.500"
-                fontSize="sm"
-              >
-                No results found
-              </Text>
-            </Box>
-          )}
-        </Box>
+              {option}
+            </MenuItem>
+          ))
+        ) : (
+          <Box
+            px={3}
+            py={2}
+          >
+            <Text
+              color="gray.500"
+              fontSize="sm"
+            >
+              No results found
+            </Text>
+          </Box>
+        )}
       </MenuList>
     </Menu>
   );
-};
+}
 
 export default SearchableDropdown;

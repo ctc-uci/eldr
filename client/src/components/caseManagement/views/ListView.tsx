@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Button,
   Divider,
@@ -6,10 +8,15 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Tag,
+  TagLabel,
   VStack,
 } from "@chakra-ui/react";
 
 import { FiPlus, FiSearch } from "react-icons/fi";
+import { IoMdCheckmark } from "react-icons/io";
+import { IoCloseOutline, IoSwapVertical } from "react-icons/io5";
+import { TbXboxX } from "react-icons/tb";
 
 import CaseCard from "../CaseCard";
 import SearchableDropdown from "../SearchableDropdown";
@@ -37,6 +44,13 @@ const caseCards = [
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: ["Financial Protection", "Spanish"],
   },
+  {
+    title: "Case 4",
+    assignee: "Spencer Shay",
+    description:
+      "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
+    tags: ["Financial Protection", "Spanish"],
+  },
 ];
 
 type Props = {
@@ -46,6 +60,33 @@ type Props = {
 };
 
 const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [selectedArea, setSelectedArea] = useState("");
+  const [appliedLanguage, setAppliedLanguage] = useState("");
+  const [appliedArea, setAppliedArea] = useState("");
+
+  const handleApply = () => {
+    setAppliedLanguage(selectedLanguage);
+    setAppliedArea(selectedArea);
+  };
+
+  const handleClear = () => {
+    setSelectedLanguage("");
+    setSelectedArea("");
+    setAppliedLanguage("");
+    setAppliedArea("");
+  };
+
+  const removeLanguageFilter = () => {
+    setAppliedLanguage("");
+    setSelectedLanguage("");
+  };
+
+  const removeAreaFilter = () => {
+    setAppliedArea("");
+    setSelectedArea("");
+  };
+
   return (
     <VStack
       w="100%"
@@ -97,36 +138,148 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
       {/* Filter bar */}
       <Flex
         w="95%"
-        h="50px"
+        minH="70px"
         bg="white"
         border="2px solid black"
         borderRadius={4}
+        px="30px"
+        py="10px"
+        gap={4}
       >
-        <HStack>
-          <SearchableDropdown></SearchableDropdown>
+        {/* Sort and filter dropdowns */}
+        <HStack
+          spacing={3}
+          mr="36px"
+        >
+          <Button
+            bg="#B9AEA7"
+            border="2px solid black"
+            px="8px"
+            py="6px"
+            h="auto"
+            borderRadius="2px"
+            leftIcon={<IoSwapVertical />}
+            iconSpacing="4px"
+          >
+            By Newest
+          </Button>
           <Divider
             orientation="vertical"
             border="1px solid black"
-            h="50%"
+            h="30px"
           />
-          <SearchableDropdown></SearchableDropdown>
-          <SearchableDropdown></SearchableDropdown>
+          <SearchableDropdown
+            placeholder="Languages"
+            options={["English", "Spanish", "French", "German", "Italian"]}
+            value={selectedLanguage}
+            onChange={setSelectedLanguage}
+          />
+          <SearchableDropdown
+            placeholder="Areas of Interest"
+            options={[
+              "Advocacy for Children",
+              "Appeals",
+              "Civil Rights",
+              "Conservatorship",
+              "Debt",
+              "Disability Rights",
+            ]}
+            value={selectedArea}
+            onChange={setSelectedArea}
+          />
         </HStack>
-        <HStack></HStack>
-        <HStack></HStack>
+
+        {/* Applied Filters */}
+        {(appliedLanguage || appliedArea) && (
+          <HStack spacing={4}>
+            {appliedLanguage && (
+              <Tag
+                size="md"
+                borderRadius="full"
+                variant="solid"
+                bg="#D8D2CF"
+                color="black"
+                px="14px"
+                py="6px"
+                border="2px solid black"
+              >
+                <TagLabel mr="4px">{appliedLanguage}</TagLabel>
+                <TbXboxX
+                  size={18}
+                  cursor="pointer"
+                  onClick={removeLanguageFilter}
+                />
+              </Tag>
+            )}
+            {appliedArea && (
+              <Tag
+                size="md"
+                borderRadius="full"
+                variant="solid"
+                bg="#D8D2CF"
+                color="black"
+                px="14px"
+                py="6px"
+                border="2px solid black"
+              >
+                <TagLabel mr="4px">{appliedArea}</TagLabel>
+                <TbXboxX
+                  size={18}
+                  cursor="pointer"
+                  onClick={removeAreaFilter}
+                />
+              </Tag>
+            )}
+          </HStack>
+        )}
+
+        {/* Apply and Clear buttons */}
+        <HStack
+          spacing={3}
+          marginLeft="auto"
+        >
+          <Button
+            size="sm"
+            bg="#8F8F8F"
+            onClick={handleApply}
+            isDisabled={!selectedLanguage && !selectedArea}
+            leftIcon={<IoMdCheckmark size={20} />}
+          >
+            Apply
+          </Button>
+          <Button
+            size="sm"
+            bg="#8F8F8F"
+            onClick={handleClear}
+            isDisabled={
+              !appliedLanguage &&
+              !appliedArea &&
+              !selectedLanguage &&
+              !selectedArea
+            }
+            leftIcon={<IoCloseOutline size={20} />}
+          >
+            Clear
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Cases list */}
       <Flex
         w="95%"
-        h="700px"
+        h="73vh"
         bg="#B1B1B1"
         py="15px"
         px="20px"
+        overflowY="auto"
       >
-        <VStack w="full">
+        <VStack
+          w="full"
+          spacing={4}
+        >
           {caseCards.map(({ title, assignee, description, tags }) => (
             <CaseCard
+              key={title}
               title={title}
               assignee={assignee}
               description={description}

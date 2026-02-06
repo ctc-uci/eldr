@@ -19,9 +19,28 @@ export const CaseManagement = () => {
       display="flex"
       flexDirection="column"
     >
-      <TabList>
-        <Tab>Cases</Tab>
-        <Tab>Clinics & Workshops</Tab>
+      <TabList
+        minH="60px"
+        alignItems="end"
+      >
+        <Tab
+          _selected={{ color: "black", borderColor: "black" }}
+          _active={{ bg: "transparent" }}
+          _focus={{ boxShadow: "none" }}
+          fontSize="lg"
+          fontWeight="semibold"
+        >
+          Cases
+        </Tab>
+        <Tab
+          _selected={{ color: "black", borderColor: "black" }}
+          _active={{ bg: "transparent" }}
+          _focus={{ boxShadow: "none" }}
+          fontSize="lg"
+          fontWeight="semibold"
+        >
+          Clinics & Workshops
+        </Tab>
       </TabList>
 
       <TabPanels
