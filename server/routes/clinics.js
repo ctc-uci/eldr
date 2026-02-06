@@ -7,11 +7,11 @@ export const clinicsRouter = Router();
 // Create a workshop
 clinicsRouter.post("/", async (req, res) => {
   try {
-    const { name, description, location, time, date, attendees, experience_level, parking } = req.body;
+    const { name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking } = req.body;
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, location, time, date, attendees, experience_level, parking) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [name, description, location, time, date, attendees, experience_level, parking]
+      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking]
     );
     res.status(201).json(keysToCamel(clinic[0]));
   } catch (e) {
@@ -47,11 +47,11 @@ clinicsRouter.get('/:id', async (req, res) => {
 clinicsRouter.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, location, time, date, attendees, language, experience_level, parking } = req.body;
+    const { name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking } = req.body;
     const clinic = await db.query(
-      `UPDATE clinics SET name = $1, description = $2, location = $3, time = $4, date = $5, attendees = $6, language = $7, experience_level = $8, parking = $9 
-       WHERE id = $10 RETURNING *`,
-      [name, description, location, time, date, attendees, language, experience_level, parking, id]
+      `UPDATE clinics SET name = $1, description = $2, location = $3, start_time = $4, end_time = $5, date = $6, attendees = $7, capacity = $8, max_target_roles = $9, experience_level = $10, parking = $11 
+       WHERE id = $12 RETURNING *`,
+      [name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking, id]
     );
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
