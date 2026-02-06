@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { ArrowBackIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -9,12 +8,13 @@ import {
   Heading,
   HStack,
   Input,
-  Link,
   Select,
   Text,
   Textarea,
   VStack,
 } from "@chakra-ui/react";
+
+import BackButton from "../BackButton";
 
 type Props = {
   onBackClick: () => void;
@@ -38,19 +38,7 @@ const CreateView = ({ onBackClick }: Props) => {
       w="100%"
       p={8}
     >
-      <Link
-        href="#"
-        display="flex"
-        mb={6}
-        alignItems="center"
-        fontSize="sm"
-        color="black"
-        _hover={{ textDecoration: "underline" }}
-        onClick={onBackClick}
-      >
-        <ArrowBackIcon mr={2} />
-        Back to ELDR Case Catalog
-      </Link>
+      <BackButton onBackClick={onBackClick} />
 
       <Heading
         as="h1"

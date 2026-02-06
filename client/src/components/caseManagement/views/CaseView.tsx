@@ -10,8 +10,9 @@ import {
 
 import { FiEdit3 } from "react-icons/fi";
 import { IoMdMail } from "react-icons/io";
-import { IoArrowBackCircleOutline, IoTrashBin } from "react-icons/io5";
+import { IoTrashBin } from "react-icons/io5";
 
+import BackButton from "../BackButton";
 import { Case } from "../types/case";
 
 type Props = {
@@ -56,22 +57,7 @@ const CaseView = ({
     >
       {/* Back button */}
       <Flex>
-        <Button
-          variant="ghost"
-          fontSize="2xl"
-          textDecoration="underline"
-          mb="30px"
-          px={0}
-          iconSpacing="16px"
-          _hover={{
-            textDecoration: "underline",
-            bg: "transparent",
-          }}
-          leftIcon={<IoArrowBackCircleOutline size={34} />}
-          onClick={onBackClick}
-        >
-          Back to ELDR Case Catalog
-        </Button>
+        <BackButton onBackClick={onBackClick} />
       </Flex>
 
       {/* Main content */}

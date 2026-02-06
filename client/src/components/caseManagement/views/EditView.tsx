@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { ArrowBackIcon, DeleteIcon } from "@chakra-ui/icons";
+import { DeleteIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertIcon,
@@ -11,13 +11,13 @@ import {
   Heading,
   HStack,
   Input,
-  Link,
   Select,
   Text,
   Textarea,
   VStack,
 } from "@chakra-ui/react";
 
+import BackButton from "../BackButton";
 import { Case } from "../types/case";
 
 type Props = {
@@ -57,19 +57,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
         w="100%"
         p={8}
       >
-        <Link
-          href="#"
-          display="flex"
-          mb={6}
-          alignItems="center"
-          fontSize="sm"
-          color="black"
-          _hover={{ textDecoration: "underline" }}
-          onClick={onBackClick}
-        >
-          <ArrowBackIcon mr={2} />
-          Back to ELDR Case Catalog
-        </Link>
+        <BackButton onBackClick={onBackClick} />
 
         <HStack
           justify="space-between"

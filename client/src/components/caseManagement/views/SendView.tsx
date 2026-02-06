@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { ArrowBackIcon, InfoIcon, SearchIcon } from "@chakra-ui/icons";
+import { InfoIcon, SearchIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -10,7 +10,6 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  Link,
   Select,
   Table,
   Tag,
@@ -27,6 +26,8 @@ import {
 } from "@chakra-ui/react";
 
 import { FiSend } from "react-icons/fi";
+
+import BackButton from "../BackButton";
 
 type Props = {
   onCaseClick: () => void;
@@ -90,19 +91,7 @@ const SendView = ({ onCaseClick, onBackClick }: Props) => {
       bg="white"
       p={8}
     >
-      <Link
-        href="#"
-        display="flex"
-        mb={6}
-        alignItems="center"
-        fontSize="sm"
-        color="black"
-        _hover={{ textDecoration: "underline" }}
-        onClick={onBackClick}
-      >
-        <ArrowBackIcon mr={2} />
-        Back to ELDR Case Catalog
-      </Link>
+      <BackButton onBackClick={onBackClick} />
 
       <Heading
         as="h1"
