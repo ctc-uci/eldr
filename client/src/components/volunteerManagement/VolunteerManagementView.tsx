@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { Volunteer } from "@/types/volunteer";
 
-import { VolunteerList, type Volunteer } from "./VolunteerList";
+import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 
 type ViewMode = "list" | "split";
@@ -121,7 +122,7 @@ export const VolunteerManagementView = () => {
                 onConfirm={async (data) => {
                   try {
                     const payload = {
-                      firebaseUid: "placeholder-uid6", // TODO: generate dynamically
+                      firebaseUid: "placeholder-uid7", // TODO: generate dynamically
                       first_name: data.firstName,
                       last_name: data.lastName,
                       email: data.email,
@@ -134,7 +135,17 @@ export const VolunteerManagementView = () => {
 
                     setIsAdding(false);
                     setRefreshTrigger((prev) => prev + 1);
-                    setSelectedVolunteer(res.data);
+
+                    // Map snake_case response to camelCase for frontend
+                    const newVolunteer = {
+                      ...res.data,
+                      firstName: res.data.first_name || data.firstName,
+                      lastName: res.data.last_name || data.lastName,
+                      phoneNumber: res.data.phone_number || data.phoneNumber,
+                      experienceLevel: res.data.experience_level || data.experienceLevel,
+                    };
+
+                    setSelectedVolunteer(newVolunteer);
                   } catch (error) {
                     console.error("Error creating volunteer:", error);
                   }

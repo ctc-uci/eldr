@@ -13,18 +13,7 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-
-export type Volunteer = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber?: string;
-  role?: string;
-  specializations?: string[];
-  languages?: string[];
-  experienceLevel?: string;
-};
+import { Volunteer } from "@/types/volunteer";
 
 interface VolunteerListProps {
   variant?: "list" | "table";

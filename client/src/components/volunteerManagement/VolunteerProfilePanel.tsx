@@ -14,7 +14,7 @@ import {
 
 import { useForm, UseFormRegisterReturn } from "react-hook-form";
 
-import { Volunteer } from "./VolunteerList";
+import { Volunteer } from "@/types/volunteer";
 
 interface LabeledBoxProps {
   label: string;
