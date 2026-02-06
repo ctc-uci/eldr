@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     phone_number TEXT NOT NULL,
     is_notary BOOLEAN,
     is_attorney BOOLEAN,
-    experience_level experience_level NOT NULL,
     form_completed BOOLEAN,
     form_link TEXT,
     is_signed_confidentiality TIMESTAMP,
