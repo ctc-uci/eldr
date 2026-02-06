@@ -80,7 +80,6 @@ export const EventManagement = () => {
                     mx="auto"
                     bg="white"
                 >
-                    {/* Search bar */}
                     <InputLeftElement pointerEvents="none">
                         <CiSearch 
                             color="black" 
@@ -180,17 +179,11 @@ export const EventManagement = () => {
                             <TabPanels>
                                 <TabPanel>
                                     <VStack p = {4}>
-                                        {/*
-                                        This card is an example for demonstration purposes only and
-                                        therefore MUST be overwritten to be able to work w/ backend 
-                                        using props & mapping especially for mutliple events/tags
-                                        */}
                                         {clinics.map((clinic) => (
                                             <Box key={clinic.id} w="80%" h="40" display="flex">
                                                 <Card w="100%" h="100%" borderRadius="sm">
                                                     <Flex h="100%" align="center" px={4} position="relative">
                                                         
-                                                        {/* LEFT COLUMN — real backend data */}
                                                         <VStack align="start" spacing={1}>
                                                             <Text fontSize="lg" fontWeight="bold">
                                                                 {clinic.name}
@@ -218,7 +211,6 @@ export const EventManagement = () => {
                                                             </HStack>
                                                         </VStack>
 
-                                                        {/* CENTER — hybrid */}
                                                         <Box
                                                             position="absolute"
                                                             left="50%"
@@ -229,12 +221,9 @@ export const EventManagement = () => {
 
                                                                 {/* TEMPORARY — hardcoded */}
                                                                 <Tag bg="#D9D9D9">Clinic</Tag>
-                                                                <Tag bg="#D9D9D9">{clinic.experience_level}</Tag>
-                                                                <Tag bg="#D9D9D9">English</Tag>
                                                             </HStack>
                                                         </Box>
 
-                                                        {/* RIGHT */}
                                                         <Button
                                                             ml="auto"
                                                             bg="#D9D9D9"
