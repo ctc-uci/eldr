@@ -8,9 +8,10 @@ import { Signup } from "@/components/signup/Signup";
 
 // Dev-made Components!
 import { AdminProfile } from "@/components/adminProfile/adminProfile";
+import {EventCatalog} from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile"
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
@@ -87,6 +88,10 @@ const App = () => {
                 <Route
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
+                />
+                <Route 
+                path="/event-catalog"
+                element={<EventCatalog />}
                 />
                 <Route
                   path="/admin-profile"
