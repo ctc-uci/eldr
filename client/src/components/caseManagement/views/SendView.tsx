@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Flex,
   Heading,
   HStack,
   Input,
@@ -28,8 +29,10 @@ import {
 import { FiSend } from "react-icons/fi";
 
 import BackButton from "../BackButton";
+import { Case } from "../types/case";
 
 type Props = {
+  caseData: Case | null;
   onCaseClick: () => void;
   onBackClick: () => void;
   onSendClick: () => void;
@@ -37,6 +40,7 @@ type Props = {
 };
 
 const SendView = ({
+  caseData,
   onCaseClick,
   onBackClick,
   onSendClick,
@@ -84,6 +88,25 @@ const SendView = ({
     );
   };
 
+  if (!caseData) {
+    return (
+      <Flex
+        w="95%"
+        h="95%"
+        bg="white"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Text
+          fontSize="xl"
+          color="gray.500"
+        >
+          No case selected
+        </Text>
+      </Flex>
+    );
+  }
+
   return (
     <Box
       w="100%"
@@ -112,27 +135,32 @@ const SendView = ({
         >
           <HStack
             justify="space-between"
-            align="center"
+            alignItems="start"
             mb={4}
           >
-            <Box>
-              <Heading
-                as="h2"
-                size="md"
-                mb={2}
+            <VStack alignItems="start">
+              <Text
+                fontSize="2rem"
+                fontWeight="bold"
+                w="1000px"
+                mb="10px"
               >
-                Elder Financial Protection - Solar Panel Loan Dispute - PLC
-                24-0088454
-              </Heading>
-              <Button
-                size="sm"
-                variant="outline"
-                bg="white"
-                borderColor="gray.400"
+                {caseData.title}
+              </Text>
+              <Tag
+                size="xl"
+                borderRadius="full"
+                variant="solid"
+                bg="#D8D2CF"
+                color="black"
+                fontWeight="bold"
+                px="50px"
+                py="10px"
+                border="2px solid #978D87"
               >
-                Financial Protection
-              </Button>
-            </Box>
+                <TagLabel mr="4px">{caseData.tags.area}</TagLabel>
+              </Tag>
+            </VStack>
             <Button
               variant="outline"
               bg="white"

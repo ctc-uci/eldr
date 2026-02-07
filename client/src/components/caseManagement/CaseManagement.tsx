@@ -190,6 +190,7 @@ export const CaseManagement = () => {
 
           {view === "send" && (
             <SendView
+              caseData={selectedCase}
               onCaseClick={() => setView("view-case")}
               onBackClick={() => setView("list")}
               onSendClick={handleSendClick}
