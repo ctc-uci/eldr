@@ -70,9 +70,15 @@ type Props = {
   onCreateClick: () => void;
   onEditClick: (c: Case) => void;
   onCaseClick: (c: Case) => void;
+  onDeleteConfirm: () => void;
 };
 
-const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
+const ListView = ({
+  onCreateClick,
+  onEditClick,
+  onCaseClick,
+  onDeleteConfirm,
+}: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
@@ -314,6 +320,7 @@ const ListView = ({ onCreateClick, onEditClick, onCaseClick }: Props) => {
               caseData={c}
               onEditClick={() => onEditClick(c)}
               onCaseClick={() => onCaseClick(c)}
+              onDeleteConfirm={onDeleteConfirm}
             />
           ))}
         </VStack>

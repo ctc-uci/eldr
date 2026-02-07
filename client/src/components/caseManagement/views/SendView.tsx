@@ -32,9 +32,16 @@ import BackButton from "../BackButton";
 type Props = {
   onCaseClick: () => void;
   onBackClick: () => void;
+  onSendClick: () => void;
+  onDiscardClick: () => void;
 };
 
-const SendView = ({ onCaseClick, onBackClick }: Props) => {
+const SendView = ({
+  onCaseClick,
+  onBackClick,
+  onSendClick,
+  onDiscardClick,
+}: Props) => {
   const [selectedVolunteers, setSelectedVolunteers] = useState<string[]>([
     "Samantha Puckett",
   ]);
@@ -75,14 +82,6 @@ const SendView = ({ onCaseClick, onBackClick }: Props) => {
     setVolunteers((prev) =>
       prev.map((v) => (v.name === name ? { ...v, selected: false } : v))
     );
-  };
-
-  const handleSend = () => {
-    console.log("Send email");
-  };
-
-  const handleDiscard = () => {
-    console.log("Discard draft");
   };
 
   return (
@@ -323,7 +322,7 @@ const SendView = ({ onCaseClick, onBackClick }: Props) => {
                   borderColor="black"
                   color="black"
                   leftIcon={<Box as="span">🗑</Box>}
-                  onClick={handleDiscard}
+                  onClick={onDiscardClick}
                 >
                   Discard Draft
                 </Button>
@@ -333,7 +332,7 @@ const SendView = ({ onCaseClick, onBackClick }: Props) => {
                   borderColor="black"
                   color="black"
                   rightIcon={<FiSend />}
-                  onClick={handleSend}
+                  onClick={onSendClick}
                 >
                   Send
                 </Button>

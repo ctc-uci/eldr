@@ -1,16 +1,33 @@
-import { Flex, HStack, IconButton, Tag, Text, VStack } from "@chakra-ui/react";
+import {
+  Flex,
+  HStack,
+  IconButton,
+  Tag,
+  Text,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
 
 import { FiArrowRight, FiEdit3, FiTrash2 } from "react-icons/fi";
 
+import DeleteConfirm from "./DeleteConfirm";
 import { Case } from "./types/case";
 
 type Props = {
   caseData: Case;
   onEditClick: () => void;
   onCaseClick: () => void;
+  onDeleteConfirm: () => void;
 };
 
-const CaseCard = ({ caseData, onEditClick, onCaseClick }: Props) => {
+const CaseCard = ({
+  caseData,
+  onEditClick,
+  onCaseClick,
+  onDeleteConfirm,
+}: Props) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <Flex
       bg="white"
@@ -107,6 +124,7 @@ const CaseCard = ({ caseData, onEditClick, onCaseClick }: Props) => {
           size="lg"
           _hover="none"
           _active={{ bg: "transparent" }}
+          onClick={onOpen}
         />
         <IconButton
           aria-label="Edit case"
@@ -128,6 +146,11 @@ const CaseCard = ({ caseData, onEditClick, onCaseClick }: Props) => {
           onClick={onCaseClick}
         />
       </HStack>
+      <DeleteConfirm
+        isOpen={isOpen}
+        onClose={onClose}
+        onDeleteConfirm={onDeleteConfirm}
+      />
     </Flex>
   );
 };

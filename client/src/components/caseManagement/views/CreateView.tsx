@@ -18,19 +18,16 @@ import BackButton from "../BackButton";
 
 type Props = {
   onBackClick: () => void;
+  onSaveClick: () => void;
 };
 
-const CreateView = ({ onBackClick }: Props) => {
+const CreateView = ({ onBackClick, onSaveClick }: Props) => {
   const [formData, setFormData] = useState({
     title: "",
     practiceArea: "",
     description: "",
     notes: "",
   });
-
-  const handleSubmit = () => {
-    console.log("Form data:", formData);
-  };
 
   return (
     <Box
@@ -139,7 +136,7 @@ const CreateView = ({ onBackClick }: Props) => {
               border="2px solid black"
               color="black"
               p={2}
-              onClick={handleSubmit}
+              onClick={onSaveClick}
             >
               SAVE
             </Button>

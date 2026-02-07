@@ -5,6 +5,7 @@ import {
   Tag,
   TagLabel,
   Text,
+  useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 
@@ -13,6 +14,7 @@ import { IoMdMail } from "react-icons/io";
 import { IoTrashBin } from "react-icons/io5";
 
 import BackButton from "../BackButton";
+import DeleteConfirm from "../DeleteConfirm";
 import { Case } from "../types/case";
 
 type Props = {
@@ -20,6 +22,7 @@ type Props = {
   onEditClick: () => void;
   onSendClick: () => void;
   onBackClick: () => void;
+  onDeleteConfirm: () => void;
 };
 
 const CaseView = ({
@@ -27,7 +30,10 @@ const CaseView = ({
   onEditClick,
   onSendClick,
   onBackClick,
+  onDeleteConfirm,
 }: Props) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   if (!caseData) {
     return (
       <Flex
@@ -117,6 +123,7 @@ const CaseView = ({
               w="260px"
               fontSize="xl"
               leftIcon={<IoTrashBin />}
+              onClick={onOpen}
             >
               Delete Case
             </Button>
@@ -216,6 +223,11 @@ const CaseView = ({
           </Flex>
         </Flex>
       </VStack>
+      <DeleteConfirm
+        isOpen={isOpen}
+        onClose={onClose}
+        onDeleteConfirm={onDeleteConfirm}
+      />
     </Flex>
   );
 };

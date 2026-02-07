@@ -15,32 +15,34 @@ import {
   Select,
   Text,
   Textarea,
+  useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 
 import BackButton from "../BackButton";
+import DeleteConfirm from "../DeleteConfirm";
 import { Case } from "../types/case";
 
 type Props = {
   caseData: Case | null;
   onBackClick: () => void;
+  onSaveClick: () => void;
+  onDeleteConfirm: () => void;
 };
 
-const EditView = ({ caseData, onBackClick }: Props) => {
+const EditView = ({
+  caseData,
+  onBackClick,
+  onSaveClick,
+  onDeleteConfirm,
+}: Props) => {
   const [formData, setFormData] = useState({
     title: caseData?.title || "",
     practiceArea: caseData?.tags.area || "",
     description: caseData?.description || "",
     notes: "",
   });
-
-  const handleSubmit = () => {
-    console.log("Form data:", formData);
-  };
-
-  const handleDelete = () => {
-    console.log("Delete case");
-  };
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Flex
@@ -90,7 +92,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
             borderColor="black"
             color="black"
             leftIcon={<DeleteIcon />}
-            onClick={handleDelete}
+            onClick={onOpen}
           >
             Delete Case
           </Button>
@@ -204,7 +206,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 borderColor="black"
                 color="black"
                 p={2}
-                onClick={handleSubmit}
+                onClick={onSaveClick}
               >
                 SAVE
               </Button>
@@ -222,6 +224,11 @@ const EditView = ({ caseData, onBackClick }: Props) => {
           </VStack>
         </Box>
       </Box>
+      <DeleteConfirm
+        isOpen={isOpen}
+        onClose={onClose}
+        onDeleteConfirm={onDeleteConfirm}
+      />
     </Flex>
   );
 };

@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+import {
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  useToast,
+} from "@chakra-ui/react";
 
 import { Case } from "./types/case";
 import CaseView from "./views/CaseView";
@@ -12,8 +19,9 @@ import SendView from "./views/SendView";
 export const CaseManagement = () => {
   // Options: 'list', 'create', 'edit', 'view-case', 'send'
   const [view, setView] = useState("list");
-
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  const toast = useToast();
 
   const handleCaseClick = (caseData: Case) => {
     setSelectedCase(caseData);
@@ -23,6 +31,84 @@ export const CaseManagement = () => {
   const handleEditClick = (caseData: Case | null) => {
     setSelectedCase(caseData);
     setView("edit");
+  };
+
+  const handleDeleteConfirm = () => {
+    setView("list");
+
+    toast({
+      title: "Case has been deleted.",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
+  };
+
+  const handleEditSave = () => {
+    setView("view-case");
+
+    toast({
+      title: "Edits to this case have been saved successfully.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
+  };
+
+  const handleCreateSave = () => {
+    setView("list");
+
+    toast({
+      title: "Case successfully created.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
+  };
+
+  const handleBackClick = () => {
+    setView("view-case");
+
+    toast({
+      title: "Your edits have been discarded.",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
+  };
+
+  const handleSendClick = () => {
+    setView("view-case");
+
+    toast({
+      title: "Case has been sent to volunteer(s)!",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
+  };
+
+  const handleDiscardClick = () => {
+    setView("view-case");
+
+    toast({
+      title: "Your message has been discarded.",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "top",
+      variant: "subtle",
+    });
   };
 
   return (
@@ -72,17 +158,23 @@ export const CaseManagement = () => {
               onCreateClick={() => setView("create")}
               onEditClick={handleEditClick}
               onCaseClick={handleCaseClick}
+              onDeleteConfirm={handleDeleteConfirm}
             />
           )}
 
           {view === "create" && (
-            <CreateView onBackClick={() => setView("list")} />
+            <CreateView
+              onBackClick={() => setView("list")}
+              onSaveClick={handleCreateSave}
+            />
           )}
 
           {view === "edit" && (
             <EditView
               caseData={selectedCase}
-              onBackClick={() => setView("list")}
+              onBackClick={handleBackClick}
+              onSaveClick={handleEditSave}
+              onDeleteConfirm={handleDeleteConfirm}
             />
           )}
 
@@ -92,6 +184,7 @@ export const CaseManagement = () => {
               onEditClick={() => handleEditClick(selectedCase)}
               onSendClick={() => setView("send")}
               onBackClick={() => setView("list")}
+              onDeleteConfirm={handleDeleteConfirm}
             />
           )}
 
@@ -99,6 +192,8 @@ export const CaseManagement = () => {
             <SendView
               onCaseClick={() => setView("view-case")}
               onBackClick={() => setView("list")}
+              onSendClick={handleSendClick}
+              onDiscardClick={handleDiscardClick}
             />
           )}
         </TabPanel>
