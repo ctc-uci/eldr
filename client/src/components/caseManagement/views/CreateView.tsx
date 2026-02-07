@@ -35,7 +35,8 @@ const CreateView = ({ onBackClick }: Props) => {
   return (
     <Box
       bg="white"
-      w="100%"
+      w="95%"
+      h="95%"
       p={8}
     >
       <BackButton onBackClick={onBackClick} />
@@ -50,7 +51,7 @@ const CreateView = ({ onBackClick }: Props) => {
 
       <Box
         bg="#F0EFEF"
-        p={6}
+        p={12}
         borderRadius="md"
       >
         <VStack
@@ -58,25 +59,27 @@ const CreateView = ({ onBackClick }: Props) => {
           align="stretch"
         >
           <HStack
-            spacing={4}
+            spacing={12}
             align="start"
           >
             <FormControl flex={2}>
-              <FormLabel>Title</FormLabel>
+              <FormLabel fontWeight="bold">Title</FormLabel>
               <Input
                 bg="white"
                 value={formData.title}
+                border="2px solid black"
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
               />
             </FormControl>
             <FormControl flex={1}>
-              <FormLabel>Practice Area</FormLabel>
+              <FormLabel fontWeight="bold">Practice Area</FormLabel>
               <Select
                 bg="white"
                 value={formData.practiceArea}
                 placeholder="Select..."
+                border="2px solid black"
                 onChange={(e) =>
                   setFormData({ ...formData, practiceArea: e.target.value })
                 }
@@ -88,14 +91,15 @@ const CreateView = ({ onBackClick }: Props) => {
             </FormControl>
           </HStack>
           <HStack
-            spacing={4}
+            spacing={12}
             align="start"
           >
             <FormControl flex={1}>
-              <FormLabel>Description</FormLabel>
+              <FormLabel fontWeight="bold">Description</FormLabel>
               <Textarea
                 bg="white"
                 rows={6}
+                border="2px solid black"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -104,7 +108,7 @@ const CreateView = ({ onBackClick }: Props) => {
             </FormControl>
 
             <FormControl flex={1}>
-              <FormLabel>
+              <FormLabel fontWeight="bold">
                 Notes{" "}
                 <Text
                   as="span"
@@ -118,6 +122,7 @@ const CreateView = ({ onBackClick }: Props) => {
                 bg="white"
                 rows={6}
                 value={formData.notes}
+                border="2px solid black"
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
@@ -131,8 +136,9 @@ const CreateView = ({ onBackClick }: Props) => {
             <Button
               variant="outline"
               bg="transparent"
-              borderColor="black"
+              border="2px solid black"
               color="black"
+              p={2}
               onClick={handleSubmit}
             >
               SAVE
@@ -140,8 +146,9 @@ const CreateView = ({ onBackClick }: Props) => {
             <Button
               variant="outline"
               bg="transparent"
-              borderColor="black"
+              border="2px solid black"
               color="black"
+              p={2}
               onClick={onBackClick}
             >
               CANCEL

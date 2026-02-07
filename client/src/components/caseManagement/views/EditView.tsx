@@ -6,6 +6,7 @@ import {
   AlertIcon,
   Box,
   Button,
+  Flex,
   FormControl,
   FormLabel,
   Heading,
@@ -27,9 +28,9 @@ type Props = {
 
 const EditView = ({ caseData, onBackClick }: Props) => {
   const [formData, setFormData] = useState({
-    title: "",
-    practiceArea: "",
-    description: "",
+    title: caseData?.title || "",
+    practiceArea: caseData?.tags.area || "",
+    description: caseData?.description || "",
     notes: "",
   });
 
@@ -42,20 +43,34 @@ const EditView = ({ caseData, onBackClick }: Props) => {
   };
 
   return (
-    <Box w="100%">
+    <Flex
+      w="100%"
+      h="100%"
+      direction="column"
+      alignItems="center"
+      justifyContent="center"
+    >
       <Alert
         status="warning"
-        bg="#F4D03F"
+        bg="#FBE383"
         color="black"
+        w="95%"
+        top={0}
+        left={0}
+        zIndex={10}
+        borderTopRadius="md"
+        alignItems="center"
+        justifyContent="center"
+        fontWeight="bold"
       >
         <AlertIcon color="black" />
         You are currently editing this case, save your changes before exiting.
       </Alert>
-
       <Box
         bg="white"
-        w="100%"
-        p={8}
+        w="95%"
+        h="95%"
+        p={12}
       >
         <BackButton onBackClick={onBackClick} />
 
@@ -91,7 +106,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
             align="stretch"
           >
             <HStack
-              spacing={4}
+              spacing={12}
               align="start"
             >
               <FormControl flex={2}>
@@ -103,8 +118,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 </FormLabel>
                 <Input
                   bg="white"
-                  border="1px solid"
-                  borderColor="black"
+                  border="2px solid black"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
@@ -120,8 +134,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 </FormLabel>
                 <Select
                   bg="white"
-                  border="1px solid"
-                  borderColor="black"
+                  border="2px solid black"
                   value={formData.practiceArea}
                   placeholder="Select..."
                   onChange={(e) =>
@@ -135,7 +148,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
               </FormControl>
             </HStack>
             <HStack
-              spacing={4}
+              spacing={12}
               align="start"
             >
               <FormControl flex={1}>
@@ -147,8 +160,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 </FormLabel>
                 <Textarea
                   bg="white"
-                  border="1px solid"
-                  borderColor="black"
+                  border="2px solid black"
                   rows={6}
                   value={formData.description}
                   onChange={(e) =>
@@ -173,8 +185,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 </FormLabel>
                 <Textarea
                   bg="white"
-                  border="1px solid"
-                  borderColor="black"
+                  border="2px solid black"
                   rows={6}
                   value={formData.notes}
                   onChange={(e) =>
@@ -192,6 +203,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 bg="white"
                 borderColor="black"
                 color="black"
+                p={2}
                 onClick={handleSubmit}
               >
                 SAVE
@@ -201,6 +213,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
                 bg="white"
                 borderColor="black"
                 color="black"
+                p={2}
                 onClick={onBackClick}
               >
                 CANCEL
@@ -209,7 +222,7 @@ const EditView = ({ caseData, onBackClick }: Props) => {
           </VStack>
         </Box>
       </Box>
-    </Box>
+    </Flex>
   );
 };
 export default EditView;
