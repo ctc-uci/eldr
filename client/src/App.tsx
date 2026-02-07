@@ -15,6 +15,7 @@ import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
+import { CaseManagement } from "./components/caseManagement/CaseManagement";
 
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -92,6 +93,11 @@ const App = () => {
                   path="/admin-profile"
                   element={<AdminProfile />}
                 />
+                <Route
+                  path="/caseManagement"
+                  element={<CaseManagement />}
+                />
+                
 
                 {/* Core Routes (Don't Touch!) */}
                 <Route
