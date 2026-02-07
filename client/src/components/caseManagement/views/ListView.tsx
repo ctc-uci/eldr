@@ -36,7 +36,7 @@ const caseCards: Case[] = [
   },
   {
     title: "Case 2",
-    assignee: "Spencer Shay",
+    assignee: "Vy Vu",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
@@ -46,7 +46,7 @@ const caseCards: Case[] = [
   },
   {
     title: "Case 3",
-    assignee: "Spencer Shay",
+    assignee: "Dommenick Lacuata",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
@@ -56,7 +56,7 @@ const caseCards: Case[] = [
   },
   {
     title: "Case 4",
-    assignee: "Spencer Shay",
+    assignee: "Joshua Sullivan",
     description:
       "Client is an older adult, a monolingual Spanish speaker, living on a fixed income. In late 2022, a door-to-door salesperson sold him solar panels for his home, under the impression that the cost would be covered by a government program.",
     tags: {
@@ -116,7 +116,8 @@ const ListView = ({
 
     const matchesSearch = searchQuery
       ? c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.description.toLowerCase().includes(searchQuery.toLowerCase())
+        c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.assignee.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
 
     return matchesLanguage && matchesArea && matchesSearch;
