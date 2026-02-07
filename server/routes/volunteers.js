@@ -325,3 +325,66 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
     res.status(500).send(e.message);
   }
 });
+
+// Volunteer Locations Routes
+// POST: assign a location to a volunteer
+// /volunteers/{volunteerId}/locations
+volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
+    try {
+        const { volunteerId } = req.params;
+        const { locationId } = req.body;
+
+        if (!locationId) {
+            return res.status(400).json({ message: "locationId is required" });
+        }
+
+        const newRelationship = await db.query(
+            "INSERT INTO volunteer_locations (volunteer_id, location_id) VALUES ($1, $2) RETURNING *",
+            [volunteerId, locationId]
+        );
+
+        res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+// DELETE: remove a location from a volunteer
+// /volunteers/{volunteerId}/locations/{locationId}
+volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
+    try {
+        const { volunteerId, locationId } = req.params;
+
+        const deletedRelationship = await db.query(
+            "DELETE FROM volunteer_locations WHERE volunteer_id = $1 AND location_id = $2 RETURNING *",
+            [volunteerId, locationId]
+        );
+
+        if (deletedRelationship.length === 0) {
+            return res.status(404).json({ message: "Location not assigned to this volunteer" });
+        }
+
+        res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+// GET: list all locations for a volunteer, including location IDs and text
+// /volunteers/{volunteerId}/locations
+volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
+    try {
+        const { volunteerId } = req.params;
+
+        const listAll = await db.query(
+            `SELECT l.id, l.location_name
+             FROM volunteer_locations vl
+             JOIN locations l ON vl.location_id = l.id
+             WHERE vl.volunteer_id = $1`,
+             [volunteerId]
+        );
+        res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
