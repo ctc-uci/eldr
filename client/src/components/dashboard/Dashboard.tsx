@@ -5,14 +5,7 @@ import {
   Link as ChakraLink,
   Heading,
   Table,
-  TableCaption,
-  TableContainer,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   VStack,
 } from "@chakra-ui/react";
 
@@ -45,10 +38,7 @@ export const Dashboard = () => {
   }, [backend]);
 
   return (
-    <VStack
-      spacing={8}
-      sx={{ maxWidth: "100%", marginX: "auto" }}
-    >
+    <VStack gap={8} maxW="100%" marginX="auto">
       <Heading>Dashboard</Heading>
 
       <VStack>
@@ -58,50 +48,42 @@ export const Dashboard = () => {
         </Text>
 
         {role === "admin" ? (
-          <ChakraLink
-            as={Link}
-            to={"/admin"}
-          >
-            Go to Admin Page
+          <ChakraLink asChild>
+            <Link to="/admin">Go to Admin Page</Link>
           </ChakraLink>
         ) : null}
         <Button onClick={logout}>Sign out</Button>
       </VStack>
 
-      <TableContainer
-        sx={{
-          overflowX: "auto",
-        }}
-      >
-        <Table variant="simple">
-          <TableCaption>Users</TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Id</Th>
-              <Th>Email</Th>
-              <Th>FirebaseUid</Th>
-              <Th>Role</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
+      <Table.ScrollArea overflowX="auto">
+        <Table.Root size="sm">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader>Id</Table.ColumnHeader>
+              <Table.ColumnHeader>Email</Table.ColumnHeader>
+              <Table.ColumnHeader>FirebaseUid</Table.ColumnHeader>
+              <Table.ColumnHeader>Role</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
             {users
               ? users.map((user, i) => (
-                  <Tr key={i}>
-                    <Td>{user.id}</Td>
-                    <Td>{user.email}</Td>
-                    <Td>{user.firebaseUid}</Td>
-                    <Td>
+                  <Table.Row key={i}>
+                    <Table.Cell>{user.id}</Table.Cell>
+                    <Table.Cell>{user.email}</Table.Cell>
+                    <Table.Cell>{user.firebaseUid}</Table.Cell>
+                    <Table.Cell>
                       <RoleSelect
                         user={user}
                         disabled={role !== "admin"}
                       />
-                    </Td>
-                  </Tr>
+                    </Table.Cell>
+                  </Table.Row>
                 ))
               : null}
-          </Tbody>
-        </Table>
-      </TableContainer>
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
     </VStack>
   );
 };

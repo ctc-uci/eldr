@@ -8,10 +8,10 @@ import { AccountManagement } from "./AccountManagement";
 
 import {
   Box,
-  Heading,
-  Flex,
   Button,
-  Divider,
+  Flex,
+  Heading,
+  Separator,
 } from "@chakra-ui/react";
 
 import { IoPencil } from "react-icons/io5";
@@ -39,10 +39,9 @@ export const ProfileManagement = () => {
                   variant="outline"
                   borderColor="#212121"
                   borderWidth="1px"
-                  rightIcon={<IoPencil />}>
-                  <Flex gap={1} align="center">
-                    Edit
-                  </Flex>
+                  gap={1}>
+                  <IoPencil />
+                  Edit
                 </Button>
               </Box>
               <Button width="55px"
@@ -57,7 +56,7 @@ export const ProfileManagement = () => {
             </Flex>
           </Flex>
 
-          <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
+          <Separator borderWidth="0.5px" borderColor="#000000" mt={8} mb={10} />
 
           <InfoManagement />
 

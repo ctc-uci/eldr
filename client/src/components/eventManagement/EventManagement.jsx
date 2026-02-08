@@ -1,23 +1,18 @@
 import {
-    Card,
-    VStack,
-    HStack,
-    Tabs,
-    TabPanels,
-    TabList,
-    Tab,
-    Button,
-    Flex,
-    Input,
-    TabPanel,
-    Text,
-    Select,
     Box,
-    InputGroup, 
-    InputLeftElement,
+    Button,
+    Card,
+    Flex,
+    HStack,
     Icon,
+    Input,
+    InputGroup,
+    NativeSelect,
+    Tabs,
+    Tag,
+    Text,
     useDisclosure,
-    Tag
+    VStack,
 } from "@chakra-ui/react";
 
 
@@ -52,22 +47,8 @@ export const EventManagement = () => {
                 > 
                     ELDR 
                 </Text>
-                <InputGroup 
-                    maxW="70%" 
-                    mx="auto"
-                    bg="white"
-                >
-                    {/* Search bar */}
-                    <InputLeftElement pointerEvents="none">
-                        <CiSearch 
-                            color="black" 
-                            size="80%" 
-                        />
-                    </InputLeftElement>
-                    <Input 
-                        borderRadius= "md" 
-                        border = "2px solid black"
-                    />
+                <InputGroup maxW="70%" mx="auto" bg="white" startElement={<Icon as={CiSearch} color="black" boxSize="80%" />}>
+                    <Input borderRadius="md" border="2px solid black" />
                 </InputGroup>
                 <Box>
                     <Icon 
@@ -76,25 +57,14 @@ export const EventManagement = () => {
                     />
                 </Box>
             </Flex>
-            <Tabs w = "100%">
-                <Flex justifyContent = "center">
-                    <TabList gap = {40}>
-                        <Tab 
-                            fontSize = "lg" 
-                            fontWeight="bold"
-                        > 
-                            Clinics & Workshops 
-                        </Tab>
-                        <Tab 
-                            fontSize = "lg" 
-                            fontWeight = "bold"
-                        > 
-                            Cases 
-                        </Tab>
-                    </TabList>
+            <Tabs.Root w="100%" defaultValue="clinics">
+                <Flex justifyContent="center">
+                    <Tabs.List gap={40}>
+                        <Tabs.Trigger value="clinics" fontSize="lg" fontWeight="bold">Clinics & Workshops</Tabs.Trigger>
+                        <Tabs.Trigger value="cases" fontSize="lg" fontWeight="bold">Cases</Tabs.Trigger>
+                    </Tabs.List>
                 </Flex>
-                <TabPanels>
-                    <TabPanel p={0}>
+                <Tabs.Content value="clinics" p={0}>
                         <Flex 
                             bg = "grey" 
                             h = "100" 
@@ -103,29 +73,22 @@ export const EventManagement = () => {
                             gap = "2%"
                             mt = "2%"
                         >
-                            <Select
-                                placeholder="Sort By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="priority"> Priority (highest to lowest) </option>
-                                <option value="date"> Date (newest to oldest) </option>
-                                <option value="etc"> etc. </option>
-                            </Select>
-
-                            <Select
-                                placeholder="Filter By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="workshop">Workshop</option>
-                                <option value="clinic">Clinic</option>
-                                <option value="etc">etc.</option>
-                            </Select>
+                            <NativeSelect.Root maxW="10%">
+                                <NativeSelect.Field placeholder="Sort By" borderRadius="sm" border="2px solid black" bg="white">
+                                    <option value="priority"> Priority (highest to lowest) </option>
+                                    <option value="date"> Date (newest to oldest) </option>
+                                    <option value="etc"> etc. </option>
+                                </NativeSelect.Field>
+                                <NativeSelect.Indicator />
+                            </NativeSelect.Root>
+                            <NativeSelect.Root maxW="10%">
+                                <NativeSelect.Field placeholder="Filter By" borderRadius="sm" border="2px solid black" bg="white">
+                                    <option value="workshop">Workshop</option>
+                                    <option value="clinic">Clinic</option>
+                                    <option value="etc">etc.</option>
+                                </NativeSelect.Field>
+                                <NativeSelect.Indicator />
+                            </NativeSelect.Root>
                             
                             <Button 
                                 ml="auto"
@@ -144,18 +107,14 @@ export const EventManagement = () => {
                                 onClose={onClose} 
                             />
                         </Flex>
-                        <Tabs>
-                            <Flex 
-                                justifyContent="center" 
-                                mt = "1%"
-                            >
-                                <TabList gap = {10}>
-                                    <Tab> Upcoming Events </Tab>
-                                    <Tab> Event Archive </Tab>
-                                </TabList>
+                        <Tabs.Root defaultValue="upcoming">
+                            <Flex justifyContent="center" mt="1%">
+                                <Tabs.List gap={10}>
+                                    <Tabs.Trigger value="upcoming">Upcoming Events</Tabs.Trigger>
+                                    <Tabs.Trigger value="archive">Event Archive</Tabs.Trigger>
+                                </Tabs.List>
                             </Flex>
-                            <TabPanels>
-                                <TabPanel>
+                            <Tabs.Content value="upcoming">
                                     <VStack p = {4}>
                                         {/*
                                         This card is an example for demonstration purposes only and
@@ -178,27 +137,24 @@ export const EventManagement = () => {
                                                     px={4} 
                                                     positions = "relative"
                                                 >
-                                                    <VStack 
-                                                        align="start" 
-                                                        spacing={1}
-                                                    >
+                                                    <VStack align="start" gap={1}>
                                                         <Text 
                                                             fontSize = "lg" 
                                                             fontWeight = "bold"
                                                         >
                                                             Underwater Basket Weaving Competition
                                                         </Text>
-                                                        <HStack spacing={2}>
+                                                        <HStack gap={2}>
                                                             <Icon as={IoCalendarSharp} />
                                                             <Text fontSize="md"> May 4th, 2026 @ 10 P.M. </Text>
                                                         </HStack>
 
-                                                        <HStack spacing={2}>
+                                                        <HStack gap={2}>
                                                             <Icon as={FaLocationDot} />
                                                             <Text fontSize="md">Example Location</Text>
                                                         </HStack>
 
-                                                        <HStack spacing={2}>
+                                                        <HStack gap={2}>
                                                             <Icon as={IoPersonSharp} />
                                                             <Text fontSize="md"> 20/40 attendees </Text>
                                                         </HStack>
@@ -212,15 +168,9 @@ export const EventManagement = () => {
                                                             >
                                                                 Tags: 
                                                             </Text>
-                                                            <Tag bg = "#D9D9D9">
-                                                                Workshop
-                                                            </Tag>
-                                                            <Tag bg = "#D9D9D9">
-                                                                ex1
-                                                            </Tag>
-                                                            <Tag bg = "#D9D9D9">
-                                                                ex2
-                                                            </Tag>
+                                                            <Tag.Root bg="#D9D9D9"><Tag.Label>Workshop</Tag.Label></Tag.Root>
+                                                            <Tag.Root bg="#D9D9D9"><Tag.Label>ex1</Tag.Label></Tag.Root>
+                                                            <Tag.Root bg="#D9D9D9"><Tag.Label>ex2</Tag.Label></Tag.Root>
                                                         </HStack>
                                                     </Box>
 
@@ -237,17 +187,14 @@ export const EventManagement = () => {
                                             </Card>
                                         </Box>
                                     </VStack>
-                                </TabPanel>
-                            </TabPanels>
-                        </Tabs>
-                    </TabPanel>
-                    <TabPanel>
-                        {/* 
-                        Figure out what to do with Cases here
-                        */}
-                    </TabPanel>
-                </TabPanels>
-            </Tabs>
+                            </Tabs.Content>
+                            <Tabs.Content value="archive" />
+                        </Tabs.Root>
+                </Tabs.Content>
+                <Tabs.Content value="cases">
+                    {/* Figure out what to do with Cases here */}
+                </Tabs.Content>
+            </Tabs.Root>
         </VStack>
     );
 };

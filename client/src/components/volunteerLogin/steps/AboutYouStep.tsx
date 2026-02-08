@@ -1,177 +1,94 @@
-import React from "react";
-import { 
-  VStack, 
-  Stack, 
-  HStack, 
-  Heading, 
-  Select, 
-  Button, 
+import {
   Box,
-  Flex, 
+  Button,
+  Flex,
+  Heading,
+  HStack,
+  NativeSelect,
   Progress,
-  useBreakpointValue 
+  Stack,
+  VStack,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
 };
 
-const GetStartedStep = ({ onNext }: Props) => {
-  const headingText = useBreakpointValue({ 
-    base: "Tell us more!", 
-    md: "Tell us more about yourself!" 
+const AboutYouStep = ({ onNext }: Props) => {
+  const headingText = useBreakpointValue({
+    base: "Tell us more!",
+    md: "Tell us more about yourself!",
   });
 
   return (
-    <Flex 
-      w="100%" 
-      h="100vh"
-      align="center" 
-      justify="flex-start"
-      direction="column"
-    >
-      <Box 
-          w="100%" 
-          h={{ base: "134px", md: "106px" }} 
-          bg="#E8E8E8" 
-        />
-      <VStack spacing={{ base: 8, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
-          <Heading 
-            as="h1" 
-            fontSize={{ base: "30px", md: "50px" }} 
-            fontWeight={500} 
-            color="black"
-            textAlign="center"
-          >
-            {headingText}
-          </Heading>
+    <Flex w="100%" h="100vh" align="center" justify="flex-start" direction="column">
+      <Box w="100%" h={{ base: "134px", md: "106px" }} bg="#E8E8E8" />
+      <VStack gap={{ base: 8, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+        <Heading as="h1" fontSize={{ base: "30px", md: "50px" }} fontWeight={500} color="black" textAlign="center">
+          {headingText}
+        </Heading>
 
-          <Stack 
-            direction={{ base: "column", md: "row" }} 
-            spacing={{ base: 4, md: "20px" }} 
-            w="100%" 
-            justify="center"
-            align="center"
-          >
-            <HStack spacing="-2px" w={{ base: "100%", md: "auto" }}>
-              <Select
-                placeholder="Language"
-                w={{ base: "100%", md: "199px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="4px"
-                borderRightRadius="0px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+        <Stack direction={{ base: "column", md: "row" }} gap={{ base: 4, md: "20px" }} w="100%" justify="center" align="center">
+          <HStack gap="-2px" w={{ base: "100%", md: "auto" }}>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Language" w={{ base: "100%", md: "199px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="4px" borderRightRadius="0px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="english">English</option>
-              </Select>
-              <Select 
-                placeholder="Proficiency" 
-                w={{ base: "100%", md: "150px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="0px"
-                borderRightRadius="4px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Proficiency" w={{ base: "100%", md: "150px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="0px" borderRightRadius="4px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="fluent">Fluent</option>
-              </Select>
-            </HStack>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </HStack>
 
-            <HStack spacing="-2px" w={{ base: "100%", md: "auto" }}>
-              <Select
-                placeholder="Language"
-                w={{ base: "100%", md: "221px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="4px"
-                borderRightRadius="0px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+          <HStack gap="-2px" w={{ base: "100%", md: "auto" }}>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Language" w={{ base: "100%", md: "221px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="4px" borderRightRadius="0px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="spanish">Spanish</option>
-              </Select>
-              <Select 
-                placeholder="Proficiency" 
-                w={{ base: "100%", md: "150px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="0px"
-                borderRightRadius="4px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Proficiency" w={{ base: "100%", md: "150px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="0px" borderRightRadius="4px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="intermediate">Intermediate</option>
-              </Select>
-            </HStack>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </HStack>
 
-            <HStack spacing="-2px" w={{ base: "100%", md: "auto" }}>
-              <Select
-                placeholder="Language"
-                w={{ base: "100%", md: "198px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="4px"
-                borderRightRadius="0px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+          <HStack gap="-2px" w={{ base: "100%", md: "auto" }}>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Language" w={{ base: "100%", md: "198px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="4px" borderRightRadius="0px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="french">French</option>
-              </Select>
-              <Select 
-                placeholder="Proficiency" 
-                w={{ base: "100%", md: "150px" }}
-                h="40px"
-                borderWidth="2px"
-                borderColor="black"
-                borderLeftRadius="0px"
-                borderRightRadius="4px"
-                pt="8px"
-                pb="8px"
-                pl="12px"
-                pr="6px"
-              >
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field placeholder="Proficiency" w={{ base: "100%", md: "150px" }} h="40px" borderWidth="2px" borderColor="black" borderLeftRadius="0px" borderRightRadius="4px" pt="8px" pb="8px" pl="12px" pr="6px">
                 <option value="basic">Basic</option>
-              </Select>
-            </HStack>
-          </Stack>
-          
-          <VStack spacing={6}>
-              <Button
-                w="102px"
-                h="40px"
-                onClick={onNext}
-                borderColor="black"
-                borderWidth="3px"
-                borderRadius="2px"
-                bg="#FAFAFA"
-              >
-                Continue
-              </Button>
-              <Box width="200px">
-                <Progress value={50} size="xs" colorScheme="gray" borderRadius="full"/>
-              </Box>
-          </VStack>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </HStack>
+        </Stack>
+
+        <VStack gap={6}>
+          <Button w="102px" h="40px" onClick={onNext} borderColor="black" borderWidth="3px" borderRadius="2px" bg="#FAFAFA">
+            Continue
+          </Button>
+          <Box width="200px">
+            <Progress.Root value={50} size="xs" colorPalette="gray" borderRadius="full">
+              <Progress.Track><Progress.Range /></Progress.Track>
+            </Progress.Root>
+          </Box>
+        </VStack>
       </VStack>
     </Flex>
   );
 };
 
-export default GetStartedStep;
+export default AboutYouStep;

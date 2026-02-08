@@ -1,11 +1,9 @@
 import React from "react";
-import { ChakraProvider, Flex, Box, Text, Input, VStack, Button, HStack, Divider} from "@chakra-ui/react";
-
+import { Flex, Box, Text, Input, VStack, Button, HStack, Separator } from "@chakra-ui/react";
 
 export const AdminLogin: React.FC = () => {
  return (
-   <ChakraProvider>
-     <Flex w="100vw" h="100vh" bg="white">
+   <Flex w="100vw" h="100vh" bg="white">
       
        {/* Image */}
        <Flex w="45%" bg="#E8E8E8" h="100%" align="center" justify="center">
@@ -42,7 +40,7 @@ export const AdminLogin: React.FC = () => {
 
 
          <Button
-             variant="link"
+             variant="plain"
              textDecoration="underline"
              color="black"
              ml="60%"
@@ -64,9 +62,9 @@ export const AdminLogin: React.FC = () => {
 
 
          <HStack w="60%" gap="4">
-           <Divider flex="1" borderColor="black" />
+           <Separator flex="1" borderColor="black" />
            <Text fontWeight="bold" fontSize="sm">OR</Text>
-           <Divider flex="1" borderColor="black" />
+           <Separator flex="1" borderColor="black" />
          </HStack>
 
 
@@ -87,9 +85,6 @@ export const AdminLogin: React.FC = () => {
            Office 365
          </Button>
        </VStack>
-
-
      </Flex>
-   </ChakraProvider>
  );
 };

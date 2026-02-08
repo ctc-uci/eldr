@@ -9,9 +9,9 @@ import { Signup } from "@/components/signup/Signup";
 // Dev-made Components!
 import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
-import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile"
-import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
+import { VolunteerManagement } from "./components/volunteerManagement/volunteerManagement";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";

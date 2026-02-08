@@ -1,15 +1,14 @@
 import { React } from "react";
 
 import {
+  Field,
   Flex,
-  SimpleGrid,
-  FormControl,
-  FormLabel,
-  Input,
   GridItem,
+  HStack,
   IconButton,
+  Input,
+  SimpleGrid,
   Tag,
-  HStack
 } from "@chakra-ui/react";
 
 import { IoAdd } from "react-icons/io5";
@@ -20,42 +19,22 @@ export const InfoManagement = () => {
       columns={{base: 1, md: 2}}
       spacingX={{base: 8, md: 20}}
       spacingY={10}>
-        <FormControl>
-          <FormLabel fontWeight="bold">
-            First Name
-          </FormLabel>
-          <Input type="text"
-            defaultValue="Peter"
-            borderWidth="2px"
-            borderColor="#000000"
-            _hover={{borderColor: "#000000"}}/>
-        </FormControl>
-        <FormControl>
-          <FormLabel fontWeight="bold">
-            Last Name
-          </FormLabel>
-          <Input type="text"
-            defaultValue="Anteater"
-            borderWidth="2px"
-            borderColor="#000000"
-            _hover={{borderColor: "#000000"}}/>
-        </FormControl>
-        <FormControl>
-          <FormLabel fontWeight="bold">
-            Phone Number
-          </FormLabel>
-        <Input type="text"
-          defaultValue="621-438-3991"
-          borderWidth="2px"
-          borderColor="#000000"
-          _hover={{ borderColor: "#000000" }}/>
-      </FormControl>
+        <Field.Root>
+          <Field.Label fontWeight="bold">First Name</Field.Label>
+          <Input type="text" defaultValue="Peter" borderWidth="2px" borderColor="#000000" _hover={{ borderColor: "#000000" }} />
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontWeight="bold">Last Name</Field.Label>
+          <Input type="text" defaultValue="Anteater" borderWidth="2px" borderColor="#000000" _hover={{ borderColor: "#000000" }} />
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontWeight="bold">Phone Number</Field.Label>
+          <Input type="text" defaultValue="621-438-3991" borderWidth="2px" borderColor="#000000" _hover={{ borderColor: "#000000" }} />
+        </Field.Root>
 
-      <GridItem colSpan={{base: 1, md: 2}}>
-        <FormControl>
-          <FormLabel fontWeight="bold">
-            Specialization(s)
-          </FormLabel>
+      <GridItem colSpan={{ base: 1, md: 2 }}>
+        <Field.Root>
+          <Field.Label fontWeight="bold">Specialization(s)</Field.Label>
           <Flex width={{base: "100%", md: "60%"}}
             minWidth="fit-content"
             minHeight="64px"
@@ -66,29 +45,29 @@ export const InfoManagement = () => {
             align="center"
             justify="space-between">
             
-            <HStack spacing={2}>
-              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
-              </Tag>
-              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
-              </Tag>
-              <Tag size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
-              </Tag>
+            <HStack gap={2}>
+              <Tag.Root size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+                <Tag.Label />
+              </Tag.Root>
+              <Tag.Root size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+                <Tag.Label />
+              </Tag.Root>
+              <Tag.Root size="md" minW="100px" borderRadius="full" bg="#E8E8E8" color="black">
+                <Tag.Label />
+              </Tag.Root>
             </HStack>
-            
-            <IconButton icon={<IoAdd size="24"/>}
-              variant="ghost" _hover={{bg: "transparent"}}
-              isRound={true} _active={{transform: "scale(0.9)"}}
-              display={{base:"none", md:"flex"}}/>
+
+            <IconButton variant="ghost" _hover={{ bg: "transparent" }} borderRadius="full" _active={{ transform: "scale(0.9)" }} display={{ base: "none", md: "flex" }} aria-label="Add">
+              <IoAdd size={24} />
+            </IconButton>
           </Flex>
-        </FormControl>
+        </Field.Root>
       </GridItem>
 
-      <GridItem colSpan={{base: 1, md: 2}}>
-        <FormControl>
-          <FormLabel fontWeight="bold">
-            Languages(s)
-          </FormLabel>
-          <Flex width={{base: "100%", md: "35%"}}
+      <GridItem colSpan={{ base: 1, md: 2 }}>
+        <Field.Root>
+          <Field.Label fontWeight="bold">Languages(s)</Field.Label>
+          <Flex width={{ base: "100%", md: "35%" }}
             minHeight="64px"
             p={2}
             borderWidth="2px"
@@ -97,27 +76,22 @@ export const InfoManagement = () => {
             align="center"
             justify="space-between">
             
-            <HStack spacing={2}>
-              <Tag size="md" borderRadius="full" bg="#E8E8E8" color="black">
-                English
-              </Tag>
-              <Tag size="md" borderRadius="full" bg="#E8E8E8" color="black">
-                Japanese
-              </Tag>
+            <HStack gap={2}>
+              <Tag.Root size="md" borderRadius="full" bg="#E8E8E8" color="black">
+                <Tag.Label>English</Tag.Label>
+              </Tag.Root>
+              <Tag.Root size="md" borderRadius="full" bg="#E8E8E8" color="black">
+                <Tag.Label>Japanese</Tag.Label>
+              </Tag.Root>
             </HStack>
           </Flex>
-        </FormControl>
+        </Field.Root>
       </GridItem>
 
-      <FormControl>
-        <FormLabel fontWeight="bold">
-          Law School & Company
-        </FormLabel>
-        <Input type="text"
-          borderWidth="2px"
-          borderColor="#000000"
-          _hover="#000000"/>
-      </FormControl>
+      <Field.Root>
+        <Field.Label fontWeight="bold">Law School & Company</Field.Label>
+        <Input type="text" borderWidth="2px" borderColor="#000000" _hover="#000000" />
+      </Field.Root>
     </SimpleGrid>
   )
 }

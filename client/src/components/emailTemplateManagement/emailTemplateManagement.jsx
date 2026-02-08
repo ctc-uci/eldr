@@ -4,22 +4,19 @@ import {
   Text,
   VStack,
   HStack,
+  Button,
+  Flex,
+  Icon,
   Input,
   InputGroup,
-  InputLeftElement,
-  SimpleGrid,
-  Flex,
   Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Button,
-  Select,
+  NativeSelect,
+  Portal,
+  SimpleGrid,
 } from "@chakra-ui/react";
-import {
-  EmailIcon, SearchIcon,
-  ChevronDownIcon} from "@chakra-ui/icons";
 import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers } from "react-icons/fa";
+import { HiMail } from "react-icons/hi";
+import { LuSearch, LuChevronDown } from "react-icons/lu";
 
 export const EmailTemplateManagement = () => {
   const [activeSection, setActiveSection] = useState("welcome");
@@ -33,10 +30,7 @@ export const EmailTemplateManagement = () => {
       <Box flex="1" p={6} >
 
         {/* Search Bar */}
-        <InputGroup mb={6} >
-          <InputLeftElement pointerEvents="none" >
-            <SearchIcon color='gray.300' />
-          </InputLeftElement>
+        <InputGroup mb={6} startElement={<Icon as={LuSearch} color="gray.300" />}>
           <Input placeholder="Search" />
         </InputGroup>
 
@@ -62,10 +56,10 @@ const Sidebar = () => (
       ELDR
     </Text>
 
-    <VStack align="stretch" spacing={2}>
+    <VStack align="stretch" gap={2}>
       <NavItem icon={<FaUser />} label="Profile" />
       <NavItem icon={<FaUsers />} label="Volunteer Management" />
-      <NavItem icon={<EmailIcon />} label="Email Management" active />
+      <NavItem icon={<HiMail />} label="Email Management" active />
       <NavItem icon={<FaClipboard />} label="Clinics" />
       <NavItem icon={<FaBriefcase />} label="Cases" />
     </VStack>
@@ -74,7 +68,7 @@ const Sidebar = () => (
 
 const NavItem = ({ icon, label, active = false }) => (
   <HStack
-    spacing={3}
+    gap={3}
     p={2}
     borderRadius="md"
     bg={active ? "gray.300" : "transparent"}
@@ -94,22 +88,29 @@ const WelcomeSection = ({ setActiveSection }) => (
     </Text>
 
     {/* Create New Button */}
-    <Menu>
-      <MenuButton as={Button} leftIcon={<FaEdit />}>
-        Create New
-      </MenuButton>
-      <MenuList>
-        <MenuItem>New folder</MenuItem>
-        <MenuItem onClick={() => setActiveSection("newTemplate")}>
-          New template
-        </MenuItem>
-      </MenuList>
-    </Menu>
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <Button gap={2}>
+          <FaEdit />
+          Create New
+        </Button>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item value="folder">New folder</Menu.Item>
+            <Menu.Item value="template" onSelect={() => setActiveSection("newTemplate")}>
+              New template
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
     </Flex>
     
      {/* Suggested Folders */}
      <Section title="Suggested folders">
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
         <FolderCard />
         <FolderCard />
         <FolderCard />
@@ -119,7 +120,7 @@ const WelcomeSection = ({ setActiveSection }) => (
 
     {/* Suggested Templates */}
     <Section title="Suggested templates">
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
         <TemplateCard />
         <TemplateCard />
         <TemplateCard />
@@ -132,7 +133,7 @@ const WelcomeSection = ({ setActiveSection }) => (
 const Section = ({ title, children }) => (
   <Box mb={8}>
     <HStack mb={4}>
-      <ChevronDownIcon />
+      <LuChevronDown />
       <Text fontSize="lg" fontWeight="semibold">
         {title}
       </Text>
@@ -168,11 +169,14 @@ const NewTemplateSection = () => (
     <HStack spacing={3} mb={6} b>
       <Button bg="white" border="2px solid black">Add Notification</Button>
       <Button bg="white" border="2px solid black">Delete Draft</Button>
-      <Select placeholder="Select Folder" w="200px" borderRadius="md" size="md" bg="white" border="1px solid black">
-        <option value="folder1">Folder 1</option>
-        <option value="folder2">Folder 2</option>
-        <option value="folder3">Folder 3</option>
-      </Select>
+      <NativeSelect.Root size="md" w="200px">
+        <NativeSelect.Field placeholder="Select Folder" borderRadius="md" bg="white" border="1px solid black">
+          <option value="folder1">Folder 1</option>
+          <option value="folder2">Folder 2</option>
+          <option value="folder3">Folder 3</option>
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
     </HStack>
 
     {/* Template Content */}

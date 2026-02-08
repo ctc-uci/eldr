@@ -1,12 +1,11 @@
 import {
-  AbsoluteCenter,
   Box,
   Button,
   Center,
-  Divider,
   Flex,
   Heading,
   Input,
+  Separator,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -16,7 +15,7 @@ type Props = {
   onBack: () => void;
 };
 
-const WelcomeStep = ({ onNext, onBack }: Props) => {
+const LoginStep = ({ onNext, onBack }: Props) => {
   return (
     <Flex
       w="100%"
@@ -46,7 +45,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
         >
           ELDR Volunteer Portal
         </Heading>
-        <VStack spacing="10px">
+        <VStack gap="10px">
           <Input
             placeholder="Enter first name"
             w="704px"
@@ -67,7 +66,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             justifyContent="end"
           >
             <Button
-              variant="link"
+              variant="plain"
               textDecoration="underline"
               color="black"
               onClick={onBack}
@@ -76,7 +75,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             </Button>
           </Flex>
         </VStack>
-        <VStack spacing="14px">
+        <VStack gap="14px">
           <Button
             bg="#FAFAFA"
             w="297px"
@@ -90,9 +89,9 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             align="center"
             w="100%"
           >
-            <Divider borderColor="black" />
+            <Separator borderColor="black" />
             <Text padding="2">OR</Text>
-            <Divider borderColor="black" />
+            <Separator borderColor="black" />
           </Flex>
           <Button
             bg="#FAFAFA"
@@ -113,7 +112,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             Office 365
           </Button>
           <Button
-            variant="link"
+            variant="plain"
             textDecoration="underline"
             color="black"
             onClick={onNext}
@@ -137,4 +136,4 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
   );
 };
 
-export default WelcomeStep;
+export default LoginStep;

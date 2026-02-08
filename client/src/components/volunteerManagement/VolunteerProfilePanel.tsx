@@ -4,9 +4,9 @@ import {
   Heading,
   Text,
   Button,
+  NativeSelect,
   SimpleGrid,
   Input,
-  Select,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 
@@ -116,7 +116,7 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
         )}
 
         {/* Profile or New Profile fields */}
-        <SimpleGrid columns={isNew ? 3 : 2} spacing={6} maxW={isNew ? "720px" : "760px"}>
+        <SimpleGrid columns={isNew ? 3 : 2} gap={6} maxW={isNew ? "720px" : "760px"}>
           <Box w={isNew ? "160px" : "100%"}>
             {isNew ? (
               <>
@@ -156,19 +156,21 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
           {isNew && (
              <Box w="120px">
                 <Text fontSize="xs" fontWeight="700" mb={1} >Role</Text>
-                <Select
-                  h="34px"
-                  fontSize="xs"
-                  bg="white"
-                  borderRadius="sm"
-                  borderColor="gray.500"
-                  iconColor="black"
-                  {...register("role")}
-                >
-                  <option value="volunteer">Volunteer</option>
-                  <option value="admin">Admin</option>
-                  <option value="staff">Staff</option>
-                </Select>
+                <NativeSelect.Root size="sm">
+                  <NativeSelect.Field
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    {...register("role")}
+                  >
+                    <option value="volunteer">Volunteer</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
              </Box>
           )}
 

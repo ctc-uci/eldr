@@ -4,19 +4,19 @@ import {
   Box,
   Flex,
   Button,
-  Divider,
-  SimpleGrid,
   IconButton,
+  SimpleGrid,
+  Separator,
+  Stack,
   Text,
   VStack,
-  Stack,
 } from "@chakra-ui/react";
 
 import { BsClockHistory, BsBoxArrowUpRight } from "react-icons/bs";
 
 export const DashboardManagement = () => {
   return (
-    <SimpleGrid width={{base: "100%", md: "80%"}} columns={{base: 1, md: 2}} spacing={6} mb={10}>
+    <SimpleGrid width={{base: "100%", md: "80%"}} columns={{ base: 1, md: 2 }} gap={6} mb={10}>
        
        <Box p={6} borderRadius="2xl">
           <Flex justify="space-between" align="center" mb={6} width={{base: "100%", md: "80%"}}>
@@ -32,7 +32,7 @@ export const DashboardManagement = () => {
 
           <Flex align="center">
             <BsClockHistory size="25" />
-            <VStack spacing={0} mr={6} align="center" width="60px">
+            <VStack gap={0} mr={6} align="center" width="60px">
                <Text fontSize="12px" color="#757575" fontWeight="bold">
                 Total
               </Text>
@@ -41,10 +41,10 @@ export const DashboardManagement = () => {
               </Text>
             </VStack>
 
-            <Divider orientation="vertical" height="40px" borderColor="#000000" mr={8}/> {/* Divider for Data */}
+            <Separator orientation="vertical" height="40px" borderColor="#000000" mr={8} />
 
             <Flex width={{base: "100%", md: "80%"}} gap={6}>
-              <VStack align="start" spacing={0}>
+              <VStack align="start" gap={0}>
                   <Text fontSize="12px" color="#757575" fontWeight="bold" mb={1}>
                       Case
                   </Text>
@@ -52,7 +52,7 @@ export const DashboardManagement = () => {
                       15
                   </Text>
               </VStack>
-              <VStack align="start" spacing={0}>
+              <VStack align="start" gap={0}>
                   <Text fontSize="12px" color="#757575" fontWeight="bold" mb={1}>
                       Clinic & Workshop
                   </Text>
@@ -66,7 +66,7 @@ export const DashboardManagement = () => {
 
        <Box p={6} borderRadius="2xl" position="relative">
           <Text fontWeight="bold" fontSize="18px" mb={6}>Event Count</Text>
-          <VStack spacing={4} align="stretch">
+          <VStack gap={4} align="stretch">
             <Flex justify="space-between">
                 <Text fontSize="12px" color="#757575" fontWeight="bold">
                   Case
@@ -77,7 +77,9 @@ export const DashboardManagement = () => {
                 <Text fontSize="12px">9</Text>
             </Flex>
             <Flex justify="flex-end" width={{base: "100%", md: "115%"}}>
-              <IconButton icon={<BsBoxArrowUpRight size="20" />} variant="ghost" _hover={{bg: "transparent"}} isRound={true} _active={{transform: "scale(0.9)"}}/>
+              <IconButton variant="ghost" _hover={{ bg: "transparent" }} borderRadius="full" _active={{ transform: "scale(0.9)" }} aria-label="Open">
+              <BsBoxArrowUpRight size={20} />
+            </IconButton>
             </Flex>
           </VStack>
        </Box>
@@ -94,7 +96,7 @@ export const DashboardManagement = () => {
                 Repeat
             </Button>
           </Flex>
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <Box bg="white" p={3} borderRadius="lg" boxShadow="sm">
                 <Text fontSize="12px" fontWeight="medium">
                   December 2, 2025 - [Clinic Name]

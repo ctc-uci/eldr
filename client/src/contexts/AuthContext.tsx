@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 
-import { CreateToastFnReturn, Spinner } from "@chakra-ui/react";
+import { Spinner } from "@chakra-ui/react";
 
 import { AxiosInstance } from "axios";
 import {
@@ -26,7 +26,7 @@ interface AuthContextProps {
   handleRedirectResult: (
     backend: AxiosInstance,
     navigate: NavigateFunction,
-    toast: CreateToastFnReturn
+    toast: (opts: { title?: string; description?: string; status?: string }) => void
   ) => Promise<void>;
 }
 
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const handleRedirectResult = async (
     backend: AxiosInstance,
     navigate: NavigateFunction,
-    toast: CreateToastFnReturn
+    toast: (opts: { title?: string; description?: string; status?: string }) => void
   ) => {
     try {
       const result = await getRedirectResult(auth);
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await backend.delete(`/users/${result.user.uid}`);
             toast({
               title: "An error occurred",
-              description: `Account was not created: ${e.message}`,
+              description: `Account was not created: ${(e as Error).message}`,
               status: "error",
             });
           }

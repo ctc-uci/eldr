@@ -1,21 +1,17 @@
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    Text,
-    ModalBody,
-    ModalFooter,
-    VStack,
-    HStack,
+    Dialog,
     Flex,
-    IconButton,
     Grid,
     GridItem,
-    InputGroup,
-    InputRightElement,
+    HStack,
     Icon,
+    IconButton,
     Input,
-    Select
+    InputGroup,
+    NativeSelect,
+    Portal,
+    Text,
+    VStack,
 } from "@chakra-ui/react";
 
 import { FaArrowCircleLeft } from "react-icons/fa";
@@ -28,29 +24,20 @@ import "react-datepicker/dist/react-datepicker.css";
 export const CreateEvent = ({isOpen, onClose}) => {
     const [startDate, setStartDate] = useState(new Date())
     return (
-        <Modal 
-            isOpen={isOpen} 
-            onClose={onClose}
-            size="6xl"
-        >
-            <ModalOverlay />
-            <ModalContent>
+        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+            <Portal>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                    <Dialog.Content>
                 <HStack>
-                    <Flex 
-                        w="100%" 
-                        align="center" 
-                        p={2}
-                    >
-                        <IconButton
-                            icon={<FaArrowCircleLeft size={24} />}
-                            onClick={onClose}
-                            bg = "white"
-                            mr={2}
-                        />
-                        <Text color = "black"> Back to ELDR event catalog </Text>
+                    <Flex w="100%" align="center" p={2}>
+                        <IconButton onClick={onClose} bg="white" mr={2} aria-label="Back">
+                            <FaArrowCircleLeft size={24} />
+                        </IconButton>
+                        <Text color="black"> Back to ELDR event catalog </Text>
                     </Flex>
                 </HStack>
-            <ModalBody>
+            <Dialog.Body>
                 <VStack align = "start">
                     <Text 
                         fontWeight = "bold" 
@@ -92,14 +79,13 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                     >
                                         Select Event Type
                                     </Text>
-                                    <Select 
-                                        placeholder = "Select one"
-                                        bg = "#D9D9D9"
-                                        borderRadius="lg"
-                                    >
-                                        <option value = "clinic"> clinic </option>
-                                        <option value = "workshop"> workshop </option>
-                                    </Select>
+                                    <NativeSelect.Root>
+                                        <NativeSelect.Field placeholder="Select one" bg="#D9D9D9" borderRadius="lg">
+                                            <option value="clinic"> clinic </option>
+                                            <option value="workshop"> workshop </option>
+                                        </NativeSelect.Field>
+                                        <NativeSelect.Indicator />
+                                    </NativeSelect.Root>
                                 </VStack>
                             </GridItem>
                             <GridItem>
@@ -117,17 +103,14 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         selected={startDate}
                                         onChange={(date) => setStartDate(date)}
                                         customInput={
-                                            <InputGroup>
+                                            <InputGroup endElement={<Icon as={IoCalendarSharp} />}>
                                                 <Input
                                                     bg="#D9D9D9"
                                                     borderRadius="lg"
                                                     placeholder="Select date"
                                                     pr="2.5rem"
-                                                    w = "100%"
+                                                    w="100%"
                                                 />
-                                                <InputRightElement>
-                                                    <Icon as={IoCalendarSharp}/>
-                                                </InputRightElement>
                                             </InputGroup>
                                         }
                                     />
@@ -142,32 +125,21 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         Timeframe
                                     </Text>
                                     <HStack>
-                                        <Select
-                                            placeholder = "Select start time"
-                                            bg = "#D9D9D9"
-                                            borderRadius="lg"
-                                        >
-                                            {/*
-                                                These are placeholders, please replace with
-                                                a mapping of times
-                                            */}
-                                            <option value = "1PM"> 1 PM </option>
-                                            <option value = "2PM"> 2 PM </option>
-                                        </Select>
-                                        <Text
-                                            fontSize = "md"
-                                            fontWeight = "bold"
-                                        >
-                                            to
-                                        </Text>
-                                        <Select
-                                            placeholder = "Select end time"
-                                            bg = "#D9D9D9"
-                                            borderRadius="lg"
-                                        >
-                                            <option value = "1PM"> 1 PM </option>
-                                            <option value = "2PM"> 2 PM </option>
-                                        </Select>
+                                        <NativeSelect.Root>
+                                            <NativeSelect.Field placeholder="Select start time" bg="#D9D9D9" borderRadius="lg">
+                                                <option value="1PM"> 1 PM </option>
+                                                <option value="2PM"> 2 PM </option>
+                                            </NativeSelect.Field>
+                                            <NativeSelect.Indicator />
+                                        </NativeSelect.Root>
+                                        <Text fontSize="md" fontWeight="bold">to</Text>
+                                        <NativeSelect.Root>
+                                            <NativeSelect.Field placeholder="Select end time" bg="#D9D9D9" borderRadius="lg">
+                                                <option value="1PM"> 1 PM </option>
+                                                <option value="2PM"> 2 PM </option>
+                                            </NativeSelect.Field>
+                                            <NativeSelect.Indicator />
+                                        </NativeSelect.Root>
                                                 
                                     </HStack>
                                 </VStack>
@@ -232,14 +204,13 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                             Tags
                                         </Text>
                                     </HStack>
-                                    <Select
-                                        placeholder = "Select applicable tags"
-                                        bg = "#D9D9D9"
-                                        borderRadius="lg"
-                                    >
-                                        <option value = "workshop"> workshop </option>
-                                        <option value = "clinic"> clinic </option>
-                                    </Select>
+                                    <NativeSelect.Root>
+                                        <NativeSelect.Field placeholder="Select applicable tags" bg="#D9D9D9" borderRadius="lg">
+                                            <option value="workshop"> workshop </option>
+                                            <option value="clinic"> clinic </option>
+                                        </NativeSelect.Field>
+                                        <NativeSelect.Indicator />
+                                    </NativeSelect.Root>
                                 </VStack>
                             </GridItem>
                             <GridItem>
@@ -285,55 +256,35 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 >
                                     One week before event date
                                 </Text>
-                                <Select
-                                    placeholder = "Select email template"
-                                    bg = "#D9D9D9"
-                                    borderRadius="lg"
-                                >
-
-                                </Select>
+                                <NativeSelect.Root>
+                                    <NativeSelect.Field placeholder="Select email template" bg="#D9D9D9" borderRadius="lg" />
+                                    <NativeSelect.Indicator />
+                                </NativeSelect.Root>
                             </HStack>
                             <HStack>
-                                {/* checkbox */}
-                                <Text
-                                    fontSize = "md"
-                                    fontWeight = "bold"
-                                >
-                                    Three days before event date
-                                </Text>
-                                <Select
-                                    placeholder = "Select email template"
-                                    bg = "#D9D9D9"
-                                    borderRadius="lg"
-                                >
-
-                                </Select>
+                                <Text fontSize="md" fontWeight="bold">Three days before event date</Text>
+                                <NativeSelect.Root>
+                                    <NativeSelect.Field placeholder="Select email template" bg="#D9D9D9" borderRadius="lg" />
+                                    <NativeSelect.Indicator />
+                                </NativeSelect.Root>
                             </HStack>
                             <HStack>
-                                {/* checkbox */}
-                                <VStack align = "start">
-                                    <Text
-                                    fontSize = "md"
-                                    fontWeight = "bold"
-                                    >
-                                        One day before event date*
-                                    </Text>
-                                    <Text fontSize = "small"> Mandatory! </Text>
+                                <VStack align="start">
+                                    <Text fontSize="md" fontWeight="bold">One day before event date*</Text>
+                                    <Text fontSize="small"> Mandatory! </Text>
                                 </VStack>
-                                <Select
-                                    placeholder = "Select email template"
-                                    bg = "#D9D9D9"
-                                    borderRadius="lg"
-                                >
-                                </Select>
+                                <NativeSelect.Root>
+                                    <NativeSelect.Field placeholder="Select email template" bg="#D9D9D9" borderRadius="lg" />
+                                    <NativeSelect.Indicator />
+                                </NativeSelect.Root>
                             </HStack>
                         </VStack>
                     </Flex>
                 </VStack>
-                </ModalBody>
-                <ModalFooter>
-                </ModalFooter>
-            </ModalContent>
-        </Modal>
+                </Dialog.Body>
+                    </Dialog.Content>
+                </Dialog.Positioner>
+            </Portal>
+        </Dialog.Root>
   );
 }

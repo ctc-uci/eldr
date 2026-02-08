@@ -9,17 +9,11 @@ import {
   Icon,
   Input,
   InputGroup,
-  InputLeftElement,
-  Select,
-  Textarea,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
+  NativeSelect,
   Tabs,
   Tag,
-  TagLabel,
   Text,
+  Textarea,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
@@ -64,22 +58,8 @@ export const EditEvent = ({ setIsEditing }) => {
         >
           ELDR
         </Text>
-        <InputGroup
-          maxW="70%"
-          mx="auto"
-          bg="white"
-        >
-          {/* Search bar */}
-          <InputLeftElement pointerEvents="none">
-            <CiSearch
-              color="black"
-              size="80%"
-            />
-          </InputLeftElement>
-          <Input
-            borderRadius="md"
-            border="2px solid black"
-          />
+        <InputGroup maxW="70%" mx="auto" bg="white" startElement={<Icon as={CiSearch} color="black" boxSize="80%" />}>
+          <Input borderRadius="md" border="2px solid black" />
         </InputGroup>
         <Box>
           <Icon
@@ -88,25 +68,23 @@ export const EditEvent = ({ setIsEditing }) => {
           />
         </Box>
       </Flex>
-      <Tabs
+      <Tabs.Root
         w="100%"
         display="flex"
         flexDirection="column"
         flex={1}
         overflow="hidden"
+        defaultValue="clinics"
       >
         <Flex justifyContent="center">
-          <TabList gap={4}>
-            <Tab>Clinics & Workshops</Tab>
-            <Tab>Cases</Tab>
-          </TabList>
+          <Tabs.List gap={4}>
+            <Tabs.Trigger value="clinics">Clinics & Workshops</Tabs.Trigger>
+            <Tabs.Trigger value="cases">Cases</Tabs.Trigger>
+          </Tabs.List>
         </Flex>
-        <TabPanels
-          flex={1}
-          display="flex"
-          overflow="hidden"
-        >
-          <TabPanel
+        <Box flex={1} display="flex" overflow="hidden">
+          <Tabs.Content
+            value="clinics"
             p={0}
             display="flex"
             flexDirection="column"
@@ -148,55 +126,51 @@ export const EditEvent = ({ setIsEditing }) => {
               align="stretch"
             >
               {/* event details / volunteer list / email notification timeline tabs */}
-              <Tabs
-                isFitted
+              <Tabs.Root
                 w="100%"
                 flex={1}
                 mt={10}
-                variant="enclosed"
                 display="flex"
                 flexDirection="column"
                 overflow="hidden"
+                defaultValue="details"
               >
-                <TabList flexShrink={0}>
-                  <Tab
-                    _selected={{ fontWeight: "bold", color: "black" }}
+                <Tabs.List flexShrink={0}>
+                  <Tabs.Trigger
                     bg="#E8E8E8"
                     border="0px"
                     roundedTop="xl"
                     justifyContent="start"
                     fontSize="lg"
+                    value="details"
                   >
                     Event Details
-                  </Tab>
-                  <Tab
-                    _selected={{ fontWeight: "bold", color: "black" }}
+                  </Tabs.Trigger>
+                  <Tabs.Trigger
                     bg="#D9D9D9"
                     border="0px"
                     roundedTop="xl"
                     justifyContent="start"
                     fontSize="lg"
+                    value="volunteers"
                   >
                     Volunteer List
-                  </Tab>
-                  <Tab
-                    _selected={{ fontWeight: "bold", color: "black" }}
+                  </Tabs.Trigger>
+                  <Tabs.Trigger
                     bg="#CECECE"
                     border="0px"
                     roundedTop="xl"
                     justifyContent="start"
                     fontSize="lg"
+                    value="timeline"
                   >
                     Email Notification Timeline
-                  </Tab>
-                </TabList>
-                <TabPanels
-                  flex={1}
-                  display="flex"
-                  overflow="hidden"
-                >
+                  </Tabs.Trigger>
+                </Tabs.List>
+                <Box flex={1} display="flex" overflow="hidden">
                   {/* event details tab */}
-                  <TabPanel
+                  <Tabs.Content
+                    value="details"
                     bg="#E8E8E8"
                     flex={1}
                     display="flex"
@@ -443,10 +417,11 @@ export const EditEvent = ({ setIsEditing }) => {
                         />
                       </VStack>
                     </VStack>
-                  </TabPanel>
+                  </Tabs.Content>
 
                   {/* volunteers list tab */}
-                  <TabPanel
+                  <Tabs.Content
+                    value="volunteers"
                     bg="#D9D9D9"
                     flex={1}
                     display="flex"
@@ -483,14 +458,8 @@ export const EditEvent = ({ setIsEditing }) => {
                             mx="auto"
                             bg="white"
                             borderRadius="md"
+                            startElement={<Icon as={CiSearch} color="black" boxSize="80%" />}
                           >
-                            {/* Search bar */}
-                            <InputLeftElement pointerEvents="none">
-                              <CiSearch
-                                color="black"
-                                size="80%"
-                              />
-                            </InputLeftElement>
                             <Input
                               borderRadius="md"
                               border="2px solid black"
@@ -505,14 +474,12 @@ export const EditEvent = ({ setIsEditing }) => {
                             alignItems="left"
                           >
                             <Text fontSize="lg">Filter By:</Text>
-                            <Select
-                              bg="white"
-                              placeholder="Select Filter"
-                              borderRadius="md"
-                              border="2px solid black"
-                            >
-                              <option value="all">All</option>
-                            </Select>
+                            <NativeSelect.Root bg="white" borderRadius="md" border="2px solid black">
+                              <NativeSelect.Field placeholder="Select Filter">
+                                <option value="all">All</option>
+                              </NativeSelect.Field>
+                              <NativeSelect.Indicator />
+                            </NativeSelect.Root>
                           </VStack>
                         </VStack>
                       </GridItem>
@@ -574,10 +541,11 @@ export const EditEvent = ({ setIsEditing }) => {
                         </Grid>
                       </GridItem>
                     </Grid>
-                  </TabPanel>
+                  </Tabs.Content>
 
                   {/* email notification timeline tab */}
-                  <TabPanel
+                  <Tabs.Content
+                    value="timeline"
                     bg="#CECECE"
                     flex={1}
                     display="flex"
@@ -616,23 +584,18 @@ export const EditEvent = ({ setIsEditing }) => {
                         </Text>
                         <Flex justify="flex-end">
                           <Button
-                            leftIcon={
-                              <Icon
-                                as={HiMiniPlusCircle}
-                                boxSize={5}
-                              />
-                            }
                             borderRadius="sm"
                             border="2px solid black"
                             bg="white"
                             _hover={{ bg: "gray.100" }}
                           >
+                            <Icon as={HiMiniPlusCircle} boxSize={5} />
                             Add Notification
                           </Button>
                         </Flex>
 
                         {/* row 1 */}
-                        <HStack spacing={2}>
+                        <HStack gap={2}>
                           <Icon
                             as={CiCircleCheck}
                             boxSize={6}
@@ -646,24 +609,21 @@ export const EditEvent = ({ setIsEditing }) => {
                             1 week before event date
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
-                            fontSize="sm"
-                          >
+                          <Tag.Label as="i" fontSize="sm">
                             T-1 Week Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                          </Tag.Label>
+                        </Tag.Root>
                         <Box />
 
                         {/* row 2 */}
-                        <HStack spacing={2}>
+                        <HStack gap={2}>
                           <Icon
                             as={CiCircleCheck}
                             boxSize={6}
@@ -677,25 +637,22 @@ export const EditEvent = ({ setIsEditing }) => {
                             3 days before event date
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
-                            fontSize="sm"
-                          >
+                          <Tag.Label as="i" fontSize="sm">
                             T-1 Week Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                          </Tag.Label>
+                        </Tag.Root>
                         <Box />
 
                         {/* row 3 */}
                         <HStack
-                          spacing={2}
+                          gap={2}
                           align="center"
                         >
                           <Icon
@@ -717,39 +674,32 @@ export const EditEvent = ({ setIsEditing }) => {
                             Mandatory!
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
-                            fontSize="sm"
-                          >
+                          <Tag.Label as="i" fontSize="sm">
                             T-1 Day Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                          </Tag.Label>
+                        </Tag.Root>
                         <Box />
                       </Grid>
                     </VStack>
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
+                  </Tabs.Content>
+                </Box>
+              </Tabs.Root>
             </VStack>
-          </TabPanel>
-          <TabPanel
-            flex={1}
-            display="flex"
-            overflow="auto"
-          >
+          </Tabs.Content>
+          <Tabs.Content value="cases" flex={1} display="flex" overflow="auto">
             {/* 
                         Figure out what to do with Cases here
                         */}
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+          </Tabs.Content>
+        </Box>
+      </Tabs.Root>
     </VStack>
   );
 };

@@ -33,24 +33,24 @@ export const VolunteerManagementView = () => {
       <Box mb={4}>
         <ButtonGroup
           size="sm"
-          isAttached
+          attached
           variant="outline"
         >
           <Button
             onClick={() => setViewMode("list")}
-            colorScheme={viewMode === "list" ? "blue" : undefined}
+            colorPalette={viewMode === "list" ? "blue" : undefined}
           >
             List Only
           </Button>
           <Button
             onClick={() => setViewMode("split")}
-            colorScheme={viewMode === "split" ? "blue" : undefined}
+            colorPalette={viewMode === "split" ? "blue" : undefined}
           >
             Split View
           </Button>
           <Button
             onClick={() => setViewMode("profile")}
-            colorScheme={viewMode === "profile" ? "blue" : undefined}
+            colorPalette={viewMode === "profile" ? "blue" : undefined}
           >
             Profile Only
           </Button>
@@ -88,7 +88,7 @@ export const VolunteerManagementView = () => {
                 mr={2}
               />
               <Input
-                variant="unstyled"
+                unstyled
                 placeholder=""
                 fontSize="sm"
               />
