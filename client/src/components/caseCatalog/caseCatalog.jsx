@@ -12,7 +12,8 @@ import {
     Button,
     Divider,
     Spacer,
-    useToast
+    useToast,
+    useBreakpointValue
   } from "@chakra-ui/react";
 
 import { SearchIcon } from "@chakra-ui/icons";
@@ -59,6 +60,8 @@ export const CaseCatalog = () => {
     const [savedCaseIds, setSavedCaseIds] = useState(new Set());
     const [isNewest, setIsNewest] = useState(true);
     const toast = useToast();
+    const isMobile = useBreakpointValue({ base: true, md: false });
+
     const languageOptions = [
         { value: "arabic", label: "Arabic" },
         { value: "japanese", label: "Japanese" },
@@ -301,17 +304,32 @@ export const CaseCatalog = () => {
             {/* Right: Case Detail */}
             {selectedCase && (activeTab === "all" || savedCaseIds.has(selectedCase.id)) && (
                 <Box
-                w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
-                bg="white"
-                p={6}
-                borderRadius="md"
-                overflowY="auto"
+                    position={{ base: "fixed", md: "relative" }}
+                    top={{ base: 0, md: "auto" }}
+                    left={{ base: 0, md: "auto" }}
+                    w={{ base: "100vw", md: "50%" }}
+                    h={{ base: "100vh", md: "auto" }}
+                    bg="white"
+                    p={6}
+                    borderRadius={{ base: 0, md: "md" }}
+                    overflowY="auto"
+                    zIndex={{ base: 1000, md: "auto" }}
                 >
-                <CaseDetail
+                    {/* Mobile back button */}
+                    <Box display={{ base: "block", md: "none" }} mb={4}>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedCase(null)}
+                    >
+                        ← Back
+                    </Button>
+                    </Box>
+                    <CaseDetail
                     caseData={selectedCase}
                     isSaved={savedCaseIds.has(selectedCase.id)}
                     onToggleBookmark={toggleBookmark}
-                />
+                    />
                 </Box>
             )}
             </>
