@@ -20,12 +20,12 @@ locationsRouter.get("/", async (req, res) => {
 // /locations
 locationsRouter.post("/", async (req, res) => {
   try {
-    const { street_address, city, state, zip_code } = req.body;
+    const { city, state, zip_code } = req.body;
 
     const newLocation = await db.query(
-      `INSERT INTO locations (street_address, city, state, zip_code)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [street_address, city, state, zip_code]
+      `INSERT INTO locations (city, state, zip_code)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [city, state, zip_code]
     );
 
     res.status(201).json(keysToCamel(newLocation[0]));
@@ -61,15 +61,15 @@ locationsRouter.delete("/:locationId", async (req, res) => {
 locationsRouter.put("/:locationId", async (req, res) => {
   try {
     const { locationId } = req.params;
-    const { street_address, city, state, zip_code } = req.body;
+    const { city, state, zip_code } = req.body;
 
-    if (!street_address || !city || !state || !zip_code) {
+    if (!city || !state || !zip_code) {
       return res.status(400).json({ message: "All location fields are required" });
     }
 
     const updatedLocation = await db.query(
-      "UPDATE locations SET street_address = $1, city = $2, state = $3, zip_code = $4 WHERE id = $5 RETURNING *",
-      [street_address, city, state, zip_code, locationId]
+      "UPDATE locations SET city = $1, state = $2, zip_code = $3 WHERE id = $4 RETURNING *",
+      [city, state, zip_code, locationId]
     );
 
     if (updatedLocation.length === 0) {
