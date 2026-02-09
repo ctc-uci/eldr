@@ -62,9 +62,9 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
     return `${hours}:${minutes}`;
   };
 
-  const [startTime, setStartTime] = useState(parseTimeForInput(eventInfo?.time));
-  const [endTime, setEndTime] = useState("");
-  const [capacity, setCapacity] = useState(eventInfo?.attendees || 0);
+  const [startTime, setStartTime] = useState(parseTimeForInput(eventInfo?.time)); // TODO: Change to start time
+  const [endTime, setEndTime] = useState(""); // TODO: Change to end time
+  const [capacity, setCapacity] = useState(eventInfo?.attendees || 0); // TODO: Change to capacity
 
   const [parking, setParking] = useState(eventInfo?.parking || "");
 
@@ -88,10 +88,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
         name,
         description,
         location,
-        time: timeStamp,
-        date: dateStr,
-        attendees: capacity,
-        experience_level: experienceLevel,
+        time: timeStamp, // TODO: Modify to start time and end time
+        date: dateStr, 
+        attendees: capacity, // TODO: Add new capacity field
+        experience_level: 'beginner', // TODO: Remove after yousef PR
         parking,
       };
 

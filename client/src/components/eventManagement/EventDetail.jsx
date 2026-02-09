@@ -58,8 +58,8 @@ export const EventDetail = () => {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [capacity, setCapacity] = useState(0);
+  const [time, setTime] = useState(""); // TODO: Change to start time and end time
+  const [capacity, setCapacity] = useState(0); // TOOD: Change to capacity
   const [parking, setParking] = useState("");
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -134,7 +134,7 @@ export const EventDetail = () => {
     day: "numeric",
   });
 
-  const startTime = new Date(time);
+  const startTime = new Date(time); // TODO: Change logic to account for start and end time
   const formattedTime = startTime.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",

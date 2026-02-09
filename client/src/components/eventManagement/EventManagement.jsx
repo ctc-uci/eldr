@@ -190,9 +190,10 @@ export const EventManagement = () => {
                                                             </Text>
 
                                                             <HStack spacing={2}>
+                                                                {/* TODO: Change to start time and end time */}
                                                                 <Icon as={IoCalendarSharp} />
                                                                 <Text fontSize="md">
-                                                                    {new Date(clinic.time).toLocaleString()}
+                                                                    {new Date(clinic.time).toLocaleString()} 
                                                                 </Text>
                                                             </HStack>
 
@@ -206,7 +207,7 @@ export const EventManagement = () => {
                                                             <HStack spacing={2}>
                                                                 <Icon as={IoPersonSharp} />
                                                                 <Text fontSize="md">
-                                                                    {clinic.attendees}
+                                                                    {clinic.attendees} 
                                                                 </Text>
                                                             </HStack>
                                                         </VStack>

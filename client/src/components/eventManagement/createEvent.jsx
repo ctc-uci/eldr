@@ -68,14 +68,14 @@ export const CreateEvent = ({isOpen, onClose}) => {
 
             const clinicData = {
                 name: name,
-                description: "test",
-                location: "Aldis", 
-                time: eventDateTime.toISOString(),
+                description: "test", // TODO: Description creation will be in mid-fi
+                location: "Aldis",  // TODO: Location creation will be in mid-fi
+                time: eventDateTime.toISOString(), // TODO: Change to start time and end time
                 date: eventDate.toISOString().split('T')[0],
-                attendees: 0,
+                attendees: 0, // TODO: Add new capacity field
                 language: "English", 
-                experience_level: 'beginner', 
-                parking: "Aldrich parking" 
+                experience_level: 'beginner', // TODO: Remove after yousef PR
+                parking: "Aldrich parking" // TODO: Parking creation will be in mid-fi
             };
 
             await backend.post('/clinics', clinicData);
