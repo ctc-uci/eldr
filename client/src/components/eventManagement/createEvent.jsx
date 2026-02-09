@@ -1,5 +1,6 @@
 import {
     Modal,
+    Button,
     ModalOverlay,
     ModalContent,
     Text,
@@ -25,8 +26,76 @@ import { useState } from "react";
 import DatePicker from "react-datepicker"; 
 import "react-datepicker/dist/react-datepicker.css";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 export const CreateEvent = ({isOpen, onClose}) => {
-    const [startDate, setStartDate] = useState(new Date())
+    const { backend } = useBackendContext();
+    
+    const [name, setName] = useState("");
+    const [eventType, setEventType] = useState("");
+    const [eventDate, setEventDate] = useState(null);
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
+    const [minVolunteers, setMinVolunteers] = useState("");
+    const [maxVolunteers, setMaxVolunteers] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const generateTimeOptions = () => {
+        const times = [];
+        for (let hour = 0; hour < 24; hour++) {
+            for (let min = 0; min < 60; min += 30) {
+                const period = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                const displayMin = min === 0 ? '00' : min;
+                times.push({
+                    value: `${hour.toString().padStart(2, '0')}:${displayMin}`,
+                    label: `${displayHour}:${displayMin} ${period}`
+                });
+            }
+        }
+        return times;
+    };
+
+    const timeOptions = generateTimeOptions();
+
+    const handleSubmit = async () => {
+        try {
+            setIsSubmitting(true);
+
+            const eventDateTime = new Date(eventDate);
+            const [startHour, startMin] = startTime.split(':');
+            eventDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+
+            const clinicData = {
+                name: name,
+                description: "test", // TODO: Description creation will be in mid-fi
+                location: "Aldis",  // TODO: Location creation will be in mid-fi
+                time: eventDateTime.toISOString(), // TODO: Change to start time and end time
+                date: eventDate.toISOString().split('T')[0],
+                attendees: 0, // TODO: Add new capacity field
+                language: "English", 
+                experience_level: 'beginner', // TODO: Remove after yousef PR
+                parking: "Aldrich parking" // TODO: Parking creation will be in mid-fi
+            };
+
+            await backend.post('/clinics', clinicData);
+
+            setName("");
+            setEventType("");
+            setEventDate(null);
+            setStartTime("");
+            setEndTime("");
+            setMinVolunteers("");
+            setMaxVolunteers("");
+
+            onClose();
+        } catch (error) {
+            console.error('Error creating event:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <Modal 
             isOpen={isOpen} 
@@ -71,24 +140,25 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             <GridItem>
                                 <VStack align = "start">
                                     <Text
-                                    fontSize = "lg"
-                                    fontWeight="bold"
+                                        fontSize = "lg"
+                                        fontWeight="bold"
                                     >
                                         Event Name
                                     </Text>
-                                    <Input 
-                                        placeholder = "Type here..."
-                                        bg = "#D9D9D9"
+                                    <Input
+                                        placeholder="Type here..."
+                                        bg="#D9D9D9"
                                         borderRadius="lg"
-                                    >
-                                    </Input>
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                    />
                                 </VStack>
                             </GridItem>
                             <GridItem>
                                 <VStack align = "start">
                                     <Text
-                                    fontSize = "lg"
-                                    fontWeight="bold"
+                                        fontSize = "lg"
+                                        fontWeight="bold"
                                     >
                                         Select Event Type
                                     </Text>
@@ -96,6 +166,8 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         placeholder = "Select one"
                                         bg = "#D9D9D9"
                                         borderRadius="lg"
+                                        value={eventType}
+                                        onChange={(e) => setEventType(e.target.value)}
                                     >
                                         <option value = "clinic"> clinic </option>
                                         <option value = "workshop"> workshop </option>
@@ -105,17 +177,14 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             <GridItem>
                                 <VStack align = "start">
                                     <Text
-                                    fontSize = "lg"
-                                    fontWeight="bold"
+                                        fontSize = "lg"
+                                        fontWeight="bold"
                                     >
                                         Date of Event
                                     </Text>
-                                    {/* 
-                                        Must forward reference to make this functional
-                                    */}
                                     <DatePicker
-                                        selected={startDate}
-                                        onChange={(date) => setStartDate(date)}
+                                        selected={eventDate}
+                                        onChange={(date) => setEventDate(date)}
                                         customInput={
                                             <InputGroup>
                                                 <Input
@@ -136,8 +205,8 @@ export const CreateEvent = ({isOpen, onClose}) => {
                             <GridItem>
                                 <VStack align = "start">
                                     <Text
-                                    fontSize = "lg"
-                                    fontWeight="bold"
+                                        fontSize = "lg"
+                                        fontWeight="bold"
                                     >
                                         Timeframe
                                     </Text>
@@ -146,13 +215,14 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                             placeholder = "Select start time"
                                             bg = "#D9D9D9"
                                             borderRadius="lg"
+                                            value={startTime}
+                                            onChange={(e) => setStartTime(e.target.value)}
                                         >
-                                            {/*
-                                                These are placeholders, please replace with
-                                                a mapping of times
-                                            */}
-                                            <option value = "1PM"> 1 PM </option>
-                                            <option value = "2PM"> 2 PM </option>
+                                            {timeOptions.map((time) => (
+                                                <option key={time.value} value={time.value}>
+                                                    {time.label}
+                                                </option>
+                                            ))}
                                         </Select>
                                         <Text
                                             fontSize = "md"
@@ -164,11 +234,15 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                             placeholder = "Select end time"
                                             bg = "#D9D9D9"
                                             borderRadius="lg"
+                                            value={endTime}
+                                            onChange={(e) => setEndTime(e.target.value)}
                                         >
-                                            <option value = "1PM"> 1 PM </option>
-                                            <option value = "2PM"> 2 PM </option>
+                                            {timeOptions.map((time) => (
+                                                <option key={time.value} value={time.value}>
+                                                    {time.label}
+                                                </option>
+                                            ))}
                                         </Select>
-                                                
                                     </HStack>
                                 </VStack>
                             </GridItem>
@@ -211,8 +285,10 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         placeholder = "Input number"
                                         bg = "#D9D9D9"
                                         borderRadius="lg"
-                                    >
-                                    </Input>
+                                        type="number"
+                                        value={minVolunteers}
+                                        onChange={(e) => setMinVolunteers(e.target.value)}
+                                    />
                                 </VStack>
                             </GridItem>
                             <GridItem>
@@ -254,8 +330,10 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                         placeholder = "Input number"
                                         bg = "#D9D9D9"
                                         borderRadius="lg"
-                                    >
-                                    </Input>
+                                        type="number"
+                                        value={maxVolunteers}
+                                        onChange={(e) => setMaxVolunteers(e.target.value)}
+                                    />
                                 </VStack>
                             </GridItem>
                         </Grid>
@@ -278,7 +356,6 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                 Your settings for this can be changed later down the line!
                             </Text>
                             <HStack>
-                                {/* checkbox */}
                                 <Text
                                     fontSize = "md"
                                     fontWeight = "bold"
@@ -289,12 +366,9 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                     placeholder = "Select email template"
                                     bg = "#D9D9D9"
                                     borderRadius="lg"
-                                >
-
-                                </Select>
+                                />
                             </HStack>
                             <HStack>
-                                {/* checkbox */}
                                 <Text
                                     fontSize = "md"
                                     fontWeight = "bold"
@@ -305,16 +379,13 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                     placeholder = "Select email template"
                                     bg = "#D9D9D9"
                                     borderRadius="lg"
-                                >
-
-                                </Select>
+                                />
                             </HStack>
                             <HStack>
-                                {/* checkbox */}
                                 <VStack align = "start">
                                     <Text
-                                    fontSize = "md"
-                                    fontWeight = "bold"
+                                        fontSize = "md"
+                                        fontWeight = "bold"
                                     >
                                         One day before event date*
                                     </Text>
@@ -324,16 +395,23 @@ export const CreateEvent = ({isOpen, onClose}) => {
                                     placeholder = "Select email template"
                                     bg = "#D9D9D9"
                                     borderRadius="lg"
-                                >
-                                </Select>
+                                />
                             </HStack>
                         </VStack>
                     </Flex>
+                    <Button 
+                        onClick={handleSubmit}
+                        colorScheme="blue"
+                        isLoading={isSubmitting}
+                        loadingText="Creating Event..."
+                    >
+                        Submit
+                    </Button>
                 </VStack>
                 </ModalBody>
                 <ModalFooter>
                 </ModalFooter>
             </ModalContent>
         </Modal>
-  );
+    );
 }

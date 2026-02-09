@@ -20,6 +20,10 @@ import {
     Tag
 } from "@chakra-ui/react";
 
+import {
+    useEffect,
+    useState
+} from "react"
 
 import { CiSearch } from "react-icons/ci";
 import { HiMiniPlusCircle } from "react-icons/hi2";
@@ -29,10 +33,29 @@ import { FaLocationDot } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 export const EventManagement = () => {
+    const { backend } = useBackendContext();
     const { isOpen, onOpen, onClose } = useDisclosure();
     const navigate = useNavigate();
+    const [clinics, setClinics] = useState([]);
+
+    const fetchEvents = async () => {
+        try{
+            const response = await backend.get(`/clinics`)
+            setClinics(response.data);
+
+        }
+        catch (error){
+            console.log(error);
+        }
+    }
+
+
+    useEffect(() => {
+        fetchEvents();
+    });
 
     return (
         <VStack 
@@ -57,7 +80,6 @@ export const EventManagement = () => {
                     mx="auto"
                     bg="white"
                 >
-                    {/* Search bar */}
                     <InputLeftElement pointerEvents="none">
                         <CiSearch 
                             color="black" 
@@ -157,85 +179,64 @@ export const EventManagement = () => {
                             <TabPanels>
                                 <TabPanel>
                                     <VStack p = {4}>
-                                        {/*
-                                        This card is an example for demonstration purposes only and
-                                        therefore MUST be overwritten to be able to work w/ backend 
-                                        using props & mapping especially for mutliple events/tags
-                                        */}
-                                        <Box 
-                                            w = "80%" 
-                                            h = "40"
-                                            display = "flex"
-                                        >
-                                            <Card 
-                                                w = "100%" 
-                                                h = "100%"
-                                                borderRadius="sm"
-                                            > 
-                                                <Flex 
-                                                    h="100%" 
-                                                    align="center" 
-                                                    px={4} 
-                                                    positions = "relative"
-                                                >
-                                                    <VStack 
-                                                        align="start" 
-                                                        spacing={1}
-                                                    >
-                                                        <Text 
-                                                            fontSize = "lg" 
-                                                            fontWeight = "bold"
-                                                        >
-                                                            Underwater Basket Weaving Competition
-                                                        </Text>
-                                                        <HStack spacing={2}>
-                                                            <Icon as={IoCalendarSharp} />
-                                                            <Text fontSize="md"> May 4th, 2026 @ 10 P.M. </Text>
-                                                        </HStack>
-
-                                                        <HStack spacing={2}>
-                                                            <Icon as={FaLocationDot} />
-                                                            <Text fontSize="md">Example Location</Text>
-                                                        </HStack>
-
-                                                        <HStack spacing={2}>
-                                                            <Icon as={IoPersonSharp} />
-                                                            <Text fontSize="md"> 20/40 attendees </Text>
-                                                        </HStack>
-                                                    </VStack>
-
-                                                    <Box position="absolute" left="50%" transform="translateX(-50%)">
-                                                        <HStack>
-                                                            <Text 
-                                                                fontSize="md" 
-                                                                fontWeight="bold"
-                                                            >
-                                                                Tags: 
+                                        {clinics.map((clinic) => (
+                                            <Box key={clinic.id} w="80%" h="40" display="flex">
+                                                <Card w="100%" h="100%" borderRadius="sm">
+                                                    <Flex h="100%" align="center" px={4} position="relative">
+                                                        
+                                                        <VStack align="start" spacing={1}>
+                                                            <Text fontSize="lg" fontWeight="bold">
+                                                                {clinic.name}
                                                             </Text>
-                                                            <Tag bg = "#D9D9D9">
-                                                                Workshop
-                                                            </Tag>
-                                                            <Tag bg = "#D9D9D9">
-                                                                ex1
-                                                            </Tag>
-                                                            <Tag bg = "#D9D9D9">
-                                                                ex2
-                                                            </Tag>
-                                                        </HStack>
-                                                    </Box>
 
-                                                    <Button 
-                                                        bg = "#D9D9D9" 
-                                                        px = "4%" 
-                                                        borderRadius="lg" 
-                                                        ml = "auto"
-                                                        onClick={() => navigate(`/events/event1`)}
-                                                    >
-                                                        View Event
-                                                    </Button>
-                                                </Flex>
-                                            </Card>
-                                        </Box>
+                                                            <HStack spacing={2}>
+                                                                {/* TODO: Change to start time and end time */}
+                                                                <Icon as={IoCalendarSharp} />
+                                                                <Text fontSize="md">
+                                                                    {new Date(clinic.time).toLocaleString()} 
+                                                                </Text>
+                                                            </HStack>
+
+                                                            <HStack spacing={2}>
+                                                                <Icon as={FaLocationDot} />
+                                                                <Text fontSize="md">
+                                                                    {clinic.location ?? "Location TBD"}
+                                                                </Text>
+                                                            </HStack>
+
+                                                            <HStack spacing={2}>
+                                                                <Icon as={IoPersonSharp} />
+                                                                <Text fontSize="md">
+                                                                    {clinic.attendees} 
+                                                                </Text>
+                                                            </HStack>
+                                                        </VStack>
+
+                                                        <Box
+                                                            position="absolute"
+                                                            left="50%"
+                                                            transform="translateX(-50%)"
+                                                        >
+                                                            <HStack spacing={2}>
+                                                                <Text fontWeight="bold">Tags:</Text>
+
+                                                                {/* TEMPORARY — hardcoded */}
+                                                                <Tag bg="#D9D9D9">Clinic</Tag>
+                                                            </HStack>
+                                                        </Box>
+
+                                                        <Button
+                                                            ml="auto"
+                                                            bg="#D9D9D9"
+                                                            borderRadius="lg"
+                                                            onClick={() => navigate(`/events/${clinic.id}`)}
+                                                        >
+                                                            View Event
+                                                        </Button>
+                                                    </Flex>
+                                                </Card>
+                                            </Box>
+                                        ))}
                                     </VStack>
                                 </TabPanel>
                             </TabPanels>
