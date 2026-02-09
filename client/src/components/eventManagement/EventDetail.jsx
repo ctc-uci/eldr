@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Box,
   Button,
-  Card,
   Flex,
   Grid,
   GridItem,
@@ -41,15 +40,105 @@ import {
 import { FaArchive } from "react-icons/fa";
 import { FaPencil } from "react-icons/fa6";
 import { HiMiniPlusCircle } from "react-icons/hi2";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
 import { EditEvent } from "./EditEvent.jsx";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 export const EventDetail = () => {
+  const { backend } = useBackendContext();
+  const navigate = useNavigate();
+
   const { id } = useParams();
+  const [eventInfo, setEventInfo] = useState(null);
+  const [invalidEvent, setInvalidEvent] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState(""); // TODO: Change to start time and end time
+  const [capacity, setCapacity] = useState(0); // TOOD: Change to capacity
+  const [parking, setParking] = useState("");
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleArchiveEvent = async () => {
+    try {
+      await backend.delete(`/clinics/${id}`);
+      navigate("/events");
+    } catch (error) {
+      console.error("Error archiving event:", error);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      const response = await backend.get(`/clinics/${id}`);
+      setEventInfo(response.data);
+      setName(response.data.name);
+      setDescription(response.data.description);
+      setLocation(response.data.location);
+      setDate(response.data.date);
+      setTime(response.data.time);
+      setCapacity(response.data.attendees);
+      setParking(response.data.parking);
+      console.log("Event info:", response.data);
+    } catch (error) {
+      setInvalidEvent(true);
+      console.log("Error archiving event:", error);
+      console.error("Error fetching event info:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backend, id]);
+
+  // when event ID is invalid
+  if (invalidEvent) {
+    return (
+      <Flex
+        w="100%"
+        h="100vh"
+        align="center"
+        justify="center"
+      >
+        <Text>Error finding event.</Text>
+      </Flex>
+    )
+  }
+
+  // when eventInfo is null (loading / error state)
+  if (!eventInfo) {
+    return (
+      <Flex
+        w="100%"
+        h="100vh"
+        align="center"
+        justify="center"
+      >
+        <Text>Loading event...</Text>
+      </Flex>
+    )
+  }
+
+  // to format date and time
+  const selectedDate = new Date(date);
+  const formattedDate = selectedDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const startTime = new Date(time); // TODO: Change logic to account for start and end time
+  const formattedTime = startTime.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return !isEditing ? (
     <VStack
@@ -165,7 +254,7 @@ export const EventDetail = () => {
                     align="left"
                     w="100%"
                   >
-                    Workshop Name
+                    {name}
                   </Text>
                   {/* event details */}
                   <Grid
@@ -181,7 +270,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Month Day, Year
+                          {formattedDate}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -192,7 +281,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Location of event
+                          {location}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -203,7 +292,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Timeframe of Event
+                          {formattedTime}
                         </Text>
                       </HStack>
                     </GridItem>
@@ -214,7 +303,7 @@ export const EventDetail = () => {
                           fontSize="lg"
                           fontWeight="medium"
                         >
-                          Capacity
+                          {capacity} Attendees
                         </Text>
                       </HStack>
                     </GridItem>
@@ -239,6 +328,7 @@ export const EventDetail = () => {
                     w="100%"
                     borderRadius="sm"
                     border="2px solid black"
+                    onClick={handleArchiveEvent}
                   >
                     <Icon
                       as={FaArchive}
@@ -322,12 +412,7 @@ export const EventDetail = () => {
                           Description
                         </Text>
                         <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
+                          {description}
                         </Text>
                       </VStack>
                       {/* parking */}
@@ -342,12 +427,7 @@ export const EventDetail = () => {
                           Parking
                         </Text>
                         <Text fontSize="md">
-                          Lorem ipsum dolor sit amet consectetur adipiscing elit
-                          Ut et massa mi. Aliquam in hendrerit urna.
-                          Pellentesque sit amet sapien fringilla, mattis ligula
-                          consectetur, ultrices mauris. Maecenas vitae mattis
-                          tellus. Nullam quis imperdiet augue. Vestibulum auctor
-                          ornare leo, non suscipit magna interdum eu.
+                          {parking}
                         </Text>
                       </VStack>
                     </VStack>
@@ -660,6 +740,6 @@ export const EventDetail = () => {
       </Tabs>
     </VStack>
   ) : (
-    <EditEvent setIsEditing={setIsEditing} />
+    <EditEvent setIsEditing={setIsEditing} eventInfo={eventInfo} onSave={fetchData} />
   );
 };

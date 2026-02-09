@@ -8,13 +8,16 @@ import { Signup } from "@/components/signup/Signup";
 
 // Dev-made Components!
 import { AdminProfile } from "@/components/adminProfile/adminProfile";
+import {EventCatalog} from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
+import { CaseManagement } from "./components/caseManagement/CaseManagement";
 
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -45,6 +48,10 @@ const App = () => {
                 <Route
                   path="/login"
                   element={<Login />}
+                />
+                <Route
+                  path="/volunteerProfile"
+                  element={<VolunteerProfile />}
                 />
                 <Route
                   path="/signup"
@@ -88,10 +95,19 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
+                <Route 
+                path="/event-catalog"
+                element={<EventCatalog />}
+                />
                 <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
                 />
+                <Route
+                  path="/caseManagement"
+                  element={<CaseManagement />}
+                />
+                
 
                 {/* Core Routes (Don't Touch!) */}
                 <Route

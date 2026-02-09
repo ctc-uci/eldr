@@ -1,7 +1,8 @@
+import { useState } from "react";
+
 import {
   Box,
   Button,
-  Card,
   Flex,
   Grid,
   GridItem,
@@ -10,8 +11,8 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   Select,
-  Textarea,
   Tab,
   TabList,
   TabPanel,
@@ -20,30 +21,102 @@ import {
   Tag,
   TagLabel,
   Text,
+  Textarea,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 
-import {
-  CgCalendarDates,
-  CgProfile,
-  CgSandClock,
-  CgUser,
-} from "react-icons/cg";
-import {
-  CiCircleCheck,
-  CiClock1,
-  CiMapPin,
-  CiSearch,
-  CiUser,
-} from "react-icons/ci";
-import { FaTrashCan, FaXmark } from "react-icons/fa6";
+import DatePicker from "react-datepicker";
+import { CgProfile, CgSandClock, CgUser } from "react-icons/cg";
+import { CiCircleCheck, CiSearch } from "react-icons/ci";
+import { FaCheck, FaTrashCan, FaXmark } from "react-icons/fa6";
 import { HiMiniPlusCircle } from "react-icons/hi2";
+import { IoCalendarSharp } from "react-icons/io5";
+
+import "react-datepicker/dist/react-datepicker.css";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { useNavigate } from "react-router-dom";
 
 import { CreateEvent } from "./CreateEvent.jsx";
 
-export const EditEvent = ({ setIsEditing }) => {
+export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
+  const { backend } = useBackendContext();
+  const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [name, setName] = useState(eventInfo?.name || "");
+  const [description, setDescription] = useState(eventInfo?.description || "");
+  const [location, setLocation] = useState(eventInfo?.location || "");
+  const [startDate, setStartDate] = useState(
+    eventInfo?.date ? new Date(eventInfo.date) : new Date()
+  );
+
+  // parse time from timestamp to "HH:MM" format for input type="time"
+  const parseTimeForInput = (timeString) => {
+    if (!timeString) return "";
+    const date = new Date(timeString);
+    if (isNaN(date.getTime())) return timeString; // Return as-is if not a valid date
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const [startTime, setStartTime] = useState(parseTimeForInput(eventInfo?.time)); // TODO: Change to start time
+  const [endTime, setEndTime] = useState(""); // TODO: Change to end time
+  const [capacity, setCapacity] = useState(eventInfo?.attendees || 0); // TODO: Change to capacity
+
+  const [parking, setParking] = useState(eventInfo?.parking || "");
+
+  // function to updates event details
+  const handleSaveEdits = async () => {
+    try {
+      // combine date and time into a full timestamp for the time field
+      const dateStr = startDate.toISOString().split("T")[0];
+      // create a Date object from local date and time
+      // then convert to ISO
+      let timeStamp = null;
+      if (startTime) {
+        const [hours, minutes] = startTime.split(":");
+        const localDate = new Date(startDate);
+        localDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        timeStamp = localDate.toISOString();
+      }
+
+      // build payload
+      const updatedClinic = {
+        name,
+        description,
+        location,
+        time: timeStamp, // TODO: Modify to start time and end time
+        date: dateStr, 
+        attendees: capacity, // TODO: Add new capacity field
+        experience_level: 'beginner', // TODO: Remove after yousef PR
+        parking,
+      };
+
+      await backend.put(`/clinics/${eventInfo.id}`, updatedClinic);
+      // refresh parent data if callback is provided
+      if (onSave) {
+        await onSave();
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
+  };
+
+  // function to delete event
+  const handleDeleteEvent = async () => {
+    try {
+      await backend.delete(`/clinics/${eventInfo.id}`);
+      navigate("/events");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
+  };
+
+
 
   return (
     <VStack
@@ -233,6 +306,8 @@ export const EditEvent = ({ setIsEditing }) => {
                                 border="2px solid black"
                                 borderRadius="md"
                                 w="100%"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                               />
                             </VStack>
 
@@ -255,11 +330,32 @@ export const EditEvent = ({ setIsEditing }) => {
                                 >
                                   Date
                                 </Text>
-                                <Input
-                                  bg="white"
-                                  border="2px solid black"
-                                  borderRadius="md"
-                                  w="100%"
+                                <DatePicker
+                                  selected={startDate}
+                                  onChange={(date) => setStartDate(date)}
+                                  customInput={
+                                    <InputGroup>
+                                      <Input
+                                        bg="white"
+                                        border="2px solid black"
+                                        borderRadius="md"
+                                        placeholder="Select date"
+                                        pr="2.5rem"
+                                        w="100%"
+                                        value={startDate.toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}
+                                      />
+                                      <InputRightElement>
+                                        <Icon as={IoCalendarSharp} />
+                                      </InputRightElement>
+                                    </InputGroup>
+                                  }
                                 />
                               </VStack>
 
@@ -280,6 +376,9 @@ export const EditEvent = ({ setIsEditing }) => {
                                   border="2px solid black"
                                   borderRadius="md"
                                   w="100%"
+                                  type="time"
+                                  value={startTime}
+                                  onChange={(e) => setStartTime(e.target.value)}
                                 />
                               </VStack>
 
@@ -300,6 +399,9 @@ export const EditEvent = ({ setIsEditing }) => {
                                   border="2px solid black"
                                   borderRadius="md"
                                   w="100%"
+                                  type="time"
+                                  value={endTime}
+                                  onChange={(e) => setEndTime(e.target.value)}
                                 />
                               </VStack>
 
@@ -320,6 +422,8 @@ export const EditEvent = ({ setIsEditing }) => {
                                   border="2px solid black"
                                   borderRadius="md"
                                   w="100%"
+                                  value={location}
+                                  onChange={(e) => setLocation(e.target.value)}
                                 />
                               </VStack>
 
@@ -340,6 +444,11 @@ export const EditEvent = ({ setIsEditing }) => {
                                   border="2px solid black"
                                   borderRadius="md"
                                   w="100%"
+                                  type="number"
+                                  value={capacity}
+                                  onChange={(e) =>
+                                    setCapacity(parseInt(e.target.value) || 0)
+                                  }
                                 />
                               </VStack>
                             </Grid>
@@ -360,9 +469,10 @@ export const EditEvent = ({ setIsEditing }) => {
                               border="2px solid green"
                               bg="white"
                               justifyContent="space-between"
+                              onClick={handleSaveEdits}
                             >
                               <Icon
-                                as={FaTrashCan}
+                                as={FaCheck}
                                 mr="5%"
                               />
                               Save Edits
@@ -391,6 +501,7 @@ export const EditEvent = ({ setIsEditing }) => {
                               border="2px solid red"
                               bg="white"
                               justifyContent="space-between"
+                              onClick={handleDeleteEvent}
                             >
                               <Icon
                                 as={FaTrashCan}
@@ -419,6 +530,8 @@ export const EditEvent = ({ setIsEditing }) => {
                           border="2px solid black"
                           borderRadius="md"
                           w="100%"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
                         />
                       </VStack>
 
@@ -440,6 +553,8 @@ export const EditEvent = ({ setIsEditing }) => {
                           borderRadius="md"
                           w="100%"
                           lineHeight={3}
+                          value={parking}
+                          onChange={(e) => setParking(e.target.value)}
                         />
                       </VStack>
                     </VStack>
