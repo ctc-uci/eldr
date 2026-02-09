@@ -317,6 +317,69 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
   }
 });
 
+// Volunteer Roles Routes
+// POST: assign a role to a volunteer
+// /volunteers/{volunteerId}/roles
+volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
+    try {
+        const { volunteerId } = req.params;
+        const { roleId } = req.body;
+
+        if (!roleId) {
+            return res.status(400).json({ message: "roleId is required" });
+        }
+
+        const newRelationship = await db.query(
+            "INSERT INTO volunteer_roles (volunteer_id, role_id) VALUES ($1, $2) RETURNING *",
+            [volunteerId, roleId]
+        );
+
+        res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+// DELETE: remove a role from a volunteer
+// /volunteers/{volunteerId}/roles/{roleId}
+volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
+    try {
+        const { volunteerId, roleId } = req.params;
+
+        const deletedRelationship = await db.query(
+            "DELETE FROM volunteer_roles WHERE volunteer_id = $1 AND role_id = $2 RETURNING *",
+            [volunteerId, roleId]
+        );
+
+        if (deletedRelationship.length === 0) {
+            return res.status(404).json({ message: "Role not assigned to this volunteer" });
+        }
+
+        res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+// GET: list all roles for a volunteer, including role IDs and text
+// /volunteers/{volunteerId}/roles
+volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
+    try {
+        const { volunteerId } = req.params;
+
+        const listAll = await db.query(
+            `SELECT r.id, r.role_name
+             FROM volunteer_roles vr
+             JOIN roles r ON vr.role_id = r.id
+             WHERE vr.volunteer_id = $1`,
+             [volunteerId]
+        );
+        res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
 // Volunteer Locations Routes
 // POST: assign a location to a volunteer
 // /volunteers/{volunteerId}/locations
