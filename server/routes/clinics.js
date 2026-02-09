@@ -15,13 +15,13 @@ clinicsRouter.post("/", async (req, res) => {
       end_time,
       date,
       attendees,
+      min_attendees,
       capacity,
       max_target_roles,
-      experience_level,
       parking,
     } = req.body;
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, capacity, max_target_roles, experience_level, parking)
+      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [
         name,
@@ -31,9 +31,9 @@ clinicsRouter.post("/", async (req, res) => {
         end_time,
         date,
         attendees,
+        min_attendees,
         capacity,
         max_target_roles,
-        experience_level,
         parking,
       ]
     );
@@ -79,13 +79,13 @@ clinicsRouter.put("/:id", async (req, res) => {
       end_time,
       date,
       attendees,
+      min_attendees,
       capacity,
       max_target_roles,
-      experience_level,
       parking,
     } = req.body;
     const clinic = await db.query(
-      `UPDATE clinics SET name = $1, description = $2, location = $3, start_time = $4, end_time = $5, date = $6, attendees = $7, capacity = $8, max_target_roles = $9, experience_level = $10, parking = $11
+      `UPDATE clinics SET name = $1, description = $2, location = $3, start_time = $4, end_time = $5, date = $6, attendees = $7, min_attendees = $8, capacity = $9, max_target_roles = $10, parking = $11
        WHERE id = $12 RETURNING *`,
       [
         name,
@@ -95,9 +95,9 @@ clinicsRouter.put("/:id", async (req, res) => {
         end_time,
         date,
         attendees,
+        min_attendees,
         capacity,
         max_target_roles,
-        experience_level,
         parking,
         id,
       ]
