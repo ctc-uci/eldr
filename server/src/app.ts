@@ -3,6 +3,7 @@ import { languagesRouter } from "@/routes/languages";
 import { areasOfInterestRouter } from "@/routes/areasOfInterest";
 import { casesRouter } from "@/routes/cases";
 import { tagsRouter } from "@/routes/tags";
+import { rolesRouter } from "@/routes/roles";
 import { usersRouter } from "@/routes/users";
 import { volunteersRouter } from "@/routes/volunteers";
 import { adminsRouter } from "@/routes/admins";
@@ -45,6 +46,7 @@ app.use("/volunteers", volunteersRouter);
 app.use("/tags", tagsRouter);
 app.use("/cases", casesRouter);
 app.use("/admins", adminsRouter);
+app.use("/roles", rolesRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
