@@ -8,6 +8,7 @@ import { usersRouter } from "@/routes/users";
 import { volunteersRouter } from "@/routes/volunteers";
 import { adminsRouter } from "@/routes/admins";
 import { clinicsRouter } from "@/routes/clinics";
+import { locationsRouter } from "@/routes/locations";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -47,6 +48,7 @@ app.use("/tags", tagsRouter);
 app.use("/cases", casesRouter);
 app.use("/admins", adminsRouter);
 app.use("/roles", rolesRouter);
+app.use("/locations", locationsRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
