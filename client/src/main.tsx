@@ -1,20 +1,15 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { ChakraProvider, extendTheme } from "@chakra-ui/react";
-
 import App from "./App.tsx";
-
-const colors = {
-  brand: {},
-};
-
-const theme = extendTheme({ colors });
+import { Provider } from "./components/ui/provider.tsx";
+import { Toaster } from "./components/ui/toaster.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ChakraProvider theme={theme}>
+    <Provider>
       <App />
-    </ChakraProvider>
+      <Toaster />
+    </Provider>
   </StrictMode>
 );
