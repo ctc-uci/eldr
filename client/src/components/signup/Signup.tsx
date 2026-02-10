@@ -3,23 +3,21 @@ import { useEffect } from "react";
 import {
   Button,
   Center,
+  Field,
   Link as ChakraLink,
-  FormControl,
-  FormErrorMessage,
-  FormHelperText,
   Heading,
   Input,
   Stack,
-  useToast,
   VStack,
 } from "@chakra-ui/react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { FaGoogle } from "react-icons/fa6";
+import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { authenticateGoogleUser } from "@/utils/auth/providers";
@@ -33,7 +31,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export const Signup = () => {
   const navigate = useNavigate();
-  const toast = useToast();
   const { signup, handleRedirectResult } = useAuthContext();
   const { backend } = useBackendContext();
 
@@ -58,11 +55,9 @@ export const Signup = () => {
       }
     } catch (err) {
       if (err instanceof Error) {
-        toast({
+        toaster.error({
           title: "An error occurred",
           description: err.message,
-          status: "error",
-          variant: "subtle",
         });
       }
     }
@@ -73,13 +68,14 @@ export const Signup = () => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate, toast);
-  }, [backend, handleRedirectResult, navigate, toast]);
+    handleRedirectResult(backend, navigate);
+  }, [backend, handleRedirectResult, navigate]);
 
   return (
     <VStack
-      spacing={8}
-      sx={{ width: 300, marginX: "auto" }}
+      gap={8}
+      w="300px"
+      mx="auto"
     >
       <Heading>Signup</Heading>
 
@@ -87,9 +83,9 @@ export const Signup = () => {
         onSubmit={handleSubmit(handleSignup)}
         style={{ width: "100%" }}
       >
-        <Stack spacing={2}>
-          <FormControl
-            isInvalid={!!errors.email}
+        <Stack gap={2}>
+          <Field.Root
+            invalid={!!errors.email}
             w={"100%"}
           >
             <Center>
@@ -103,11 +99,11 @@ export const Signup = () => {
                 autoComplete="email"
               />
             </Center>
-            <FormErrorMessage>
+            <Field.ErrorText>
               {errors.email?.message?.toString()}
-            </FormErrorMessage>
-          </FormControl>
-          <FormControl isInvalid={!!errors.password}>
+            </Field.ErrorText>
+          </Field.Root>
+          <Field.Root invalid={!!errors.password}>
             <Center>
               <Input
                 placeholder="Password"
@@ -119,22 +115,21 @@ export const Signup = () => {
                 autoComplete="password"
               />
             </Center>
-            <FormErrorMessage>
+            <Field.ErrorText>
               {errors.password?.message?.toString()}
-            </FormErrorMessage>
-            <ChakraLink
-              as={Link}
-              to="/login"
-            >
-              <FormHelperText>Click here to login</FormHelperText>
+            </Field.ErrorText>
+            <ChakraLink asChild>
+              <Link to="/login">
+                <Field.HelperText>Click here to login</Field.HelperText>
+              </Link>
             </ChakraLink>
-          </FormControl>
+          </Field.Root>
 
           <Button
             type="submit"
             size={"lg"}
-            sx={{ width: "100%" }}
-            isDisabled={Object.keys(errors).length > 0}
+            w="100%"
+            disabled={Object.keys(errors).length > 0}
           >
             Signup
           </Button>
@@ -142,11 +137,11 @@ export const Signup = () => {
       </form>
 
       <Button
-        leftIcon={<FaGoogle />}
+        startElement={<FcGoogle />}
         variant={"solid"}
         size={"lg"}
         onClick={handleGoogleSignup}
-        sx={{ width: "100%" }}
+        w="100%"
       >
         Signup with Google
       </Button>

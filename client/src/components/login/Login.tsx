@@ -3,23 +3,21 @@ import { useCallback, useEffect } from "react";
 import {
   Button,
   Center,
+  Field,
   Link as ChakraLink,
-  FormControl,
-  FormErrorMessage,
-  FormHelperText,
   Heading,
   Input,
   Stack,
-  useToast,
   VStack,
 } from "@chakra-ui/react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { FaGoogle } from "react-icons/fa6";
+import { FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { authenticateGoogleUser } from "@/utils/auth/providers";
@@ -33,7 +31,6 @@ type SigninFormValues = z.infer<typeof signinSchema>;
 
 export const Login = () => {
   const navigate = useNavigate();
-  const toast = useToast();
 
   const { login, handleRedirectResult } = useAuthContext();
   const { backend } = useBackendContext();
@@ -49,14 +46,12 @@ export const Login = () => {
 
   const toastLoginError = useCallback(
     (msg: string) => {
-      toast({
+      toaster.error({
         title: "An error occurred while signing in",
         description: msg,
-        status: "error",
-        variant: "subtle",
       });
     },
-    [toast]
+    []
   );
 
   const handleLogin = async (data: SigninFormValues) => {
@@ -103,13 +98,14 @@ export const Login = () => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate, toast);
-  }, [backend, handleRedirectResult, navigate, toast]);
+    handleRedirectResult(backend, navigate);
+  }, [backend, handleRedirectResult, navigate]);
 
   return (
     <VStack
-      spacing={8}
-      sx={{ width: 300, marginX: "auto" }}
+      gap={8}
+      w="250px"
+      mx="auto"
     >
       <Heading>Login</Heading>
 
@@ -117,9 +113,9 @@ export const Login = () => {
         onSubmit={handleSubmit(handleLogin)}
         style={{ width: "100%" }}
       >
-        <Stack spacing={2}>
-          <FormControl
-            isInvalid={!!errors.email}
+        <Stack gap={2}>
+          <Field.Root
+            invalid={!!errors.email}
             w={"100%"}
           >
             <Center>
@@ -129,15 +125,15 @@ export const Login = () => {
                 size={"lg"}
                 {...register("email")}
                 name="email"
-                isRequired
+                required
                 autoComplete="email"
               />
             </Center>
-            <FormErrorMessage>
+            <Field.ErrorText>
               {errors.email?.message?.toString()}
-            </FormErrorMessage>
-          </FormControl>
-          <FormControl isInvalid={!!errors.password}>
+            </Field.ErrorText>
+          </Field.Root>
+          <Field.Root invalid={!!errors.password}>
             <Center>
               <Input
                 placeholder="Password"
@@ -145,26 +141,25 @@ export const Login = () => {
                 size={"lg"}
                 {...register("password")}
                 name="password"
-                isRequired
+                required
                 autoComplete="current-password"
               />
             </Center>
-            <FormErrorMessage>
+            <Field.ErrorText>
               {errors.password?.message?.toString()}
-            </FormErrorMessage>
-            <ChakraLink
-              as={Link}
-              to="/signup"
-            >
-              <FormHelperText>Click here to sign up</FormHelperText>
+            </Field.ErrorText>
+            <ChakraLink asChild>
+              <Link to="/signup">
+              <Field.HelperText>Click here to sign up</Field.HelperText>
+              </Link>
             </ChakraLink>
-          </FormControl>
+          </Field.Root>
 
           <Button
             type="submit"
             size={"lg"}
-            sx={{ width: "100%" }}
-            isDisabled={Object.keys(errors).length > 0}
+            w="100%"
+            disabled={Object.keys(errors).length > 0}
           >
             Login
           </Button>
@@ -172,13 +167,12 @@ export const Login = () => {
       </form>
 
       <Button
-        leftIcon={<FaGoogle />}
-        variant={"solid"}
-        size={"lg"}
+        variant="solid"
+        size="lg"
         onClick={handleGoogleLogin}
-        sx={{ width: "100%" }}
+        w="100%"
       >
-        Login with Google
+        Login with Google <FaGoogle />
       </Button>
     </VStack>
   );
