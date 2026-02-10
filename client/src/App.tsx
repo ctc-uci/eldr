@@ -11,7 +11,7 @@ import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
 // import { AdminProfile } from "@/components/adminProfile/adminProfile";
-// import {EventCatalog} from "@/components/eventCatalog/eventCatalog";
+// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 // import { AdminLogin } from "@/components/adminProfile/adminLogin";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
