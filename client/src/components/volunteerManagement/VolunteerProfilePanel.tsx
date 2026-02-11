@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Box,
   Flex,
@@ -56,11 +57,32 @@ interface VolunteerProfilePanelProps {
   showBack?: boolean;
   onBack?: () => void;
   onConfirm?: (data: VolunteerProfileFormData) => void;
+  onUpdate?: (id: number, data: any) => void;
+  selectedVolunteer?: any;
 }
 
-export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, onConfirm }: VolunteerProfilePanelProps) => {
+export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, onConfirm, onUpdate, selectedVolunteer }: VolunteerProfilePanelProps) => {
   const isNew = variant === "new";
   const { register, handleSubmit } = useForm<VolunteerProfileFormData>();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: ""
+  });
+
+  useEffect(() => {
+    if (selectedVolunteer) {
+      setEditedData({
+        firstName: selectedVolunteer.firstName || "",
+        lastName: selectedVolunteer.lastName || "",
+        email: selectedVolunteer.email || "",
+        phoneNumber: selectedVolunteer.phoneNumber || ""
+      });
+    }
+  }, [selectedVolunteer]);
 
   const onSubmit = (data: VolunteerProfileFormData) => {
     if (onConfirm) onConfirm(data);
@@ -88,7 +110,7 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
         <Box flex="1" />
 
         {!isNew && (
-          <Button size="xs" variant="outline">
+          <Button size="xs" variant="outline" onClick={() => setIsEditing(true)}>
             Edit ↗
           </Button>
         )}
@@ -130,8 +152,21 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                   {...register("firstName")}
                 />
               </>
-            ) : (
-              <LabeledBox label="First Name" value="Peter" />
+            ) : isEditing ? (
+                <>    
+                  <Text fontSize="xs" fontWeight="700" mb={1}>First Name</Text>
+                  <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    value={editedData.firstName || selectedVolunteer?.firstName}
+                    onChange={(e) => setEditedData({...editedData, firstName: e.target.value})}
+                  />
+                </>
+              ) : (
+              <LabeledBox label="First Name" value={selectedVolunteer?.firstName || "Peter"} />
             )}
           </Box>
 
@@ -148,8 +183,21 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                   {...register("lastName")}
                 />
               </>
-            ) : (
-              <LabeledBox label="Last Name" value="Anteater" />
+            ) : isEditing ? (
+                <>    
+                  <Text fontSize="xs" fontWeight="700" mb={1}>Last Name</Text>
+                  <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    value={editedData.lastName || selectedVolunteer?.lastName}
+                    onChange={(e) => setEditedData({...editedData, lastName: e.target.value})}
+                  />
+                </>
+              ) : (
+              <LabeledBox label="Last Name" value={selectedVolunteer?.lastName || "Peter"} />
             )}
           </Box>
           
@@ -185,8 +233,21 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                     {...register("email")}
                  />
                </>
-             ) : (
-               <LabeledBox label="Email Address" value="peteranteater@uci.edu" />
+             ) : isEditing ? (
+                <>    
+                  <Text fontSize="xs" fontWeight="700" mb={1}>Email Address</Text>
+                  <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    value={editedData.email || selectedVolunteer?.email}
+                    onChange={(e) => setEditedData({...editedData, email: e.target.value})}
+                  />
+                </>
+              ) : (
+               <LabeledBox label="Email Address" value={selectedVolunteer?.email || "peteranteater@uci.edu"} />
              )}
           </Box>
 
@@ -203,8 +264,21 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
                     {...register("phoneNumber")}
                  />
                </>
-             ) : (
-               <LabeledBox label="Phone Number" value="621-438-3991" />
+             ) : isEditing ? (
+                <>    
+                  <Text fontSize="xs" fontWeight="700" mb={1}>Phone Number</Text>
+                  <Input
+                    h="34px"
+                    fontSize="xs"
+                    bg="white"
+                    borderRadius="sm"
+                    borderColor="gray.500"
+                    value={editedData.phoneNumber || selectedVolunteer?.phoneNumber}
+                    onChange={(e) => setEditedData({...editedData, phoneNumber: e.target.value})}
+                  />
+                </>
+              ) : (
+               <LabeledBox label="Phone Number" value={selectedVolunteer?.phoneNumber || "621-438-3991"} />
              )}
           </Box>
 
@@ -304,11 +378,24 @@ export const VolunteerProfilePanel = ({ variant = "profile", showBack, onBack, o
 
         {/* Bottom right action */}
         <Flex mt={10} justify="flex-end">
-          <Button size="sm" variant="outline">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            type={isNew ? "submit" : "button"}
+            onClick={() => {
+              if (!isNew && isEditing) {
+                // If we are editing, call the update function
+                if (onUpdate && selectedVolunteer?.id) {
+                  onUpdate(selectedVolunteer.id, editedData);
+                  setIsEditing(false); // Turn off edit mode after saving
+                }
+              }
+            }}
+          >
             {isNew ? "Confirm" : "Save"}
           </Button>
         </Flex>
       </Box>
     </Box>
   );
-}
+};

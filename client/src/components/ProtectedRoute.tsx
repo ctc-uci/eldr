@@ -15,6 +15,10 @@ export const ProtectedRoute = ({
   const { currentUser } = useAuthContext();
   const { role } = useRoleContext();
 
+  console.log("DEBUG - ProtectedRoute:");
+  console.log("Current User:", currentUser);
+  console.log("Role:", role);
+  
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   const isValidRole = getIsValidRole(roles, role);
   return currentUser && isValidRole ? (

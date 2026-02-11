@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Box,
@@ -9,20 +9,104 @@ import {
   Input,
 } from "@chakra-ui/react";
 
+
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 import { VolunteerProfilesPanel } from "./VolunteerProfilesPanel";
+
+interface VolunteerFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+}
 
 type ViewMode = "list" | "split" | "profile";
 
 export const VolunteerManagementView = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [isAdding, setIsAdding] = useState(false);
+  const [volunteers, setVolunteers] = useState<never[]>([]);
+  const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+
+
+  const fetchVolunteers = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/volunteers");
+      const data = await response.json();
+      setVolunteers(data);
+      console.log("Volunteers loaded:", data);
+    } catch (error) {
+      console.error("Error fetching volunteers:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchVolunteers();
+  }, []);
 
   const handleAddClick = () => {
     setIsAdding(true);
     if (viewMode === "list") {
       setViewMode("split");
     }
+  };
+
+  const handleConfirmNewVolunteer = async (data: VolunteerFormData) => {
+    console.log("Attempting to create volunteer with data:", data);
+    try {
+      const response = await fetch("http://localhost:3001/volunteers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firebaseUid: "temp-" + Date.now(),
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone_number: data.phoneNumber,
+        }),
+      });
+
+      if (response.ok) {
+        fetchVolunteers();
+        setIsAdding(false);
+      }
+    } catch (error) {
+      console.error("Error creating volunteer:", error);
+    }
+  };
+
+  const handleUpdateVolunteer = async (id: number, data: any) => {
+    try {
+      const response = await fetch(`http://localhost:3001/volunteers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // We must map these to snake_case to match your volunteers.js PUT route
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone_number: data.phoneNumber,
+          // Sending nulls for the extra fields your backend expects
+          form_completed: null,
+          form_link: null,
+          is_signed_confidentiality: null,
+          is_attorney: null,
+          is_notary: null
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Volunteer updated successfully");
+        fetchVolunteers(); // Refresh the list so the UI updates
+      }
+    } catch (error) {
+      console.error("Error updating volunteer:", error);
+    }
+  };
+
+  const handleSelectVolunteer = (volunteer) => {
+    setSelectedVolunteer(volunteer);
+    setIsAdding(false);
   };
 
   return (
@@ -123,6 +207,8 @@ export const VolunteerManagementView = () => {
           >
             <VolunteerProfilesPanel
               variant={viewMode === "list" ? "table" : "list"}
+              volunteers={volunteers}
+              onSelectVolunteer={handleSelectVolunteer}
             />
           </Box>
         )}
@@ -141,15 +227,14 @@ export const VolunteerManagementView = () => {
                 variant="new"
                 showBack
                 onBack={() => setIsAdding(false)}
-                onConfirm={(data) => {
-                  console.log("New Profile Data:", data);
-                  setIsAdding(false);
-                }}
+                onConfirm={handleConfirmNewVolunteer}
               />
             ) : (
               <VolunteerProfilePanel
                 showBack={viewMode === "profile"}
                 onBack={() => setViewMode("list")}
+                selectedVolunteer={selectedVolunteer}
+                onUpdate={handleUpdateVolunteer}
               />
             )}
           </Box>
