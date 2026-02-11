@@ -3,7 +3,7 @@ import {
   Box,
   Button,
   Center,
-  Divider,
+  Separator,
   Flex,
   Heading,
   Input,
@@ -90,9 +90,9 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             align="center"
             w="100%"
           >
-            <Divider borderColor="black" />
+            <Separator borderColor="black" />
             <Text padding="2">OR</Text>
-            <Divider borderColor="black" />
+            <Separator borderColor="black" />
           </Flex>
           <Button
             bg="#FAFAFA"

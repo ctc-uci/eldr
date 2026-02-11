@@ -12,7 +12,7 @@ import { Playground } from "@/components/playground/Playground";
 // Dev-made Components!
 // import { AdminProfile } from "@/components/adminProfile/adminProfile";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
+import { AdminLogin } from "@/components/adminProfile/adminLogin";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 // import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
@@ -44,10 +44,10 @@ const App = () => {
             <Router>
               <Routes>
                 {/* Dev-made Routes! */}
-                {/* <Route
+                <Route
                   path="/adminLogin"
                   element={<AdminLogin />}
-                /> */}
+                />
                 
                 {/* <Route
                   path="/volunteerProfile"
