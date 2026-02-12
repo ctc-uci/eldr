@@ -1,89 +1,87 @@
 import { React } from "react";
 
-import { Flex, HStack, Text, VStack, Badge } from "@chakra-ui/react";
+import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
-export const EventsList = ( {events, onSelect} ) => {
+export const EventsList = ({ events, onSelect, selectedEvent }) => {
   return (
     <VStack
-      backgroundColor="#D4D4D4"
-      p={2}
+      bg="#FAFAFA"
+      px="16px"
+      py="8px"
       minH="100%"
       gap="12px"
       align="stretch"
-      textAlign="left"
     >
-      {events.map((event) => (
-        <Flex
-          as="button"
-          direction="column"
-          minH="160px"
-          justify="space-between"
-          key={event.title}
-          borderWidth="1px"
-          _hover={{ bg: "gray.100" }}
-          textAlign="left"
-          backgroundColor={"#FFFFFF"}
-          p={4}
-          onClick={() => onSelect(event)}
-        >
-          {/* top row of info for button */}
+      {events.map((event) => {
+        const isSelected = selectedEvent && selectedEvent.id === event.id;
+        return (
           <Flex
-            justifyContent="space-between"
-            width="100%"
+            as="button"
+            direction="column"
+            gap="8px"
+            key={event.id}
+            borderWidth={isSelected ? "2px" : "1px"}
+            borderStyle="solid"
+            borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
+            borderRadius="8px"
+            bg="white"
+            textAlign="left"
+            px="20px"
+            py="16px"
+            _hover={{ bg: "#F9FAFB" }}
+            onClick={() => onSelect(event)}
+            transition="all 0.15s ease"
           >
-            <HStack>
-              <Text
-                fontSize="16px"
-                fontWeight={400}
-              >
-                {event.date}
-              </Text>
-              <Text
-                fontSize="24px"
-                fontWeight={400}
-              >
-                • {/* delimiter between date and time */}
-              </Text>
-              <Text
-                fontSize="16px"
-                fontWeight={400}
-              >
-                {event.time}
-              </Text>
-            </HStack>
-            <Text
-                fontSize="16px"
-                fontWeight={400}
-              >
+            {/* Date/time row + spots */}
+            <Flex justifyContent="space-between" width="100%" align="center">
+              <HStack gap="4px">
+                <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  {event.date}
+                </Text>
+                <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  •
+                </Text>
+                <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  {event.time}
+                </Text>
+              </HStack>
+              <Text fontSize="14px" fontWeight={400} color="#6B7280">
                 {event.spots} spots filled
               </Text>
-          </Flex>
+            </Flex>
 
-          {/* title and address rows */}
-          <Text
-            fontSize="18px"
-            fontWeight={500}>
+            {/* Title */}
+            <Text fontSize="18px" fontWeight={600} color="#111827">
               {event.title}
-          </Text>
-          <Text
-                fontSize="16px"
-                fontWeight={400}
-              >
-                {event.address}
-              </Text>
-          <HStack>
-            {event.tags.map((tag, i) => (
+            </Text>
+
+            {/* Address */}
+            <Text fontSize="14px" fontWeight={400} color="#6B7280">
+              {event.address}
+            </Text>
+
+            {/* Tags */}
+            <HStack gap="8px" mt="4px">
+              {event.tags.map((tag, i) => (
                 <Badge
                   key={i}
                   variant="outline"
-                  px={3}
-                  fontWeight="black">
+                  borderColor="#D1D5DB"
+                  color="#374151"
+                  borderRadius="4px"
+                  px="8px"
+                  py="2px"
+                  fontSize="12px"
+                  fontWeight={500}
+                  textTransform="none"
+                >
                   {tag}
                 </Badge>
-            ))}
-          </HStack>
-        </Flex>
-      ))}
+              ))}
+            </HStack>
+          </Flex>
+        );
+      })}
     </VStack>
   );
 };
