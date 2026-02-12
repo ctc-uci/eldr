@@ -4,9 +4,6 @@ import {
   Flex,
   Input,
   InputGroup,
-  InputLeftElement,
-  Tab,
-  TabList,
   Tabs,
   Text,
   useBreakpointValue
@@ -44,34 +41,36 @@ export const TopBar = ({ showDetails }) => {
         align="center"
       >
         <Text
-          size="16px"
+          fontSize="16px"
           fontWeight={600}
         >
           Header TBD
         </Text>
       </Flex>
 
-      <Tabs w="100%">
-        <TabList
+      <Tabs.Root defaultValue="all" w="100%">
+        <Tabs.List
           w="100%"
           h="40px"
           justifyContent="space-between"
           gap={tabsGap}
         >
-          <Tab
+          <Tabs.Trigger
+            value="all"
             flex="1"
             _selected={{ borderColor: "black", borderBottomWidth: "3px" }}
           >
             All Events
-          </Tab>
-          <Tab
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="my"
             flex="1"
             _selected={{ borderColor: "black", borderBottomWidth: "3px" }}
           >
             My Events
-          </Tab>
-        </TabList>
-      </Tabs>
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
 
       {showSearch && ( // Conditionally render search bar
         <Flex
@@ -84,11 +83,7 @@ export const TopBar = ({ showDetails }) => {
           justify="center"
           align="center"
         >
-          <InputGroup w={inputWidth}>
-            <InputLeftElement>
-              <FaMagnifyingGlass />
-            </InputLeftElement>
-            
+          <InputGroup w={inputWidth} startElement={<FaMagnifyingGlass />}>
             <Input
               placeholder="Search for a event..."
               backgroundColor="white"

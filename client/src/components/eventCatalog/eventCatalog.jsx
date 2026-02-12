@@ -111,7 +111,6 @@ export const EventCatalog = () => {
               display={{ base: "block", md: "none" }}
             >
               <Button
-                leftIcon={<IoCaretBack />}
                 onClick={() => setShowDetails(false)}
                 variant="ghost"
                 w="77px"
@@ -127,6 +126,7 @@ export const EventCatalog = () => {
                 fontWeight="normal"
                 _hover={{ backgroundColor: "#D8D8D8" }}
               >
+                <IoCaretBack />
                 Back
               </Button>
             </Box>
@@ -141,7 +141,9 @@ export const EventCatalog = () => {
             left="0"
             w="100%"
             h="100px"
-            bgGradient="linear(to-b, transparent, white)"
+            bgGradient="to-b"
+            gradientFrom="transparent"
+            gradientTo="white"
             pointerEvents="none"
           />
         </Box>

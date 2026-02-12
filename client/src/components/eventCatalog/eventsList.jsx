@@ -8,7 +8,7 @@ export const EventsList = ( {events, onSelect} ) => {
       backgroundColor="#D4D4D4"
       p={2}
       minH="100%"
-      spacing="12px"
+      gap="12px"
       align="stretch"
       textAlign="left"
     >

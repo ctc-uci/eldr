@@ -37,7 +37,7 @@ export const EventInfo = ({ event }) => {
             maxW="720px"
             py={{ base: 2, md: "50px" }}
             px={{ base: 4, md: 8 }}
-            spacing={2}
+            gap={2}
             align="flex-start"
           >
             {/* Event title */}
@@ -54,7 +54,7 @@ export const EventInfo = ({ event }) => {
             </Box>
 
             {/* Event metadata */}
-            <VStack align="flex-start" spacing="8px">
+            <VStack align="flex-start" gap="8px">
               <Text display="flex" alignItems="center" gap="8px">
                 <FaCalendarAlt />
                 {event.date}
@@ -92,7 +92,9 @@ export const EventInfo = ({ event }) => {
         left={0}
         right={0}
         height="150px"
-        bgGradient="linear(to-b, transparent, white)"
+        bgGradient="to-b"
+        gradientFrom="transparent"
+        gradientTo="white"
         pointerEvents="none"
       />
 
