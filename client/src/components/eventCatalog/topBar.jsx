@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import {
   Button,
@@ -13,8 +13,22 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
 import { LuSettings2 } from "react-icons/lu";
 
-export const TopBar = ({ showDetails, activeTab, onTabChange }) => {
+import { SortAndFilter } from "./sortAndFilter";
+
+export const TopBar = ({
+  showDetails,
+  activeTab,
+  onTabChange,
+  searchQuery,
+  onSearchChange,
+  sortBy,
+  setSortBy,
+  selectedFilters,
+  setSelectedFilters,
+  filteredCount,
+}) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // Hide search on mobile when showing details
   const showSearch = !isMobile || !showDetails;
@@ -107,10 +121,21 @@ export const TopBar = ({ showDetails, activeTab, onTabChange }) => {
             fontWeight={500}
             flexShrink={0}
             _hover={{ backgroundColor: "#BFDBFE" }}
+            onClick={() => setFilterOpen(true)}
           >
             <LuSettings2 />
             Sort and Filter
           </Button>
+
+          <SortAndFilter
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            selectedFilters={selectedFilters}
+            setSelectedFilters={setSelectedFilters}
+            filteredCount={filteredCount}
+          />
 
           <InputGroup flex="1" startElement={<FaMagnifyingGlass color="#9CA3AF" />}>
             <Input
@@ -121,6 +146,8 @@ export const TopBar = ({ showDetails, activeTab, onTabChange }) => {
               h="40px"
               fontSize="14px"
               _placeholder={{ color: "#9CA3AF" }}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
             />
           </InputGroup>
         </Flex>

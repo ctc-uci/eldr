@@ -20,9 +20,10 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             direction="column"
             gap="8px"
             key={event.id}
-            borderWidth={isSelected ? "2px" : "1px"}
+            borderWidth="1px"
             borderStyle="solid"
             borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
+            outline={isSelected ? "1px solid #3B82F6" : "none"}
             borderRadius="8px"
             bg="white"
             textAlign="left"

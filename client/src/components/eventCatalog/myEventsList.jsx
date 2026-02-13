@@ -40,6 +40,8 @@ export const MyEventsList = ({ events, onSelect, selectedEvent }) => {
 };
 
 const EventSection = ({ title, events, onSelect, selectedEvent }) => {
+  const isPastSection = title === "Past Events";
+  
   return (
     <Box>
       <Text
@@ -61,15 +63,17 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
               direction="column"
               gap="8px"
               key={event.id}
-              borderWidth={isSelected ? "2px" : "1px"}
+              borderWidth="1px"
               borderStyle="solid"
               borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
+              outline={isSelected ? "1px solid #3B82F6" : "none"}
               borderRadius="8px"
               bg="white"
               textAlign="left"
               px="20px"
               py="16px"
-              _hover={{ bg: "#F9FAFB" }}
+              opacity={isPastSection ? 0.6 : 1}
+              _hover={{ bg: "#F9FAFB", opacity: isPastSection ? 0.8 : 1 }}
               onClick={() => onSelect(event)}
               transition="all 0.15s ease"
             >

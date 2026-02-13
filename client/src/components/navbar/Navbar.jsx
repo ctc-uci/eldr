@@ -9,8 +9,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import { LuCalendarDays, LuBriefcase } from "react-icons/lu";
-
 export const Navbar = () => {
   return (
     <Flex
@@ -45,7 +43,7 @@ export const Navbar = () => {
           color="#374151"
           _hover={{ color: "#111827", textDecoration: "none" }}
         >
-          <LuCalendarDays size={18} />
+          <Image src="/clipboard-list.svg" alt="Events" w="18px" h="18px" />
           <Text>Events</Text>
         </Link>
 
@@ -59,7 +57,7 @@ export const Navbar = () => {
           color="#374151"
           _hover={{ color: "#111827", textDecoration: "none" }}
         >
-          <LuBriefcase size={18} />
+          <Image src="/briefcase-business.svg" alt="Cases" w="18px" h="18px" />
           <Text>Cases</Text>
         </Link>
 
