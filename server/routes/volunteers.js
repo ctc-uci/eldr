@@ -13,6 +13,7 @@ volunteersRouter.post("/", async(req, res) => {
             last_name, 
             email, 
             phone_number,  
+            experience_level, 
             form_completed, 
             form_link, 
             is_signed_confidentiality,
@@ -61,8 +62,8 @@ volunteersRouter.post("/", async(req, res) => {
 
         const volunteerResult = await db.query(
             `
-            INSERT INTO volunteers (id, first_name, last_name, email, phone_number, form_completed, form_link, is_signed_confidentiality, is_attorney, is_notary)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+            INSERT INTO volunteers (id, first_name, last_name, email, phone_number, experience_level, form_completed, form_link, is_signed_confidentiality, is_attorney, is_notary)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
             RETURNING *;
             `, 
             [
@@ -71,6 +72,7 @@ volunteersRouter.post("/", async(req, res) => {
                 last_name, 
                 email, 
                 phone_number, 
+                experience_level, 
                 form_completed, 
                 form_link, 
                 is_signed_confidentiality,
@@ -131,6 +133,7 @@ volunteersRouter.put("/:id", async(req, res) => {
             last_name, 
             email, 
             phone_number, 
+            experience_level, 
             form_completed, 
             form_link, 
             is_signed_confidentiality,
@@ -144,11 +147,12 @@ volunteersRouter.put("/:id", async(req, res) => {
                 last_name = $3,
                 email = $4,
                 phone_number = $5,
-                form_completed = $6,
-                form_link = $7,
-                is_signed_confidentiality = $8,
-                is_attorney = $9,
-                is_notary = $10
+                experience_level = $6,
+                form_completed = $7,
+                form_link = $8,
+                is_signed_confidentiality = $9,
+                is_attorney = $10,
+                is_notary = $11
             WHERE id = $1;
             `,
             [
@@ -157,6 +161,7 @@ volunteersRouter.put("/:id", async(req, res) => {
                 last_name, 
                 email, 
                 phone_number, 
+                experience_level, 
                 form_completed, 
                 form_link, 
                 is_signed_confidentiality,

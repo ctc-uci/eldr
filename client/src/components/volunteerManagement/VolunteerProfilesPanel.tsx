@@ -12,11 +12,9 @@ import {
 
 interface VolunteerProfilesPanelProps {
   variant?: string;
-  volunteers?: never[];
-  onSelectVolunteer?: (volunteer: never) => void;
 }
 
-export const VolunteerProfilesPanel = ({ variant = "list", volunteers = [], onSelectVolunteer }: VolunteerProfilesPanelProps) => {
+export const VolunteerProfilesPanel = ({ variant = "list" }: VolunteerProfilesPanelProps) => {
   return (
     <Box>
       {variant === "list" && (
@@ -28,28 +26,28 @@ export const VolunteerProfilesPanel = ({ variant = "list", volunteers = [], onSe
               </Tr>
             </Thead>
             <Tbody>
-            {volunteers.map((volunteer) => (
-              <Tr key={volunteer.id} onClick={() => onSelectVolunteer?.(volunteer)} style={{ cursor: 'pointer' }}>
-                <Td>
-                  <Flex align="center">
-                    <Box
-                      w="28px"
-                      h="28px"
-                      borderWidth="1px"
-                      borderColor="gray.400"
-                      borderRadius="full"
-                      mr={3}
-                    />
-                    <Text fontSize="sm" flex="1">
-                      {volunteer.firstName} {volunteer.lastName}
-                    </Text>
-                    <Text fontSize="sm" color="gray.700">
-                      Volunteer
-                    </Text>
-                  </Flex>
-                </Td>
-              </Tr>
-            ))}
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Tr key={i}>
+                  <Td>
+                    <Flex align="center">
+                      <Box
+                        w="28px"
+                        h="28px"
+                        borderWidth="1px"
+                        borderColor="gray.400"
+                        borderRadius="full"
+                        mr={3}
+                      />
+                      <Text fontSize="sm" flex="1">
+                        [Username]
+                      </Text>
+                      <Text fontSize="sm" color="gray.700">
+                        {i % 3 === 0 ? "Staff" : "Volunteer"}
+                      </Text>
+                    </Flex>
+                  </Td>
+                </Tr>
+              ))}
             </Tbody>
           </Table>
         </Box>
@@ -69,8 +67,7 @@ export const VolunteerProfilesPanel = ({ variant = "list", volunteers = [], onSe
             </Thead>
             <Tbody>
               {Array.from({ length: 11 }).map((_, i) => (
-                <Tr key={volunteer.id} onClick={() => onSelectVolunteer?.(volunteer)} style={{ cursor: 'pointer' }}>
-
+                <Tr key={i}>
                   <Td>
                     <Flex align="center" gap={3}>
                       <Box
