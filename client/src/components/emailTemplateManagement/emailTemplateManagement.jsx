@@ -1,19 +1,16 @@
 import React, { useState } from "react";
 import {
-  Steps,
   Box,
   Text,
   VStack,
   HStack,
   Input,
   InputGroup,
-  InputLeftElement,
   SimpleGrid,
   Flex,
   Menu,
   Button,
   NativeSelect,
-  Icon,
   Portal,
 } from "@chakra-ui/react";
 import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers } from "react-icons/fa";
@@ -30,10 +27,7 @@ export const EmailTemplateManagement = () => {
       <Box flex="1" p={6} >
 
         {/* Search Bar */}
-        <InputGroup mb={6} >
-          <InputLeftElement pointerEvents="none" >
-            <Icon color='gray.300' asChild><LuSearch /></Icon>
-          </InputLeftElement>
+        <InputGroup mb={6} startElement={<LuSearch color="gray" />}>
           <Input placeholder="Search" />
         </InputGroup>
 
