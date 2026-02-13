@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+    Steps,
     Box,
     Text,
     Input,
@@ -10,18 +11,19 @@ import {
     Tag,
     Flex,
     Button,
-    Divider,
     Spacer,
     useToast,
-    useBreakpointValue
-  } from "@chakra-ui/react";
+    useBreakpointValue,
+    Separator,
+    Icon,
+} from "@chakra-ui/react";
 
-import { SearchIcon } from "@chakra-ui/icons";
 import { FaCheck } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
 import { HiOutlineArrowsUpDown } from "react-icons/hi2";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
 import ReactSelect from "react-select";
+import { LuSearch } from 'react-icons/lu';
 
 
 const mockCases = [
@@ -117,224 +119,219 @@ export const CaseCatalog = () => {
 
     return (
         <Flex minH="100vh" bg="gray.100" direction="column">
-
-        {/* Header */}
-        <Box bg="#757575" py={4} textAlign="center">
-            <Text fontWeight="semibold">Header TBD</Text>
-        </Box>
-        
-        {/* Tabs */}
-        <Flex width="100%" bg="white">
-            <Box
-                flex="1"
-                textAlign="center"
-                py={3}
-                cursor="pointer"
-                fontWeight={activeTab === "all" ? "bold" : "normal"}
-                borderBottom={activeTab === "all" ? "4px solid black" : "2px solid gray.300"}
-                onClick={() => setActiveTab("all")}
-            >
-                All Cases
+            {/* Header */}
+            <Box bg="#757575" py={4} textAlign="center">
+                <Text fontWeight="semibold">Header TBD</Text>
             </Box>
-
-            <Box
-                flex="1"
-                textAlign="center"
-                py={3}
-                cursor="pointer"
-                fontWeight={activeTab === "saved" ? "bold" : "normal"}
-                borderBottom={activeTab === "saved" ? "4px solid black" : "2px solid gray.300"}
-                onClick={() => setActiveTab("saved")}
-            >
-                Saved Cases ({savedCaseIds.size})
-            </Box>
-        </Flex>
-
-        {/* Search Bar */}
-        <HStack bg="#D0D0D0" px={8} py={4} h="90px" justify="center">
-            <InputGroup>
-                <InputLeftElement pointerEvents="none" >
-                <SearchIcon color='gray.300' />
-                </InputLeftElement>
-                <Input placeholder="Search for a case..." borderRadius="lg" bg="white"/>
-            </InputGroup>
-        </HStack>
-        
-        {activeTab === "all" && (
-            <Flex
-                px={{ base: 4, md: 8 }}
-                py={4}
-                bg="#8F8F8F"
-            >
-                <Flex
-                    display={{ base: "none", md: "flex" }}
-                    gap={3}
-                    direction={{ base: "column", md: "row" }}
-                    align={{ base: "stretch", md: "center" }}
-                    wrap="wrap"
-                    w="100%"
-                >
-                    <Button leftIcon={<HiOutlineArrowsUpDown/>}
-                    colorScheme='gray' variant='outline' size="sm" w={{ base: "100%", md: "120px" }} bg="#EBEBEB"
-                    onClick={() => setIsNewest((prev) => !prev)}>
-                        {isNewest ? "By Newest" : "By Oldest"}
-                    </Button>
-
-                    <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
-
-                    <Box w={{ base: "100%", md: "150px" }}>
-                        <ReactSelect
-                            options={languageOptions}
-                            placeholder="Languages"
-                            value={languageFilter}
-                            onChange={setLanguageFilter}
-                            isClearable
-                            isSearchable
-                            styles={{
-                            control: (base) => ({
-                                ...base,
-                                backgroundColor: "white",
-                                minHeight: "32px",
-                                height: "32px",
-                                borderRadius: "6px",
-                                fontSize: "0.875rem",
-                            }),
-                            valueContainer: (base) => ({
-                                ...base,
-                                padding: "0 8px",
-                            }),
-                            indicatorsContainer: (base) => ({
-                                ...base,
-                                height: "32px",
-                            }),
-                            menu: (base) => ({
-                                ...base,
-                                zIndex: 9999,
-                            }),
-                            }}
-                        />
-                        </Box>
-
-                        <Box w={{ base: "100%", md: "180px" }}>
-                        <ReactSelect
-                            options={interestOptions}
-                            placeholder="Areas of Interest"
-                            value={interestFilter}
-                            onChange={setInterestFilter}
-                            isClearable
-                            isSearchable
-                            styles={{
-                            control: (base) => ({
-                                ...base,
-                                backgroundColor: "white",
-                                minHeight: "32px",
-                                height: "32px",
-                                borderRadius: "6px",
-                                fontSize: "0.875rem",
-                            }),
-                            valueContainer: (base) => ({
-                                ...base,
-                                padding: "0 8px",
-                            }),
-                            indicatorsContainer: (base) => ({
-                                ...base,
-                                height: "32px",
-                            }),
-                            menu: (base) => ({
-                                ...base,
-                                zIndex: 9999,
-                            }),
-                            }}
-                        />
-                    </Box>
-                    
-                    <Spacer display={{ base: "none", md: "block" }} />
-                    
-                    <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                        Apply
-                    </Button>
-
-                    <Button leftIcon={<FaX/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
-                        Clear
-                    </Button>
-                </Flex>
-            </Flex>
-        )}
-
-        {/* Main Content */}
-        <Flex
-        bg="#D0D0D0"
-        flex="1"
-        px={8}
-        py={6}
-        gap={6}
-        direction={{ base: "column", md: "row" }} // stack on mobile
-        >
-        {activeTab === "saved" && visibleCases.length === 0 ? (
-            <Flex
-                width="100%"
-                justify="center"
-                align="center"
-                direction="column"
-                color="#D4D4D4"
-            >
-                <Text mb={10} color="black">No cases currently saved.</Text>
-
-                <Button
-                    size="sm"
+            {/* Tabs */}
+            <Flex width="100%" bg="white">
+                <Box
+                    flex="1"
+                    textAlign="center"
+                    py={3}
+                    cursor="pointer"
+                    fontWeight={activeTab === "all" ? "bold" : "normal"}
+                    borderBottom={activeTab === "all" ? "4px solid black" : "2px solid gray.300"}
                     onClick={() => setActiveTab("all")}
                 >
-                    Browse All Cases
-                </Button>
-            </Flex>
-        ) : (
-        <>
-        {/* Left: Case List */}
-            <VStack
-                spacing={4}
-                align="stretch"
-                w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
-                overflowY="auto"
-            >
-                {visibleCases.map((c) => (
-                <CaseCard key={c.id} caseData={c} onClick={() => setSelectedCase(c)} />
-                ))}
-            </VStack>
+                    All Cases
+                </Box>
 
-            {/* Right: Case Detail */}
-            {selectedCase && (activeTab === "all" || savedCaseIds.has(selectedCase.id)) && (
                 <Box
-                    position={{ base: "fixed", md: "relative" }}
-                    top={{ base: 0, md: "auto" }}
-                    left={{ base: 0, md: "auto" }}
-                    w={{ base: "100vw", md: "50%" }}
-                    h={{ base: "100vh", md: "auto" }}
-                    bg="white"
-                    p={6}
-                    borderRadius={{ base: 0, md: "md" }}
-                    overflowY="auto"
-                    zIndex={{ base: 1000, md: "auto" }}
+                    flex="1"
+                    textAlign="center"
+                    py={3}
+                    cursor="pointer"
+                    fontWeight={activeTab === "saved" ? "bold" : "normal"}
+                    borderBottom={activeTab === "saved" ? "4px solid black" : "2px solid gray.300"}
+                    onClick={() => setActiveTab("saved")}
                 >
-                    {/* Mobile back button */}
-                    <Box display={{ base: "block", md: "none" }} mb={4}>
+                    Saved Cases ({savedCaseIds.size})
+                </Box>
+            </Flex>
+            {/* Search Bar */}
+            <HStack bg="#D0D0D0" px={8} py={4} h="90px" justify="center">
+                <InputGroup>
+                    <InputLeftElement pointerEvents="none" >
+                    <Icon color='gray.300' asChild><LuSearch /></Icon>
+                    </InputLeftElement>
+                    <Input placeholder="Search for a case..." borderRadius="lg" bg="white"/>
+                </InputGroup>
+            </HStack>
+            {activeTab === "all" && (
+                <Flex
+                    px={{ base: 4, md: 8 }}
+                    py={4}
+                    bg="#8F8F8F"
+                >
+                    <Flex
+                        display={{ base: "none", md: "flex" }}
+                        gap={3}
+                        direction={{ base: "column", md: "row" }}
+                        align={{ base: "stretch", md: "center" }}
+                        wrap="wrap"
+                        w="100%"
+                    >
+                        <Button
+                            colorPalette='gray'
+                            variant='outline'
+                            size="sm"
+                            w={{ base: "100%", md: "120px" }}
+                            bg="#EBEBEB"
+                            onClick={() => setIsNewest((prev) => !prev)}><HiOutlineArrowsUpDown/>{isNewest ? "By Newest" : "By Oldest"}</Button>
+
+                        <Separator orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
+
+                        <Box w={{ base: "100%", md: "150px" }}>
+                            <ReactSelect
+                                options={languageOptions}
+                                placeholder="Languages"
+                                value={languageFilter}
+                                onChange={setLanguageFilter}
+                                isClearable
+                                isSearchable
+                                styles={{
+                                control: (base) => ({
+                                    ...base,
+                                    backgroundColor: "white",
+                                    minHeight: "32px",
+                                    height: "32px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.875rem",
+                                }),
+                                valueContainer: (base) => ({
+                                    ...base,
+                                    padding: "0 8px",
+                                }),
+                                indicatorsContainer: (base) => ({
+                                    ...base,
+                                    height: "32px",
+                                }),
+                                menu: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                }),
+                                }}
+                            />
+                            </Box>
+
+                            <Box w={{ base: "100%", md: "180px" }}>
+                            <ReactSelect
+                                options={interestOptions}
+                                placeholder="Areas of Interest"
+                                value={interestFilter}
+                                onChange={setInterestFilter}
+                                isClearable
+                                isSearchable
+                                styles={{
+                                control: (base) => ({
+                                    ...base,
+                                    backgroundColor: "white",
+                                    minHeight: "32px",
+                                    height: "32px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.875rem",
+                                }),
+                                valueContainer: (base) => ({
+                                    ...base,
+                                    padding: "0 8px",
+                                }),
+                                indicatorsContainer: (base) => ({
+                                    ...base,
+                                    height: "32px",
+                                }),
+                                menu: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                }),
+                                }}
+                            />
+                        </Box>
+                        
+                        <Spacer display={{ base: "none", md: "block" }} />
+                        
+                        <Button colorPalette='gray' variant='outline' size="sm" bg="#EBEBEB"><FaCheck/>Apply
+                                                    </Button>
+
+                        <Button colorPalette='gray' variant='outline' size="sm" bg="#EBEBEB"><FaX/>Clear
+                                                    </Button>
+                    </Flex>
+                </Flex>
+            )}
+            {/* Main Content */}
+            <Flex
+            bg="#D0D0D0"
+            flex="1"
+            px={8}
+            py={6}
+            gap={6}
+            direction={{ base: "column", md: "row" }} // stack on mobile
+            >
+            {activeTab === "saved" && visibleCases.length === 0 ? (
+                <Flex
+                    width="100%"
+                    justify="center"
+                    align="center"
+                    direction="column"
+                    color="#D4D4D4"
+                >
+                    <Text mb={10} color="black">No cases currently saved.</Text>
+
                     <Button
                         size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedCase(null)}
+                        onClick={() => setActiveTab("all")}
                     >
-                        ← Back
+                        Browse All Cases
                     </Button>
+                </Flex>
+            ) : (
+            <>
+            {/* Left: Case List */}
+                <VStack
+                    gap={4}
+                    align="stretch"
+                    w={{ base: "100%", md: "50%" }} // fixed 50% on desktop
+                    overflowY="auto"
+                >
+                    {visibleCases.map((c) => (
+                    <CaseCard key={c.id} caseData={c} onClick={() => setSelectedCase(c)} />
+                    ))}
+                </VStack>
+
+                {/* Right: Case Detail */}
+                {selectedCase && (activeTab === "all" || savedCaseIds.has(selectedCase.id)) && (
+                    <Box
+                        position={{ base: "fixed", md: "relative" }}
+                        top={{ base: 0, md: "auto" }}
+                        left={{ base: 0, md: "auto" }}
+                        w={{ base: "100vw", md: "50%" }}
+                        h={{ base: "100vh", md: "auto" }}
+                        bg="white"
+                        p={6}
+                        borderRadius={{ base: 0, md: "md" }}
+                        overflowY="auto"
+                        zIndex={{ base: 1000, md: "auto" }}
+                    >
+                        {/* Mobile back button */}
+                        <Box display={{ base: "block", md: "none" }} mb={4}>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedCase(null)}
+                        >
+                            ← Back
+                        </Button>
+                        </Box>
+                        <CaseDetail
+                        caseData={selectedCase}
+                        isSaved={savedCaseIds.has(selectedCase.id)}
+                        onToggleBookmark={toggleBookmark}
+                        />
                     </Box>
-                    <CaseDetail
-                    caseData={selectedCase}
-                    isSaved={savedCaseIds.has(selectedCase.id)}
-                    onToggleBookmark={toggleBookmark}
-                    />
-                </Box>
+                )}
+                </>
             )}
-            </>
-        )}
-        </Flex>
+            </Flex>
         </Flex>
     );
 };
@@ -355,15 +352,15 @@ const CaseCard = ({ caseData, onClick}) => (
             </Text>
         </Flex>
 
-        <Text fontSize="sm" color="gray.600" noOfLines={3}>
+        <Text fontSize="sm" color="gray.600" lineClamp={3}>
             {caseData.description}
         </Text>
 
-        <HStack mt={3} spacing={2}>
+        <HStack mt={3} gap={2}>
             {caseData.tags.map((tag) => (
-                <Tag key={tag} size="sm">
+                <Tag.Root key={tag} size="sm">
                     {tag}
-                </Tag>
+                </Tag.Root>
             ))}
         </HStack>
     </Box>
@@ -374,42 +371,37 @@ const CaseDetail = ({ caseData, isSaved, onToggleBookmark }) => {
 
     return (
         <Box>
-        <Flex justify="space-between" mb={4}>
-            <Text fontSize="xl" fontWeight="bold">
-            {caseData.title}
-            </Text>
+            <Flex justify="space-between" mb={4}>
+                <Text fontSize="xl" fontWeight="bold">
+                {caseData.title}
+                </Text>
+                
+                <Box cursor="pointer" onClick={() => onToggleBookmark(caseData.id)} >
+                    {isSaved ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+                </Box>
             
-            <Box cursor="pointer" onClick={() => onToggleBookmark(caseData.id)} >
-                {isSaved ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
-            </Box>
-        
-        </Flex>
-        
-        <HStack mb={4}>
-            {caseData.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-            ))}
-        </HStack>
-        
-        <Divider mb={4} />
-  
-        <Text fontSize="sm" color="gray.700" mb={6}>
-            {caseData.description}
-        </Text>
-  
-        <Button onClick={() =>
-            toast({
-                title: "Email Copied to Clipboard",
-                status: "success",
-                duration: 2000,
-                isClosable: true,
-                position: "bottom-right"
-            })
-        }> 
-            Email Supervisor
-        </Button>
-    </Box>
-
-    )
+            </Flex>
+            <HStack mb={4}>
+                {caseData.tags.map((tag) => (
+                <Tag.Root key={tag}>{tag}</Tag.Root>
+                ))}
+            </HStack>
+            <Separator mb={4} />
+            <Text fontSize="sm" color="gray.700" mb={6}>
+                {caseData.description}
+            </Text>
+            <Button onClick={() =>
+                toast({
+                    title: "Email Copied to Clipboard",
+                    status: "success",
+                    duration: 2000,
+                    isClosable: true,
+                    position: "bottom-right"
+                })
+            }> 
+                Email Supervisor
+            </Button>
+        </Box>
+    );
 };
   

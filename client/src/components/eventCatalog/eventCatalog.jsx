@@ -1,6 +1,6 @@
 import { React, useState } from "react";
 
-import { Box, Button, Flex } from "@chakra-ui/react";
+import { Steps, Box, Button, Flex } from "@chakra-ui/react";
 
 import { IoCaretBack } from "react-icons/io5";
 
@@ -71,7 +71,6 @@ export const EventCatalog = () => {
       h="100vh"
     >
       <TopBar showDetails={showDetails} />
-
       <Flex
         flex="1"
         overflow="hidden"
@@ -111,7 +110,6 @@ export const EventCatalog = () => {
               display={{ base: "block", md: "none" }}
             >
               <Button
-                leftIcon={<IoCaretBack />}
                 onClick={() => setShowDetails(false)}
                 variant="ghost"
                 w="77px"
@@ -125,10 +123,8 @@ export const EventCatalog = () => {
                 alignItems="center"
                 fontSize="sm"
                 fontWeight="normal"
-                _hover={{ backgroundColor: "#D8D8D8" }}
-              >
-                Back
-              </Button>
+                _hover={{ backgroundColor: "#D8D8D8" }}><IoCaretBack />Back
+                              </Button>
             </Box>
 
             <EventInfo event={selectedEvent} />

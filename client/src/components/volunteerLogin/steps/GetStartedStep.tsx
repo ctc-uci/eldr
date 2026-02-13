@@ -1,14 +1,15 @@
 import React from "react";
-import { 
-  VStack, 
-  Stack, 
-  Heading, 
-  Select, 
-  Input, 
-  Button, 
+import {
+  Steps,
+  VStack,
+  Stack,
+  Heading,
+  NativeSelect,
+  Input,
+  Button,
   Box,
-  Flex, 
-  Progress, 
+  Flex,
+  Progress,
 } from "@chakra-ui/react";
 
 type Props = {
@@ -29,51 +30,56 @@ const GetStartedStep = ({ onNext }: Props) => {
         h={{ base: "134px", md: "106px" }} 
         bg="#E8E8E8" 
       />
-      <VStack spacing={{ base: 8, md: 12}} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+      <VStack gap={{ base: 8, md: 12}} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
           <Heading as="h1" fontSize={{ base: "30px",md: "50px"}} fontWeight={500} color="black">
             Let's get started!
           </Heading>
-          <Stack spacing={{ base: 4, md: "-2px" }} 
+          <Stack gap={{ base: 4, md: "-2px" }} 
                  width="100%" 
                  maxW="1029px" 
                  direction={{ base: "column", md: "row" }}
                  align="center"
                  >
-            <Select
-              placeholder="Select Occupation"
-              w={{ base: "100%", md: "343px" }}
-              h="40px"
-              borderWidth="2px"
-              borderColor="black"
-              borderTopLeftRadius="4px"
-              borderBottomLeftRadius="4px"
-              borderTopRightRadius={{ base: "4px", md: "0px" }}
-              borderBottomRightRadius={{ base: "4px", md: "0px" }}
-              pt="8px"
-              pb="8px"
-              pl="12px"
-              pr="6px"
-            >
-              <option value="notary">Notary</option>
-            </Select>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                placeholder="Select Occupation"
+                w={{ base: "100%", md: "343px" }}
+                h="40px"
+                borderWidth="2px"
+                borderColor="black"
+                borderTopLeftRadius="4px"
+                borderBottomLeftRadius="4px"
+                borderTopRightRadius={{ base: "4px", md: "0px" }}
+                borderBottomRightRadius={{ base: "4px", md: "0px" }}
+                pt="8px"
+                pb="8px"
+                pl="12px"
+                pr="6px">
+                <option value="notary">Notary</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
 
-            <Select 
-              placeholder="Select Notary Status" 
-              w={{ base: "100%", md: "343px" }}
-              h="40px"
-              borderWidth="2px"
-              borderColor="black"
-              borderTopLeftRadius={{ base: "4px", md: "0px" }}
-              borderTopRightRadius={{ base: "4px", md: "0px" }}
-              borderBottomRightRadius={{ base: "4px", md: "0px" }}
-              borderBottomLeftRadius={{ base: "4px", md: "0px" }}
-              ml={{ base: 0, md: "-2px" }}
-              pt="8px"
-              pb="8px"
-              pl="12px"
-              pr="6px">
-              <option value="active">Active</option>
-            </Select>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                placeholder="Select Notary Status"
+                w={{ base: "100%", md: "343px" }}
+                h="40px"
+                borderWidth="2px"
+                borderColor="black"
+                borderTopLeftRadius={{ base: "4px", md: "0px" }}
+                borderTopRightRadius={{ base: "4px", md: "0px" }}
+                borderBottomRightRadius={{ base: "4px", md: "0px" }}
+                borderBottomLeftRadius={{ base: "4px", md: "0px" }}
+                ml={{ base: 0, md: "-2px" }}
+                pt="8px"
+                pb="8px"
+                pl="12px"
+                pr="6px">
+                <option value="active">Active</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
 
             <Input
               placeholder="Enter Affiliated Institution"
@@ -92,7 +98,7 @@ const GetStartedStep = ({ onNext }: Props) => {
               pr="12px"
               />
           </Stack>
-          <VStack spacing={6}>
+          <VStack gap={6}>
               <Button
                 w="102px"
                 h="40px"
@@ -106,7 +112,11 @@ const GetStartedStep = ({ onNext }: Props) => {
                 Continue
               </Button>
               <Box width="200px">
-                <Progress value={30} size="xs" colorScheme="gray" borderRadius="full"/>
+                <Progress.Root value='30' size="xs" colorPalette="gray" borderRadius="full">
+                  <Progress.Track>
+                    <Progress.Range />
+                  </Progress.Track>
+                </Progress.Root>
               </Box>
           </VStack>
       </VStack>

@@ -1,17 +1,17 @@
 import { useState } from "react";
 
 import {
+  Steps,
   Box,
   Button,
-  FormControl,
-  FormLabel,
   Heading,
   HStack,
   Input,
-  Select,
+  NativeSelect,
   Text,
   Textarea,
   VStack,
+  Field,
 } from "@chakra-ui/react";
 
 import BackButton from "../BackButton";
@@ -37,7 +37,6 @@ const CreateView = ({ onBackClick, onSaveClick }: Props) => {
       p={8}
     >
       <BackButton onBackClick={onBackClick} />
-
       <Heading
         as="h1"
         size="lg"
@@ -45,67 +44,68 @@ const CreateView = ({ onBackClick, onSaveClick }: Props) => {
       >
         Create New Case
       </Heading>
-
       <Box
         bg="#F0EFEF"
         p={12}
         borderRadius="md"
       >
         <VStack
-          spacing={6}
+          gap={6}
           align="stretch"
         >
           <HStack
-            spacing={12}
+            gap={12}
             align="start"
           >
-            <FormControl flex={2}>
-              <FormLabel fontWeight="bold">Title</FormLabel>
+            <Field.Root flex={2}>
+              <Field.Label fontWeight="bold">Title</Field.Label>
               <Input
                 bg="white"
-                value={formData.title}
+                value={String(formData.title)}
                 border="2px solid black"
-                onChange={(e) =>
+                onValueChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
               />
-            </FormControl>
-            <FormControl flex={1}>
-              <FormLabel fontWeight="bold">Practice Area</FormLabel>
-              <Select
-                bg="white"
-                value={formData.practiceArea}
-                placeholder="Select..."
-                border="2px solid black"
-                onChange={(e) =>
-                  setFormData({ ...formData, practiceArea: e.target.value })
-                }
-              >
-                <option value="family">Family Law</option>
-                <option value="criminal">Criminal Law</option>
-                <option value="corporate">Corporate Law</option>
-              </Select>
-            </FormControl>
+            </Field.Root>
+            <Field.Root flex={1}>
+              <Field.Label fontWeight="bold">Practice Area</Field.Label>
+              <NativeSelect.Root>
+                <NativeSelect.Field
+                  bg="white"
+                  value={String(formData.practiceArea)}
+                  placeholder="Select..."
+                  border="2px solid black"
+                  onValueChange={(e) =>
+                    setFormData({ ...formData, practiceArea: e.target.value })
+                  }>
+                  <option value="family">Family Law</option>
+                  <option value="criminal">Criminal Law</option>
+                  <option value="corporate">Corporate Law</option>
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
           </HStack>
           <HStack
-            spacing={12}
+            gap={12}
             align="start"
           >
-            <FormControl flex={1}>
-              <FormLabel fontWeight="bold">Description</FormLabel>
+            <Field.Root flex={1}>
+              <Field.Label fontWeight="bold">Description</Field.Label>
               <Textarea
                 bg="white"
                 rows={6}
                 border="2px solid black"
-                value={formData.description}
-                onChange={(e) =>
+                value={String(formData.description)}
+                onValueChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
 
-            <FormControl flex={1}>
-              <FormLabel fontWeight="bold">
+            <Field.Root flex={1}>
+              <Field.Label fontWeight="bold">
                 Notes{" "}
                 <Text
                   as="span"
@@ -114,21 +114,21 @@ const CreateView = ({ onBackClick, onSaveClick }: Props) => {
                 >
                   (Only Viewed by You)
                 </Text>
-              </FormLabel>
+              </Field.Label>
               <Textarea
                 bg="white"
                 rows={6}
-                value={formData.notes}
+                value={String(formData.notes)}
                 border="2px solid black"
-                onChange={(e) =>
+                onValueChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
           </HStack>
           <HStack
             justify="flex-end"
-            spacing={3}
+            gap={3}
           >
             <Button
               variant="outline"

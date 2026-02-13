@@ -1,14 +1,6 @@
 import React from "react";
 
-import {
-  Badge,
-  Box,
-  Button,
-  Flex,
-  HStack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Steps, Badge, Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
 import { IoMdPeople } from "react-icons/io";
@@ -37,7 +29,7 @@ export const EventInfo = ({ event }) => {
             maxW="720px"
             py={{ base: 2, md: "50px" }}
             px={{ base: 4, md: 8 }}
-            spacing={2}
+            gap={2}
             align="flex-start"
           >
             {/* Event title */}
@@ -54,7 +46,7 @@ export const EventInfo = ({ event }) => {
             </Box>
 
             {/* Event metadata */}
-            <VStack align="flex-start" spacing="8px">
+            <VStack align="flex-start" gap="8px">
               <Text display="flex" alignItems="center" gap="8px">
                 <FaCalendarAlt />
                 {event.date}
@@ -84,7 +76,6 @@ export const EventInfo = ({ event }) => {
           </VStack>
         </Flex>
       </Box>
-
       {/* Gradient overlay - fixed at bottom */}
       <Box
         position="absolute"
@@ -95,7 +86,6 @@ export const EventInfo = ({ event }) => {
         bgGradient="linear(to-b, transparent, white)"
         pointerEvents="none"
       />
-
       {/* RSVP Button*/}
       <Flex
         position="absolute"

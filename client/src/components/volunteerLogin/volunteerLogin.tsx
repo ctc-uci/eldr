@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Box, Flex } from "@chakra-ui/react";
+import { Steps, Box, Flex } from "@chakra-ui/react";
 
 import AboutYouStep from "./steps/AboutYouStep";
 import CreateAccountStep from "./steps/CreateAccountStep";

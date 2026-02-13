@@ -1,14 +1,15 @@
 import React from "react";
-import { 
-  VStack, 
-  Stack, 
-  Heading, 
-  Select,   
-  Button, 
-  Box, 
-  Flex, 
-  Progress, 
-  useBreakpointValue
+import {
+  Steps,
+  VStack,
+  Stack,
+  Heading,
+  NativeSelect,
+  Button,
+  Box,
+  Flex,
+  Progress,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 
 type Props = {
@@ -49,7 +50,7 @@ const GetStartedStep = ({ onNext }: Props) => {
           h={{ base: "134px", md: "106px" }} 
           bg="#E8E8E8" 
         />
-      <VStack spacing={{ base: 4, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+      <VStack gap={{ base: 4, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
           <Heading 
             as="h1" 
             fontSize={{ base: "30px", md: "50px" }} 
@@ -62,59 +63,65 @@ const GetStartedStep = ({ onNext }: Props) => {
 
           <Stack 
             direction={{ base: "column", md: "row" }} 
-            spacing={0} 
+            gap={0} 
             width="100%" 
             maxW="900px" 
             justify="center"
             align="center"
           >
-            <Select
-              placeholder={placeholderText}
-              w={{ base: "100%", md: "244px" }}
-              h="40px"
-              borderWidth="2px"
-              borderColor="black"
-              borderRadius="2px"
-              pt="8px"
-              pb="8px"
-              pl="12px"
-              pr="6px"
-            >
-              <option value="n/a">N/A</option>
-            </Select>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                placeholder={placeholderText}
+                w={{ base: "100%", md: "244px" }}
+                h="40px"
+                borderWidth="2px"
+                borderColor="black"
+                borderRadius="2px"
+                pt="8px"
+                pb="8px"
+                pl="12px"
+                pr="6px">
+                <option value="n/a">N/A</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
 
-            <Select 
-              placeholder={secondaryPlaceholder} 
-              w={{ base: "100%", md: "269px" }}
-              h="40px"
-              borderWidth="2px"
-              borderColor="black"
-              borderRadius="2px"
-              pt="8px"
-              pb="8px"
-              pl="12px"
-              pr="6px"
-            >
-              <option value="n/a">N/A</option>
-            </Select>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                placeholder={secondaryPlaceholder}
+                w={{ base: "100%", md: "269px" }}
+                h="40px"
+                borderWidth="2px"
+                borderColor="black"
+                borderRadius="2px"
+                pt="8px"
+                pb="8px"
+                pl="12px"
+                pr="6px">
+                <option value="n/a">N/A</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
 
-            <Select 
-              placeholder={tertiaryPlaceholder} 
-              w={{ base: "100%", md: "244px" }}
-              h="40px"
-              borderWidth="2px"
-              borderColor="black"
-              borderRadius="2px"
-              pt="8px"
-              pb="8px"
-              pl="12px"
-              pr="6px"
-            >
-              <option value="n/a">N/A</option>
-            </Select>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                placeholder={tertiaryPlaceholder}
+                w={{ base: "100%", md: "244px" }}
+                h="40px"
+                borderWidth="2px"
+                borderColor="black"
+                borderRadius="2px"
+                pt="8px"
+                pb="8px"
+                pl="12px"
+                pr="6px">
+                <option value="n/a">N/A</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
           </Stack>
 
-          <VStack spacing={6}>
+          <VStack gap={6}>
               <Button
                 w="102px"
                 h="40px"
@@ -128,7 +135,11 @@ const GetStartedStep = ({ onNext }: Props) => {
                 Continue
               </Button>
               <Box width="200px">
-                <Progress value={75} size="xs" colorScheme="gray" borderRadius="full"/>
+                <Progress.Root value='75' size="xs" colorPalette="gray" borderRadius="full">
+                  <Progress.Track>
+                    <Progress.Range />
+                  </Progress.Track>
+                </Progress.Root>
               </Box>
           </VStack>
       </VStack>

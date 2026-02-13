@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  Center,
-  Flex,
-  Heading,
-  Input,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Steps, Box, Button, Center, Flex, Heading, Input, Text, VStack } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
@@ -45,7 +36,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           Create an Account
         </Heading>
         <VStack
-          spacing="10px"
+          gap="10px"
           mb="10px"
         >
           <Input
@@ -71,7 +62,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             <Text>
               Didn't mean to come here?{" "}
               <Button
-                variant="link"
+                variant='plain'
                 textDecoration="underline"
                 color="black"
                 onClick={onBack}

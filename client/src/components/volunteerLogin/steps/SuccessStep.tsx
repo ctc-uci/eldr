@@ -1,13 +1,14 @@
 import React from "react";
-import { 
-  VStack, 
+import {
+  Steps,
+  VStack,
   Heading,
   Text,
-  Button, 
+  Button,
   Box,
-  Flex, 
-  Progress, 
-  useBreakpointValue
+  Flex,
+  Progress,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 
 type Props = {
@@ -38,8 +39,8 @@ const GetStartedStep = ({ onNext }: Props) => {
         h={{ base: "134px", md: "106px" }} 
         bg="#E8E8E8" 
       />
-      <VStack spacing={{ base: 6, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
-          <VStack spacing={2}>
+      <VStack gap={{ base: 6, md: 12 }} width="100%" px={10} pt={{ base: "60px", md: "120px" }}>
+          <VStack gap={2}>
             <Heading 
               as="h1" 
               fontSize={{ base: "32px", md: "50px" }} 
@@ -56,7 +57,7 @@ const GetStartedStep = ({ onNext }: Props) => {
             )}
           </VStack>
 
-          <VStack spacing={6}>
+          <VStack gap={6}>
               <Button
                 w={{ base: "280px", md: "348px" }}
                 h={{ base: "80px", md: "105px" }}
@@ -85,7 +86,11 @@ const GetStartedStep = ({ onNext }: Props) => {
               </Text>
 
               <Box width={{ base: "300px", md: "200px" }} pt={4}>
-                <Progress value={100} size="xs" colorScheme="gray" borderRadius="full"/>
+                <Progress.Root value='100' size="xs" colorPalette="gray" borderRadius="full">
+                  <Progress.Track>
+                    <Progress.Range />
+                  </Progress.Track>
+                </Progress.Root>
               </Box>
           </VStack>
       </VStack>

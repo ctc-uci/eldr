@@ -1,4 +1,4 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Steps, Box, Text } from "@chakra-ui/react";
 
 export const Playground = () => {
   return (

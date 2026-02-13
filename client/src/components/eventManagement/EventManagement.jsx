@@ -1,4 +1,5 @@
 import {
+    Steps,
     Card,
     VStack,
     HStack,
@@ -11,13 +12,13 @@ import {
     Input,
     TabPanel,
     Text,
-    Select,
+    NativeSelect,
     Box,
-    InputGroup, 
+    InputGroup,
     InputLeftElement,
     Icon,
     useDisclosure,
-    Tag
+    Tag,
 } from "@chakra-ui/react";
 
 import {
@@ -37,7 +38,7 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 export const EventManagement = () => {
     const { backend } = useBackendContext();
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { open, onOpen, onClose } = useDisclosure();
     const navigate = useNavigate();
     const [clinics, setClinics] = useState([]);
 
@@ -92,15 +93,12 @@ export const EventManagement = () => {
                     />
                 </InputGroup>
                 <Box>
-                    <Icon 
-                        as={CgProfile} 
-                        boxSize="50"
-                    />
+                    <Icon boxSize="50" asChild><CgProfile /></Icon>
                 </Box>
             </Flex>
-            <Tabs w = "100%">
+            <Tabs.Root w = "100%">
                 <Flex justifyContent = "center">
-                    <TabList gap = {40}>
+                    <Tabs.List gap = {40}>
                         <Tab 
                             fontSize = "lg" 
                             fontWeight="bold"
@@ -113,7 +111,7 @@ export const EventManagement = () => {
                         > 
                             Cases 
                         </Tab>
-                    </TabList>
+                    </Tabs.List>
                 </Flex>
                 <TabPanels>
                     <TabPanel p={0}>
@@ -125,29 +123,33 @@ export const EventManagement = () => {
                             gap = "2%"
                             mt = "2%"
                         >
-                            <Select
-                                placeholder="Sort By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="priority"> Priority (highest to lowest) </option>
-                                <option value="date"> Date (newest to oldest) </option>
-                                <option value="etc"> etc. </option>
-                            </Select>
+                            <NativeSelect.Root>
+                                <NativeSelect.Field
+                                    placeholder="Sort By"
+                                    borderRadius="sm"
+                                    border="2px solid black"
+                                    maxW="10%"
+                                    bg = "white">
+                                    <option value="priority"> Priority (highest to lowest) </option>
+                                    <option value="date"> Date (newest to oldest) </option>
+                                    <option value="etc"> etc. </option>
+                                </NativeSelect.Field>
+                                <NativeSelect.Indicator />
+                            </NativeSelect.Root>
 
-                            <Select
-                                placeholder="Filter By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="workshop">Workshop</option>
-                                <option value="clinic">Clinic</option>
-                                <option value="etc">etc.</option>
-                            </Select>
+                            <NativeSelect.Root>
+                                <NativeSelect.Field
+                                    placeholder="Filter By"
+                                    borderRadius="sm"
+                                    border="2px solid black"
+                                    maxW="10%"
+                                    bg = "white">
+                                    <option value="workshop">Workshop</option>
+                                    <option value="clinic">Clinic</option>
+                                    <option value="etc">etc.</option>
+                                </NativeSelect.Field>
+                                <NativeSelect.Indicator />
+                            </NativeSelect.Root>
                             
                             <Button 
                                 ml="auto"
@@ -155,10 +157,7 @@ export const EventManagement = () => {
                                 border = "2px solid black"
                                 onClick={onOpen}
                             >
-                                <Icon 
-                                    as={HiMiniPlusCircle} 
-                                    mr="5%" 
-                                /> 
+                                <Icon mr="5%" asChild><HiMiniPlusCircle /></Icon> 
                                     Add event
                             </Button>
                             <CreateEvent 
@@ -166,46 +165,46 @@ export const EventManagement = () => {
                                 onClose={onClose} 
                             />
                         </Flex>
-                        <Tabs>
+                        <Tabs.Root>
                             <Flex 
                                 justifyContent="center" 
                                 mt = "1%"
                             >
-                                <TabList gap = {10}>
+                                <Tabs.List gap = {10}>
                                     <Tab> Upcoming Events </Tab>
                                     <Tab> Event Archive </Tab>
-                                </TabList>
+                                </Tabs.List>
                             </Flex>
                             <TabPanels>
                                 <TabPanel>
                                     <VStack p = {4}>
                                         {clinics.map((clinic) => (
                                             <Box key={clinic.id} w="80%" h="40" display="flex">
-                                                <Card w="100%" h="100%" borderRadius="sm">
+                                                <Card.Root w="100%" h="100%" borderRadius="sm">
                                                     <Flex h="100%" align="center" px={4} position="relative">
                                                         
-                                                        <VStack align="start" spacing={1}>
+                                                        <VStack align="start" gap={1}>
                                                             <Text fontSize="lg" fontWeight="bold">
                                                                 {clinic.name}
                                                             </Text>
 
-                                                            <HStack spacing={2}>
+                                                            <HStack gap={2}>
                                                                 {/* TODO: Change to start time and end time */}
-                                                                <Icon as={IoCalendarSharp} />
+                                                                <Icon asChild><IoCalendarSharp /></Icon>
                                                                 <Text fontSize="md">
                                                                     {new Date(clinic.time).toLocaleString()} 
                                                                 </Text>
                                                             </HStack>
 
-                                                            <HStack spacing={2}>
-                                                                <Icon as={FaLocationDot} />
+                                                            <HStack gap={2}>
+                                                                <Icon asChild><FaLocationDot /></Icon>
                                                                 <Text fontSize="md">
                                                                     {clinic.location ?? "Location TBD"}
                                                                 </Text>
                                                             </HStack>
 
-                                                            <HStack spacing={2}>
-                                                                <Icon as={IoPersonSharp} />
+                                                            <HStack gap={2}>
+                                                                <Icon asChild><IoPersonSharp /></Icon>
                                                                 <Text fontSize="md">
                                                                     {clinic.attendees} 
                                                                 </Text>
@@ -217,11 +216,11 @@ export const EventManagement = () => {
                                                             left="50%"
                                                             transform="translateX(-50%)"
                                                         >
-                                                            <HStack spacing={2}>
+                                                            <HStack gap={2}>
                                                                 <Text fontWeight="bold">Tags:</Text>
 
                                                                 {/* TEMPORARY — hardcoded */}
-                                                                <Tag bg="#D9D9D9">Clinic</Tag>
+                                                                <Tag.Root bg="#D9D9D9">Clinic</Tag.Root>
                                                             </HStack>
                                                         </Box>
 
@@ -234,13 +233,13 @@ export const EventManagement = () => {
                                                             View Event
                                                         </Button>
                                                     </Flex>
-                                                </Card>
+                                                </Card.Root>
                                             </Box>
                                         ))}
                                     </VStack>
                                 </TabPanel>
                             </TabPanels>
-                        </Tabs>
+                        </Tabs.Root>
                     </TabPanel>
                     <TabPanel>
                         {/* 
@@ -248,7 +247,7 @@ export const EventManagement = () => {
                         */}
                     </TabPanel>
                 </TabPanels>
-            </Tabs>
+            </Tabs.Root>
         </VStack>
     );
 };

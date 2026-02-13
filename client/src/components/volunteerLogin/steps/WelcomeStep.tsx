@@ -1,4 +1,4 @@
-import { Box, Button, Center, Flex, Heading, VStack } from "@chakra-ui/react";
+import { Steps, Box, Button, Center, Flex, Heading, VStack } from "@chakra-ui/react";
 
 type Props = {
   onNext: () => void;
@@ -33,7 +33,7 @@ const WelcomeStep = ({ onNext }: Props) => {
         >
           Welcome ELDR!
         </Heading>
-        <VStack spacing="20px">
+        <VStack gap="20px">
           <Button
             bg="#FAFAFA"
             w="300px"

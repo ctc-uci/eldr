@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useState } from "react";
 
-import { NativeSelect } from "@chakra-ui/react";
+import { Steps, NativeSelect } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { User } from "@/types/user";
@@ -48,8 +48,8 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
     >
       <NativeSelect.Field
         placeholder="Select role"
-        value={role}
-        onChange={handleChangeRole}
+        value={String(role)}
+        onValueChange={handleChangeRole}
         disabled={loading || disabled}
       >
         <option value="user">User</option>

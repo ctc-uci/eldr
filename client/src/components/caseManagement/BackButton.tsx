@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Button } from "@chakra-ui/react";
+import { Steps, Button } from "@chakra-ui/react";
 
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 
@@ -16,16 +16,13 @@ const BackButton = ({ onBackClick }: Props) => {
       textDecoration="underline"
       mb="30px"
       px={0}
-      iconSpacing="16px"
+      gap="16px"
       _hover={{
         textDecoration: "underline",
         bg: "transparent",
       }}
-      leftIcon={<IoArrowBackCircleOutline size={34} />}
-      onClick={onBackClick}
-    >
-      Back to ELDR Case Catalog
-    </Button>
+      onClick={onBackClick}><IoArrowBackCircleOutline size={34} />Back to ELDR Case Catalog
+          </Button>
   );
 };
 

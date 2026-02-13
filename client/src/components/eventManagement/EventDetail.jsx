@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import {
+  Steps,
   Box,
   Button,
   Flex,
@@ -11,7 +12,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  Select,
+  NativeSelect,
   Tab,
   TabList,
   TabPanel,
@@ -62,7 +63,7 @@ export const EventDetail = () => {
   const [capacity, setCapacity] = useState(0); // TOOD: Change to capacity
   const [parking, setParking] = useState("");
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
 
   const handleArchiveEvent = async () => {
@@ -145,7 +146,7 @@ export const EventDetail = () => {
       w="100%"
       h="100vh"
       bg="#E8E8E8"
-      spacing={0}
+      gap={0}
     >
       <Flex
         w="100%"
@@ -177,13 +178,10 @@ export const EventDetail = () => {
           />
         </InputGroup>
         <Box>
-          <Icon
-            as={CgProfile}
-            boxSize="50"
-          />
+          <Icon boxSize="50" asChild><CgProfile /></Icon>
         </Box>
       </Flex>
-      <Tabs
+      <Tabs.Root
         w="100%"
         display="flex"
         flexDirection="column"
@@ -191,10 +189,10 @@ export const EventDetail = () => {
         overflow="hidden"
       >
         <Flex justifyContent="center">
-          <TabList gap={4}>
+          <Tabs.List gap={4}>
             <Tab>Clinics & Workshops</Tab>
             <Tab>Cases</Tab>
-          </TabList>
+          </Tabs.List>
         </Flex>
         <TabPanels
           flex={1}
@@ -222,10 +220,7 @@ export const EventDetail = () => {
                 border="2px solid black"
                 onClick={onOpen}
               >
-                <Icon
-                  as={HiMiniPlusCircle}
-                  mr="5%"
-                />
+                <Icon mr="5%" asChild><HiMiniPlusCircle /></Icon>
                 Add event
               </Button>
               <CreateEvent
@@ -318,10 +313,7 @@ export const EventDetail = () => {
                     border="2px solid black"
                     onClick={() => setIsEditing(true)}
                   >
-                    <Icon
-                      as={FaPencil}
-                      mr="5%"
-                    />
+                    <Icon mr="5%" asChild><FaPencil /></Icon>
                     Edit Event
                   </Button>
                   <Button
@@ -330,27 +322,24 @@ export const EventDetail = () => {
                     border="2px solid black"
                     onClick={handleArchiveEvent}
                   >
-                    <Icon
-                      as={FaArchive}
-                      mr="5%"
-                    />
+                    <Icon mr="5%" asChild><FaArchive /></Icon>
                     Archive Event
                   </Button>
                 </VStack>
               </HStack>
 
               {/* event details / volunteer list / email notification timeline tabs */}
-              <Tabs
-                isFitted
+              <Tabs.Root
+                fitted
                 w="100%"
                 flex={1}
                 mt={10}
-                variant="enclosed"
+                variant='enclosed'
                 display="flex"
                 flexDirection="column"
                 overflow="hidden"
               >
-                <TabList flexShrink={0}>
+                <Tabs.List flexShrink={0}>
                   <Tab
                     _selected={{ fontWeight: "bold", color: "black" }}
                     bg="#E8E8E8"
@@ -381,7 +370,7 @@ export const EventDetail = () => {
                   >
                     Email Notification Timeline
                   </Tab>
-                </TabList>
+                </Tabs.List>
                 <TabPanels
                   flex={1}
                   display="flex"
@@ -493,14 +482,16 @@ export const EventDetail = () => {
                             alignItems="left"
                           >
                             <Text fontSize="lg">Filter By:</Text>
-                            <Select
-                              bg="white"
-                              placeholder="Select Filter"
-                              borderRadius="md"
-                              border="2px solid black"
-                            >
-                              <option value="all">All</option>
-                            </Select>
+                            <NativeSelect.Root>
+                              <NativeSelect.Field
+                                bg="white"
+                                placeholder="Select Filter"
+                                borderRadius="md"
+                                border="2px solid black">
+                                <option value="all">All</option>
+                              </NativeSelect.Field>
+                              <NativeSelect.Indicator />
+                            </NativeSelect.Root>
                           </VStack>
                         </VStack>
                       </GridItem>
@@ -515,48 +506,44 @@ export const EventDetail = () => {
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
-                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                              >
-                                Gibby Gibson
-                              </Text>
+                                asChild
+                              ><u>Gibby Gibson
+                                                              </u></Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
-                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                              >
-                                Gibby Gibson
-                              </Text>
+                                asChild
+                              ><u>Gibby Gibson
+                                                              </u></Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
-                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                              >
-                                Freddie Benson
-                              </Text>
+                                asChild
+                              ><u>Freddie Benson
+                                                              </u></Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
-                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                              >
-                                Freddie Benson
-                              </Text>
+                                asChild
+                              ><u>Freddie Benson
+                                                              </u></Text>
                             </HStack>
                           </GridItem>
                         </Grid>
@@ -604,27 +591,16 @@ export const EventDetail = () => {
                         </Text>
                         <Flex justify="flex-end">
                           <Button
-                            leftIcon={
-                              <Icon
-                                as={HiMiniPlusCircle}
-                                boxSize={5}
-                              />
-                            }
                             borderRadius="sm"
                             border="2px solid black"
                             bg="white"
-                            _hover={{ bg: "gray.100" }}
-                          >
-                            Add Notification
-                          </Button>
+                            _hover={{ bg: "gray.100" }}><Icon boxSize={5} asChild><HiMiniPlusCircle /></Icon>Add Notification
+                                                      </Button>
                         </Flex>
 
                         {/* row 1 */}
-                        <HStack spacing={2}>
-                          <Icon
-                            as={CiCircleCheck}
-                            boxSize={6}
-                          />
+                        <HStack gap={2}>
+                          <Icon boxSize={6} asChild><CiCircleCheck /></Icon>
                         </HStack>
                         <Box>
                           <Text
@@ -634,28 +610,24 @@ export const EventDetail = () => {
                             1 week before event date
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
+                          <Tag.Label
                             fontSize="sm"
-                          >
-                            T-1 Week Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                            asChild
+                          ><i>T-1 Week Email Reminder Template
+                                                      </i></Tag.Label>
+                        </Tag.Root>
                         <Box />
 
                         {/* row 2 */}
-                        <HStack spacing={2}>
-                          <Icon
-                            as={CiCircleCheck}
-                            boxSize={6}
-                          />
+                        <HStack gap={2}>
+                          <Icon boxSize={6} asChild><CiCircleCheck /></Icon>
                         </HStack>
                         <Box>
                           <Text
@@ -665,31 +637,27 @@ export const EventDetail = () => {
                             3 days before event date
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
+                          <Tag.Label
                             fontSize="sm"
-                          >
-                            T-1 Week Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                            asChild
+                          ><i>T-1 Week Email Reminder Template
+                                                      </i></Tag.Label>
+                        </Tag.Root>
                         <Box />
 
                         {/* row 3 */}
                         <HStack
-                          spacing={2}
+                          gap={2}
                           align="center"
                         >
-                          <Icon
-                            as={CgSandClock}
-                            boxSize={6}
-                          />
+                          <Icon boxSize={6} asChild><CgSandClock /></Icon>
                         </HStack>
                         <Box>
                           <Text
@@ -705,26 +673,25 @@ export const EventDetail = () => {
                             Mandatory!
                           </Text>
                         </Box>
-                        <Tag
+                        <Tag.Root
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <TagLabel
-                            as="i"
+                          <Tag.Label
                             fontSize="sm"
-                          >
-                            T-1 Day Email Reminder Template
-                          </TagLabel>
-                        </Tag>
+                            asChild
+                          ><i>T-1 Day Email Reminder Template
+                                                      </i></Tag.Label>
+                        </Tag.Root>
                         <Box />
                       </Grid>
                     </VStack>
                   </TabPanel>
                 </TabPanels>
-              </Tabs>
+              </Tabs.Root>
             </VStack>
           </TabPanel>
           <TabPanel
@@ -737,7 +704,7 @@ export const EventDetail = () => {
                       */}
           </TabPanel>
         </TabPanels>
-      </Tabs>
+      </Tabs.Root>
     </VStack>
   ) : (
     <EditEvent setIsEditing={setIsEditing} eventInfo={eventInfo} onSave={fetchData} />

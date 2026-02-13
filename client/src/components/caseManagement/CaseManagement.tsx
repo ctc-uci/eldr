@@ -1,13 +1,6 @@
 import { useState } from "react";
 
-import {
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  useToast,
-} from "@chakra-ui/react";
+import { Steps, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from "@chakra-ui/react";
 
 import { Case } from "./types/case";
 import CaseView from "./views/CaseView";
@@ -112,13 +105,13 @@ export const CaseManagement = () => {
   };
 
   return (
-    <Tabs
-      isFitted
+    <Tabs.Root
+      fitted
       h="100vh"
       display="flex"
       flexDirection="column"
     >
-      <TabList
+      <Tabs.List
         minH="60px"
         alignItems="end"
       >
@@ -140,8 +133,7 @@ export const CaseManagement = () => {
         >
           Clinics & Workshops
         </Tab>
-      </TabList>
-
+      </Tabs.List>
       <TabPanels
         bg="#D2CFCF"
         flex="1"
@@ -202,6 +194,6 @@ export const CaseManagement = () => {
           <p>clinic & workshop stuffs</p>
         </TabPanel>
       </TabPanels>
-    </Tabs>
+    </Tabs.Root>
   );
 };

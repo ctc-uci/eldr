@@ -1,4 +1,4 @@
-import { Box, Flex, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from "@chakra-ui/react";
+import { Steps, Box, Flex, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from "@chakra-ui/react";
 import { VolunteerManagementView } from "./VolunteerManagementView";
 
 export const VolunteerTopNav = () => {
@@ -20,14 +20,13 @@ export const VolunteerTopNav = () => {
           borderRadius="full"
         />
       </Flex>
-
-      <Tabs isFitted>
-        <TabList>
+      <Tabs.Root fitted>
+        <Tabs.List>
           <Tab>Profiles</Tab>
           <Tab>Cases</Tab>
           <Tab>Clinics & Workshops</Tab>
           <Tab>Settings</Tab>
-        </TabList>
+        </Tabs.List>
 
         <TabPanels>
           <TabPanel>
@@ -40,7 +39,7 @@ export const VolunteerTopNav = () => {
             <p>three!</p>
           </TabPanel>
         </TabPanels>
-      </Tabs>
+      </Tabs.Root>
     </Box>
   );
 };

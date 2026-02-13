@@ -1,15 +1,15 @@
 import { React } from "react";
 
 import {
+  Steps,
   Flex,
   SimpleGrid,
-  FormControl,
-  FormLabel,
   Input,
   IconButton,
   InputGroup,
   InputRightElement,
   Link,
+  Field,
 } from "@chakra-ui/react";
 
 import { FaRegEye } from "react-icons/fa";
@@ -21,20 +21,20 @@ export const AccountManagement = () => {
       spacingX={20}
       spacingY={10}
       mb={20}>
-      <FormControl>
-        <FormLabel fontWeight="bold">
+      <Field.Root>
+        <Field.Label fontWeight="bold">
           Email Address
-        </FormLabel>
+        </Field.Label>
         <Input type="text"
           defaultValue="user@uci.edu"
           borderWidth="2px"
           borderColor="#000000"
           _hover="#000000"/>
-      </FormControl>
-      <FormControl>
-        <FormLabel fontWeight="bold">
+      </Field.Root>
+      <Field.Root>
+        <Field.Label fontWeight="bold">
           Password
-        </FormLabel>
+        </Field.Label>
 
         <Flex align="center" gap={3}>
           <InputGroup flex="1">
@@ -44,9 +44,11 @@ export const AccountManagement = () => {
               borderColor="#000000"
               _hover="#000000"/>
             <InputRightElement>
-              <IconButton icon={<FaRegEye size="20"/>}
-                variant="ghost" _hover={{bg: "transparent"}}
-                isRound={true} _active={{transform: "scale(0.9)"}}/>
+              <IconButton
+                variant="ghost"
+                _hover={{bg: "transparent"}}
+                isRound={true}
+                _active={{transform: "scale(0.9)"}}><FaRegEye size="20"/></IconButton>
             </InputRightElement>
           </InputGroup>
           <Link color="#2E52D6"
@@ -57,7 +59,7 @@ export const AccountManagement = () => {
             Reset Password
           </Link>
         </Flex>
-      </FormControl>
+      </Field.Root>
     </SimpleGrid>
-  )
+  );
 }
