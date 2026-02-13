@@ -70,7 +70,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
               borderRadius="8px"
               bg="white"
               textAlign="left"
-              px="20px"
+              px={{ base: "16px", md: "20px" }}
               py="16px"
               opacity={isPastSection ? 0.6 : 1}
               _hover={{ bg: "#F9FAFB", opacity: isPastSection ? 0.8 : 1 }}
@@ -80,17 +80,17 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
               {/* Date/time row + spots */}
               <Flex justifyContent="space-between" width="100%" align="center">
                 <HStack gap="4px">
-                  <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
                     {event.date}
                   </Text>
-                  <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
                     •
                   </Text>
-                  <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
                     {event.time}
                   </Text>
                 </HStack>
-                <Text fontSize="14px" fontWeight={400} color="#6B7280">
+                <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280" flexShrink={0}>
                   {event.spots} spots filled
                 </Text>
               </Flex>
@@ -106,7 +106,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
               </Text>
 
               {/* Status + Tags */}
-              <HStack gap="8px" mt="4px">
+              <HStack gap="8px" mt="4px" flexWrap="wrap">
                 <HStack gap="6px">
                   <Circle size="8px" bg="#22C55E" />
                   <Text fontSize="14px" fontWeight={500} color="#111827">

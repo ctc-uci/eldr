@@ -1,6 +1,6 @@
 import { React, useMemo, useState } from "react";
 
-import { Box, Button, Flex } from "@chakra-ui/react";
+import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
 
 import { IoCaretBack } from "react-icons/io5";
 
@@ -179,12 +179,33 @@ export const EventCatalog = () => {
     setShowDetails(true);
   };
 
+  const isMobile = useBreakpointValue({ base: true, md: false });
+
   return (
     <Flex
       direction="column"
       h="100vh"
     >
-      <Navbar />
+      {/* Mobile: centered logo header | Desktop: full Navbar */}
+      {isMobile ? (
+        <Flex
+          w="100%"
+          h="80px"
+          align="center"
+          justify="center"
+          bg="white"
+          flexShrink={0}
+        >
+          <Image
+            src="/eldr-logo.png"
+            alt="Elder Law & Disability Rights Center"
+            h="60px"
+            objectFit="contain"
+          />
+        </Flex>
+      ) : (
+        <Navbar />
+      )}
       <Flex
         flex="1"
         overflow="hidden"

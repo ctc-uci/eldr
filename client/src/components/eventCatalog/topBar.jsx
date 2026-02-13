@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   Button,
   Flex,
+  IconButton,
   Input,
   InputGroup,
   Tabs,
@@ -110,22 +111,40 @@ export const TopBar = ({
           align="center"
           bg="white"
         >
-          <Button
-            backgroundColor="#DBEAFE"
-            color="#173DA6"
-            borderRadius="8px"
-            border="1px solid #BFDBFE"
-            px="16px"
-            h="40px"
-            fontSize="14px"
-            fontWeight={500}
-            flexShrink={0}
-            _hover={{ backgroundColor: "#BFDBFE" }}
-            onClick={() => setFilterOpen(true)}
-          >
-            <LuSettings2 />
-            Sort and Filter
-          </Button>
+          {isMobile ? (
+            <IconButton
+              aria-label="Sort and Filter"
+              backgroundColor="#DBEAFE"
+              color="#173DA6"
+              borderRadius="8px"
+              border="1px solid #BFDBFE"
+              size="md"
+              w="44px"
+              h="44px"
+              flexShrink={0}
+              _hover={{ backgroundColor: "#BFDBFE" }}
+              onClick={() => setFilterOpen(true)}
+            >
+              <LuSettings2 />
+            </IconButton>
+          ) : (
+            <Button
+              backgroundColor="#DBEAFE"
+              color="#173DA6"
+              borderRadius="8px"
+              border="1px solid #BFDBFE"
+              px="16px"
+              h="40px"
+              fontSize="14px"
+              fontWeight={500}
+              flexShrink={0}
+              _hover={{ backgroundColor: "#BFDBFE" }}
+              onClick={() => setFilterOpen(true)}
+            >
+              <LuSettings2 />
+              Sort and Filter
+            </Button>
+          )}
 
           <SortAndFilter
             open={filterOpen}
@@ -143,7 +162,7 @@ export const TopBar = ({
               backgroundColor="white"
               borderColor="#D1D5DB"
               borderRadius="8px"
-              h="40px"
+              h="44px"
               fontSize="14px"
               _placeholder={{ color: "#9CA3AF" }}
               value={searchQuery}
