@@ -8,7 +8,7 @@ import {
 
 export function Provider(props: ColorModeProviderProps) {
   return (
-    <ChakraProvider value={String(defaultSystem)}>
+    <ChakraProvider value={defaultSystem}>
       <ColorModeProvider
         // Match Chakra v2 default behavior: start in light mode
         defaultTheme="light"
