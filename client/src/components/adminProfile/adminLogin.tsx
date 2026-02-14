@@ -4,26 +4,30 @@ import {
   Text,
   InputGroup,
   Input, 
+  Icon,
   VStack, 
   Button, 
+  ButtonGroup,
   HStack, 
   Separator,
   NativeSelect,
   IconButton, 
   List,
-  Link
+  Link,
+  Image
 } from "@chakra-ui/react";
 
 import {
     useState
 } from "react"
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
 import { HiOutlineKey } from "react-icons/hi";
 
-const DomainSelect = () => (
+import { useNavigate } from "react-router-dom";
 
+const DomainSelect = () => (
   <NativeSelect.Root size="sm" bg = "#F6F6F6" borderColor="#F6F6F6">
     <NativeSelect.Field placeholder = "--">
       <option value="gmail">gmail.com</option>
@@ -35,10 +39,35 @@ const DomainSelect = () => (
   </NativeSelect.Root>
 )
 
+
 export const AdminLogin: React.FC = () => {
+  const navigate = useNavigate();
+  // use for conditionally rendering password
+
+  // empty vs filled case
+  const [passFilled, setPassFilled] = useState(false);
+  // show vs hidden case
+  const [showPassword, setShowPassword] = useState(false);
+  const HidePassword = () => {
+    return (
+      <IconButton as = {FaRegEyeSlash} variant = "ghost" boxSize="20px" onClick={() => setShowPassword(true)}>
+      </IconButton>
+    )
+  }
+
+const ShowPassword = () => {
+    return (
+      <IconButton as = {FaRegEye} variant = "ghost" boxSize = "20px" onClick={() => setShowPassword(false)}></IconButton>
+    )
+  }
  return (
-     <Flex w="100vw" h="100vh" bg="white">
-       <VStack align = "left" justify = "center" width = "50vw" px = "5%">
+    <VStack minH="100vh">
+      <Flex w = "100vw" bg = "#F6F6F6" h = "70px" align = "left">
+        {/* FIX - Image is not rendering at the moment */}
+        <Image src = "client/src/components/adminProfile/ELDR_Logo.png"></Image>
+      </Flex>
+      <Flex flex="1" w="100%" bg="white" p = {4}>
+       <VStack align = "left" width = "50vw" px = "5%">
         <Text fontWeight="bold" fontSize="30px">
           Welcome to CC Staff Portal by Community Counsel
           </Text>
@@ -66,14 +95,38 @@ export const AdminLogin: React.FC = () => {
             textDecoration="underline"
             color="#3182CE"
             bg = "white"
+            href = "https://eldrcenter.org/"
           >
             Community Counsel Website
           </Link>
           <HStack>
-            <IconButton as = {FiFacebook} variant = "ghost"></IconButton>
-            <IconButton as = {FiLinkedin} variant = "ghost"></IconButton>
-            <IconButton as = {FaInstagram} variant = "ghost"></IconButton>
-            <IconButton as = {MdOutlineEmail} variant = "ghost"></IconButton>
+            <IconButton 
+              boxSize="20px" 
+              as = {FiFacebook} 
+              variant = "ghost"
+              onClick = {() => navigate("https://www.facebook.com/ELDRCenter/photos/")}
+            >
+            </IconButton>
+            <IconButton 
+              boxSize="20px" 
+              as = {FiLinkedin} 
+              variant = "ghost"
+              onClick={() => navigate("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+              >
+            </IconButton>
+            <IconButton 
+              boxSize="20px" 
+              as = {FaInstagram} 
+              variant = "ghost"
+              onClick = {() => navigate("https://www.instagram.com/eldr_center/?hl=en")}
+            >
+            </IconButton>
+            <IconButton 
+              boxSize="20px" 
+              as = {MdOutlineEmail} 
+              variant = "ghost"
+            >
+            </IconButton>
           </HStack>
         </VStack>
 
@@ -83,7 +136,7 @@ export const AdminLogin: React.FC = () => {
 
        <VStack w="55%" bg="#FFFFFF" h="100%" align="left" justify="center" px = "5%">
          <Box>
-            <Text>
+            <Text fontWeight="bold">
               Email
             </Text>
          </Box>
@@ -100,11 +153,16 @@ export const AdminLogin: React.FC = () => {
             </InputGroup>
          </Box>
          <Box>
-            <Text>
+            <Text fontWeight="bold">
               Password
             </Text>
          </Box>
          <Box w="80%" h="40px">
+          {/*
+            Proposition - conditionally render password input group where IFF data entered
+              -> use the HidePassword component defined above
+                -> this component should have a clickable hide button that shows/hides text ('*' replace)
+          */}
           <InputGroup startElement = {<HiOutlineKey/>}>
             <Input
             placeholder="Enter Password"
@@ -116,34 +174,112 @@ export const AdminLogin: React.FC = () => {
             />  
           </InputGroup>      
          </Box>
+
+
+
+        {showPassword && 
+         <Box w="80%" h="40px">
+          {/*
+            This is the password that should only render once something is entered
+              -> show password case
+          */}
+          <InputGroup startElement = {<HiOutlineKey/>} endElement = {<HidePassword/>}>
+            <Input
+            placeholder="Enter Password"
+            variant="outline"
+            borderColor="#E4E4E7"
+            borderWidth="1px"
+            borderRadius="md"
+            _placeholder={{ color: "A1A1AA", opacity: 1 }}
+            />  
+          </InputGroup>      
+         </Box>
+        }
+
+        {!showPassword &&
+         <Box w="80%" h="40px">
+          {/*
+            This is the password that should only render once something is entered
+              -> hide password case
+          */}
+          <InputGroup startElement = {<HiOutlineKey/>} endElement = {<ShowPassword/>}>
+            <Input
+            placeholder="Enter Password"
+            variant="outline"
+            borderColor="#E4E4E7"
+            borderWidth="1px"
+            borderRadius="md"
+            _placeholder={{ color: "A1A1AA", opacity: 1 }}
+            />  
+          </InputGroup>      
+         </Box>
+        }
+
          <Link
              textDecoration="underline"
              color="#3182CE"
              ml="60%"
              pb="8"
              background = "white"
+             href="/adminForgotPass"
           >
            Forgot Password?
          </Link>
         
-        
-         <Button variant="outline" 
-           borderRadius="md"
-           background = "#D4D4D8"
-           w="60%"
-           h="50px"
-           color = "white"
-           _hover = {{bg: "#5797BD"}}
+        {/* 
+        Proposition - condiitonally render a different button
+        based on whether both fields have been filled or not
+        (use a useState to keep track of that)
+          -> default "grey" button should NOT have hover capability
+          -> filled in "blue" version should
+        */}
+         <Button
+            position="relative"
+            variant="outline"
+            borderRadius="md"
+            background="#D4D4D8"
+            w="80%"
+            h="50px"
+            color="white"
+            disabled
           >
-           Login
-         </Button>
+            Login
 
+            <Icon
+              as={FaArrowRight}
+              position="absolute"
+              right="16px"
+              top="50%"
+              transform="translateY(-50%)"
+            />
+          </Button>
 
-         <HStack w="60%" gap="4" align = "center">
-           <Text fontSize="sm">or continue with</Text>
+          {/* This will be the button that should render when fields are filled */}
+          <Button
+            position="relative"
+            variant="outline"
+            borderRadius="md"
+            background="#3182CE"
+            w="80%"
+            h="50px"
+            color="white"
+            _hover={{ bg: "#5797BD" }}
+          >
+            Login
+
+            <Icon
+              as={FaArrowRight}
+              position="absolute"
+              right="16px"
+              top="50%"
+              transform="translateY(-50%)"
+            />
+          </Button>
+
+        <VStack  w="60%" align="center" mt={4} gap={4}>
+         <HStack w="60%" gap="4" alignItems = "center">
+           <Text fontSize="md" fontWeight="bold">or continue with</Text>
          </HStack>
-
-
          <Button variant="outline" 
            bg="#3182CE"
            borderWidth="2px"
@@ -153,7 +289,7 @@ export const AdminLogin: React.FC = () => {
            color = "white"
            _hover = {{bg: "#5797BD"}}
           >
-           Google SSO
+           Google
          </Button>
          <Button variant="outline" 
            bg="#3182CE"
@@ -164,10 +300,12 @@ export const AdminLogin: React.FC = () => {
            color = "white"
            _hover = {{bg: "#5797BD"}}
           >
-           Office 365
+           Microsoft
          </Button>
+        </VStack>
        </VStack>
      </Flex>
-   
+     <Flex w = "100vw" bg = "#F6F6F6" h = "70px"></Flex>
+    </VStack>
  );
 };
