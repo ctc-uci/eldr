@@ -42,11 +42,8 @@ const DomainSelect = () => (
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  // use for conditionally rendering password
-
-  // empty vs filled case
+  const [userFilled, setUserFilled] = useState(false);
   const [passFilled, setPassFilled] = useState(false);
-  // show vs hidden case
   const [showPassword, setShowPassword] = useState(false);
   return (
     <VStack minH="100vh">
@@ -137,6 +134,10 @@ export const AdminLogin: React.FC = () => {
                 borderWidth="1px"
                 borderRadius="md"
                 _placeholder={{ color: "A1A1AA", opacity: 1 }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setUserFilled(value.length > 0);
+                }}
               />
             </InputGroup>
          </Box>
@@ -194,27 +195,6 @@ export const AdminLogin: React.FC = () => {
           -> default "grey" button should NOT have hover capability
           -> filled in "blue" version should
         */}
-         <Button
-            position="relative"
-            variant="outline"
-            borderRadius="md"
-            background="#D4D4D8"
-            w="80%"
-            h="50px"
-            color="white"
-            disabled
-          >
-            Login
-
-            <Icon
-              as={FaArrowRight}
-              position="absolute"
-              right="16px"
-              top="50%"
-              transform="translateY(-50%)"
-            />
-          </Button>
-
           {/* This will be the button that should render when fields are filled */}
           <Button
             position="relative"
@@ -225,6 +205,8 @@ export const AdminLogin: React.FC = () => {
             h="50px"
             color="white"
             _hover={{ bg: "#5797BD" }}
+            disabled = {!(userFilled && passFilled)}
+            onClick={() => navigate("/dashboard")}
           >
             Login
 
