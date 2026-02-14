@@ -14,6 +14,7 @@ import { Playground } from "@/components/playground/Playground";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
+import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 // import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
@@ -52,6 +53,12 @@ const App = () => {
                 <Route
                   path = "/adminForgotPass"
                   element = {<AdminForgotPass/>}
+                >
+                </Route>
+
+                <Route
+                  path = "/adminPassReset"
+                  element = {<AdminPassReset/>}
                 >
                 </Route>
                 

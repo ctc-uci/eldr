@@ -13,15 +13,19 @@ import {
   HStack,
 } from "@chakra-ui/react";
 
-import { FaArrowRight, FaInstagram } from "react-icons/fa";
+import { FaArrowRight, FaInstagram, FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
+import { HiOutlineKey } from "react-icons/hi";
 import { MdOutlineEmail } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-export const AdminForgotPass: React.FC = () => {
+export const AdminPassReset: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
     <VStack minH="100vh">
@@ -32,11 +36,15 @@ export const AdminForgotPass: React.FC = () => {
       <Flex flex="1" w="100%" bg="white" p={4}>
         <VStack align="left" width="50vw" px="5%">
           <Text fontWeight="bold" fontSize="30px">
-            Account Confirmation Verification
+            Community Counsel Password Manager
           </Text>
           
           <Text mb={6}>
-            Enter your ELDR account email and we'll send you a link to reset your password.
+            Enter your new password below, and confirm where prompted.
+          </Text>
+
+          <Text mb={6}>
+            Recommended min. 8 characters with 1 special character.
           </Text>
           
           <Text fontWeight="bold">
@@ -84,21 +92,72 @@ export const AdminForgotPass: React.FC = () => {
         <VStack w="55%" bg="#FFFFFF" h="100%" align="left" justify="center" px="5%">
           <Box>
             <Text fontWeight="bold" mb={2}>
-              Email
+              New Password
             </Text>
           </Box>
           
           <Box w="80%" h="40px" mb={6}>
-            <InputGroup startElement={<MdOutlineEmail />}>
+            <InputGroup 
+              startElement={<HiOutlineKey />}
+              endElement={
+                newPassword ? (
+                  <IconButton
+                    variant="ghost"
+                    boxSize="20px"
+                    onClick={() => setShowNewPassword(prev => !prev)}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                  </IconButton>
+                ) : null
+              }
+            >
               <Input 
-                placeholder="Enter an email"
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Enter Password"
                 variant="outline"
                 borderColor="#E4E4E7"
                 borderWidth="1px"
                 borderRadius="md"
                 _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </InputGroup>
+          </Box>
+
+          <Box>
+            <Text fontWeight="bold" mb={2}>
+              Confirm Password
+            </Text>
+          </Box>
+          
+          <Box w="80%" h="40px" mb={6}>
+            <InputGroup 
+              startElement={<HiOutlineKey />}
+              endElement={
+                confirmPassword ? (
+                  <IconButton
+                    variant="ghost"
+                    boxSize="20px"
+                    onClick={() => setShowConfirmPassword(prev => !prev)}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                  </IconButton>
+                ) : null
+              }
+            >
+              <Input 
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Enter Password"
+                variant="outline"
+                borderColor="#E4E4E7"
+                borderWidth="1px"
+                borderRadius="md"
+                _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </InputGroup>
           </Box>
@@ -107,14 +166,13 @@ export const AdminForgotPass: React.FC = () => {
             position="relative"
             variant="outline"
             borderRadius="md"
-            background={email ? "#3182CE" : "#D4D4D8"}
+            background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
             w="80%"
             h="50px"
             color="white"
-            disabled={!email}
-            _hover={email ? { bg: "#5797BD" } : {}}
+            disabled={!newPassword || !confirmPassword}
+            _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
             mb={4}
-            onClick={() => navigate("/adminPassReset")}
           >
             Continue
             <Icon
