@@ -48,28 +48,16 @@ export const AdminLogin: React.FC = () => {
   const [passFilled, setPassFilled] = useState(false);
   // show vs hidden case
   const [showPassword, setShowPassword] = useState(false);
-  const HidePassword = () => {
-    return (
-      <IconButton as = {FaRegEyeSlash} variant = "ghost" boxSize="20px" onClick={() => setShowPassword(true)}>
-      </IconButton>
-    )
-  }
-
-const ShowPassword = () => {
-    return (
-      <IconButton as = {FaRegEye} variant = "ghost" boxSize = "20px" onClick={() => setShowPassword(false)}></IconButton>
-    )
-  }
- return (
+  return (
     <VStack minH="100vh">
       <Flex w = "100vw" bg = "#F6F6F6" h = "70px" align = "left">
         {/* FIX - Image is not rendering at the moment */}
         <Image src = "client/src/components/adminProfile/ELDR_Logo.png"></Image>
       </Flex>
       <Flex flex="1" w="100%" bg="white" p = {4}>
-       <VStack align = "left" width = "50vw" px = "5%">
-        <Text fontWeight="bold" fontSize="30px">
-          Welcome to CC Staff Portal by Community Counsel
+        <VStack align = "left" width = "50vw" px = "5%">
+          <Text fontWeight="bold" fontSize="30px">
+            Welcome to CC Staff Portal by Community Counsel
           </Text>
           <List.Root color = "black">
             <List.Item>
@@ -157,64 +145,37 @@ const ShowPassword = () => {
               Password
             </Text>
          </Box>
-         <Box w="80%" h="40px">
-          {/*
-            Proposition - conditionally render password input group where IFF data entered
-              -> use the HidePassword component defined above
-                -> this component should have a clickable hide button that shows/hides text ('*' replace)
-          */}
-          <InputGroup startElement = {<HiOutlineKey/>}>
+        <Box w="80%" h="40px">
+          <InputGroup
+            startElement={<HiOutlineKey />}
+            endElement={
+              passFilled ? (
+                <IconButton
+                  variant="ghost"
+                  boxSize="20px"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                </IconButton>
+              ) : null
+            }
+          >
             <Input
-            placeholder="Enter Password"
-            variant="outline"
-            borderColor="#E4E4E7"
-            borderWidth="1px"
-            borderRadius="md"
-            _placeholder={{ color: "A1A1AA", opacity: 1 }}
-            />  
-          </InputGroup>      
-         </Box>
-
-
-
-        {showPassword && 
-         <Box w="80%" h="40px">
-          {/*
-            This is the password that should only render once something is entered
-              -> show password case
-          */}
-          <InputGroup startElement = {<HiOutlineKey/>} endElement = {<HidePassword/>}>
-            <Input
-            placeholder="Enter Password"
-            variant="outline"
-            borderColor="#E4E4E7"
-            borderWidth="1px"
-            borderRadius="md"
-            _placeholder={{ color: "A1A1AA", opacity: 1 }}
-            />  
-          </InputGroup>      
-         </Box>
-        }
-
-        {!showPassword &&
-         <Box w="80%" h="40px">
-          {/*
-            This is the password that should only render once something is entered
-              -> hide password case
-          */}
-          <InputGroup startElement = {<HiOutlineKey/>} endElement = {<ShowPassword/>}>
-            <Input
-            placeholder="Enter Password"
-            variant="outline"
-            borderColor="#E4E4E7"
-            borderWidth="1px"
-            borderRadius="md"
-            _placeholder={{ color: "A1A1AA", opacity: 1 }}
-            />  
-          </InputGroup>      
-         </Box>
-        }
-
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter Password"
+              variant="outline"
+              borderColor="#E4E4E7"
+              borderWidth="1px"
+              borderRadius="md"
+              _placeholder={{ color: "A1A1AA", opacity: 1 }}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPassFilled(value.length > 0);
+              }}
+            />
+          </InputGroup>
+        </Box>
          <Link
              textDecoration="underline"
              color="#3182CE"
