@@ -200,7 +200,7 @@ export const AdminLogin: React.FC = () => {
             position="relative"
             variant="outline"
             borderRadius="md"
-            background="#3182CE"
+            background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
             w="80%"
             h="50px"
             color="white"
