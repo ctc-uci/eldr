@@ -36,7 +36,6 @@ const DomainSelect = () => (
 )
 
 export const AdminLogin: React.FC = () => {
-  [FileUploadDropzone,]
  return (
      <Flex w="100vw" h="100vh" bg="white">
        <VStack align = "left" justify = "center" width = "50vw" px = "5%">
