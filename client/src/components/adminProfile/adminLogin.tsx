@@ -7,7 +7,6 @@ import {
   Icon,
   VStack, 
   Button, 
-  ButtonGroup,
   HStack, 
   Separator,
   NativeSelect,
@@ -38,7 +37,6 @@ const DomainSelect = () => (
     <NativeSelect.Indicator />
   </NativeSelect.Root>
 )
-
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -114,18 +112,14 @@ export const AdminLogin: React.FC = () => {
             </IconButton>
           </HStack>
         </VStack>
-
-
-       {/* ELDR Staff Portal */}
-      <Separator orientation = "vertical"></Separator>
-
-       <VStack w="55%" bg="#FFFFFF" h="100%" align="left" justify="center" px = "5%">
-         <Box>
+        <Separator orientation = "vertical"></Separator>
+        <VStack w="55%" bg="#FFFFFF" h="100%" align="left" justify="center" px = "5%">
+          <Box>
             <Text fontWeight="bold">
               Email
             </Text>
-         </Box>
-         <Box w="80%" h="40px">
+          </Box>
+          <Box w="80%" h="40px">
             <InputGroup startElement={<MdOutlineEmail/>} endElement = {<DomainSelect/>}>
               <Input 
                 placeholder="example@"
@@ -140,12 +134,12 @@ export const AdminLogin: React.FC = () => {
                 }}
               />
             </InputGroup>
-         </Box>
-         <Box>
-            <Text fontWeight="bold">
-              Password
-            </Text>
-         </Box>
+          </Box>
+        <Box>
+          <Text fontWeight="bold">
+            Password
+          </Text>
+        </Box>
         <Box w="80%" h="40px">
           <InputGroup
             startElement={<HiOutlineKey />}
@@ -177,78 +171,67 @@ export const AdminLogin: React.FC = () => {
             />
           </InputGroup>
         </Box>
-         <Link
-             textDecoration="underline"
-             color="#3182CE"
-             ml="60%"
-             pb="8"
-             background = "white"
-             href="/adminForgotPass"
-          >
-           Forgot Password?
-         </Link>
-        
-        {/* 
-        Proposition - condiitonally render a different button
-        based on whether both fields have been filled or not
-        (use a useState to keep track of that)
-          -> default "grey" button should NOT have hover capability
-          -> filled in "blue" version should
-        */}
-          {/* This will be the button that should render when fields are filled */}
-          <Button
-            position="relative"
-            variant="outline"
-            borderRadius="md"
-            background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
-            w="80%"
-            h="50px"
-            color="white"
-            _hover={{ bg: "#5797BD" }}
-            disabled = {!(userFilled && passFilled)}
-            onClick={() => navigate("/dashboard")}
-          >
-            Login
-
-            <Icon
-              as={FaArrowRight}
-              position="absolute"
-              right="16px"
-              top="50%"
-              transform="translateY(-50%)"
-            />
-          </Button>
-
-        <VStack  w="60%" align="center" mt={4} gap={4}>
-         <HStack w="60%" gap="4" alignItems = "center">
-           <Text fontSize="md" fontWeight="bold">or continue with</Text>
-         </HStack>
-         <Button variant="outline" 
-           bg="#3182CE"
-           borderWidth="2px"
-           borderRadius="md"
-           w="60%"
-           h="50px"
-           color = "white"
-           _hover = {{bg: "#5797BD"}}
-          >
-           Google
-         </Button>
-         <Button variant="outline" 
-           bg="#3182CE"
-           borderWidth="2px"
-           borderRadius="md"
-           w="60%"
-           h="50px"
-           color = "white"
-           _hover = {{bg: "#5797BD"}}
-          >
-           Microsoft
-         </Button>
+        <Link
+          textDecoration="underline"
+          color="#3182CE"
+          ml="60%"
+          pb="8"
+          background = "white"
+          href="/adminForgotPass"
+        >
+          Forgot Password?
+        </Link>
+        <Button
+          position="relative"
+          variant="outline"
+          borderRadius="md"
+          background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
+          w="80%"
+          h="50px"
+          color="white"
+          _hover={{ bg: "#5797BD" }}
+          disabled = {!(userFilled && passFilled)}
+          onClick={() => navigate("/dashboard")}
+        >
+          Login
+          <Icon
+            as={FaArrowRight}
+            position="absolute"
+            right="16px"
+            top="50%"
+            transform="translateY(-50%)"
+          />
+        </Button>
+          <VStack  w="60%" align="center" mt={4} gap={4}>
+            <HStack w="60%" gap="4" alignItems = "center">
+              <Text fontSize="md" fontWeight="bold">or continue with</Text>
+            </HStack>
+            <Button variant="outline" 
+              bg="#3182CE"
+              borderWidth="2px"
+              borderRadius="md"
+              w="60%"
+              h="50px"
+              color = "white"
+              _hover = {{bg: "#5797BD"}}
+            >
+              Google
+            </Button>
+            <Button variant="outline" 
+              bg="#3182CE"
+              borderWidth="2px"
+              borderRadius="md"
+              w="60%"
+              h="50px"
+              color = "white"
+              _hover = {{bg: "#5797BD"}}
+            >
+              Microsoft
+            </Button>
+          </VStack>
         </VStack>
-       </VStack>
-     </Flex>
-     <Flex w = "100vw" bg = "#F6F6F6" h = "70px"></Flex>
+      </Flex>
+      <Flex w = "100vw" bg = "#F6F6F6" h = "70px"></Flex>
     </VStack>
- );
+  );
 };
