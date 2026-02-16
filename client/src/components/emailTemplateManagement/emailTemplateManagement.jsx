@@ -10,8 +10,8 @@ import {
   Flex,
   Menu,
   Button,
-  Select,
   Portal,
+  NativeSelect
 } from "@chakra-ui/react";
 
 /** @TODO: change to use different icons bc chakra-ui/icons isn't compatible */
@@ -169,11 +169,20 @@ const NewTemplateSection = () => (
     <HStack spacing={3} mb={6} b>
       <Button bg="white" border="2px solid black">Add Notification</Button>
       <Button bg="white" border="2px solid black">Delete Draft</Button>
-      <Select placeholder="Select Folder" w="200px" borderRadius="md" size="md" bg="white" border="1px solid black">
-        <option value="folder1">Folder 1</option>
-        <option value="folder2">Folder 2</option>
-        <option value="folder3">Folder 3</option>
-      </Select>
+      <NativeSelect.Root
+        size="sm"
+        width="200px"
+        bg="white"
+        border="1px solid black"
+        borderRadius="md"
+      >
+        <NativeSelect.Field placeholder="Select Folder">
+          <option value="folder1">Folder 1</option>
+          <option value="folder2">Folder 2</option>
+          <option value="folder3">Folder 3</option>
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
     </HStack>
 
     {/* Template Content */}
