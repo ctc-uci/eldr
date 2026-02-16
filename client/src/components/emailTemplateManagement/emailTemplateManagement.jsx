@@ -9,15 +9,10 @@ import {
   SimpleGrid,
   Flex,
   Menu,
-  // MenuButton,
-  // MenuList,
-  // MenuItem,
   Button,
   Select,
+  Portal,
 } from "@chakra-ui/react";
-// import {
-//   EmailIcon, SearchIcon,
-//   ChevronDownIcon} from "@chakra-ui/icons";
 
 /** @TODO: change to use different icons bc chakra-ui/icons isn't compatible */
 import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers, FaQuestion } from "react-icons/fa";
@@ -35,9 +30,6 @@ export const EmailTemplateManagement = () => {
 
         {/* Search Bar */}
         <InputGroup mb={6} >
-          <InputLeftElement pointerEvents="none" >
-            <FaQuestion color='gray.300' />
-          </InputLeftElement>
           <Input placeholder="Search" />
         </InputGroup>
 
@@ -96,17 +88,24 @@ const WelcomeSection = ({ setActiveSection }) => (
 
     {/* @TODO: migrate create new button to v3 */}
     {/* Create New Button */}
-    <Menu>
-      {/* <MenuButton as={Button} leftIcon={<FaEdit />}>
-        Create New
-      </MenuButton> */}
-      {/* <MenuList>
-        <MenuItem>New folder</MenuItem>
-        <MenuItem onClick={() => setActiveSection("newTemplate")}>
-          New template
-        </MenuItem>
-      </MenuList> */}
-    </Menu>
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <Button leftIcon={<FaEdit />}>
+          Create New
+        </Button>
+      </Menu.Trigger>
+
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item>New folder</Menu.Item>
+            <Menu.Item onClick={() => setActiveSection("newTemplate")}>
+              New template
+            </Menu.Item>            
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
     </Flex>
     
      {/* Suggested Folders */}
