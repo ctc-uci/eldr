@@ -9,16 +9,18 @@ import {
   SimpleGrid,
   Flex,
   Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
+  // MenuButton,
+  // MenuList,
+  // MenuItem,
   Button,
   Select,
 } from "@chakra-ui/react";
-import {
-  EmailIcon, SearchIcon,
-  ChevronDownIcon} from "@chakra-ui/icons";
-import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers } from "react-icons/fa";
+// import {
+//   EmailIcon, SearchIcon,
+//   ChevronDownIcon} from "@chakra-ui/icons";
+
+/** @TODO: change to use different icons bc chakra-ui/icons isn't compatible */
+import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers, FaQuestion } from "react-icons/fa";
 
 export const EmailTemplateManagement = () => {
   const [activeSection, setActiveSection] = useState("welcome");
@@ -34,7 +36,7 @@ export const EmailTemplateManagement = () => {
         {/* Search Bar */}
         <InputGroup mb={6} >
           <InputLeftElement pointerEvents="none" >
-            <SearchIcon color='gray.300' />
+            <FaQuestion color='gray.300' />
           </InputLeftElement>
           <Input placeholder="Search" />
         </InputGroup>
@@ -64,7 +66,7 @@ const Sidebar = () => (
     <VStack align="stretch" spacing={2}>
       <NavItem icon={<FaUser />} label="Profile" />
       <NavItem icon={<FaUsers />} label="Volunteer Management" />
-      <NavItem icon={<EmailIcon />} label="Email Management" active />
+      <NavItem icon={<FaQuestion />} label="Email Management" active />
       <NavItem icon={<FaClipboard />} label="Clinics" />
       <NavItem icon={<FaBriefcase />} label="Cases" />
     </VStack>
@@ -92,17 +94,18 @@ const WelcomeSection = ({ setActiveSection }) => (
       Welcome
     </Text>
 
+    {/* @TODO: migrate create new button to v3 */}
     {/* Create New Button */}
     <Menu>
-      <MenuButton as={Button} leftIcon={<FaEdit />}>
+      {/* <MenuButton as={Button} leftIcon={<FaEdit />}>
         Create New
-      </MenuButton>
-      <MenuList>
+      </MenuButton> */}
+      {/* <MenuList>
         <MenuItem>New folder</MenuItem>
         <MenuItem onClick={() => setActiveSection("newTemplate")}>
           New template
         </MenuItem>
-      </MenuList>
+      </MenuList> */}
     </Menu>
     </Flex>
     
@@ -131,7 +134,7 @@ const WelcomeSection = ({ setActiveSection }) => (
 const Section = ({ title, children }) => (
   <Box mb={8}>
     <HStack mb={4}>
-      <ChevronDownIcon />
+      <FaQuestion />
       <Text fontSize="lg" fontWeight="semibold">
         {title}
       </Text>
