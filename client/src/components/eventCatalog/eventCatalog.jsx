@@ -1,124 +1,117 @@
-import { React, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { IoCaretBack } from "react-icons/io5";
 
+import { Navbar } from "../navbar/Navbar";
 import { EventInfo } from "./eventInfo";
 import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
-import { Navbar } from "../navbar/Navbar";
 import { TopBar } from "./topBar";
-
-// List of all events and metadata, will be replaced with a query later probably ?
-const events = [
-  {
-    id: 1,
-    my_event: true,
-    past: false,
-    status: "Registered",
-    title: "Elder Law Workshop",
-    date: "02/15/26",
-    time: "9:00 A.M. - 12:00 P.M.",
-    address: "Santa Ana, CA 92705",
-    spots: "30/50",
-    tags: ["Estate Planning", "Spanish", "In-person", "Attorney"],
-    urgency: 3,
-    description:
-      "Join us for an informative workshop on elder law basics. This session will cover topics including estate planning, power of attorney, healthcare directives, and protecting assets. Our experienced attorneys will guide you through the essentials every senior should know about their legal rights and options.",
-  },
-  {
-    id: 2,
-    my_event: true,
-    past: false,
-    status: "Registered",
-    title: "Medicare Benefits Seminar",
-    date: "02/20/26",
-    time: "1:00 P.M. - 3:00 P.M.",
-    address: "Irvine, CA 92618",
-    spots: "45/60",
-    tags: ["Probate Note Clearing", "Korean", "Virtual", "Law Student 1L"],
-    urgency: 1,
-    description:
-      "Understanding Medicare can be confusing. This seminar breaks down Medicare Parts A, B, C, and D, explains enrollment periods, and helps you understand what's covered. Learn how to maximize your benefits and avoid common pitfalls that can cost you money.",
-  },
-  {
-    id: 3,
-    my_event: true,
-    past: true,
-    status: "Attended",
-    title: "Social Security Planning Session",
-    date: "01/10/26",
-    time: "10:00 A.M. - 11:30 A.M.",
-    address: "Anaheim, CA 92801",
-    spots: "50/50",
-    tags: ["Limited Conservatorship", "Mandarin", "In-person", "Paralegal/Legal Worker"],
-    urgency: 2,
-    description:
-      "This past session covered strategies for maximizing your Social Security benefits. Attendees learned about optimal claiming ages, spousal benefits, and how to coordinate Social Security with other retirement income sources.",
-  },
-  {
-    id: 4,
-    my_event: true,
-    past: true,
-    status: "Attended",
-    title: "Disability Rights Clinic",
-    date: "12/05/25",
-    time: "2:00 P.M. - 5:00 P.M.",
-    address: "Fullerton, CA 92832",
-    spots: "25/25",
-    tags: ["Estate Planning", "Vietnamese", "Virtual", "Law Student 2L"],
-    urgency: 5,
-    description:
-      "Our disability rights clinic provided one-on-one consultations with attorneys specializing in ADA compliance, workplace accommodations, and disability benefits. Participants received personalized guidance on their specific situations.",
-  },
-  {
-    id: 5,
-    my_event: false,
-    past: false,
-    status: null,
-    title: "Conservatorship Training",
-    date: "03/01/26",
-    time: "10:00 A.M. - 1:00 P.M.",
-    address: "Long Beach, CA 90802",
-    spots: "10/40",
-    tags: ["Limited Conservatorship", "Japanese", "In-person", "Undergraduate Student"],
-    urgency: 4,
-    description:
-      "This training session covers the fundamentals of limited conservatorship in California. Learn about the petition process, court procedures, and the rights of conservatees. Ideal for students and new legal professionals.",
-  },
-  {
-    id: 6,
-    my_event: false,
-    past: false,
-    status: null,
-    title: "Probate Law Overview",
-    date: "03/10/26",
-    time: "3:00 P.M. - 5:00 P.M.",
-    address: "Online (Zoom)",
-    spots: "20/100",
-    tags: ["Probate Note Clearing", "Arabic", "Virtual", "Law Student 3L"],
-    urgency: 2,
-    description:
-      "An online overview of California probate law. This webinar covers the probate process from start to finish, including filing requirements, timelines, and common challenges. Available in Arabic with live interpretation.",
-  },
-];
 
 // Filter categories for grouping (OR within category, AND across categories)
 const filterCategories = {
   Type: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  Language: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
+  Language: [
+    "Arabic",
+    "Japanese",
+    "Korean",
+    "Mandarin",
+    "Spanish",
+    "Vietnamese",
+  ],
   Location: ["Virtual", "In-person"],
-  Occupation: ["Attorney", "Law Student 1L", "Law Student 2L", "Law Student 3L", "Law Student LLM", "Undergraduate Student", "Paralegal/Legal Worker", "Paralegal Student"],
+  Occupation: [
+    "Attorney",
+    "Law Student 1L",
+    "Law Student 2L",
+    "Law Student 3L",
+    "Law Student LLM",
+    "Undergraduate Student",
+    "Paralegal/Legal Worker",
+    "Paralegal Student",
+  ],
 };
 
 export const EventCatalog = () => {
-  const [selectedEvent, setSelectedEvent] = useState(events[0]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("upcoming");
   const [selectedFilters, setSelectedFilters] = useState([]);
+  const [events, setEvents] = useState([]);
+  const { backend } = useBackendContext();
+
+  useEffect(() => {
+    const fetchFullEventData = async () => {
+      try {
+        const res = await backend.get("/clinics");
+        const baseEvents = res.data;
+
+        const dateFormatter = new Intl.DateTimeFormat("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "2-digit",
+          timeZone: "UTC",
+        });
+
+        const timeFormatter = new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: "UTC",
+        });
+
+        // Map over events and create promises for the extra data
+        const fullEvents = await Promise.all(
+          baseEvents.map(async (event) => {
+            const [langRes, areaRes] = await Promise.all([
+              backend.get(`/clinics/${event.id}/languages`),
+              backend.get(`/clinics/${event.id}/areas-of-interest`),
+            ]);
+
+            // Format Date
+            const displayDate = event.date
+              ? dateFormatter.format(new Date(event.date))
+              : "Date TBD";
+
+            // Format Time Range
+            let displayTime = "Time TBD";
+            if (event.startTime && event.endTime) {
+              const start = timeFormatter.format(new Date(event.startTime));
+              const end = timeFormatter.format(new Date(event.endTime));
+              displayTime = `${start} - ${end}`;
+            }
+
+            // Return a merged object
+            return {
+              ...event,
+              languages: langRes.data,
+              areas: areaRes.data,
+              displayDate,
+              displayTime,
+            };
+          })
+        );
+
+        setEvents(fullEvents);
+      } catch (error) {
+        console.error("Failed to fetch event details:", error);
+      }
+    };
+
+    fetchFullEventData();
+  }, [backend]);
+
+  useEffect(() => {
+    // Only auto-select if we have events and haven't selected one yet
+    if (events.length > 0 && !selectedEvent) {
+      setSelectedEvent(events[0]);
+    }
+  }, [events, selectedEvent]);
 
   // Filter and sort events
   const filteredEvents = useMemo(() => {
@@ -129,10 +122,11 @@ export const EventCatalog = () => {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (e) =>
-          e.title.toLowerCase().includes(q) ||
+          e.name.toLowerCase().includes(q) ||
           e.address.toLowerCase().includes(q) ||
           e.description.toLowerCase().includes(q) ||
-          e.tags.some((t) => t.toLowerCase().includes(q))
+          e.languages.some((l) => l.toLowerCase().includes(q)) ||
+          e.areas.some((a) => a.toLowerCase().includes(q))
       );
     }
 
@@ -152,12 +146,27 @@ export const EventCatalog = () => {
         }
       });
 
-      // Filter events: must match at least one filter from each selected category
-      result = result.filter((event) =>
-        Object.values(filtersByCategory).every((categoryFilters) =>
-          categoryFilters.some((filter) => event.tags.includes(filter))
-        )
-      );
+      result = result.filter((event) => {
+        // Every category that has active filters must return true
+        return Object.entries(filtersByCategory).every(
+          ([category, activeFilters]) => {
+            switch (category) {
+              case "Language":
+                return activeFilters.some((f) => event.languages.includes(f));
+              case "Type":
+                return activeFilters.some((f) => event.areas.includes(f));
+              // Events currently don't have the right "location" field or "occupation" field to use these filters from the design
+              // case "Location":
+              //   // Assuming location is a string like "Virtual" or "In-person"
+              //   return activeFilters.some((f) => event.location === f);
+              // case "Occupation":
+              //   return activeFilters.some((f) => event.occupation === f);
+              default:
+                return true;
+            }
+          }
+        );
+      });
     }
 
     // Apply sort
@@ -172,7 +181,7 @@ export const EventCatalog = () => {
     }
 
     return result;
-  }, [searchQuery, selectedFilters, sortBy]);
+  }, [searchQuery, selectedFilters, sortBy, events]);
 
   const showEventDetails = (event) => {
     setSelectedEvent(event);

@@ -1,5 +1,3 @@
-import React from "react";
-
 import {
   Badge,
   Box,
@@ -30,7 +28,10 @@ export const EventInfo = ({ event }) => {
         overflowY="auto"
         pb="120px"
       >
-        <Flex justify="center" w="100%">
+        <Flex
+          justify="center"
+          w="100%"
+        >
           <VStack
             direction="column"
             w="100%"
@@ -49,32 +50,65 @@ export const EventInfo = ({ event }) => {
                 letterSpacing="-2.5%"
                 color="#000000"
               >
-                {event.title}
+                {event.name}
               </Text>
             </Box>
 
             {/* Event metadata */}
-            <VStack align="flex-start" gap="8px">
-              <Text display="flex" alignItems="center" gap="8px">
+            <VStack
+              align="flex-start"
+              gap="8px"
+            >
+              <Text
+                display="flex"
+                alignItems="center"
+                gap="8px"
+              >
                 <FaCalendarAlt />
-                {event.date}
+                {event.displayDate}
               </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <FaClock /> {event.time}
+              <Text
+                display="flex"
+                alignItems="center"
+                gap="8px"
+              >
+                <FaClock /> {event.displayTime}
               </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <IoLocationSharp /> {event.address}
+              <Text
+                display="flex"
+                alignItems="center"
+                gap="8px"
+              >
+                <IoLocationSharp /> {event.location}
               </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <IoMdPeople /> {event.spots} spots filled
+              <Text
+                display="flex"
+                alignItems="center"
+                gap="8px"
+              >
+                <IoMdPeople /> {event.attendees} spots filled
               </Text>
             </VStack>
 
             {/* Event tags */}
-            <HStack flexWrap="wrap" mt={4}>
-              {event.tags.map((tag, i) => (
-                <Badge key={i} variant="outline">
-                  {tag}
+            <HStack
+              flexWrap="wrap"
+              mt={4}
+            >
+              {event.languages.map((l, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                >
+                  {l.language}
+                </Badge>
+              ))}
+              {event.areas.map((a, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                >
+                  {a.areasOfInterest}
                 </Badge>
               ))}
             </HStack>

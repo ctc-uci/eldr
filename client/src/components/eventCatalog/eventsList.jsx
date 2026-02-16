@@ -1,5 +1,3 @@
-import { React } from "react";
-
 import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
@@ -34,38 +32,70 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             transition="all 0.15s ease"
           >
             {/* Date/time row + spots */}
-            <Flex justifyContent="space-between" width="100%" align="center">
+            <Flex
+              justifyContent="space-between"
+              width="100%"
+              align="center"
+            >
               <HStack gap="4px">
-                <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
-                  {event.date}
+                <Text
+                  fontSize={{ base: "12px", md: "14px" }}
+                  fontWeight={400}
+                  color="#6B7280"
+                >
+                  {event.displayDate}
                 </Text>
-                <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
+                <Text
+                  fontSize={{ base: "12px", md: "14px" }}
+                  fontWeight={400}
+                  color="#6B7280"
+                >
                   •
                 </Text>
-                <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
-                  {event.time}
+                <Text
+                  fontSize={{ base: "12px", md: "14px" }}
+                  fontWeight={400}
+                  color="#6B7280"
+                >
+                  {event.displayTime}
                 </Text>
               </HStack>
-              <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280" flexShrink={0}>
-                {event.spots} spots filled
+              <Text
+                fontSize={{ base: "12px", md: "14px" }}
+                fontWeight={400}
+                color="#6B7280"
+                flexShrink={0}
+              >
+                {event.attendees} spots filled
               </Text>
             </Flex>
 
             {/* Title */}
-            <Text fontSize="18px" fontWeight={600} color="#111827">
-              {event.title}
+            <Text
+              fontSize="18px"
+              fontWeight={600}
+              color="#111827"
+            >
+              {event.name}
             </Text>
 
             {/* Address */}
-            <Text fontSize="14px" fontWeight={400} color="#6B7280">
+            <Text
+              fontSize="14px"
+              fontWeight={400}
+              color="#6B7280"
+            >
               {event.address}
             </Text>
 
             {/* Tags */}
-            <HStack gap="8px" mt="4px" flexWrap="wrap">
-              {event.tags.map((tag, i) => (
+            <HStack
+              gap="8px"
+              mt="4px"
+              flexWrap="wrap"
+            >
+              {event.languages.map((l, i) => (
                 <Badge
-                  key={i}
                   variant="outline"
                   borderColor="#D1D5DB"
                   color="#374151"
@@ -76,7 +106,22 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                   fontWeight={500}
                   textTransform="none"
                 >
-                  {tag}
+                  {l.language}
+                </Badge>
+              ))}
+              {event.areas.map((a, i) => (
+                <Badge
+                  variant="outline"
+                  borderColor="#D1D5DB"
+                  color="#374151"
+                  borderRadius="4px"
+                  px="8px"
+                  py="2px"
+                  fontSize="12px"
+                  fontWeight={500}
+                  textTransform="none"
+                >
+                  {a.areasOfInterest}
                 </Badge>
               ))}
             </HStack>
