@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import {
-  Steps,
   Button,
+  Divider,
   Flex,
   HStack,
   Input,
@@ -11,7 +11,6 @@ import {
   Tag,
   TagLabel,
   VStack,
-  Separator,
 } from "@chakra-ui/react";
 
 import { FiPlus, FiSearch } from "react-icons/fi";
@@ -128,7 +127,7 @@ const ListView = ({
     <VStack
       w="100%"
       h="100%"
-      gap="16px"
+      spacing="16px"
     >
       {/* Search bar + Create button */}
       <Flex
@@ -147,8 +146,8 @@ const ListView = ({
             placeholder="Search a case"
             bg="white"
             border="2px solid black"
-            value={String(searchQuery)}
-            onValueChange={(e) => setSearchQuery(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             _placeholder={{
               opacity: 1,
               color: "black",
@@ -163,13 +162,17 @@ const ListView = ({
           />
         </InputGroup>
         <Button
+          leftIcon={<FiPlus size={24} />}
           bg="#ADADAD"
           onClick={onCreateClick}
           px="30px"
           borderRadius={4}
-          border="3px solid black"><FiPlus size={24} />Create New Case
-                  </Button>
+          border="3px solid black"
+        >
+          Create New Case
+        </Button>
       </Flex>
+
       {/* Filter bar */}
       <Flex
         w="95%"
@@ -183,7 +186,7 @@ const ListView = ({
       >
         {/* Sort and filter dropdowns */}
         <HStack
-          gap={3}
+          spacing={3}
           mr="36px"
         >
           <Button
@@ -193,9 +196,12 @@ const ListView = ({
             py="6px"
             h="auto"
             borderRadius="2px"
-            gap="4px"><IoSwapVertical />By Newest
-                      </Button>
-          <Separator
+            leftIcon={<IoSwapVertical />}
+            iconSpacing="4px"
+          >
+            By Newest
+          </Button>
+          <Divider
             orientation="vertical"
             border="1px solid black"
             h="30px"
@@ -223,9 +229,9 @@ const ListView = ({
 
         {/* Applied Filters */}
         {(appliedLanguage || appliedArea) && (
-          <HStack gap={4}>
+          <HStack spacing={4}>
             {appliedLanguage && (
-              <Tag.Root
+              <Tag
                 size="md"
                 borderRadius="full"
                 variant="solid"
@@ -235,16 +241,16 @@ const ListView = ({
                 py="6px"
                 border="2px solid black"
               >
-                <Tag.Label mr="4px">{appliedLanguage}</Tag.Label>
+                <TagLabel mr="4px">{appliedLanguage}</TagLabel>
                 <TbXboxX
                   size={18}
                   cursor="pointer"
                   onClick={removeLanguageFilter}
                 />
-              </Tag.Root>
+              </Tag>
             )}
             {appliedArea && (
-              <Tag.Root
+              <Tag
                 size="md"
                 borderRadius="full"
                 variant="solid"
@@ -254,41 +260,48 @@ const ListView = ({
                 py="6px"
                 border="2px solid black"
               >
-                <Tag.Label mr="4px">{appliedArea}</Tag.Label>
+                <TagLabel mr="4px">{appliedArea}</TagLabel>
                 <TbXboxX
                   size={18}
                   cursor="pointer"
                   onClick={removeAreaFilter}
                 />
-              </Tag.Root>
+              </Tag>
             )}
           </HStack>
         )}
 
         {/* Apply and Clear buttons */}
         <HStack
-          gap={3}
+          spacing={3}
           marginLeft="auto"
         >
           <Button
             size="sm"
             bg="#8F8F8F"
             onClick={handleApply}
-            disabled={!selectedLanguage && !selectedArea}><IoMdCheckmark size={20} />Apply
-                      </Button>
+            isDisabled={!selectedLanguage && !selectedArea}
+            leftIcon={<IoMdCheckmark size={20} />}
+          >
+            Apply
+          </Button>
           <Button
             size="sm"
             bg="#8F8F8F"
             onClick={handleClear}
-            disabled={
+            isDisabled={
               !appliedLanguage &&
               !appliedArea &&
               !selectedLanguage &&
               !selectedArea
-            }><IoCloseOutline size={20} />Clear
-                      </Button>
+            }
+            leftIcon={<IoCloseOutline size={20} />}
+          >
+            Clear
+          </Button>
         </HStack>
       </Flex>
+
       {/* Cases list */}
       <Flex
         w="95%"
@@ -300,7 +313,7 @@ const ListView = ({
       >
         <VStack
           w="full"
-          gap={4}
+          spacing={4}
         >
           {filteredCases.map((c: Case) => (
             <CaseCard

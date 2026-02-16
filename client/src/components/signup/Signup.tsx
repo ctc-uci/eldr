@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import {
-  Steps,
   Button,
   Center,
   Field,
@@ -79,6 +78,7 @@ export const Signup = () => {
       mx="auto"
     >
       <Heading>Signup</Heading>
+
       <form
         onSubmit={handleSubmit(handleSignup)}
         style={{ width: "100%" }}
@@ -95,7 +95,7 @@ export const Signup = () => {
                 size={"lg"}
                 {...register("email")}
                 name="email"
-                required
+                isRequired
                 autoComplete="email"
               />
             </Center>
@@ -111,7 +111,7 @@ export const Signup = () => {
                 size={"lg"}
                 {...register("password")}
                 name="password"
-                required
+                isRequired
                 autoComplete="password"
               />
             </Center>
@@ -135,6 +135,7 @@ export const Signup = () => {
           </Button>
         </Stack>
       </form>
+
       <Button
         startElement={<FcGoogle />}
         variant={"solid"}

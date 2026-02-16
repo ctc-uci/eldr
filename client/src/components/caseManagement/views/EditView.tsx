@@ -1,26 +1,27 @@
 import { useState } from "react";
 
+import { DeleteIcon } from "@chakra-ui/icons";
 import {
-  Steps,
   Alert,
+  AlertIcon,
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
   HStack,
   Input,
-  NativeSelect,
+  Select,
   Text,
   Textarea,
   useDisclosure,
   VStack,
-  Field,
 } from "@chakra-ui/react";
-import BackButton from "../BackButton";
 
+import BackButton from "../BackButton";
 import DeleteConfirm from "../DeleteConfirm";
 import { Case } from "../types/case";
-import { LuTrash2 } from 'react-icons/lu';
 
 type Props = {
   caseData: Case | null;
@@ -41,7 +42,7 @@ const EditView = ({
     description: caseData?.description || "",
     notes: "",
   });
-  const { open, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Flex
@@ -51,7 +52,7 @@ const EditView = ({
       alignItems="center"
       justifyContent="center"
     >
-      <Alert.Root
+      <Alert
         status="warning"
         bg="#FBE383"
         color="black"
@@ -64,9 +65,9 @@ const EditView = ({
         justifyContent="center"
         fontWeight="bold"
       >
-        <Alert.Indicator color="black" />
+        <AlertIcon color="black" />
         You are currently editing this case, save your changes before exiting.
-      </Alert.Root>
+      </Alert>
       <Box
         bg="white"
         w="95%"
@@ -86,8 +87,15 @@ const EditView = ({
           >
             Editting Case
           </Heading>
-          <Button variant="outline" borderColor="black" color="black" onClick={onOpen}><LuTrash2 />Delete Case
-                      </Button>
+          <Button
+            variant="outline"
+            borderColor="black"
+            color="black"
+            leftIcon={<DeleteIcon />}
+            onClick={onOpen}
+          >
+            Delete Case
+          </Button>
         </HStack>
 
         <Box
@@ -96,77 +104,75 @@ const EditView = ({
           borderRadius="md"
         >
           <VStack
-            gap={6}
+            spacing={6}
             align="stretch"
           >
             <HStack
-              gap={12}
+              spacing={12}
               align="start"
             >
-              <Field.Root flex={2}>
-                <Field.Label
+              <FormControl flex={2}>
+                <FormLabel
                   fontSize="sm"
                   fontWeight="bold"
                 >
                   Title
-                </Field.Label>
+                </FormLabel>
                 <Input
                   bg="white"
                   border="2px solid black"
-                  value={String(formData.title)}
-                  onValueChange={(e) =>
+                  value={formData.title}
+                  onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
                 />
-              </Field.Root>
-              <Field.Root flex={1}>
-                <Field.Label
+              </FormControl>
+              <FormControl flex={1}>
+                <FormLabel
                   fontSize="sm"
                   fontWeight="bold"
                 >
                   Practice Area
-                </Field.Label>
-                <NativeSelect.Root>
-                  <NativeSelect.Field
-                    bg="white"
-                    border="2px solid black"
-                    value={String(formData.practiceArea)}
-                    placeholder="Select..."
-                    onValueChange={(e) =>
-                      setFormData({ ...formData, practiceArea: e.target.value })
-                    }>
-                    <option value="family">Family Law</option>
-                    <option value="criminal">Criminal Law</option>
-                    <option value="corporate">Corporate Law</option>
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+                </FormLabel>
+                <Select
+                  bg="white"
+                  border="2px solid black"
+                  value={formData.practiceArea}
+                  placeholder="Select..."
+                  onChange={(e) =>
+                    setFormData({ ...formData, practiceArea: e.target.value })
+                  }
+                >
+                  <option value="family">Family Law</option>
+                  <option value="criminal">Criminal Law</option>
+                  <option value="corporate">Corporate Law</option>
+                </Select>
+              </FormControl>
             </HStack>
             <HStack
-              gap={12}
+              spacing={12}
               align="start"
             >
-              <Field.Root flex={1}>
-                <Field.Label
+              <FormControl flex={1}>
+                <FormLabel
                   fontSize="sm"
                   fontWeight="bold"
                 >
                   Description
-                </Field.Label>
+                </FormLabel>
                 <Textarea
                   bg="white"
                   border="2px solid black"
                   rows={6}
-                  value={String(formData.description)}
-                  onValueChange={(e) =>
+                  value={formData.description}
+                  onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
                 />
-              </Field.Root>
+              </FormControl>
 
-              <Field.Root flex={1}>
-                <Field.Label
+              <FormControl flex={1}>
+                <FormLabel
                   fontSize="sm"
                   fontWeight="bold"
                 >
@@ -178,21 +184,21 @@ const EditView = ({
                   >
                     (Only Viewed by You)
                   </Text>
-                </Field.Label>
+                </FormLabel>
                 <Textarea
                   bg="white"
                   border="2px solid black"
                   rows={6}
-                  value={String(formData.notes)}
-                  onValueChange={(e) =>
+                  value={formData.notes}
+                  onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
                 />
-              </Field.Root>
+              </FormControl>
             </HStack>
             <HStack
               justify="flex-end"
-              gap={3}
+              spacing={3}
             >
               <Button
                 variant="outline"

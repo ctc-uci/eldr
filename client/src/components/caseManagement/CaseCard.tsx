@@ -1,4 +1,12 @@
-import { Steps, Flex, HStack, IconButton, Tag, Text, useDisclosure, VStack } from "@chakra-ui/react";
+import {
+  Flex,
+  HStack,
+  IconButton,
+  Tag,
+  Text,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
 
 import { FiArrowRight, FiEdit3, FiTrash2 } from "react-icons/fi";
 
@@ -18,7 +26,7 @@ const CaseCard = ({
   onCaseClick,
   onDeleteConfirm,
 }: Props) => {
-  const { open, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Flex
@@ -32,18 +40,25 @@ const CaseCard = ({
       {/* Content Area */}
       <VStack
         align="flex-start"
-        gap={3}
+        spacing={3}
         flex={1}
         mr={4}
       >
         <VStack
           align="flex-start"
-          gap={1}
+          spacing={1}
           mb="12px"
         >
-          <Text fontWeight="bold" fontSize="xl" mb="6px" cursor="pointer" asChild><u onClick={onCaseClick}>
-              {caseData.title}
-            </u></Text>
+          <Text
+            fontWeight="bold"
+            fontSize="xl"
+            as="u"
+            mb="6px"
+            cursor="pointer"
+            onClick={onCaseClick}
+          >
+            {caseData.title}
+          </Text>
           <Text
             fontSize="md"
             color="black"
@@ -58,7 +73,7 @@ const CaseCard = ({
         <Text
           fontSize="md"
           color="gray.700"
-          lineClamp={2}
+          noOfLines={2}
           size="16px"
           mb="12px"
         >
@@ -66,7 +81,7 @@ const CaseCard = ({
         </Text>
 
         <HStack
-          gap={2}
+          spacing={2}
           align="center"
         >
           <Text
@@ -77,52 +92,59 @@ const CaseCard = ({
             Tags:
           </Text>
           <HStack
-            gap={2}
+            spacing={2}
             flexWrap="wrap"
           >
-            <Tag.Root
+            <Tag
               key={caseData.tags.area}
               size="md"
               bg="#D8D2CF"
               borderRadius="full"
             >
               {caseData.tags.area}
-            </Tag.Root>
-            <Tag.Root
+            </Tag>
+            <Tag
               key={caseData.tags.language}
               size="md"
               bg="#D8D2CF"
               borderRadius="full"
             >
               {caseData.tags.language}
-            </Tag.Root>
+            </Tag>
           </HStack>
         </HStack>
       </VStack>
+
       {/* Buttons Area */}
-      <HStack gap={2}>
+      <HStack spacing={2}>
         <IconButton
           aria-label="Delete case"
+          icon={<FiTrash2 size={30} />}
           variant="ghost"
           size="lg"
           _hover="none"
           _active={{ bg: "transparent" }}
-          onClick={onOpen}><FiTrash2 size={30} /></IconButton>
+          onClick={onOpen}
+        />
         <IconButton
           aria-label="Edit case"
+          icon={<FiEdit3 size={30} />}
           variant="ghost"
-          colorPalette="gray"
+          colorScheme="gray"
           size="lg"
           _hover="none"
           _active={{ bg: "transparent" }}
-          onClick={onEditClick}><FiEdit3 size={30} /></IconButton>
+          onClick={onEditClick}
+        />
         <IconButton
           aria-label="View case"
+          icon={<FiArrowRight size={30} />}
           variant="ghost"
           size="lg"
           _hover="none"
           _active={{ bg: "transparent" }}
-          onClick={onCaseClick}><FiArrowRight size={30} /></IconButton>
+          onClick={onCaseClick}
+        />
       </HStack>
       <DeleteConfirm
         isOpen={isOpen}

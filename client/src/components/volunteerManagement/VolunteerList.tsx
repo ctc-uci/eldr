@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 
-import { Steps, Box, Flex, Table, Tbody, Td, Text, Th, Thead, Tr } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Table,
+  Tbody,
+  Td,
+  Text,
+  Th,
+  Thead,
+  Tr,
+} from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
@@ -40,15 +50,15 @@ export const VolunteerList = ({
     <Box>
       {variant === "list" && (
         <Box mt={4} borderWidth="1px" borderColor="gray.200">
-          <Table.Root size="md">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader fontSize="xs">Name</Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
+          <Table size="md">
+            <Thead>
+              <Tr>
+                <Th fontSize="xs">Name</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
               {volunteers.map((volunteer) => (
-                <Table.Row
+                <Tr
                   key={volunteer.id}
                   onClick={() => onSelect?.(volunteer)}
                   bg={selectedId === volunteer.id ? "blue.50" : undefined}
@@ -57,7 +67,7 @@ export const VolunteerList = ({
                     cursor: "pointer",
                   }}
                 >
-                  <Table.Cell>
+                  <Td>
                     <Flex align="center">
                       <Box
                         w="28px"
@@ -74,28 +84,29 @@ export const VolunteerList = ({
                         Volunteer
                       </Text>
                     </Flex>
-                  </Table.Cell>
-                </Table.Row>
+                  </Td>
+                </Tr>
               ))}
-            </Table.Body>
-          </Table.Root>
+            </Tbody>
+          </Table>
         </Box>
       )}
+
       {variant === "table" && (
         <Box mt={4} borderWidth="1px" borderColor="gray.200">
-          <Table.Root size="md">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader fontSize="xs">Name</Table.ColumnHeader>
-                <Table.ColumnHeader fontSize="xs">Role</Table.ColumnHeader>
-                <Table.ColumnHeader fontSize="xs">Email</Table.ColumnHeader>
-                <Table.ColumnHeader fontSize="xs">Active Date</Table.ColumnHeader>
-                <Table.ColumnHeader />
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
+          <Table size="md">
+            <Thead>
+              <Tr>
+                <Th fontSize="xs">Name</Th>
+                <Th fontSize="xs">Role</Th>
+                <Th fontSize="xs">Email</Th>
+                <Th fontSize="xs">Active Date</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
               {volunteers.map((volunteer) => (
-                <Table.Row
+                <Tr
                   key={volunteer.id}
                   onClick={() => onSelect?.(volunteer)}
                   bg={selectedId === volunteer.id ? "blue.50" : undefined}
@@ -104,7 +115,7 @@ export const VolunteerList = ({
                     cursor: "pointer",
                   }}
                 >
-                  <Table.Cell>
+                  <Td>
                     <Flex align="center" gap={3}>
                       <Box
                         w="24px"
@@ -117,22 +128,22 @@ export const VolunteerList = ({
                         {volunteer.firstName} {volunteer.lastName}
                       </Text>
                     </Flex>
-                  </Table.Cell>
-                  <Table.Cell fontSize="sm">Volunteer</Table.Cell>
-                  <Table.Cell fontSize="sm">{volunteer.email}</Table.Cell>
-                  <Table.Cell fontSize="sm">-------------</Table.Cell>
-                  <Table.Cell
+                  </Td>
+                  <Td fontSize="sm">Volunteer</Td>
+                  <Td fontSize="sm">{volunteer.email}</Td>
+                  <Td fontSize="sm">-------------</Td>
+                  <Td
                     textAlign="right"
                     fontSize="18px"
                     onClick={(e) => handleDelete(e, volunteer.id)}
                     _hover={{ opacity: 0.7, cursor: "pointer" }}
                   >
                     🗑️
-                  </Table.Cell>
-                </Table.Row>
+                  </Td>
+                </Tr>
               ))}
-            </Table.Body>
-          </Table.Root>
+            </Tbody>
+          </Table>
         </Box>
       )}
     </Box>

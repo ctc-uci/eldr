@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 
-import { Steps, Spinner } from "@chakra-ui/react";
+import { Spinner } from "@chakra-ui/react";
 
 import { AxiosInstance } from "axios";
 import {

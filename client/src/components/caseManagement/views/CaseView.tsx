@@ -1,4 +1,13 @@
-import { Steps, Button, Flex, HStack, Tag, TagLabel, Text, useDisclosure, VStack } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  HStack,
+  Tag,
+  TagLabel,
+  Text,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
 
 import { FiEdit3 } from "react-icons/fi";
 import { IoMdMail } from "react-icons/io";
@@ -23,7 +32,7 @@ const CaseView = ({
   onBackClick,
   onDeleteConfirm,
 }: Props) => {
-  const { open, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   if (!caseData) {
     return (
@@ -56,6 +65,7 @@ const CaseView = ({
       <Flex>
         <BackButton onBackClick={onBackClick} />
       </Flex>
+
       {/* Main content */}
       <VStack>
         <HStack
@@ -73,7 +83,7 @@ const CaseView = ({
             >
               {caseData.title}
             </Text>
-            <Tag.Root
+            <Tag
               size="xl"
               borderRadius="full"
               variant="solid"
@@ -84,13 +94,13 @@ const CaseView = ({
               py="10px"
               border="2px solid #978D87"
             >
-              <Tag.Label mr="4px">{caseData.tags.area}</Tag.Label>
-            </Tag.Root>
+              <TagLabel mr="4px">{caseData.tags.area}</TagLabel>
+            </Tag>
           </VStack>
 
           {/* Buttons */}
           <VStack
-            gap={5}
+            spacing={5}
             mb={8}
           >
             <Button
@@ -100,8 +110,11 @@ const CaseView = ({
               border="3px solid black"
               w="260px"
               fontSize="xl"
-              onClick={onEditClick}><FiEdit3 />Edit Case
-                          </Button>
+              leftIcon={<FiEdit3 />}
+              onClick={onEditClick}
+            >
+              Edit Case
+            </Button>
             <Button
               bg="#ADADAD"
               px="30px"
@@ -109,8 +122,11 @@ const CaseView = ({
               border="3px solid black"
               w="260px"
               fontSize="xl"
-              onClick={onOpen}><IoTrashBin />Delete Case
-                          </Button>
+              leftIcon={<IoTrashBin />}
+              onClick={onOpen}
+            >
+              Delete Case
+            </Button>
             <Button
               bg="#ADADAD"
               px="30px"
@@ -118,8 +134,11 @@ const CaseView = ({
               border="3px solid black"
               w="260px"
               fontSize="xl"
-              onClick={onSendClick}><IoMdMail />Send to Volunteer(s)
-                          </Button>
+              leftIcon={<IoMdMail />}
+              onClick={onSendClick}
+            >
+              Send to Volunteer(s)
+            </Button>
           </VStack>
         </HStack>
 

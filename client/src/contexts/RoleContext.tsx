@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 
-import { Steps, Spinner } from "@chakra-ui/react";
+import { Spinner } from "@chakra-ui/react";
 
 import type { User as DbUser, User } from "../types/user";
 import { auth } from "../utils/auth/firebase";

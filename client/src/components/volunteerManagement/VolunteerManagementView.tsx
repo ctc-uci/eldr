@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Steps, Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";

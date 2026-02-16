@@ -6,7 +6,13 @@ import { InfoManagement } from "./InfoManagement";
 import { DashboardManagement } from "./DashboardManagement";    
 import { AccountManagement } from "./AccountManagement";        
 
-import { Steps, Box, Heading, Flex, Button, Separator } from "@chakra-ui/react";
+import {
+  Box,
+  Heading,
+  Flex,
+  Button,
+  Divider,
+} from "@chakra-ui/react";
 
 import { IoPencil } from "react-icons/io5";
 
@@ -26,16 +32,18 @@ export const ProfileManagement = () => {
             </Heading>
             <Flex gap={3}>
               <Box display={{base:"none", md:"flex"}}>
-                <Button
-                  width="66px"
+                <Button width="66px"
                   height="28px"
                   color="212121"
                   backgroundColor="#D9D9D9"
                   variant="outline"
                   borderColor="#212121"
-                  borderWidth="1px"><Flex gap={1} align="center">
+                  borderWidth="1px"
+                  rightIcon={<IoPencil />}>
+                  <Flex gap={1} align="center">
                     Edit
-                  </Flex><IoPencil /></Button>
+                  </Flex>
+                </Button>
               </Box>
               <Button width="55px"
                 height="28px"
@@ -49,7 +57,7 @@ export const ProfileManagement = () => {
             </Flex>
           </Flex>
 
-          <Separator borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
+          <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
 
           <InfoManagement />
 
@@ -61,5 +69,5 @@ export const ProfileManagement = () => {
         </Box>
       </Flex>
     </Box>
-  );
+  )
 }

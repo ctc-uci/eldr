@@ -1,7 +1,7 @@
 import { useState } from "react";
 
+import { InfoIcon, SearchIcon } from "@chakra-ui/icons";
 import {
-  Steps,
   Box,
   Button,
   Checkbox,
@@ -11,7 +11,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  NativeSelect,
+  Select,
   Table,
   Tag,
   TagCloseButton,
@@ -24,14 +24,12 @@ import {
   Thead,
   Tr,
   VStack,
-  Icon,
 } from "@chakra-ui/react";
+
 import { FiSend } from "react-icons/fi";
 
 import BackButton from "../BackButton";
-
 import { Case } from "../types/case";
-import { LuInfo, LuSearch } from 'react-icons/lu';
 
 type Props = {
   caseData: Case | null;
@@ -116,6 +114,7 @@ const SendView = ({
       p={8}
     >
       <BackButton onBackClick={onBackClick} />
+
       <Heading
         as="h1"
         size="lg"
@@ -148,7 +147,7 @@ const SendView = ({
               >
                 {caseData.title}
               </Text>
-              <Tag.Root
+              <Tag
                 size="xl"
                 borderRadius="full"
                 variant="solid"
@@ -159,81 +158,83 @@ const SendView = ({
                 py="10px"
                 border="2px solid #978D87"
               >
-                <Tag.Label mr="4px">{caseData.tags.area}</Tag.Label>
-              </Tag.Root>
+                <TagLabel mr="4px">{caseData.tags.area}</TagLabel>
+              </Tag>
             </VStack>
             <Button
               variant="outline"
               bg="white"
               borderColor="black"
               color="black"
-              onClick={onCaseClick}><LuInfo />View Case
-                          </Button>
+              leftIcon={<InfoIcon />}
+              onClick={onCaseClick}
+            >
+              View Case
+            </Button>
           </HStack>
         </Box>
 
         <VStack
-          gap={6}
+          spacing={6}
           align="stretch"
         >
-          <HStack gap={4}>
+          <HStack spacing={4}>
             <InputGroup flex={1}>
               <InputLeftElement pointerEvents="none">
-                <Icon color="gray.400" asChild><LuSearch /></Icon>
+                <SearchIcon color="gray.400" />
               </InputLeftElement>
               <Input
                 placeholder="Search Volunteer"
                 bg="white"
                 border="1px solid"
                 borderColor="black"
-                value={String(searchQuery)}
-                onValueChange={(e) => setSearchQuery(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </InputGroup>
-            <NativeSelect.Root>
-              <NativeSelect.Field
-                w="150px"
-                bg="white"
-                border="1px solid"
-                borderColor="black"
-                placeholder="Filter">
-                <option value="available">Available</option>
-                <option value="busy">Busy</option>
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
+            <Select
+              w="150px"
+              bg="white"
+              border="1px solid"
+              borderColor="black"
+              placeholder="Filter"
+            >
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+            </Select>
           </HStack>
 
           <Box overflowX="auto">
-            <Table.Root
+            <Table
               variant="simple"
               bg="white"
             >
-              <Table.Header bg="gray.200">
-                <Table.Row>
-                  <Table.ColumnHeader>Volunteer Name</Table.ColumnHeader>
-                  <Table.ColumnHeader>Availability Status</Table.ColumnHeader>
-                  <Table.ColumnHeader>Languages</Table.ColumnHeader>
-                  <Table.ColumnHeader>Specialization</Table.ColumnHeader>
-                  <Table.ColumnHeader>Select</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
+              <Thead bg="gray.200">
+                <Tr>
+                  <Th>Volunteer Name</Th>
+                  <Th>Availability Status</Th>
+                  <Th>Languages</Th>
+                  <Th>Specialization</Th>
+                  <Th>Select</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {volunteers.map((volunteer) => (
-                  <Table.Row key={volunteer.name}>
-                    <Table.Cell>{volunteer.name}</Table.Cell>
-                    <Table.Cell>{volunteer.status}</Table.Cell>
-                    <Table.Cell>{volunteer.languages}</Table.Cell>
-                    <Table.Cell>{volunteer.specialization}</Table.Cell>
-                    <Table.Cell>
-                      <Checkbox.Root
-                        onCheckedChange={() => handleVolunteerToggle(volunteer.name)}
-                        checked={volunteer.selected}><Checkbox.HiddenInput /><Checkbox.Control><Checkbox.Indicator /></Checkbox.Control></Checkbox.Root>
-                    </Table.Cell>
-                  </Table.Row>
+                  <Tr key={volunteer.name}>
+                    <Td>{volunteer.name}</Td>
+                    <Td>{volunteer.status}</Td>
+                    <Td>{volunteer.languages}</Td>
+                    <Td>{volunteer.specialization}</Td>
+                    <Td>
+                      <Checkbox
+                        isChecked={volunteer.selected}
+                        onChange={() => handleVolunteerToggle(volunteer.name)}
+                      />
+                    </Td>
+                  </Tr>
                 ))}
-              </Table.Body>
-            </Table.Root>
+              </Tbody>
+            </Table>
           </Box>
 
           <Box>
@@ -247,22 +248,20 @@ const SendView = ({
               >
                 Compose Email
               </Heading>
-              <NativeSelect.Root>
-                <NativeSelect.Field
-                  w="200px"
-                  bg="white"
-                  border="1px solid"
-                  borderColor="black"
-                  defaultValue="A">
-                  <option value="A">Template A</option>
-                  <option value="B">Template B</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
+              <Select
+                w="200px"
+                bg="white"
+                border="1px solid"
+                borderColor="black"
+                defaultValue="A"
+              >
+                <option value="A">Template A</option>
+                <option value="B">Template B</option>
+              </Select>
             </HStack>
 
             <VStack
-              gap={0}
+              spacing={0}
               align="stretch"
             >
               <Box
@@ -295,22 +294,22 @@ const SendView = ({
                   To
                 </Text>
                 <HStack
-                  gap={2}
+                  spacing={2}
                   flexWrap="wrap"
                 >
                   {selectedVolunteers.map((name) => (
-                    <Tag.Root
+                    <Tag
                       key={name}
                       size="md"
                       borderRadius="full"
                       variant="outline"
                       bg="white"
                     >
-                      <Tag.Label>{name}</Tag.Label>
-                      <Tag.CloseTrigger
+                      <TagLabel>{name}</TagLabel>
+                      <TagCloseButton
                         onClick={() => handleRemoveRecipient(name)}
                       />
-                    </Tag.Root>
+                    </Tag>
                   ))}
                 </HStack>
               </HStack>
@@ -323,8 +322,8 @@ const SendView = ({
                 borderColor="gray.400"
                 borderRadius={0}
                 p={3}
-                value={String(emailSubject)}
-                onValueChange={(e) => setEmailSubject(e.target.value)}
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
                 _focus={{ boxShadow: "none" }}
               />
 
@@ -334,8 +333,8 @@ const SendView = ({
                 borderRadius={0}
                 rows={10}
                 p={3}
-                value={String(emailBody)}
-                onValueChange={(e) => setEmailBody(e.target.value)}
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
                 _focus={{ boxShadow: "none" }}
                 resize="none"
               />
@@ -350,15 +349,21 @@ const SendView = ({
                   bg="gray.400"
                   borderColor="black"
                   color="black"
-                  onClick={onDiscardClick}><Box as="span">🗑</Box>Discard Draft
-                                  </Button>
+                  leftIcon={<Box as="span">🗑</Box>}
+                  onClick={onDiscardClick}
+                >
+                  Discard Draft
+                </Button>
                 <Button
                   variant="outline"
                   bg="gray.400"
                   borderColor="black"
                   color="black"
-                  onClick={onSendClick}>Send
-                                  <FiSend /></Button>
+                  rightIcon={<FiSend />}
+                  onClick={onSendClick}
+                >
+                  Send
+                </Button>
               </HStack>
             </VStack>
           </Box>

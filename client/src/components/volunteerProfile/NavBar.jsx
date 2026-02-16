@@ -1,6 +1,11 @@
 import { React } from "react";
 
-import { Steps, Box, Flex, Image, Link } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Image,
+  Link,
+} from "@chakra-ui/react";
 
 import { RxAvatar } from "react-icons/rx";
 import logo_eldr from "../profilePage/logo_eldr.png"

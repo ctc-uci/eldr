@@ -1,15 +1,14 @@
 import {
-  Steps,
   AbsoluteCenter,
   Box,
   Button,
   Center,
+  Divider,
   Flex,
   Heading,
   Input,
   Text,
   VStack,
-  Separator,
 } from "@chakra-ui/react";
 
 type Props = {
@@ -47,7 +46,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
         >
           ELDR Volunteer Portal
         </Heading>
-        <VStack gap="10px">
+        <VStack spacing="10px">
           <Input
             placeholder="Enter first name"
             w="704px"
@@ -68,7 +67,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             justifyContent="end"
           >
             <Button
-              variant='plain'
+              variant="link"
               textDecoration="underline"
               color="black"
               onClick={onBack}
@@ -77,7 +76,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             </Button>
           </Flex>
         </VStack>
-        <VStack gap="14px">
+        <VStack spacing="14px">
           <Button
             bg="#FAFAFA"
             w="297px"
@@ -91,9 +90,9 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             align="center"
             w="100%"
           >
-            <Separator borderColor="black" />
+            <Divider borderColor="black" />
             <Text padding="2">OR</Text>
-            <Separator borderColor="black" />
+            <Divider borderColor="black" />
           </Flex>
           <Button
             bg="#FAFAFA"
@@ -114,7 +113,7 @@ const WelcomeStep = ({ onNext, onBack }: Props) => {
             Office 365
           </Button>
           <Button
-            variant='plain'
+            variant="link"
             textDecoration="underline"
             color="black"
             onClick={onNext}

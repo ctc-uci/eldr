@@ -1,16 +1,5 @@
 import React from "react";
-import {
-  Steps,
-  ChakraProvider,
-  Flex,
-  Box,
-  Text,
-  Input,
-  VStack,
-  Button,
-  HStack,
-  Separator,
-} from "@chakra-ui/react";
+import { ChakraProvider, Flex, Box, Text, Input, VStack, Button, HStack, Divider} from "@chakra-ui/react";
 
 
 export const AdminLogin: React.FC = () => {
@@ -53,7 +42,7 @@ export const AdminLogin: React.FC = () => {
 
 
          <Button
-             variant='plain'
+             variant="link"
              textDecoration="underline"
              color="black"
              ml="60%"
@@ -75,9 +64,9 @@ export const AdminLogin: React.FC = () => {
 
 
          <HStack w="60%" gap="4">
-           <Separator flex="1" borderColor="black" />
+           <Divider flex="1" borderColor="black" />
            <Text fontWeight="bold" fontSize="sm">OR</Text>
-           <Separator flex="1" borderColor="black" />
+           <Divider flex="1" borderColor="black" />
          </HStack>
 
 

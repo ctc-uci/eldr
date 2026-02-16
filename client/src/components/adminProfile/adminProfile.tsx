@@ -1,8 +1,10 @@
 import {
-  Steps,
   Box,
   Button,
+  Divider,
   Flex,
+  FormControl,
+  FormLabel,
   Grid,
   GridItem,
   Heading,
@@ -12,8 +14,6 @@ import {
   Tag,
   Text,
   VStack,
-  Separator,
-  Field,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { FiPlus, FiUser } from "react-icons/fi";
@@ -66,7 +66,7 @@ export const AdminProfile: React.FC = () => {
         </Text>
 
         {/* Navigation Items */}
-        <HStack gap={12}>
+        <HStack spacing={12}>
           {navItems.map((item) => (
             <Box
               key={item}
@@ -88,8 +88,15 @@ export const AdminProfile: React.FC = () => {
         </HStack>
 
         {/* Profile Icon */}
-        <IconButton aria-label="Profile" variant="ghost" fontSize="xl" rounded="full"><FiUser /></IconButton>
+        <IconButton
+          aria-label="Profile"
+          icon={<FiUser />}
+          variant="ghost"
+          fontSize="xl"
+          rounded="full"
+        />
       </Flex>
+
       {/* Main Content */}
       <Flex px={8} py={8}>
         {/* Main Profile Section */}
@@ -99,7 +106,7 @@ export const AdminProfile: React.FC = () => {
             <Heading size="lg" fontWeight="bold">
               Profile Management
             </Heading>
-            <HStack gap={2}>
+            <HStack spacing={2}>
               <Button
                 variant="outline"
                 size="sm"
@@ -119,11 +126,11 @@ export const AdminProfile: React.FC = () => {
             </HStack>
           </Flex>
 
-          <Separator mb={8} borderColor="gray.300" />
+          <Divider mb={8} borderColor="gray.300" />
 
           <Flex>
             {/* Sidebar */}
-            <VStack align="start" gap={4} minW="150px" mr={8}>
+            <VStack align="start" spacing={4} minW="150px" mr={8}>
               {sidebarItems.map((item) => (
                 <Text
                   key={item}
@@ -142,91 +149,91 @@ export const AdminProfile: React.FC = () => {
               {/* Basic Info Fields */}
               <Grid templateColumns="repeat(2, 1fr)" gap={6} mb={6}>
                 <GridItem>
-                  <Field.Root>
-                    <Field.Label fontSize="sm" fontWeight="bold">
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="bold">
                       First Name
-                    </Field.Label>
+                    </FormLabel>
                     <Input
-                      value={String(profile.firstName)}
-                      onValueChange={(e) =>
+                      value={profile.firstName}
+                      onChange={(e) =>
                         setProfile({ ...profile, firstName: e.target.value })
                       }
-                      readOnly={!isEditing}
+                      isReadOnly={!isEditing}
                       variant="outline"
                       size="md"
                       borderColor="gray.300"
                     />
-                  </Field.Root>
+                  </FormControl>
                 </GridItem>
                 <GridItem>
-                  <Field.Root>
-                    <Field.Label fontSize="sm" fontWeight="bold">
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="bold">
                       Last Name
-                    </Field.Label>
+                    </FormLabel>
                     <Input
-                      value={String(profile.lastName)}
-                      onValueChange={(e) =>
+                      value={profile.lastName}
+                      onChange={(e) =>
                         setProfile({ ...profile, lastName: e.target.value })
                       }
-                      readOnly={!isEditing}
+                      isReadOnly={!isEditing}
                       variant="outline"
                       size="md"
                       borderColor="gray.300"
                     />
-                  </Field.Root>
+                  </FormControl>
                 </GridItem>
                 <GridItem>
-                  <Field.Root>
-                    <Field.Label fontSize="sm" fontWeight="bold">
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="bold">
                       Email Address
-                    </Field.Label>
+                    </FormLabel>
                     <Input
-                      value={String(profile.email)}
-                      onValueChange={(e) =>
+                      value={profile.email}
+                      onChange={(e) =>
                         setProfile({ ...profile, email: e.target.value })
                       }
-                      readOnly={!isEditing}
+                      isReadOnly={!isEditing}
                       variant="outline"
                       size="md"
                       borderColor="gray.300"
                     />
-                  </Field.Root>
+                  </FormControl>
                 </GridItem>
                 <GridItem>
-                  <Field.Root>
-                    <Field.Label fontSize="sm" fontWeight="bold">
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="bold">
                       Phone Number
-                    </Field.Label>
+                    </FormLabel>
                     <Input
-                      value={String(profile.phone)}
-                      onValueChange={(e) =>
+                      value={profile.phone}
+                      onChange={(e) =>
                         setProfile({ ...profile, phone: e.target.value })
                       }
-                      readOnly={!isEditing}
+                      isReadOnly={!isEditing}
                       variant="outline"
                       size="md"
                       borderColor="gray.300"
                     />
-                  </Field.Root>
+                  </FormControl>
                 </GridItem>
               </Grid>
 
               {/* Role Field */}
-              <Field.Root mb={8} maxW="150px">
-                <Field.Label fontSize="sm" fontWeight="bold">
+              <FormControl mb={8} maxW="150px">
+                <FormLabel fontSize="sm" fontWeight="bold">
                   Role
-                </Field.Label>
+                </FormLabel>
                 <Input
-                  value={String(profile.role)}
-                  readOnly
+                  value={profile.role}
+                  isReadOnly
                   variant="outline"
                   size="md"
                   borderColor="gray.300"
                   bg="white"
                 />
-              </Field.Root>
+              </FormControl>
 
-              <Separator mb={8} borderColor="gray.200" />
+              <Divider mb={8} borderColor="gray.200" />
 
               {/* Specialization(s) */}
               <Box mb={6}>
@@ -244,7 +251,7 @@ export const AdminProfile: React.FC = () => {
                   maxW="400px"
                 >
                   {profile.specializations.map((spec, index) => (
-                    <Tag.Root
+                    <Tag
                       key={index}
                       size="md"
                       borderRadius="full"
@@ -254,13 +261,15 @@ export const AdminProfile: React.FC = () => {
                       py={1}
                     >
                       {spec}
-                    </Tag.Root>
+                    </Tag>
                   ))}
                   <IconButton
                     aria-label="Add specialization"
+                    icon={<FiPlus />}
                     size="xs"
                     variant="ghost"
-                    borderRadius="full"><FiPlus /></IconButton>
+                    borderRadius="full"
+                  />
                 </Flex>
               </Box>
 
@@ -279,7 +288,7 @@ export const AdminProfile: React.FC = () => {
                   maxW="300px"
                 >
                   {profile.languages.map((lang, index) => (
-                    <Tag.Root
+                    <Tag
                       key={index}
                       size="md"
                       borderRadius="full"
@@ -289,7 +298,7 @@ export const AdminProfile: React.FC = () => {
                       py={1}
                     >
                       {lang}
-                    </Tag.Root>
+                    </Tag>
                   ))}
                 </Flex>
               </Box>
@@ -306,7 +315,7 @@ export const AdminProfile: React.FC = () => {
                   p={3}
                   maxW="350px"
                 >
-                  <Tag.Root
+                  <Tag
                     size="md"
                     borderRadius="md"
                     bg="gray.800"
@@ -315,7 +324,7 @@ export const AdminProfile: React.FC = () => {
                     py={1}
                   >
                     {profile.lawSchoolCompany}
-                  </Tag.Root>
+                  </Tag>
                 </Flex>
               </Box>
             </Box>

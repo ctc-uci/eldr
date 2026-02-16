@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 
-import { Steps, Button, Link as ChakraLink, Heading, Table, Text, VStack } from "@chakra-ui/react";
+import {
+  Button,
+  Link as ChakraLink,
+  Heading,
+  Table,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 import { Link } from "react-router-dom";
 

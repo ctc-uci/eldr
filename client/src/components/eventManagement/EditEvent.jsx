@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  Steps,
   Box,
   Button,
   Flex,
@@ -13,7 +12,7 @@ import {
   InputGroup,
   InputLeftElement,
   InputRightElement,
-  NativeSelect,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -44,7 +43,7 @@ import { CreateEvent } from "./CreateEvent.jsx";
 export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
-  const { open, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [name, setName] = useState(eventInfo?.name || "");
   const [description, setDescription] = useState(eventInfo?.description || "");
@@ -124,7 +123,7 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
       w="100%"
       h="100vh"
       bg="#E8E8E8"
-      gap={0}
+      spacing={0}
     >
       <Flex
         w="100%"
@@ -156,10 +155,13 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
           />
         </InputGroup>
         <Box>
-          <Icon boxSize="50" asChild><CgProfile /></Icon>
+          <Icon
+            as={CgProfile}
+            boxSize="50"
+          />
         </Box>
       </Flex>
-      <Tabs.Root
+      <Tabs
         w="100%"
         display="flex"
         flexDirection="column"
@@ -167,10 +169,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
         overflow="hidden"
       >
         <Flex justifyContent="center">
-          <Tabs.List gap={4}>
+          <TabList gap={4}>
             <Tab>Clinics & Workshops</Tab>
             <Tab>Cases</Tab>
-          </Tabs.List>
+          </TabList>
         </Flex>
         <TabPanels
           flex={1}
@@ -198,7 +200,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                 border="2px solid black"
                 onClick={onOpen}
               >
-                <Icon mr="5%" asChild><HiMiniPlusCircle /></Icon>
+                <Icon
+                  as={HiMiniPlusCircle}
+                  mr="5%"
+                />
                 Add event
               </Button>
               <CreateEvent
@@ -216,17 +221,17 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
               align="stretch"
             >
               {/* event details / volunteer list / email notification timeline tabs */}
-              <Tabs.Root
-                fitted
+              <Tabs
+                isFitted
                 w="100%"
                 flex={1}
                 mt={10}
-                variant='enclosed'
+                variant="enclosed"
                 display="flex"
                 flexDirection="column"
                 overflow="hidden"
               >
-                <Tabs.List flexShrink={0}>
+                <TabList flexShrink={0}>
                   <Tab
                     _selected={{ fontWeight: "bold", color: "black" }}
                     bg="#E8E8E8"
@@ -257,7 +262,7 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                   >
                     Email Notification Timeline
                   </Tab>
-                </Tabs.List>
+                </TabList>
                 <TabPanels
                   flex={1}
                   display="flex"
@@ -301,8 +306,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                 border="2px solid black"
                                 borderRadius="md"
                                 w="100%"
-                                value={String(name)}
-                                onValueChange={(e) => setName(e.target.value)}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                               />
                             </VStack>
 
@@ -337,17 +342,17 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                         placeholder="Select date"
                                         pr="2.5rem"
                                         w="100%"
-                                        value={String(startDate.toLocaleDateString(
+                                        value={startDate.toLocaleDateString(
                                           "en-US",
                                           {
                                             year: "numeric",
                                             month: "long",
                                             day: "numeric",
                                           }
-                                        ))}
+                                        )}
                                       />
                                       <InputRightElement>
-                                        <Icon asChild><IoCalendarSharp /></Icon>
+                                        <Icon as={IoCalendarSharp} />
                                       </InputRightElement>
                                     </InputGroup>
                                   }
@@ -372,8 +377,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                   borderRadius="md"
                                   w="100%"
                                   type="time"
-                                  value={String(startTime)}
-                                  onValueChange={(e) => setStartTime(e.target.value)}
+                                  value={startTime}
+                                  onChange={(e) => setStartTime(e.target.value)}
                                 />
                               </VStack>
 
@@ -395,8 +400,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                   borderRadius="md"
                                   w="100%"
                                   type="time"
-                                  value={String(endTime)}
-                                  onValueChange={(e) => setEndTime(e.target.value)}
+                                  value={endTime}
+                                  onChange={(e) => setEndTime(e.target.value)}
                                 />
                               </VStack>
 
@@ -417,8 +422,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                   border="2px solid black"
                                   borderRadius="md"
                                   w="100%"
-                                  value={String(location)}
-                                  onValueChange={(e) => setLocation(e.target.value)}
+                                  value={location}
+                                  onChange={(e) => setLocation(e.target.value)}
                                 />
                               </VStack>
 
@@ -440,8 +445,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                                   borderRadius="md"
                                   w="100%"
                                   type="number"
-                                  value={String(capacity)}
-                                  onValueChange={(e) =>
+                                  value={capacity}
+                                  onChange={(e) =>
                                     setCapacity(parseInt(e.target.value) || 0)
                                   }
                                 />
@@ -466,7 +471,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                               justifyContent="space-between"
                               onClick={handleSaveEdits}
                             >
-                              <Icon mr="5%" asChild><FaCheck /></Icon>
+                              <Icon
+                                as={FaCheck}
+                                mr="5%"
+                              />
                               Save Edits
                             </Button>
 
@@ -479,7 +487,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                               justifyContent="space-between"
                               onClick={() => setIsEditing(false)}
                             >
-                              <Icon mr="5%" asChild><FaXmark /></Icon>
+                              <Icon
+                                as={FaXmark}
+                                mr="5%"
+                              />
                               Discard Edits
                             </Button>
 
@@ -492,7 +503,10 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                               justifyContent="space-between"
                               onClick={handleDeleteEvent}
                             >
-                              <Icon mr="5%" asChild><FaTrashCan /></Icon>
+                              <Icon
+                                as={FaTrashCan}
+                                mr="5%"
+                              />
                               Delete Event
                             </Button>
                           </VStack>
@@ -516,8 +530,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                           border="2px solid black"
                           borderRadius="md"
                           w="100%"
-                          value={String(description)}
-                          onValueChange={(e) => setDescription(e.target.value)}
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
                         />
                       </VStack>
 
@@ -539,8 +553,8 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                           borderRadius="md"
                           w="100%"
                           lineHeight={3}
-                          value={String(parking)}
-                          onValueChange={(e) => setParking(e.target.value)}
+                          value={parking}
+                          onChange={(e) => setParking(e.target.value)}
                         />
                       </VStack>
                     </VStack>
@@ -606,16 +620,14 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                             alignItems="left"
                           >
                             <Text fontSize="lg">Filter By:</Text>
-                            <NativeSelect.Root>
-                              <NativeSelect.Field
-                                bg="white"
-                                placeholder="Select Filter"
-                                borderRadius="md"
-                                border="2px solid black">
-                                <option value="all">All</option>
-                              </NativeSelect.Field>
-                              <NativeSelect.Indicator />
-                            </NativeSelect.Root>
+                            <Select
+                              bg="white"
+                              placeholder="Select Filter"
+                              borderRadius="md"
+                              border="2px solid black"
+                            >
+                              <option value="all">All</option>
+                            </Select>
                           </VStack>
                         </VStack>
                       </GridItem>
@@ -630,44 +642,48 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
+                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                                asChild
-                              ><u>Gibby Gibson
-                                                              </u></Text>
+                              >
+                                Gibby Gibson
+                              </Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
+                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                                asChild
-                              ><u>Gibby Gibson
-                                                              </u></Text>
+                              >
+                                Gibby Gibson
+                              </Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
+                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                                asChild
-                              ><u>Freddie Benson
-                                                              </u></Text>
+                              >
+                                Freddie Benson
+                              </Text>
                             </HStack>
                           </GridItem>
                           <GridItem>
                             <HStack gap={4}>
                               <CgUser size={32} />
                               <Text
+                                as="u"
                                 textUnderlineOffset={4}
                                 fontSize="lg"
-                                asChild
-                              ><u>Freddie Benson
-                                                              </u></Text>
+                              >
+                                Freddie Benson
+                              </Text>
                             </HStack>
                           </GridItem>
                         </Grid>
@@ -715,16 +731,27 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                         </Text>
                         <Flex justify="flex-end">
                           <Button
+                            leftIcon={
+                              <Icon
+                                as={HiMiniPlusCircle}
+                                boxSize={5}
+                              />
+                            }
                             borderRadius="sm"
                             border="2px solid black"
                             bg="white"
-                            _hover={{ bg: "gray.100" }}><Icon boxSize={5} asChild><HiMiniPlusCircle /></Icon>Add Notification
-                                                      </Button>
+                            _hover={{ bg: "gray.100" }}
+                          >
+                            Add Notification
+                          </Button>
                         </Flex>
 
                         {/* row 1 */}
-                        <HStack gap={2}>
-                          <Icon boxSize={6} asChild><CiCircleCheck /></Icon>
+                        <HStack spacing={2}>
+                          <Icon
+                            as={CiCircleCheck}
+                            boxSize={6}
+                          />
                         </HStack>
                         <Box>
                           <Text
@@ -734,24 +761,28 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                             1 week before event date
                           </Text>
                         </Box>
-                        <Tag.Root
+                        <Tag
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <Tag.Label
+                          <TagLabel
+                            as="i"
                             fontSize="sm"
-                            asChild
-                          ><i>T-1 Week Email Reminder Template
-                                                      </i></Tag.Label>
-                        </Tag.Root>
+                          >
+                            T-1 Week Email Reminder Template
+                          </TagLabel>
+                        </Tag>
                         <Box />
 
                         {/* row 2 */}
-                        <HStack gap={2}>
-                          <Icon boxSize={6} asChild><CiCircleCheck /></Icon>
+                        <HStack spacing={2}>
+                          <Icon
+                            as={CiCircleCheck}
+                            boxSize={6}
+                          />
                         </HStack>
                         <Box>
                           <Text
@@ -761,27 +792,31 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                             3 days before event date
                           </Text>
                         </Box>
-                        <Tag.Root
+                        <Tag
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <Tag.Label
+                          <TagLabel
+                            as="i"
                             fontSize="sm"
-                            asChild
-                          ><i>T-1 Week Email Reminder Template
-                                                      </i></Tag.Label>
-                        </Tag.Root>
+                          >
+                            T-1 Week Email Reminder Template
+                          </TagLabel>
+                        </Tag>
                         <Box />
 
                         {/* row 3 */}
                         <HStack
-                          gap={2}
+                          spacing={2}
                           align="center"
                         >
-                          <Icon boxSize={6} asChild><CgSandClock /></Icon>
+                          <Icon
+                            as={CgSandClock}
+                            boxSize={6}
+                          />
                         </HStack>
                         <Box>
                           <Text
@@ -797,25 +832,26 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                             Mandatory!
                           </Text>
                         </Box>
-                        <Tag.Root
+                        <Tag
                           size="lg"
                           borderRadius="full"
                           px={6}
                           py={2}
                           bg="#E4E4E4"
                         >
-                          <Tag.Label
+                          <TagLabel
+                            as="i"
                             fontSize="sm"
-                            asChild
-                          ><i>T-1 Day Email Reminder Template
-                                                      </i></Tag.Label>
-                        </Tag.Root>
+                          >
+                            T-1 Day Email Reminder Template
+                          </TagLabel>
+                        </Tag>
                         <Box />
                       </Grid>
                     </VStack>
                   </TabPanel>
                 </TabPanels>
-              </Tabs.Root>
+              </Tabs>
             </VStack>
           </TabPanel>
           <TabPanel
@@ -828,7 +864,7 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
                         */}
           </TabPanel>
         </TabPanels>
-      </Tabs.Root>
+      </Tabs>
     </VStack>
   );
 };

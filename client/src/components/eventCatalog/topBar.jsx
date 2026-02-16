@@ -1,7 +1,6 @@
 import React from "react";
 
 import {
-  Steps,
   Flex,
   Input,
   InputGroup,
@@ -10,7 +9,7 @@ import {
   TabList,
   Tabs,
   Text,
-  useBreakpointValue,
+  useBreakpointValue
 } from "@chakra-ui/react";
 
 import { FaMagnifyingGlass } from "react-icons/fa6";
@@ -51,8 +50,9 @@ export const TopBar = ({ showDetails }) => {
           Header TBD
         </Text>
       </Flex>
-      <Tabs.Root w="100%">
-        <Tabs.List
+
+      <Tabs w="100%">
+        <TabList
           w="100%"
           h="40px"
           justifyContent="space-between"
@@ -70,10 +70,11 @@ export const TopBar = ({ showDetails }) => {
           >
             My Events
           </Tab>
-        </Tabs.List>
-      </Tabs.Root>
+        </TabList>
+      </Tabs>
+
       {showSearch && ( // Conditionally render search bar
-        (<Flex
+        <Flex
           w="100%"
           h={searchHeight}
           backgroundColor={searchBg}
@@ -94,7 +95,7 @@ export const TopBar = ({ showDetails }) => {
               borderColor="black"
             />
           </InputGroup>
-        </Flex>)
+        </Flex>
       )}
     </>
   );
