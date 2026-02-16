@@ -44,17 +44,17 @@ export const AdminForgotPass: React.FC = () => {
         borderRadius="50%"
         zIndex={0}
       />
-      <VStack minH="80vh" borderWidth="1px" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
+      <VStack minH="80vh" borderWidth="1px" borderRadius = "sm" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
         <Flex  w = "80vw" bg = "#F6F6F6" h = "70px" align = "left" px = "2%" py = "1%">
           <Image src={logo} />
         </Flex>  
-        <Flex flex="1" w="100%" bg="white" p={4}>
-          <VStack align = "left" width = "50vw" px = "5%" gap = {1}>
-            <Text fontWeight="bold" fontSize="30px">
+        <Flex flex="1" w="100%" bg="white">
+          <VStack align = "left" width = "50%" px = "5%" gap = {1}>
+            <Text fontWeight="bold" fontSize="30px" pt = "15%" pb = "10%">
               Account Confirmation Verification
             </Text>
             
-            <Text mb={6}>
+            <Text mb={6} pb = "15%">
               Enter your ELDR account email and we'll send you a link to reset your password.
             </Text>
             
@@ -69,11 +69,12 @@ export const AdminForgotPass: React.FC = () => {
               color="#3182CE"
               bg="white"
               href="https://eldrcenter.org/"
+              pt = "2%"
             >
               Community Counsel Website
             </Link>
             
-            <HStack>
+            <HStack pt = "15%" align = "left" gap = {0}>
               <IconButton 
                 boxSize="20px" 
                 as={FiFacebook} 
@@ -100,35 +101,32 @@ export const AdminForgotPass: React.FC = () => {
             </HStack>
           </VStack>
           <Separator orientation = "vertical"></Separator>
-          <VStack w="55%" bg="#FFFFFF" h="100%" align="left" justify="center" px="5%">
+          <VStack w="50%" bg="#FFFFFF" h="100%" align="left" justify="center" px="5%" py = "10%">
             <Box>
               <Text fontWeight="bold" mb={2}>
                 Email
               </Text>
             </Box>
-            
-            <Box w="80%" h="40px" mb={6}>
-              <InputGroup startElement={<MdOutlineEmail />}>
-                <Input 
-                  placeholder="Enter an email"
-                  variant="outline"
-                  borderColor="#E4E4E7"
-                  borderWidth="1px"
-                  borderRadius="md"
-                  _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </InputGroup>
-            </Box>
-
+            <InputGroup pb = "3%" w = "30vw" startElement={<MdOutlineEmail />}>
+              <Input 
+                placeholder="Enter an email"
+                height = "2vw"
+                variant="outline"
+                borderColor="#E4E4E7"
+                borderWidth="1px"
+                borderRadius="md"
+                _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </InputGroup>
             <Button
               position="relative"
               variant="outline"
               borderRadius="md"
               background={email ? "#3182CE" : "#D4D4D8"}
-              w="80%"
-              h="50px"
+              w="30vw"
+              h="3vw"
               color="white"
               disabled={!email}
               _hover={email ? { bg: "#5797BD" } : {}}
@@ -144,17 +142,18 @@ export const AdminForgotPass: React.FC = () => {
                 transform="translateY(-50%)"
               />
             </Button>
-
-            <Text fontSize="sm" color="gray.600">
-              Go back to{" "}
-              <Link 
-                color="#3182CE" 
-                textDecoration="underline"
-                href="/adminLogin"
-              >
-                Login Portal
-              </Link>
-            </Text>
+            <Flex align= "center" justify = "center">
+              <Text fontSize="sm">
+                Go back to{" "}
+                <Link 
+                  color="#3182CE" 
+                  textDecoration="underline"
+                  href="/adminLogin"
+                >
+                  Login Portal
+                </Link>
+              </Text>
+            </Flex>
           </VStack>
         </Flex>
         

@@ -48,13 +48,13 @@ export const AdminPassReset: React.FC = () => {
         borderRadius="50%"
         zIndex={0}
       />
-      <VStack  minH="80vh" borderWidth="1px" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
+      <VStack  minH="80vh"  borderRadius = "sm" borderWidth="1px" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
         <Flex w = "80vw" bg = "#F6F6F6" h = "70px" align = "left" px = "2%" py = "1%">
           <Image src={logo} />
         </Flex>
         
         <Flex flex="1" w="100%" bg="white">
-          <VStack align = "left" width = "50vw" px = "5%" gap = {1}>
+          <VStack align = "left" width = "50%" px = "5%" gap = {1}>
             <Text fontWeight="bold" fontSize="30px">
               Community Counsel Password Manager
             </Text>
