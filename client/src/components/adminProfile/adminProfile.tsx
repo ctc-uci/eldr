@@ -11,45 +11,256 @@ import {
   HStack,
   IconButton,
   Input,
+  Spinner,
   Tag,
   Text,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiPlus, FiUser } from "react-icons/fi";
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-// Mock profile data - replace with actual data fetching
-const mockProfileData = {
-  firstName: "Peter",
-  lastName: "Anteater",
-  email: "peteranteater@uci.edu",
-  phone: "621-438-3991",
+// Profile data type
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  calendarEmail: string;
+  role: string;
+  specializations: string[];
+  languages: string[];
+  lawSchoolCompany: string;
+}
+
+// Initial empty profile state
+const initialProfile: ProfileData = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  calendarEmail: "",
   role: "Admin",
-  specializations: ["Immigration", "Family Law", "Civil Rights"],
-  languages: ["English", "Japanese"],
-  lawSchoolCompany: "UCI Law",
+  specializations: [],
+  languages: [],
+  lawSchoolCompany: "",
 };
 
 export const AdminProfile: React.FC = () => {
+  const { currentUser } = useAuthContext();
+  const { backend } = useBackendContext();
+  const toast = useToast();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(mockProfileData);
+  const [profile, setProfile] = useState<ProfileData>(initialProfile);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [adminExists, setAdminExists] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const navItems = ["Profiles", "Cases", "Clinics & Workshops", "Settings"];
   const sidebarItems = ["About", "Permissions"];
   const [activeNavItem, setActiveNavItem] = useState("Settings");
   const [activeSidebarItem, setActiveSidebarItem] = useState("About");
 
+  // Fetch profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!currentUser) {
+        setLoading(false);
+        setError("Not logged in");
+        return;
+      }
+
+      try {
+        // Step 1: Get user record using Firebase UID to get the database ID
+        const userResponse = await backend.get(`/users/${currentUser.uid}`);
+        const userData = userResponse.data[0];
+
+        if (!userData) {
+          setError("User not found in database");
+          setLoading(false);
+          return;
+        }
+
+        setUserId(userData.id);
+
+        // Step 2: Get admin profile using database ID
+        try {
+          const adminResponse = await backend.get(`/admins/id/${userData.id}`);
+          const adminData = adminResponse.data;
+
+          if (adminData && !adminData.error) {
+            setAdminExists(true);
+            setProfile({
+              firstName: adminData.firstName || "",
+              lastName: adminData.lastName || "",
+              email: adminData.email || userData.email || "",
+              phone: "", // Not in admin schema, keeping for UI
+              calendarEmail: adminData.calendarEmail || "",
+              role: userData.role || "Admin",
+              specializations: [], // Would need additional queries
+              languages: [], // Would need additional queries
+              lawSchoolCompany: "",
+            });
+          } else {
+            // Admin profile doesn't exist yet, use user data
+            setAdminExists(false);
+            setProfile({
+              ...initialProfile,
+              email: userData.email || "",
+              role: userData.role || "Admin",
+            });
+          }
+        } catch (adminErr: unknown) {
+          // Handle 404 - admin profile doesn't exist yet
+          const err = adminErr as { response?: { status?: number } };
+          if (err.response?.status === 404) {
+            // Admin profile doesn't exist yet, use user data
+            setAdminExists(false);
+            setProfile({
+              ...initialProfile,
+              email: userData.email || "",
+              role: userData.role || "Admin",
+            });
+          } else {
+            throw adminErr;
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError("Failed to fetch profile");
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          status: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [currentUser, backend, toast]);
+
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Add save logic here
+  const handleSave = async () => {
+    if (!userId || !currentUser) {
+      toast({
+        title: "Error",
+        description: "User ID not found. Cannot save.",
+        status: "error",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (adminExists) {
+        // Update existing admin profile
+        await backend.put(`/admins/${userId}`, {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          calendarEmail: profile.calendarEmail,
+        });
+      } else {
+        // Create new admin profile
+        await backend.post(`/admins/create`, {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          calendarEmail: profile.calendarEmail,
+          firebaseUid: currentUser.uid,
+        });
+        setAdminExists(true); // Mark as existing for future saves
+      }
+
+      toast({
+        title: "Success",
+        description: adminExists ? "Profile updated successfully" : "Profile created successfully",
+        status: "success",
+      });
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      toast({
+        title: "Error",
+        description: "Failed to save profile",
+        status: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
+
+  // Show error message if there's an error
+  if (error && !profile.email) {
+    return (
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
+
   return (
-    <Box minH="100vh" bg="white">
+    <Box minH="100vh" bg="white" position="relative">
+      {/* Dev Debug Banner - Only shown in development */}
+      {import.meta.env.DEV && (
+        <Box
+          position="fixed"
+          top={0}
+          right={0}
+          bg="yellow.100"
+          border="2px solid"
+          borderColor="yellow.400"
+          p={3}
+          zIndex={9999}
+          fontSize="xs"
+          borderBottomLeftRadius="md"
+          maxW="300px"
+        >
+          <Text fontWeight="bold" mb={2}>
+            🔧 Dev Debug Info
+          </Text>
+          <VStack align="start" spacing={1}>
+            <Text>
+              <strong>Auth:</strong> {currentUser ? "✅ Logged in" : "❌ Not logged in"}
+            </Text>
+            {currentUser && (
+              <>
+                <Text>
+                  <strong>Email:</strong> {currentUser.email}
+                </Text>
+                <Text>
+                  <strong>Firebase UID:</strong> {currentUser.uid.substring(0, 8)}...
+                </Text>
+              </>
+            )}
+            <Text>
+              <strong>DB User ID:</strong> {userId || "Not loaded"}
+            </Text>
+            <Text>
+              <strong>Profile:</strong> {profile.firstName ? `${profile.firstName} ${profile.lastName}` : "Not loaded"}
+            </Text>
+          </VStack>
+        </Box>
+      )}
       {/* Header Navigation */}
       <Flex
         as="nav"
@@ -87,14 +298,44 @@ export const AdminProfile: React.FC = () => {
           ))}
         </HStack>
 
-        {/* Profile Icon */}
-        <IconButton
-          aria-label="Profile"
-          icon={<FiUser />}
-          variant="ghost"
-          fontSize="xl"
-          rounded="full"
-        />
+        {/* Profile Icon with Login Status */}
+        <Flex align="center" gap={3}>
+          {currentUser ? (
+            <>
+              <VStack spacing={0} align="end">
+                <Text fontSize="sm" fontWeight="medium">
+                  {currentUser.email}
+                </Text>
+                <Text fontSize="xs" color="green.600">
+                  ✓ Logged in
+                </Text>
+              </VStack>
+              <IconButton
+                aria-label="Profile"
+                icon={<FiUser />}
+                variant="ghost"
+                fontSize="xl"
+                rounded="full"
+                bg="green.50"
+                color="green.600"
+              />
+            </>
+          ) : (
+            <>
+              <Text fontSize="sm" color="red.500">
+                Not logged in
+              </Text>
+              <IconButton
+                aria-label="Profile"
+                icon={<FiUser />}
+                variant="ghost"
+                fontSize="xl"
+                rounded="full"
+                color="red.500"
+              />
+            </>
+          )}
+        </Flex>
       </Flex>
 
       {/* Main Content */}
@@ -120,6 +361,8 @@ export const AdminProfile: React.FC = () => {
                 size="sm"
                 onClick={handleSave}
                 borderColor="gray.400"
+                isLoading={saving}
+                isDisabled={!isEditing || saving}
               >
                 Save
               </Button>
