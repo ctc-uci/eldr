@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { IoCaretBack } from "react-icons/io5";
+import { MdChevronLeft } from "react-icons/md";
 
 import { Navbar } from "../navbar/Navbar";
 import { EventInfo } from "./eventInfo";
@@ -265,47 +265,32 @@ export const EventCatalog = () => {
         </Flex>
 
         {/* Event details */}
-        <Box
+        <Flex
           w={{ base: "100%", md: "50%" }}
-          h="100%"
-          bg="white"
-          display={{ base: showDetails ? "block" : "none", md: "block" }}
+          display={{ base: showDetails ? "flex" : "none", md: "flex" }}
           position="relative"
-          overflow="hidden"
+          direction="column"
+          align="start"
+          px={{ base: "12px", md: "none" }}
         >
-          <Box
-            h="100%"
-            overflowY="auto"
-            pb="10%"
-          >
-            {/* Back Button */}
-            <Box
-              p={4}
-              display={{ base: "block", md: "none" }}
+          {/* Back Button */}
+          {isMobile && (
+            <Button
+              onClick={() => setShowDetails(false)}
+              variant="ghost"
+              color="#2563EB"
+              px="12px"
+              py="4px"
+              gap="2px"
+              fontSize="md"
+              fontWeight="normal"
             >
-              <Button
-                onClick={() => setShowDetails(false)}
-                variant="ghost"
-                w="77px"
-                h="28px"
-                backgroundColor="#EBEBEB"
-                borderRadius="4px 2px 2px 2px"
-                px="12px"
-                py="4px"
-                gap="4px"
-                display="flex"
-                alignItems="center"
-                fontSize="sm"
-                fontWeight="normal"
-                _hover={{ backgroundColor: "#D8D8D8" }}
-              >
-                <IoCaretBack />
-                Back
-              </Button>
-            </Box>
+              <MdChevronLeft />
+              Back
+            </Button>
+          )}
 
-            <EventInfo event={selectedEvent} />
-          </Box>
+          <EventInfo event={selectedEvent} />
 
           {/* Bottom white gradient */}
           <Box
@@ -319,7 +304,7 @@ export const EventCatalog = () => {
             gradientTo="white"
             pointerEvents="none"
           />
-        </Box>
+        </Flex>
       </Flex>
     </Flex>
   );

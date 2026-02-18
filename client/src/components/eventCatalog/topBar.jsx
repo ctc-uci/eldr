@@ -11,8 +11,7 @@ import {
 } from "@chakra-ui/react";
 
 import { FaMagnifyingGlass } from "react-icons/fa6";
-import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
-import { LuSettings2 } from "react-icons/lu";
+import { LuCalendarDays, LuSettings2, LuUserCheck } from "react-icons/lu";
 
 import { SortAndFilter } from "./sortAndFilter";
 
@@ -35,7 +34,10 @@ export const TopBar = ({
   const showSearch = !isMobile || !showDetails;
 
   return (
-    <Flex direction="column"  w="100%">
+    <Flex
+      direction="column"
+      w="100%"
+    >
       {/* Tabs - Segmented Control Style */}
       <Flex
         w="100%"
@@ -45,7 +47,13 @@ export const TopBar = ({
         px="16px"
         bg="white"
       >
-        <Tabs.Root value={activeTab} onValueChange={(e) => onTabChange(e.value)} variant="plain" fitted w="100%">
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(e) => onTabChange(e.value)}
+          variant="plain"
+          fitted
+          w="100%"
+        >
           <Tabs.List
             bg="#F3F4F6"
             borderRadius="8px"
@@ -156,7 +164,10 @@ export const TopBar = ({
             filteredCount={filteredCount}
           />
 
-          <InputGroup flex="1" startElement={<FaMagnifyingGlass color="#9CA3AF" />}>
+          <InputGroup
+            flex="1"
+            startElement={<FaMagnifyingGlass color="#9CA3AF" />}
+          >
             <Input
               placeholder="Search for an event..."
               backgroundColor="white"

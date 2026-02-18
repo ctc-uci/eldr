@@ -4,13 +4,18 @@ import {
   Button,
   Flex,
   HStack,
+  Separator,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
-import { FaCalendarAlt, FaClock } from "react-icons/fa";
-import { IoMdPeople } from "react-icons/io";
-import { IoLocationSharp } from "react-icons/io5";
+import {
+  CalendarClock,
+  CalendarDays,
+  CalendarPlus,
+  MapPin,
+  Users,
+} from "lucide-react";
 
 export const EventInfo = ({ event }) => {
   if (!event) return <Box p={10}>Please select an event to view details!</Box>;
@@ -18,105 +23,112 @@ export const EventInfo = ({ event }) => {
   return (
     <Flex
       direction="column"
-      h="100%"
-      w="100%"
-      position="relative"
+      py={{ base: 2, md: "50px" }}
+      px={{ base: 4, md: 8 }}
+      gap={2}
+      align="flex-start"
+      w="full"
+      h="full"
     >
-      {/* Scrollable */}
-      <Box
-        flex="1"
-        overflowY="auto"
-        pb="120px"
+      {/* Event name */}
+      <Text
+        fontSize="26px"
+        fontWeight="400"
+        lineHeight="44px"
+        letterSpacing="-2.5%"
+        color="#000000"
+        mb="14px"
       >
-        <Flex
-          justify="center"
-          w="100%"
+        {event.name}
+      </Text>
+
+      {/* Event metadata */}
+      <VStack
+        align="flex-start"
+        gap="10px"
+        w="full"
+        fontSize="16px"
+        px="4px"
+      >
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="16px"
         >
-          <VStack
-            direction="column"
-            w="100%"
-            maxW="720px"
-            py={{ base: 2, md: "50px" }}
-            px={{ base: 4, md: 8 }}
-            gap={2}
-            align="flex-start"
+          <CalendarDays />
+          {event.displayDate}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="16px"
+        >
+          <CalendarClock /> {event.displayTime}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="16px"
+        >
+          <MapPin /> {event.location}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="16px"
+        >
+          <Users /> {event.attendees}/{event.capacity} spots filled
+        </Text>
+      </VStack>
+
+      {/* Event tags */}
+      <HStack
+        flexWrap="wrap"
+        my={4}
+      >
+        {event.languages.map((l, i) => (
+          <Badge
+            key={i}
+            variant="solid"
+            bg="#F4F4F5"
+            color="black"
+            fontSize="14px"
           >
-            {/* Event title */}
-            <Box w="100%">
-              <Text
-                fontSize="36px"
-                fontWeight="500"
-                lineHeight="44px"
-                letterSpacing="-2.5%"
-                color="#000000"
-              >
-                {event.name}
-              </Text>
-            </Box>
+            {l.language}
+          </Badge>
+        ))}
+        {event.areas.map((a, i) => (
+          <Badge
+            key={i}
+            variant="solid"
+            bg="#F4F4F5"
+            color="black"
+            fontSize="14px"
+          >
+            {a.areasOfInterest}
+          </Badge>
+        ))}
+      </HStack>
 
-            {/* Event metadata */}
-            <VStack
-              align="flex-start"
-              gap="8px"
-            >
-              <Text
-                display="flex"
-                alignItems="center"
-                gap="8px"
-              >
-                <FaCalendarAlt />
-                {event.displayDate}
-              </Text>
-              <Text
-                display="flex"
-                alignItems="center"
-                gap="8px"
-              >
-                <FaClock /> {event.displayTime}
-              </Text>
-              <Text
-                display="flex"
-                alignItems="center"
-                gap="8px"
-              >
-                <IoLocationSharp /> {event.location}
-              </Text>
-              <Text
-                display="flex"
-                alignItems="center"
-                gap="8px"
-              >
-                <IoMdPeople /> {event.attendees} spots filled
-              </Text>
-            </VStack>
-
-            {/* Event tags */}
-            <HStack
-              flexWrap="wrap"
-              mt={4}
-            >
-              {event.languages.map((l, i) => (
-                <Badge
-                  key={i}
-                  variant="outline"
-                >
-                  {l.language}
-                </Badge>
-              ))}
-              {event.areas.map((a, i) => (
-                <Badge
-                  key={i}
-                  variant="outline"
-                >
-                  {a.areasOfInterest}
-                </Badge>
-              ))}
-            </HStack>
-
-            {/* Event description */}
-            <Text>{event.description}</Text>
-          </VStack>
-        </Flex>
+      {/* Event description */}
+      <Box
+        w="full"
+        overflowY="auto"
+        scrollbar="hidden"
+      >
+        <Text whiteSpace="pre-line">{event.description}</Text>
       </Box>
 
       {/* Gradient overlay - fixed at bottom */}
@@ -132,7 +144,7 @@ export const EventInfo = ({ event }) => {
         pointerEvents="none"
       />
 
-      {/* RSVP Button*/}
+      {/* Register Button */}
       <Flex
         position="absolute"
         bottom={0}
@@ -143,17 +155,13 @@ export const EventInfo = ({ event }) => {
         zIndex={2}
       >
         <Button
-          w="148px"
-          h="40px"
-          backgroundColor="#ADADAD"
-          border="3px solid"
-          borderColor="#212121"
-          borderRadius="4px 2px 2px 2px"
-          px="16px"
-          py="8px"
-          _hover={{ backgroundColor: "#9A9A9A" }}
+          variant="solid"
+          colorPalette="blue"
+          px="18px"
+          py="6px"
         >
-          RSVP for Event
+          <CalendarPlus />
+          Register
         </Button>
       </Flex>
     </Flex>

@@ -1,6 +1,12 @@
-import { React } from "react";
-
-import { Badge, Box, Circle, Flex, HStack, Text, VStack } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Circle,
+  Flex,
+  HStack,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 export const MyEventsList = ({ events, onSelect, selectedEvent }) => {
   const myEvents = events.filter((e) => e.my_event);
@@ -41,7 +47,7 @@ export const MyEventsList = ({ events, onSelect, selectedEvent }) => {
 
 const EventSection = ({ title, events, onSelect, selectedEvent }) => {
   const isPastSection = title === "Past Events";
-  
+
   return (
     <Box>
       <Text
@@ -54,7 +60,10 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
       >
         {title}
       </Text>
-      <VStack gap="12px" align="stretch">
+      <VStack
+        gap="12px"
+        align="stretch"
+      >
         {events.map((event) => {
           const isSelected = selectedEvent && selectedEvent.id === event.id;
           return (
@@ -78,38 +87,78 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
               transition="all 0.15s ease"
             >
               {/* Date/time row + spots */}
-              <Flex justifyContent="space-between" width="100%" align="center">
+              <Flex
+                justifyContent="space-between"
+                width="100%"
+                align="center"
+              >
                 <HStack gap="4px">
-                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
+                  <Text
+                    fontSize={{ base: "12px", md: "14px" }}
+                    fontWeight={400}
+                    color="#6B7280"
+                  >
                     {event.date}
                   </Text>
-                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
+                  <Text
+                    fontSize={{ base: "12px", md: "14px" }}
+                    fontWeight={400}
+                    color="#6B7280"
+                  >
                     •
                   </Text>
-                  <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280">
+                  <Text
+                    fontSize={{ base: "12px", md: "14px" }}
+                    fontWeight={400}
+                    color="#6B7280"
+                  >
                     {event.time}
                   </Text>
                 </HStack>
-                <Text fontSize={{ base: "12px", md: "14px" }} fontWeight={400} color="#6B7280" flexShrink={0}>
-                  {event.spots} spots filled
+                <Text
+                  fontSize={{ base: "12px", md: "14px" }}
+                  fontWeight={400}
+                  color="#6B7280"
+                  flexShrink={0}
+                >
+                  {event.spots}/{event.capacity} spots filled
                 </Text>
               </Flex>
 
               {/* Title */}
-              <Text fontSize="18px" fontWeight={600} color="#111827">
+              <Text
+                fontSize="18px"
+                fontWeight={600}
+                color="#111827"
+              >
                 {event.title}
               </Text>
 
               {/* Address */}
-              <Text fontSize="14px" fontWeight={400} color="#6B7280">
+              <Text
+                fontSize="14px"
+                fontWeight={400}
+                color="#6B7280"
+              >
                 {event.address}
               </Text>
 
               {/* Status + Tags */}
-              <HStack gap="8px" mt="4px" flexWrap="wrap">
+              <HStack
+                gap="8px"
+                mt="4px"
+                flexWrap="wrap"
+              >
                 <HStack gap="6px">
-                  <Circle size="8px" bg="#22C55E" />
-                  <Text fontSize="14px" fontWeight={500} color="#111827">
+                  <Circle
+                    size="8px"
+                    bg="#22C55E"
+                  />
+                  <Text
+                    fontSize="14px"
+                    fontWeight={500}
+                    color="#111827"
+                  >
                     {event.status}
                   </Text>
                 </HStack>

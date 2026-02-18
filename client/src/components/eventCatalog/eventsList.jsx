@@ -66,7 +66,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                 color="#6B7280"
                 flexShrink={0}
               >
-                {event.attendees} spots filled
+                {event.attendees}/{event.capacity} spots filled
               </Text>
             </Flex>
 
