@@ -11,17 +11,20 @@ import {
   Menu,
   Button,
   Portal,
-  NativeSelect
+  NativeSelect,
+  Image,
+  Icon,
 } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 
 /** @TODO: change to use different icons bc chakra-ui/icons isn't compatible */
-import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaUsers, FaQuestion } from "react-icons/fa";
+import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaMailBulk, FaQuestion } from "react-icons/fa";
 
 export const EmailTemplateManagement = () => {
   const [activeSection, setActiveSection] = useState("welcome");
 
   return (
-    <Flex minH="100vh" bg="gray.100">
+    <Flex minH="100vh" bg="white">
       {/* Sidebar */}
       <Sidebar />
 
@@ -44,38 +47,60 @@ export const EmailTemplateManagement = () => {
 };
   
 
+const sidebarNav = [
+  { label: "Event Catalog", icon: FaClipboard, active: false },
+  { label: "Case Catalog", icon: FaBriefcase, active: false },
+  { label: "Email Template", icon: FaMailBulk, active: true },
+  { label: "Manage Profiles", icon: FaUser, active: false },
+];
+
 const Sidebar = () => (
   <Box
-    w="300px"
-    bg="gray.200"
-    p={10}
+    w="260px"
+    borderRight="1px solid #E0E0E0"
+    py={8}
+    px={4}
     minH="100vh"
+    display="flex"
+    flexDirection="column"
+    justifyContent="space-between"
   >
-    <Text fontSize="2xl" fontWeight="bold" mb={8}>
-      ELDR
-    </Text>
-
-    <VStack align="stretch" spacing={2}>
-      <NavItem icon={<FaUser />} label="Profile" />
-      <NavItem icon={<FaUsers />} label="Volunteer Management" />
-      <NavItem icon={<FaQuestion />} label="Email Management" active />
-      <NavItem icon={<FaClipboard />} label="Clinics" />
-      <NavItem icon={<FaBriefcase />} label="Cases" />
-    </VStack>
+    <Box>
+      <Link to="/">
+        <Image src="/logo.png" alt="Elder Law & Disability Rights Center" objectFit="contain" mb={10} _hover={{ opacity: 0.85 }} />
+      </Link>
+      <VStack align="stretch" gap={10}>
+        {sidebarNav.map((item) => (
+          <SidebarNavItem key={item.label} icon={item.icon} label={item.label} active={item.active} />
+        ))}
+      </VStack>
+    </Box>
+    <Box px={2} pb={2}>
+      {/* User avatar placeholder, bottom left */}
+      <Box boxSize="36px" borderRadius="full" overflow="hidden" cursor="pointer">
+        {/** @TODO: replace with actual user avatar */}
+        <Image src="https://randomuser.me/api/portraits/men/67.jpg" alt="User" boxSize="100%" objectFit="cover" />
+      </Box>
+    </Box>
   </Box>
 );
 
-const NavItem = ({ icon, label, active = false }) => (
+const SidebarNavItem = ({ icon, label, active }) => (
   <HStack
     spacing={3}
-    p={2}
-    borderRadius="md"
-    bg={active ? "gray.300" : "transparent"}
+    px={4}
+    py={3}
+    borderRadius="lg"
+    bg={active ? "#D8F1FF" : "transparent"}
+    // color={active ? "#1A567E" : "#3A3A3A"}
+    color="#294A5F"
+    fontWeight={active ? "bold" : "normal"}
     cursor="pointer"
-    _hover={{ bg: "gray.300" }}
+    _hover={{ bg: "#E3F0F9" }}
+    transition="background 0.2s"
   >
-    {icon}
-    <Text>{label}</Text>
+    <Icon as={icon} boxSize={5} color={active ? "#5797bd" : "#294A5F"} />
+    <Text fontSize="md">{label}</Text>
   </HStack>
 );
 
