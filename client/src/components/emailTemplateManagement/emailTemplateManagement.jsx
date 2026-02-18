@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  IconButton,
   Box,
   Text,
   VStack,
@@ -11,25 +12,78 @@ import {
   Menu,
   Button,
   Portal,
-  NativeSelect,
+  Textarea,
   Image,
   Icon,
   Breadcrumb,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
-import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaMailBulk, FaQuestion } from "react-icons/fa";
+import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaMailBulk, FaQuestion, FaPlus } from "react-icons/fa";
 
 export const EmailTemplateManagement = () => {
-  // For now, static folder data and pagination
-  const folders = [
+  const [view, setView] = useState("folders"); 
+  // "folders" | "newTemplate"
+
+  const [templateName, setTemplateName] = useState("Untitled Template");
+  const [templateContent, setTemplateContent] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState("");
+  const [showFolderPrompt, setShowFolderPrompt] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [templates, setTemplates] = useState([]);
+
+
+  const [folders, setFolders] = useState([
     "Untitled Folder",
     "Untitled Folder",
     "Untitled Folder",
-    "Untitled Folder",
-    "Untitled Folder",
-    "Untitled Folder",
-  ];
+  ]);
+
+  const handleSaveTemplate = () => {
+    // Trim values
+    const trimmedName = templateName.trim();
+    const trimmedFolder = selectedFolder.trim();
+  
+    // Validate template name
+    if (!trimmedName) {
+      alert("Template name cannot be empty.");
+      return;
+    }
+  
+    // Validate folder
+    if (!trimmedFolder) {
+      alert("Please select or enter a folder.");
+      return;
+    }
+  
+    // If folder doesn't exist → show modal
+    if (!folders.includes(trimmedFolder)) {
+      setShowFolderModal(true);
+      return;
+    }
+  
+    // Create new template object
+    const newTemplate = {
+      id: Date.now(),
+      name: trimmedName,
+      content: templateContent,
+      folder: trimmedFolder,
+      createdAt: new Date(),
+    };
+  
+    // Save template
+    setTemplates((prev) => [...prev, newTemplate]);
+  
+    // Reset form
+    setTemplateName("Untitled Template");
+    setTemplateContent("");
+    setSelectedFolder("");
+  
+    // Go back to folders view
+    setView("folders");
+  };
+
   const totalPages = 6;
   const currentPage = 1;
 
@@ -37,66 +91,193 @@ export const EmailTemplateManagement = () => {
     <Flex minH="100vh" bg="#FAFBFC">
       <Sidebar />
       <Box flex="1" px={10} py={8}>
-        {/* breadcrumbs */}
-        <Breadcrumb.Root mb={2} fontSize="sm" color="gray.500">
-          <Breadcrumb.List>
-            <Breadcrumb.Item>
-              <Breadcrumb.Link as={Link} to="#">Management</Breadcrumb.Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Separator />
-            <Breadcrumb.Item isCurrentPage>
-              <Breadcrumb.Link as={Link} to="#">New Template</Breadcrumb.Link>
-            </Breadcrumb.Item>
-          </Breadcrumb.List>
-        </Breadcrumb.Root>
-
-        {/* title and actions */}
-        <Flex align="center" justify="space-between" mb={6}>
-          <Text fontSize="2xl" fontWeight="bold">Manage your folders</Text>
-          <HStack spacing={4}>
-            <Button backgroundColor="#5797BD" color="white" variant="solid" minW="259px">
-              <FaMailBulk />
-              New Template
-            </Button>
-            <Button backgroundColor="#5797BD" color="white" variant="solid" minW="259px">
-              <FaFolder />
-              New Folder
-            </Button>
-          </HStack>
-        </Flex>
-
         {/* Search Bar */}
         <InputGroup mb={6} maxW="400px">
           <Input placeholder="Type to search" bg="white" />
         </InputGroup>
 
-        {/* Folder List */}
-        <VStack align="stretch" spacing={4} mb={8}>
-          {folders.map((folder, idx) => (
-            <Flex key={idx} align="center" bg="white" borderRadius="md" px={6} py={4} boxShadow="sm" justify="space-between">
-              <Text fontWeight="medium">{folder}</Text>
-              <Icon as={FaQuestion} boxSize={5} color="gray.400" cursor="pointer" />
-            </Flex>
-          ))}
-        </VStack>
+        {/* breadcrumbs */}
+        <Breadcrumb.Root mb={4} fontSize="sm" color="gray.500">
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              {view === "newTemplate" ? (
+                <Breadcrumb.Link
+                  cursor="pointer"
+                  onClick={() => setView("folders")}
+                  _hover={{ color: "gray.700" }}
+                >
+                  Management
+                </Breadcrumb.Link>
+              ) : (
+                <Breadcrumb.Link as={Link} to="#">
+                  Management
+                </Breadcrumb.Link>
+              )}
+            </Breadcrumb.Item>
 
-        {/* Pagination */}
-        <Flex justify="flex-end">
-          <HStack spacing={1} bg="white" borderRadius="md" p={2} boxShadow="sm">
-            {[...Array(totalPages)].map((_, i) => (
+            {view === "newTemplate" && (
+              <>
+                <Breadcrumb.Separator />
+                <Breadcrumb.Item isCurrentPage>
+                  <Breadcrumb.Link color="gray.800" fontWeight="medium">
+                    {templateName || "Untitled Template"}
+                  </Breadcrumb.Link>
+                </Breadcrumb.Item>
+              </>
+            )}
+          </Breadcrumb.List>
+        </Breadcrumb.Root>
+
+        {/* title and actions */}
+        <Flex align="center" justify="space-between" mb={8}>
+        {view === "folders" ? (
+          <>
+            <Text fontSize="2xl" fontWeight="bold">
+              Manage your folders
+            </Text>
+
+            <HStack spacing={4}>
               <Button
-                key={i}
-                size="sm"
-                variant={i + 1 === currentPage ? "solid" : "ghost"}
-                colorScheme={i + 1 === currentPage ? "blue" : undefined}
-                fontWeight={i + 1 === currentPage ? "bold" : "normal"}
+                backgroundColor="#5797BD"
+                color="white"
+                minW="180px"
+                onClick={() => setView("newTemplate")}
               >
-                {i + 1}
+                <FaMailBulk />
+                New Template
               </Button>
+
+              <Button
+                backgroundColor="#5797BD"
+                color="white"
+                minW="180px"
+              >
+                <FaFolder />
+                New Folder
+              </Button>
+            </HStack>
+          </>
+        ) : (
+          <>
+            <Input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                variant="unstyled"
+                fontSize="3xl"
+                fontWeight="600"
+                bg="#FAFBFC"
+                mb={6}
+                _focus={{ boxShadow: "none" }}
+            />
+            <HStack spacing={4} ml="auto">
+              <Box position="relative">
+                <Button
+                  backgroundColor="#5797BD"
+                  color="white"
+                  onClick={() => setShowFolderPrompt((prev) => !prev)}
+                >
+                  Save Template
+                </Button>
+
+                {showFolderPrompt && (
+                  <Box
+                    position="absolute"
+                    top="110%"
+                    right="0"
+                    mt={3}
+                    bg="white"
+                    boxShadow="0 4px 12px rgba(0,0,0,0.15)"
+                    borderRadius="md"
+                    p={5}
+                    width="420px"
+                    zIndex={20}
+                  >
+                    <Text fontWeight="600" mb={3}>
+                      Indicate a folder to store this template.
+                    </Text>
+
+                    <Flex gap={3}>
+                      <Input
+                        placeholder="Enter a folder name"
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                      />
+
+                    <IconButton
+                      borderRadius="full"
+                      variant="outline"
+                      onClick={() => {
+                        if (!newFolderName.trim()) return;
+                        setFolders((prev) => [...prev, newFolderName]);
+                        setSelectedFolder(newFolderName);
+                        setNewFolderName("");
+                      }}
+                    >
+                      <FaPlus />
+                    </IconButton>
+                    </Flex>
+                  </Box>
+                )}
+              </Box>
+
+              <Button
+                backgroundColor="#5797BD"
+                color="white"
+                onClick={() => setView("folders")}
+              >
+                Delete Template
+              </Button>
+            </HStack>
+          </>
+        )}
+      </Flex>
+
+        {/* Folder List */}
+        {view === "folders" && (
+          <>
+          <VStack align="stretch" spacing={4} mb={8}>
+            {folders.map((folder, idx) => (
+              <Flex key={idx} align="center" bg="white" borderRadius="md" px={6} py={4} boxShadow="sm" justify="space-between">
+                <Text fontWeight="medium">{folder}</Text>
+                <Icon as={FaQuestion} boxSize={5} color="gray.400" cursor="pointer" />
+              </Flex>
             ))}
-            <Button size="sm" variant="ghost">→</Button>
-          </HStack>
-        </Flex>
+          </VStack>
+
+          {/* Pagination */}
+          <Flex justify="flex-end">
+            <HStack spacing={1} bg="white" borderRadius="md" p={2} boxShadow="sm">
+              {[...Array(totalPages)].map((_, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  variant={i + 1 === currentPage ? "solid" : "ghost"}
+                  colorScheme={i + 1 === currentPage ? "blue" : undefined}
+                  fontWeight={i + 1 === currentPage ? "bold" : "normal"}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+              <Button size="sm" variant="ghost">→</Button>
+            </HStack>
+          </Flex>
+          </>
+        )}
+
+        {view === "newTemplate" && (
+          <NewTemplateSection
+            templateName={templateName}
+            setTemplateName={setTemplateName}
+            templateContent={templateContent}
+            setTemplateContent={setTemplateContent}
+            selectedFolder={selectedFolder}
+            setSelectedFolder={setSelectedFolder}
+            folders={folders}
+            setShowFolderModal={setShowFolderModal}
+            onSave={handleSaveTemplate}
+          />
+        )}
+
       </Box>
     </Flex>
   );
@@ -237,45 +418,55 @@ const TemplateCard = () => (
   </Box>
 );
 
-const NewTemplateSection = () => (
-  <Box>
-    <Text fontSize="5xl" mb={4}>
-      Template Name
-    </Text>
+const NewTemplateSection = ({
+  templateName,
+  setTemplateName,
+  templateContent,
+  setTemplateContent,
+  selectedFolder,
+  setSelectedFolder,
+  folders,
+  onSave,
+}) => (
+  <Box maxW="100%" mx="auto">
 
-    <Text fontSize="2xl" mb={4}>
-      Templates
-    </Text>
-
-    <HStack spacing={3} mb={6} b>
-      <Button bg="white" border="2px solid black">Add Notification</Button>
-      <Button bg="white" border="2px solid black">Delete Draft</Button>
-      <NativeSelect.Root
-        size="sm"
-        width="200px"
+    <VStack spacing={6} align="stretch">
+      {/* Editor Container */}
+      <Box
         bg="white"
-        border="1px solid black"
-        borderRadius="md"
+        border="1px solid"
+        borderColor="gray.200"
+        borderRadius="16px"
+        overflow="hidden"
+        boxShadow="sm"
       >
-        <NativeSelect.Field placeholder="Select Folder">
-          <option value="folder1">Folder 1</option>
-          <option value="folder2">Folder 2</option>
-          <option value="folder3">Folder 3</option>
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
-    </HStack>
+        {/* Toolbar */}
+        <HStack
+          px={4}
+          py={3}
+          borderBottom="1px solid"
+          borderColor="gray.100"
+          spacing={4}
+        >
+          <Text fontWeight="600" cursor="pointer">B</Text>
+          <Text fontStyle="italic" cursor="pointer">I</Text>
+          <Text textDecoration="underline" cursor="pointer">U</Text>
+        </HStack>
 
-    {/* Template Content */}
-    <Box w="100%" mb={4}>
-      <Box bg="white" border="1px solid black" p={2} mb={5}>
-        B I U
+        {/* Big Text Box */}
+        <Textarea
+          value={templateContent}
+          onChange={(e) => setTemplateContent(e.target.value)}
+          placeholder="Start writing your template..."
+          minH="400px"
+          resize="none"
+          border="none"
+          borderRadius="0"
+          _focus={{ boxShadow: "none" }}
+          p={6}
+          fontSize="md"
+        />
       </Box>
-
-      <Box bg="gray.300" border="2px solid black" minH="350px" />
-    </Box>
-
-
-    <Button bg="white" border="2px solid black">Save</Button>
+    </VStack>
   </Box>
 );
