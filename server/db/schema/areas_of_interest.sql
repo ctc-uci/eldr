@@ -14,3 +14,9 @@ CREATE TABLE clinic_areas_of_interest (
     area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
     PRIMARY KEY (clinic_id, area_of_interest_id)
 );
+
+CREATE TABLE IF NOT EXISTS public.volunteer_areas_of_interest (
+    volunteer_id INTEGER REFERENCES public.volunteers(id) ON DELETE CASCADE,
+    area_of_interest_id INTEGER REFERENCES public.areas_of_interest(id) ON DELETE CASCADE,
+    PRIMARY KEY (volunteer_id, area_of_interest_id)
+);

@@ -24,15 +24,20 @@ volunteersRouter.post("/", async (req, res) => {
       return res.status(400).send("firebaseUid and email are required");
     }
 
+    // volunteers.phone_number is NOT NULL in your schema
+    if (!phone_number) {
+      return res.status(400).send("phone_number is required");
+    }
+
     // Create the base user first (volunteer role defaults to 'user')
     let userId;
     try {
       const userResult = await db.query(
         `
-                INSERT INTO users (email, firebase_uid)
-                VALUES ($1, $2)
-                RETURNING *;
-                `,
+          INSERT INTO users (email, firebase_uid)
+          VALUES ($1, $2)
+          RETURNING *;
+        `,
         [email, firebaseUid]
       );
 
@@ -42,10 +47,10 @@ volunteersRouter.post("/", async (req, res) => {
       if (err.code === "23505") {
         const existingUser = await db.query(
           `
-                    SELECT id
-                    FROM users
-                    WHERE email = $1;
-                    `,
+            SELECT id
+            FROM users
+            WHERE email = $1;
+          `,
           [email]
         );
 
@@ -59,12 +64,40 @@ volunteersRouter.post("/", async (req, res) => {
       }
     }
 
+    // Minimal change: prevent duplicate volunteer insert from crashing
+    const existingVolunteer = await db.query(
+      `
+        SELECT *
+        FROM volunteers
+        WHERE id = $1;
+      `,
+      [userId]
+    );
+
+    if (existingVolunteer.length) {
+      return res.status(409).json({
+        message: "Volunteer already exists",
+        volunteer: keysToCamel(existingVolunteer[0]),
+      });
+    }
+
     const volunteerResult = await db.query(
       `
-            INSERT INTO volunteers (id, first_name, last_name, email, phone_number, form_completed, form_link, is_signed_confidentiality, is_attorney, is_notary)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *;
-            `,
+        INSERT INTO volunteers (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone_number,
+          form_completed,
+          form_link,
+          is_signed_confidentiality,
+          is_attorney,
+          is_notary
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        RETURNING *;
+      `,
       [
         userId,
         first_name,
@@ -79,7 +112,8 @@ volunteersRouter.post("/", async (req, res) => {
       ]
     );
 
-    res.status(201).json(keysToCamel(volunteerResult));
+    // Minimal change: return a single object, not an array
+    res.status(201).json(keysToCamel(volunteerResult[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -90,9 +124,9 @@ volunteersRouter.get("/", async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
-            SELECT *
-            FROM volunteers;
-            `
+        SELECT *
+        FROM volunteers;
+      `
     );
     res.status(201).json(keysToCamel(volunteersQuery));
   } catch (e) {
@@ -106,10 +140,10 @@ volunteersRouter.get("/:id", async (req, res) => {
     const { id } = req.params;
     const volunteerQuery = await db.query(
       `
-            SELECT *
-            FROM volunteers
-            WHERE id = $1;
-            `,
+        SELECT *
+        FROM volunteers
+        WHERE id = $1;
+      `,
       [id]
     );
 
@@ -134,20 +168,21 @@ volunteersRouter.put("/:id", async (req, res) => {
       is_attorney,
       is_notary,
     } = req.body;
+
     await db.query(
       `
-            UPDATE volunteers
-            SET first_name = $2,
-                last_name = $3,
-                email = $4,
-                phone_number = $5,
-                form_completed = $6,
-                form_link = $7,
-                is_signed_confidentiality = $8,
-                is_attorney = $9,
-                is_notary = $10
-            WHERE id = $1;
-            `,
+        UPDATE volunteers
+        SET first_name = $2,
+            last_name = $3,
+            email = $4,
+            phone_number = $5,
+            form_completed = $6,
+            form_link = $7,
+            is_signed_confidentiality = $8,
+            is_attorney = $9,
+            is_notary = $10
+        WHERE id = $1;
+      `,
       [
         id,
         first_name,
@@ -174,10 +209,10 @@ volunteersRouter.delete("/:id", async (req, res) => {
     const { id } = req.params;
     await db.query(
       `
-            DELETE
-            FROM volunteers
-            WHERE id = $1;
-            `,
+        DELETE
+        FROM volunteers
+        WHERE id = $1;
+      `,
       [id]
     );
 
@@ -186,6 +221,92 @@ volunteersRouter.delete("/:id", async (req, res) => {
     res.status(500).send(e.message);
   }
 });
+
+//
+// Volunteer Areas of Interest Routes
+// Requires: volunteer_areas_of_interest(volunteer_id, area_of_interest_id)
+//
+
+// Assign an area of interest to a volunteer
+// POST /volunteers/:volunteerId/areas-of-interest  body: { areaOfInterestId }
+volunteersRouter.post("/:volunteerId/areas-of-interest", async (req, res) => {
+  try {
+    const { volunteerId } = req.params;
+    const { areaOfInterestId } = req.body;
+
+    if (!areaOfInterestId) {
+      return res.status(400).json({ message: "areaOfInterestId is required" });
+    }
+
+    const result = await db.query(
+      `
+        INSERT INTO volunteer_areas_of_interest (volunteer_id, area_of_interest_id)
+        VALUES ($1, $2)
+        RETURNING *;
+      `,
+      [volunteerId, areaOfInterestId]
+    );
+
+    res.status(201).json(keysToCamel(result[0]));
+  } catch (e) {
+    if (e.code === "23505") {
+      return res.status(409).json({ message: "Area of interest already assigned" });
+    }
+    res.status(500).send(e.message);
+  }
+});
+
+// List all areas of interest for a volunteer
+// GET /volunteers/:volunteerId/areas-of-interest
+volunteersRouter.get("/:volunteerId/areas-of-interest", async (req, res) => {
+  try {
+    const { volunteerId } = req.params;
+
+    const result = await db.query(
+      `
+        SELECT aoi.id, aoi.areas_of_interest
+        FROM volunteer_areas_of_interest vao
+        JOIN areas_of_interest aoi ON aoi.id = vao.area_of_interest_id
+        WHERE vao.volunteer_id = $1;
+      `,
+      [volunteerId]
+    );
+
+    res.status(200).json(keysToCamel(result));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Remove an area of interest from a volunteer
+// DELETE /volunteers/:volunteerId/areas-of-interest/:areaOfInterestId
+volunteersRouter.delete(
+  "/:volunteerId/areas-of-interest/:areaOfInterestId",
+  async (req, res) => {
+    try {
+      const { volunteerId, areaOfInterestId } = req.params;
+
+      const result = await db.query(
+        `
+          DELETE FROM volunteer_areas_of_interest
+          WHERE volunteer_id = $1 AND area_of_interest_id = $2
+          RETURNING *;
+        `,
+        [volunteerId, areaOfInterestId]
+      );
+
+      if (!result.length) {
+        return res
+          .status(404)
+          .json({ message: "Area of interest not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(result[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
+  }
+);
 
 // Volunteer Tags Routes
 // Assign volunteer a tag
@@ -196,10 +317,10 @@ volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
 
     const volunteerResult = await db.query(
       `
-            INSERT INTO volunteer_tags (volunteer_id, tag_id)
-            VALUES ($1, $2) 
-            RETURNING *;
-            `,
+        INSERT INTO volunteer_tags (volunteer_id, tag_id)
+        VALUES ($1, $2) 
+        RETURNING *;
+      `,
       [volunteerId, tagId]
     );
 
@@ -216,10 +337,10 @@ volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
 
     await db.query(
       `
-            DELETE
-            FROM volunteer_tags
-            WHERE volunteer_id = $1 AND tag_id = $2;
-            `,
+        DELETE
+        FROM volunteer_tags
+        WHERE volunteer_id = $1 AND tag_id = $2;
+      `,
       [volunteerId, tagId]
     );
 
@@ -235,17 +356,16 @@ volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
     const { volunteerId } = req.params;
     const volunteerResult = await db.query(
       `
-            SELECT t.id, t.tag
-            FROM volunteer_tags vt
-            JOIN tags t ON t.id = vt.tag_id 
-            WHERE vt.volunteer_id = $1;
-            `,
+        SELECT t.id, t.tag
+        FROM volunteer_tags vt
+        JOIN tags t ON t.id = vt.tag_id 
+        WHERE vt.volunteer_id = $1;
+      `,
       [volunteerId]
     );
 
     res.status(200).json(keysToCamel(volunteerResult));
   } catch (e) {
-    // Volunteer does not exist
     if (e.code === "23505") {
       return res.status(404).json({ message: "Volunteer not found" });
     }
@@ -262,8 +382,8 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
 
     const result = await db.query(
       `INSERT INTO volunteer_language (volunteer_id, language_id, proficiency)
-             VALUES($1, $2, $3)
-             RETURNING *`,
+       VALUES($1, $2, $3)
+       RETURNING *`,
       [volunteerId, languageId, proficiency]
     );
     res.status(201).json(keysToCamel(result[0]));
@@ -281,8 +401,8 @@ volunteersRouter.delete(
 
       const result = await db.query(
         `DELETE FROM volunteer_language
-       WHERE volunteer_id = $1 AND language_id = $2
-       RETURNING *`,
+         WHERE volunteer_id = $1 AND language_id = $2
+         RETURNING *`,
         [volunteerId, languageId]
       );
 
@@ -307,7 +427,7 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
     const languages = await db.query(
       `SELECT l.*, vl.proficiency
        FROM languages l
-        JOIN volunteer_language vl ON vl.language_id = l.id
+       JOIN volunteer_language vl ON vl.language_id = l.id
        WHERE vl.volunteer_id = $1`,
       [volunteerId]
     );
@@ -318,127 +438,115 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
 });
 
 // Volunteer Roles Routes
-// POST: assign a role to a volunteer
-// /volunteers/{volunteerId}/roles
 volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
-    try {
-        const { volunteerId } = req.params;
-        const { roleId } = req.body;
+  try {
+    const { volunteerId } = req.params;
+    const { roleId } = req.body;
 
-        if (!roleId) {
-            return res.status(400).json({ message: "roleId is required" });
-        }
-
-        const newRelationship = await db.query(
-            "INSERT INTO volunteer_roles (volunteer_id, role_id) VALUES ($1, $2) RETURNING *",
-            [volunteerId, roleId]
-        );
-
-        res.status(201).json(keysToCamel(newRelationship));
-    } catch (e) {
-        res.status(500).send(e.message);
+    if (!roleId) {
+      return res.status(400).json({ message: "roleId is required" });
     }
+
+    const newRelationship = await db.query(
+      "INSERT INTO volunteer_roles (volunteer_id, role_id) VALUES ($1, $2) RETURNING *",
+      [volunteerId, roleId]
+    );
+
+    res.status(201).json(keysToCamel(newRelationship));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
-// DELETE: remove a role from a volunteer
-// /volunteers/{volunteerId}/roles/{roleId}
 volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
-    try {
-        const { volunteerId, roleId } = req.params;
+  try {
+    const { volunteerId, roleId } = req.params;
 
-        const deletedRelationship = await db.query(
-            "DELETE FROM volunteer_roles WHERE volunteer_id = $1 AND role_id = $2 RETURNING *",
-            [volunteerId, roleId]
-        );
+    const deletedRelationship = await db.query(
+      "DELETE FROM volunteer_roles WHERE volunteer_id = $1 AND role_id = $2 RETURNING *",
+      [volunteerId, roleId]
+    );
 
-        if (deletedRelationship.length === 0) {
-            return res.status(404).json({ message: "Role not assigned to this volunteer" });
-        }
-
-        res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (e) {
-        res.status(500).send(e.message);
+    if (deletedRelationship.length === 0) {
+      return res.status(404).json({ message: "Role not assigned to this volunteer" });
     }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
-// GET: list all roles for a volunteer, including role IDs and text
-// /volunteers/{volunteerId}/roles
 volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
-    try {
-        const { volunteerId } = req.params;
+  try {
+    const { volunteerId } = req.params;
 
-        const listAll = await db.query(
-            `SELECT r.id, r.role_name
-             FROM volunteer_roles vr
-             JOIN roles r ON vr.role_id = r.id
-             WHERE vr.volunteer_id = $1`,
-             [volunteerId]
-        );
-        res.status(200).json(keysToCamel(listAll));
-    } catch (e) {
-        res.status(500).send(e.message);
-    }
+    const listAll = await db.query(
+      `SELECT r.id, r.role_name
+       FROM volunteer_roles vr
+       JOIN roles r ON vr.role_id = r.id
+       WHERE vr.volunteer_id = $1`,
+      [volunteerId]
+    );
+    res.status(200).json(keysToCamel(listAll));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
 // Volunteer Locations Routes
-// POST: assign a location to a volunteer
-// /volunteers/{volunteerId}/locations
 volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
-    try {
-        const { volunteerId } = req.params;
-        const { locationId } = req.body;
+  try {
+    const { volunteerId } = req.params;
+    const { locationId } = req.body;
 
-        if (!locationId) {
-            return res.status(400).json({ message: "locationId is required" });
-        }
-
-        const newRelationship = await db.query(
-            "INSERT INTO volunteer_locations (volunteer_id, location_id) VALUES ($1, $2) RETURNING *",
-            [volunteerId, locationId]
-        );
-
-        res.status(201).json(keysToCamel(newRelationship));
-    } catch (e) {
-        res.status(500).send(e.message);
+    if (!locationId) {
+      return res.status(400).json({ message: "locationId is required" });
     }
+
+    const newRelationship = await db.query(
+      "INSERT INTO volunteer_locations (volunteer_id, location_id) VALUES ($1, $2) RETURNING *",
+      [volunteerId, locationId]
+    );
+
+    res.status(201).json(keysToCamel(newRelationship));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
-// DELETE: remove a location from a volunteer
-// /volunteers/{volunteerId}/locations/{locationId}
 volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
-    try {
-        const { volunteerId, locationId } = req.params;
+  try {
+    const { volunteerId, locationId } = req.params;
 
-        const deletedRelationship = await db.query(
-            "DELETE FROM volunteer_locations WHERE volunteer_id = $1 AND location_id = $2 RETURNING *",
-            [volunteerId, locationId]
-        );
+    const deletedRelationship = await db.query(
+      "DELETE FROM volunteer_locations WHERE volunteer_id = $1 AND location_id = $2 RETURNING *",
+      [volunteerId, locationId]
+    );
 
-        if (deletedRelationship.length === 0) {
-            return res.status(404).json({ message: "Location not assigned to this volunteer" });
-        }
-
-        res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (e) {
-        res.status(500).send(e.message);
+    if (deletedRelationship.length === 0) {
+      return res.status(404).json({ message: "Location not assigned to this volunteer" });
     }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
-// GET: list all locations for a volunteer, including location IDs and text
-// /volunteers/{volunteerId}/locations
 volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
-    try {
-        const { volunteerId } = req.params;
+  try {
+    const { volunteerId } = req.params;
 
-        const listAll = await db.query(
-            `SELECT l.id, l.location_name
-             FROM volunteer_locations vl
-             JOIN locations l ON vl.location_id = l.id
-             WHERE vl.volunteer_id = $1`,
-             [volunteerId]
-        );
-        res.status(200).json(keysToCamel(listAll));
-    } catch (e) {
-        res.status(500).send(e.message);
-    }
+    const listAll = await db.query(
+      `SELECT l.id, l.location_name
+       FROM volunteer_locations vl
+       JOIN locations l ON vl.location_id = l.id
+       WHERE vl.volunteer_id = $1`,
+      [volunteerId]
+    );
+    res.status(200).json(keysToCamel(listAll));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
