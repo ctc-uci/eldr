@@ -14,33 +14,89 @@ import {
   NativeSelect,
   Image,
   Icon,
+  Breadcrumb,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
-/** @TODO: change to use different icons bc chakra-ui/icons isn't compatible */
 import { FaEdit, FaFolder, FaUser, FaClipboard, FaBriefcase, FaMailBulk, FaQuestion } from "react-icons/fa";
 
 export const EmailTemplateManagement = () => {
-  const [activeSection, setActiveSection] = useState("welcome");
+  // For now, static folder data and pagination
+  const folders = [
+    "Untitled Folder",
+    "Untitled Folder",
+    "Untitled Folder",
+    "Untitled Folder",
+    "Untitled Folder",
+    "Untitled Folder",
+  ];
+  const totalPages = 6;
+  const currentPage = 1;
 
   return (
-    <Flex minH="100vh" bg="white">
-      {/* Sidebar */}
+    <Flex minH="100vh" bg="#FAFBFC">
       <Sidebar />
+      <Box flex="1" px={10} py={8}>
+        {/* breadcrumbs */}
+        <Breadcrumb.Root mb={2} fontSize="sm" color="gray.500">
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              <Breadcrumb.Link as={Link} to="#">Management</Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item isCurrentPage>
+              <Breadcrumb.Link as={Link} to="#">New Template</Breadcrumb.Link>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
+        </Breadcrumb.Root>
 
-      {/* Main content */}
-      <Box flex="1" p={6} >
+        {/* title and actions */}
+        <Flex align="center" justify="space-between" mb={6}>
+          <Text fontSize="2xl" fontWeight="bold">Manage your folders</Text>
+          <HStack spacing={4}>
+            <Button backgroundColor="#5797BD" color="white" variant="solid" minW="259px">
+              <FaMailBulk />
+              New Template
+            </Button>
+            <Button backgroundColor="#5797BD" color="white" variant="solid" minW="259px">
+              <FaFolder />
+              New Folder
+            </Button>
+          </HStack>
+        </Flex>
 
         {/* Search Bar */}
-        <InputGroup mb={6} >
-          <Input placeholder="Search" />
+        <InputGroup mb={6} maxW="400px">
+          <Input placeholder="Type to search" bg="white" />
         </InputGroup>
 
-        {/* Conditionally render sections */}
-        {activeSection === "welcome" && (
-          <WelcomeSection setActiveSection={setActiveSection} />
-        )}
-        {activeSection === "newTemplate" && <NewTemplateSection />}
+        {/* Folder List */}
+        <VStack align="stretch" spacing={4} mb={8}>
+          {folders.map((folder, idx) => (
+            <Flex key={idx} align="center" bg="white" borderRadius="md" px={6} py={4} boxShadow="sm" justify="space-between">
+              <Text fontWeight="medium">{folder}</Text>
+              <Icon as={FaQuestion} boxSize={5} color="gray.400" cursor="pointer" />
+            </Flex>
+          ))}
+        </VStack>
+
+        {/* Pagination */}
+        <Flex justify="flex-end">
+          <HStack spacing={1} bg="white" borderRadius="md" p={2} boxShadow="sm">
+            {[...Array(totalPages)].map((_, i) => (
+              <Button
+                key={i}
+                size="sm"
+                variant={i + 1 === currentPage ? "solid" : "ghost"}
+                colorScheme={i + 1 === currentPage ? "blue" : undefined}
+                fontWeight={i + 1 === currentPage ? "bold" : "normal"}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button size="sm" variant="ghost">→</Button>
+          </HStack>
+        </Flex>
       </Box>
     </Flex>
   );
