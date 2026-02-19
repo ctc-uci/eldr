@@ -117,13 +117,6 @@ export const EventCatalog = () => {
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
 
-  useEffect(() => {
-    // Only auto-select if we have events and haven't selected one yet
-    if (events.length > 0 && !selectedEvent) {
-      setSelectedEvent(events[0]);
-    }
-  }, [events, selectedEvent]);
-
   // Filter and sort events
   const filteredEvents = useMemo(() => {
     let result = [...events];
@@ -193,6 +186,13 @@ export const EventCatalog = () => {
 
     return result;
   }, [searchQuery, selectedFilters, sortBy, events]);
+
+  useEffect(() => {
+    // Only auto-select if we have events and haven't selected one yet
+    if (filteredEvents.length > 0 && !selectedEvent) {
+      setSelectedEvent(filteredEvents[0]);
+    }
+  }, [filteredEvents, selectedEvent]);
 
   const showEventDetails = (event) => {
     setSelectedEvent(event);
