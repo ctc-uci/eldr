@@ -1,9 +1,14 @@
+import { useState } from "react";
+
 import {
   Badge,
   Box,
   Button,
+  CloseButton,
+  Dialog,
   Flex,
   HStack,
+  Portal,
   Separator,
   Text,
   VStack,
@@ -13,11 +18,29 @@ import {
   CalendarClock,
   CalendarDays,
   CalendarPlus,
+  CalendarX,
+  Check,
   MapPin,
   Users,
 } from "lucide-react";
 
 export const EventInfo = ({ event }) => {
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleRegistration = () => {
+    if (isRegistered) {
+      setOpen(true);
+    } else {
+      setIsRegistered(true);
+    }
+  };
+
+  const confirmUnregister = () => {
+    setIsRegistered(false);
+    setOpen(false);
+  };
+
   if (!event) return <Box p={10}>Please select an event to view details!</Box>;
 
   return (
@@ -25,10 +48,9 @@ export const EventInfo = ({ event }) => {
       direction="column"
       py={{ base: 2, md: "50px" }}
       px={{ base: 4, md: 8 }}
-      gap={2}
-      align="flex-start"
       w="full"
       h="full"
+      justify="space-between"
     >
       {/* Event name */}
       <Text
@@ -37,7 +59,7 @@ export const EventInfo = ({ event }) => {
         lineHeight="44px"
         letterSpacing="-2.5%"
         color="#000000"
-        mb="14px"
+        mb={{ base: "24px", md: 0 }}
       >
         {event.name}
       </Text>
@@ -45,15 +67,15 @@ export const EventInfo = ({ event }) => {
       {/* Event metadata */}
       <VStack
         align="flex-start"
-        gap="10px"
+        gap="12px"
         w="full"
-        fontSize="16px"
+        fontSize="14px"
         px="4px"
       >
         <Text
           display="flex"
           alignItems="center"
-          gap="16px"
+          gap="18px"
         >
           <CalendarDays />
           {event.displayDate}
@@ -65,7 +87,7 @@ export const EventInfo = ({ event }) => {
         <Text
           display="flex"
           alignItems="center"
-          gap="16px"
+          gap="18px"
         >
           <CalendarClock /> {event.displayTime}
         </Text>
@@ -76,7 +98,7 @@ export const EventInfo = ({ event }) => {
         <Text
           display="flex"
           alignItems="center"
-          gap="16px"
+          gap="18px"
         >
           <MapPin /> {event.location}
         </Text>
@@ -87,7 +109,7 @@ export const EventInfo = ({ event }) => {
         <Text
           display="flex"
           alignItems="center"
-          gap="16px"
+          gap="18px"
         >
           <Users /> {event.attendees}/{event.capacity} spots filled
         </Text>
@@ -96,7 +118,9 @@ export const EventInfo = ({ event }) => {
       {/* Event tags */}
       <HStack
         flexWrap="wrap"
-        my={4}
+        my={{ base: 6, md: 0 }}
+        fontSize="12px"
+        gap="10px"
       >
         {event.languages.map((l, i) => (
           <Badge
@@ -104,7 +128,8 @@ export const EventInfo = ({ event }) => {
             variant="solid"
             bg="#F4F4F5"
             color="black"
-            fontSize="14px"
+            px="10px"
+            py="4px"
           >
             {l.language}
           </Badge>
@@ -115,7 +140,8 @@ export const EventInfo = ({ event }) => {
             variant="solid"
             bg="#F4F4F5"
             color="black"
-            fontSize="14px"
+            px="10px"
+            py="4px"
           >
             {a.areasOfInterest}
           </Badge>
@@ -127,9 +153,85 @@ export const EventInfo = ({ event }) => {
         w="full"
         overflowY="auto"
         scrollbar="hidden"
+        h="360px"
       >
         <Text whiteSpace="pre-line">{event.description}</Text>
       </Box>
+
+      {/* Register Button */}
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        alignSelf="center"
+        zIndex={2}
+        mb={{ base: 6, md: 1 }}
+      >
+        <HStack
+          opacity={isRegistered ? 1 : 0}
+          transition="opacity 0.2s"
+          gap={1}
+          fontSize="12px"
+          mb={2}
+        >
+          <Check size={16} /> You are attending
+        </HStack>
+        <Dialog.Root
+          open={open}
+          onOpenChange={(e) => setOpen(e.open)}
+          placement="center"
+          motionPreset="slide-in-bottom"
+          size="xs"
+        >
+          <Button
+            variant={isRegistered ? "surface" : "solid"}
+            colorPalette={isRegistered ? "red" : "blue"}
+            px="18px"
+            py="6px"
+            onClick={handleRegistration}
+          >
+            {isRegistered ? (
+              <>
+                <CalendarX /> Unregister
+              </>
+            ) : (
+              <>
+                <CalendarPlus /> Register
+              </>
+            )}
+          </Button>
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Unregister from this event</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                  <p>
+                    something something guilt trip something something don’t do
+                    it pls
+                  </p>
+                </Dialog.Body>
+                <Dialog.Footer>
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </Dialog.ActionTrigger>
+                  <Button
+                    colorPalette="red"
+                    onClick={confirmUnregister}
+                  >
+                    Unregister
+                  </Button>
+                </Dialog.Footer>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" />
+                </Dialog.CloseTrigger>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
+      </Flex>
 
       {/* Gradient overlay - fixed at bottom */}
       <Box
@@ -137,33 +239,12 @@ export const EventInfo = ({ event }) => {
         bottom={0}
         left={0}
         right={0}
-        height="150px"
+        height="40%"
         bgGradient="to-b"
         gradientFrom="transparent"
         gradientTo="white"
         pointerEvents="none"
       />
-
-      {/* Register Button */}
-      <Flex
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        justify="center"
-        py={4}
-        zIndex={2}
-      >
-        <Button
-          variant="solid"
-          colorPalette="blue"
-          px="18px"
-          py="6px"
-        >
-          <CalendarPlus />
-          Register
-        </Button>
-      </Flex>
     </Flex>
   );
 };

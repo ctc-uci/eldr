@@ -284,6 +284,7 @@ export const EventCatalog = () => {
               gap="2px"
               fontSize="md"
               fontWeight="normal"
+              my={2}
             >
               <MdChevronLeft />
               Back
@@ -291,19 +292,6 @@ export const EventCatalog = () => {
           )}
 
           <EventInfo event={selectedEvent} />
-
-          {/* Bottom white gradient */}
-          <Box
-            position="absolute"
-            bottom="0"
-            left="0"
-            w="100%"
-            h="100px"
-            bgGradient="to-b"
-            gradientFrom="transparent"
-            gradientTo="white"
-            pointerEvents="none"
-          />
         </Flex>
       </Flex>
     </Flex>
