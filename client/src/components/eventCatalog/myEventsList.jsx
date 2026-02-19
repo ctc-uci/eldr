@@ -8,10 +8,18 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-export const MyEventsList = ({ events, onSelect, selectedEvent }) => {
-  const myEvents = events.filter((e) => e.my_event);
-  const upcoming = myEvents.filter((e) => !e.past);
-  const past = myEvents.filter((e) => e.past);
+export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
+  const now = new Date();
+
+  const upcoming = myEvents.filter((e) => {
+    if (!e.startTime) return true;
+    return new Date(e.startTime) >= now;
+  });
+
+  const past = myEvents.filter((e) => {
+    if (!e.startTime) return false;
+    return new Date(e.startTime) < now;
+  });
 
   return (
     <VStack
@@ -50,16 +58,19 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
 
   return (
     <Box>
-      <Text
-        fontSize="20px"
-        fontWeight={600}
-        color="#111827"
-        px="4px"
-        pt="8px"
-        pb="12px"
-      >
-        {title}
-      </Text>
+      {isPastSection && (
+        <Text
+          fontSize="20px"
+          fontWeight={400}
+          color="#111827"
+          px="4px"
+          pt="8px"
+          pb="12px"
+        >
+          {title}
+        </Text>
+      )}
+
       <VStack
         gap="12px"
         align="stretch"
@@ -98,7 +109,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     fontWeight={400}
                     color="#6B7280"
                   >
-                    {event.date}
+                    {event.displayDate}
                   </Text>
                   <Text
                     fontSize={{ base: "12px", md: "14px" }}
@@ -112,7 +123,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     fontWeight={400}
                     color="#6B7280"
                   >
-                    {event.time}
+                    {event.displayTime}
                   </Text>
                 </HStack>
                 <Text
@@ -121,7 +132,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                   color="#6B7280"
                   flexShrink={0}
                 >
-                  {event.spots}/{event.capacity} spots filled
+                  {event.attendees}/{event.capacity} spots filled
                 </Text>
               </Flex>
 
@@ -131,7 +142,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                 fontWeight={600}
                 color="#111827"
               >
-                {event.title}
+                {event.name}
               </Text>
 
               {/* Address */}
@@ -140,7 +151,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                 fontWeight={400}
                 color="#6B7280"
               >
-                {event.address}
+                {event.location}
               </Text>
 
               {/* Status + Tags */}
@@ -162,20 +173,30 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     {event.status}
                   </Text>
                 </HStack>
-                {event.tags.map((tag, i) => (
+                {event.languages.map((l, i) => (
                   <Badge
                     key={i}
-                    variant="outline"
+                    variant="solid"
                     borderColor="#D1D5DB"
-                    color="#374151"
-                    borderRadius="4px"
-                    px="8px"
-                    py="2px"
-                    fontSize="12px"
-                    fontWeight={500}
-                    textTransform="none"
+                    color="#27272A"
+                    bg="#F4F4F5"
+                    px="10px"
+                    py="4px"
                   >
-                    {tag}
+                    {l.language}
+                  </Badge>
+                ))}
+                {event.areas.map((a, i) => (
+                  <Badge
+                    key={i}
+                    variant="solid"
+                    borderColor="#D1D5DB"
+                    color="#27272A"
+                    bg="#F4F4F5"
+                    px="10px"
+                    py="4px"
+                  >
+                    {a.areasOfInterest}
                   </Badge>
                 ))}
               </HStack>

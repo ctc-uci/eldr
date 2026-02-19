@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
 
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdChevronLeft } from "react-icons/md";
 
@@ -44,10 +45,14 @@ export const EventCatalog = () => {
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [events, setEvents] = useState([]);
   const { backend } = useBackendContext();
+  const { currentUser } = useAuthContext();
 
   useEffect(() => {
     const fetchFullEventData = async () => {
       try {
+        const userRes = await backend.get(`/users/${currentUser.uid}`);
+        const volunteerId = userRes.data[0].id;
+
         const res = await backend.get("/clinics");
         const baseEvents = res.data;
 
@@ -68,10 +73,15 @@ export const EventCatalog = () => {
         // Map over events and create promises for the extra data
         const fullEvents = await Promise.all(
           baseEvents.map(async (event) => {
-            const [langRes, areaRes] = await Promise.all([
+            const [langRes, areaRes, attendeeRes] = await Promise.all([
               backend.get(`/clinics/${event.id}/languages`),
               backend.get(`/clinics/${event.id}/areas-of-interest`),
+              backend.get(`/clinics/${event.id}/attendees`),
             ]);
+
+            const isRegistered = attendeeRes.data.some(
+              (attendee) => attendee.id === volunteerId
+            );
 
             // Format Date
             const displayDate = event.date
@@ -93,6 +103,7 @@ export const EventCatalog = () => {
               areas: areaRes.data,
               displayDate,
               displayTime,
+              isRegistered,
             };
           })
         );
@@ -104,7 +115,7 @@ export const EventCatalog = () => {
     };
 
     fetchFullEventData();
-  }, [backend]);
+  }, [backend, currentUser?.uid]);
 
   useEffect(() => {
     // Only auto-select if we have events and haven't selected one yet
@@ -256,7 +267,7 @@ export const EventCatalog = () => {
               />
             ) : (
               <MyEventsList
-                events={filteredEvents}
+                myEvents={filteredEvents.filter((e) => e.isRegistered)}
                 onSelect={showEventDetails}
                 selectedEvent={selectedEvent}
               />

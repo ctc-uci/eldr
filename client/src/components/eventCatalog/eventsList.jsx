@@ -14,10 +14,10 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
         const isSelected = selectedEvent && selectedEvent.id === event.id;
         return (
           <Flex
+            key={event.id}
             as="button"
             direction="column"
             gap="8px"
-            key={event.id}
             borderWidth="1px"
             borderStyle="solid"
             borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
@@ -98,6 +98,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             >
               {event.languages.map((l, i) => (
                 <Badge
+                  key={i}
                   variant="solid"
                   borderColor="#D1D5DB"
                   color="#27272A"
@@ -110,6 +111,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               ))}
               {event.areas.map((a, i) => (
                 <Badge
+                  key={i}
                   variant="solid"
                   borderColor="#D1D5DB"
                   color="#27272A"
