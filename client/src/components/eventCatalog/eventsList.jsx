@@ -85,41 +85,37 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               fontWeight={400}
               color="#6B7280"
             >
-              {event.address}
+              {event.location}
             </Text>
 
             {/* Tags */}
             <HStack
-              gap="8px"
               mt="4px"
               flexWrap="wrap"
+              fontSize="12px"
+              fontWeight={500}
+              gap="10px"
             >
               {event.languages.map((l, i) => (
                 <Badge
-                  variant="outline"
+                  variant="solid"
                   borderColor="#D1D5DB"
-                  color="#374151"
-                  borderRadius="4px"
-                  px="8px"
-                  py="2px"
-                  fontSize="12px"
-                  fontWeight={500}
-                  textTransform="none"
+                  color="#27272A"
+                  bg="#F4F4F5"
+                  px="10px"
+                  py="4px"
                 >
                   {l.language}
                 </Badge>
               ))}
               {event.areas.map((a, i) => (
                 <Badge
-                  variant="outline"
+                  variant="solid"
                   borderColor="#D1D5DB"
-                  color="#374151"
-                  borderRadius="4px"
-                  px="8px"
-                  py="2px"
-                  fontSize="12px"
-                  fontWeight={500}
-                  textTransform="none"
+                  color="#27272A"
+                  bg="#F4F4F5"
+                  px="10px"
+                  py="4px"
                 >
                   {a.areasOfInterest}
                 </Badge>

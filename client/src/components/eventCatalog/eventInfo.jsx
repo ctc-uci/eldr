@@ -120,6 +120,7 @@ export const EventInfo = ({ event }) => {
         flexWrap="wrap"
         my={{ base: 6, md: 0 }}
         fontSize="12px"
+        fontWeight={500}
         gap="10px"
       >
         {event.languages.map((l, i) => (
@@ -127,7 +128,7 @@ export const EventInfo = ({ event }) => {
             key={i}
             variant="solid"
             bg="#F4F4F5"
-            color="black"
+            color="#27272A"
             px="10px"
             py="4px"
           >
@@ -139,7 +140,7 @@ export const EventInfo = ({ event }) => {
             key={i}
             variant="solid"
             bg="#F4F4F5"
-            color="black"
+            color="#27272A"
             px="10px"
             py="4px"
           >
