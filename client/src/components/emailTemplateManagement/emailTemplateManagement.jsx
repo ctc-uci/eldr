@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 import {
   Box,
@@ -12,7 +12,7 @@ import {
   Input,
   InputGroup,
   Menu,
-  Portal,
+  Popover,
   SimpleGrid,
   Text,
   VStack,
@@ -35,10 +35,12 @@ import {
   FaGripLines,
   FaMailBulk,
   FaPlus,
+  FaPlusCircle,
   FaQuestion,
   FaUser,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+
 
 export const EmailTemplateManagement = () => {
   const [view, setView] = useState("folders");
@@ -51,12 +53,35 @@ export const EmailTemplateManagement = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [templates, setTemplates] = useState([]);
-
   const [folders, setFolders] = useState([
     "Untitled Folder",
     "Untitled Folder",
     "Untitled Folder",
   ]);
+
+  const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
+  const [newTemplateInput, setNewTemplateInput] = useState("");
+  const inputRef = useRef(null);
+
+  // Dismiss popover on outside click or trigger click
+  const handlePopoverOpenChange = (open) => {
+    setShowNewTemplatePopover(open);
+    if (!open) {
+      setNewTemplateInput("");
+    }
+  };
+
+  // Create new template from popover
+  const handleCreateTemplateFromPopover = () => {
+    const trimmedName = newTemplateInput.trim();
+    if (!trimmedName) return;
+    setTemplateName(trimmedName);
+    setTemplateContent("");
+    setSelectedFolder("");
+    setShowNewTemplatePopover(false);
+    setNewTemplateInput("");
+    setView("newTemplate");
+  };
 
   const handleSaveTemplate = () => {
     // Trim values
@@ -201,20 +226,55 @@ export const EmailTemplateManagement = () => {
               </Text>
 
               <HStack spacing={4}>
+                <Popover.Root open={showNewTemplatePopover} onOpenChange={(e) => handlePopoverOpenChange(e.open)} placement="bottom-start" initialFocusRef={inputRef}>
+                  <Popover.Trigger asChild>
+                    <Button
+                      backgroundColor="#5797BD"
+                      color="white"
+                      w="292px"
+                    >
+                      <FaMailBulk />
+                      New Template
+                    </Button>
+                  </Popover.Trigger>
+                  <Popover.Positioner zIndex={1000}>
+                    <Popover.Content w="292px" boxShadow="lg" borderRadius="md" mt={2} p={0}>
+                      <Popover.CloseTrigger />
+                      <Popover.Body p={4}>
+                        <Popover.Title as={Text} fontSize="xs" fontWeight="bold" mb={2}>
+                          New Template Creation
+                        </Popover.Title>
+                        <HStack gap="10px">
+                          <Input
+                            ref={inputRef}
+                            placeholder="Enter a template name"
+                            value={newTemplateInput}
+                            onChange={e => setNewTemplateInput(e.target.value)}
+                            size="md"
+                            fontSize="xs"
+                            bg="white"
+                            onKeyDown={e => {
+                              if (e.key === "Enter" && newTemplateInput.trim()) {
+                                handleCreateTemplateFromPopover();
+                              }
+                            }}
+                          />
+                          <FaPlus
+                            size={24}
+                            cursor={newTemplateInput.trim() ? "pointer" : "not-allowed"}
+                            color={newTemplateInput.trim() ? "black" : "#ccc"}
+                            onClick={newTemplateInput.trim() ? handleCreateTemplateFromPopover : undefined}
+                            title={newTemplateInput.trim() ? "Create template" : "Enter a name first"}
+                          />
+                        </HStack>
+                      </Popover.Body>
+                    </Popover.Content>
+                  </Popover.Positioner>
+                </Popover.Root>
                 <Button
                   backgroundColor="#5797BD"
                   color="white"
-                  minW="180px"
-                  onClick={() => setView("newTemplate")}
-                >
-                  <FaMailBulk />
-                  New Template
-                </Button>
-
-                <Button
-                  backgroundColor="#5797BD"
-                  color="white"
-                  minW="180px"
+                  w="292px"
                 >
                   <FaFolder />
                   New Folder
@@ -241,6 +301,7 @@ export const EmailTemplateManagement = () => {
                   <Button
                     backgroundColor="#5797BD"
                     color="white"
+                    w="292px"
                     onClick={() => setShowFolderPrompt((prev) => !prev)}
                   >
                     Save Template
@@ -293,6 +354,7 @@ export const EmailTemplateManagement = () => {
                 <Button
                   backgroundColor="#5797BD"
                   color="white"
+                  w="292px"
                   onClick={() => setView("folders")}
                 >
                   Delete Template
