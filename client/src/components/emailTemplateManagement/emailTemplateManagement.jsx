@@ -15,9 +15,16 @@ import {
   Portal,
   SimpleGrid,
   Text,
-  Textarea,
   VStack,
 } from "@chakra-ui/react";
+
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyleKit } from "@tiptap/extension-text-style";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Control, RichTextEditor } from "@/components/ui/rich-text-editor";
 
 import {
   FaArrowRight,
@@ -223,7 +230,7 @@ export const EmailTemplateManagement = () => {
                 fontSize="3xl"
                 fontWeight="600"
                 bg="#FAFBFC"
-                mb={6}
+                px="0px"
                 _focus={{ boxShadow: "none" }}
               />
               <HStack
@@ -325,17 +332,19 @@ export const EmailTemplateManagement = () => {
         )}
 
         {view === "newTemplate" && (
-          <NewTemplateSection
-            templateName={templateName}
-            setTemplateName={setTemplateName}
-            templateContent={templateContent}
-            setTemplateContent={setTemplateContent}
-            selectedFolder={selectedFolder}
-            setSelectedFolder={setSelectedFolder}
-            folders={folders}
-            setShowFolderModal={setShowFolderModal}
-            onSave={handleSaveTemplate}
-          />
+          <Box flex="1" minH={0} display="flex" flexDirection="column">
+            <NewTemplateSection
+              templateName={templateName}
+              setTemplateName={setTemplateName}
+              templateContent={templateContent}
+              setTemplateContent={setTemplateContent}
+              selectedFolder={selectedFolder}
+              setSelectedFolder={setSelectedFolder}
+              folders={folders}
+              setShowFolderModal={setShowFolderModal}
+              onSave={handleSaveTemplate}
+            />
+          </Box>
         )}
 
         {/* pagination at the bottom */}
@@ -473,59 +482,6 @@ const SidebarNavItem = ({ icon, label, active }) => (
   </HStack>
 );
 
-const Section = ({ title, children }) => (
-  <Box mb={8}>
-    <HStack mb={4}>
-      <FaQuestion />
-      <Text
-        fontSize="lg"
-        fontWeight="semibold"
-      >
-        {title}
-      </Text>
-    </HStack>
-    {children}
-  </Box>
-);
-
-const FolderCard = () => (
-  <HStack
-    bg="gray.300"
-    p={4}
-    borderRadius="md"
-    spacing={3}
-  >
-    <FaFolder
-      size={20}
-      color="black"
-    />
-    <Input
-      placeholder="Folder Name"
-      bg="white"
-      border="2px solid black"
-    />
-  </HStack>
-);
-
-const TemplateCard = () => (
-  <Box
-    bg="gray.300"
-    p={4}
-    borderRadius="md"
-  >
-    <Input
-      placeholder="Template Name"
-      bg="white"
-      mb={3}
-      border="2px solid black"
-    />
-    <Box
-      h="120px"
-      bg="gray.100"
-      borderRadius="md"
-    />
-  </Box>
-);
 
 const NewTemplateSection = ({
   templateName,
@@ -536,66 +492,66 @@ const NewTemplateSection = ({
   setSelectedFolder,
   folders,
   onSave,
-}) => (
-  <Box
-    maxW="100%"
-    mx="auto"
-  >
-    <VStack
-      spacing={6}
-      align="stretch"
-    >
-      {/* Editor Container */}
-      <Box
-        bg="white"
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="16px"
-        overflow="hidden"
-        boxShadow="sm"
-      >
-        {/* Toolbar */}
-        <HStack
-          px={4}
-          py={3}
-          borderBottom="1px solid"
-          borderColor="gray.100"
-          spacing={4}
-        >
-          <Text
-            fontWeight="600"
-            cursor="pointer"
-          >
-            B
-          </Text>
-          <Text
-            fontStyle="italic"
-            cursor="pointer"
-          >
-            I
-          </Text>
-          <Text
-            textDecoration="underline"
-            cursor="pointer"
-          >
-            U
-          </Text>
-        </HStack>
+}) => {
+  // Rich text editor setup
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ link: { openOnClick: false } }),
+      Subscript,
+      Superscript,
+      TextAlign.configure({ types: ["paragraph", "heading"] }),
+      TextStyleKit,
+    ],
+    content: templateContent || '<p></p>',
+    onUpdate: ({ editor }) => {
+      setTemplateContent(editor.getHTML());
+    },
+    shouldRerenderOnTransaction: true,
+    immediatelyRender: false,
+  });
 
-        {/* Big Text Box */}
-        <Textarea
-          value={templateContent}
-          onChange={(e) => setTemplateContent(e.target.value)}
-          placeholder="Start writing your template..."
-          minH="400px"
-          resize="none"
-          border="none"
-          borderRadius="0"
-          _focus={{ boxShadow: "none" }}
-          p={6}
-          fontSize="md"
-        />
-      </Box>
-    </VStack>
-  </Box>
-);
+  if (!editor) return null;
+
+  return (
+    <Box width="100%" flex="1" display="flex" flexDirection="column" minH={0}>
+      <VStack spacing={6} align="stretch" flex="1" minH={0}>
+        <Box
+          bg="white"
+          border="1px solid"
+          borderColor="#EFEFF1"
+          borderRadius="5px"
+          boxShadow="sm"
+          overflow="hidden"
+          flex="1"
+          display="flex"
+          flexDirection="column"
+          minH={0}
+        >
+          <RichTextEditor.Root editor={editor} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <RichTextEditor.Toolbar style={{ borderBottom: '1px solid #EFEFF1' }}>
+              <RichTextEditor.ControlGroup>
+                <Control.FontFamily />
+                <Control.FontSize />
+              </RichTextEditor.ControlGroup>
+              <RichTextEditor.ControlGroup>
+                <Control.Bold />
+                <Control.Italic />
+                <Control.Underline />
+                <Control.Strikethrough />
+              </RichTextEditor.ControlGroup>
+              <RichTextEditor.ControlGroup>
+                <Control.H1 />
+                <Control.H2 />
+                <Control.H3 />
+                <Control.H4 />
+              </RichTextEditor.ControlGroup>
+            </RichTextEditor.Toolbar>
+            <Box flex="1" minH={0}>
+              <RichTextEditor.Content style={{ height: '100%', minHeight: 0 }} />
+            </Box>
+          </RichTextEditor.Root>
+        </Box>
+      </VStack>
+    </Box>
+  );
+};
