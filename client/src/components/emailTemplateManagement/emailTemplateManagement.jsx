@@ -39,7 +39,7 @@ import { Link } from "react-router-dom";
 
 export const EmailTemplateManagement = () => {
   const [view, setView] = useState("folders");
-  // "folders" | "newTemplate"
+  // "folders" | "newTemplate" | "folderView"
 
   const [templateName, setTemplateName] = useState("Untitled Template");
   const [templateContent, setTemplateContent] = useState("");
@@ -53,6 +53,7 @@ export const EmailTemplateManagement = () => {
     "Untitled Folder",
     "Untitled Folder",
   ]);
+  const [currentFolder, setCurrentFolder] = useState(null);
 
   const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
   const [newTemplateInput, setNewTemplateInput] = useState("");
@@ -62,7 +63,11 @@ export const EmailTemplateManagement = () => {
   const [newFolderInput, setNewFolderInput] = useState("");
   const folderInputRef = useRef(null);
 
-  // Dismiss popover on outside click or trigger click
+  const [showFolderViewTemplatePopover, setShowFolderViewTemplatePopover] = useState(false);
+  const [folderViewTemplateInput, setFolderViewTemplateInput] = useState("");
+  const folderViewTemplateInputRef = useRef(null);
+
+  // for dismissing popover on outside click or trigger click
   const handleTemplatePopoverOpenChange = (open) => {
     setShowNewTemplatePopover(open);
     if (!open) {
@@ -77,16 +82,50 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  // Create new folder from popover
+  // create new folder from popover
   const handleCreateFolderFromPopover = () => {
     const trimmedName = newFolderInput.trim();
     if (!trimmedName) return;
     setFolders((prev) => [...prev, trimmedName]);
     setShowNewFolderPopover(false);
     setNewFolderInput("");
+    setCurrentFolder(trimmedName);
+    setView("folderView");
   };
 
-  // Create new template from popover
+  // navigate to folder view when clicking on a folder
+  const handleFolderClick = (folderName) => {
+    setCurrentFolder(folderName);
+    setView("folderView");
+  };
+
+  // get templates for current folder
+  const getTemplatesInFolder = () => {
+    if (!currentFolder) return [];
+    return templates.filter((t) => t.folder === currentFolder);
+  };
+
+  // create new template from folder view
+  const handleCreateTemplateFromFolderView = () => {
+    const trimmedName = folderViewTemplateInput.trim();
+    if (!trimmedName) return;
+    setSelectedFolder(currentFolder);
+    setTemplateName(trimmedName);
+    setTemplateContent("");
+    setShowFolderViewTemplatePopover(false);
+    setFolderViewTemplateInput("");
+    setView("newTemplate");
+  };
+
+  // handle folder view template popover open change
+  const handleFolderViewTemplatePopoverOpenChange = (open) => {
+    setShowFolderViewTemplatePopover(open);
+    if (!open) {
+      setFolderViewTemplateInput("");
+    }
+  };
+
+  // create new template from popover
   const handleCreateTemplateFromPopover = () => {
     const trimmedName = newTemplateInput.trim();
     if (!trimmedName) return;
@@ -99,17 +138,17 @@ export const EmailTemplateManagement = () => {
   };
 
   const handleSaveTemplate = () => {
-    // Trim values
+    // trim values
     const trimmedName = templateName.trim();
     const trimmedFolder = selectedFolder.trim();
 
-    // Validate template name
+    // validate template name
     if (!trimmedName) {
       alert("Template name cannot be empty.");
       return;
     }
 
-    // Validate folder
+    // validate folder
     if (!trimmedFolder) {
       alert("Please select or enter a folder.");
       return;
@@ -121,7 +160,7 @@ export const EmailTemplateManagement = () => {
       return;
     }
 
-    // Create new template object
+    // create new template object
     const newTemplate = {
       id: Date.now(),
       name: trimmedName,
@@ -130,15 +169,15 @@ export const EmailTemplateManagement = () => {
       createdAt: new Date(),
     };
 
-    // Save template
+    // save template
     setTemplates((prev) => [...prev, newTemplate]);
 
-    // Reset form
+    // reset form
     setTemplateName("Untitled Template");
     setTemplateContent("");
     setSelectedFolder("");
 
-    // Go back to folders view
+    // go back to folders view
     setView("folders");
   };
 
@@ -177,7 +216,7 @@ export const EmailTemplateManagement = () => {
         >
           <Breadcrumb.List>
             <Breadcrumb.Item>
-              {view === "newTemplate" ? (
+              {(view === "newTemplate" || view === "folderView") ? (
                 <Breadcrumb.Link
                   cursor="pointer"
                   onClick={() => setView("folders")}
@@ -209,6 +248,20 @@ export const EmailTemplateManagement = () => {
               </>
             )}
 
+            {view === "folderView" && (
+              <>
+                <Breadcrumb.Separator />
+                <Breadcrumb.Item isCurrentPage>
+                  <Breadcrumb.Link
+                    color="gray.800"
+                    fontWeight="medium"
+                  >
+                    {currentFolder || "New Folder"}
+                  </Breadcrumb.Link>
+                </Breadcrumb.Item>
+              </>
+            )}
+
             {view === "newTemplate" && (
               <>
                 <Breadcrumb.Separator />
@@ -231,107 +284,109 @@ export const EmailTemplateManagement = () => {
           justify="space-between"
           mb={8}
         >
-          {view === "folders" ? (
+          {(view === "folders" || view === "folderView") ? (
             <>
               <Text
                 fontSize="2xl"
                 fontWeight="bold"
               >
-                Manage your folders
+                {view === "folderView" ? "Manage your files" : "Manage your folders"}
               </Text>
 
-              <HStack spacing={4}>
-                <Popover.Root open={showNewTemplatePopover} onOpenChange={(e) => handleTemplatePopoverOpenChange(e.open)} placement="bottom-start" initialFocusRef={templateInputRef}>
-                  <Popover.Trigger asChild>
-                    <Button
-                      backgroundColor="#5797BD"
-                      color="white"
-                      w="292px"
-                    >
-                      <FaMailBulk />
-                      New Template
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Positioner zIndex={1000}>
-                    <Popover.Content w="292px" boxShadow="lg" borderRadius="md" mt={2} p={0}>
-                      <Popover.CloseTrigger />
-                      <Popover.Body p={4}>
-                        <Popover.Title as={Text} fontSize="xs" fontWeight="bold" mb={2}>
-                          New Template Creation
-                        </Popover.Title>
-                        <HStack gap="10px">
-                          <Input
-                            ref={templateInputRef}
-                            placeholder="Enter a template name"
-                            value={newTemplateInput}
-                            onChange={e => setNewTemplateInput(e.target.value)}
-                            size="md"
-                            fontSize="xs"
-                            bg="white"
-                            onKeyDown={e => {
-                              if (e.key === "Enter" && newTemplateInput.trim()) {
-                                handleCreateTemplateFromPopover();
-                              }
-                            }}
-                          />
-                          <FaPlus
-                            size={24}
-                            cursor={newTemplateInput.trim() ? "pointer" : "not-allowed"}
-                            color={newTemplateInput.trim() ? "black" : "#ccc"}
-                            onClick={newTemplateInput.trim() ? handleCreateTemplateFromPopover : undefined}
-                            title={newTemplateInput.trim() ? "Create template" : "Enter a name first"}
-                          />
-                        </HStack>
-                      </Popover.Body>
-                    </Popover.Content>
-                  </Popover.Positioner>
-                </Popover.Root>
-                <Popover.Root open={showNewFolderPopover} onOpenChange={(e) => handleFolderPopoverOpenChange(e.open)} placement="bottom-start" initialFocusRef={folderInputRef}>
-                  <Popover.Trigger asChild>
-                    <Button
-                      backgroundColor="#5797BD"
-                      color="white"
-                      w="292px"
-                    >
-                      <FaFolder />
-                      New Folder
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Positioner zIndex={1000}>
-                    <Popover.Content w="292px" boxShadow="lg" borderRadius="md" mt={2} p={0}>
-                      <Popover.CloseTrigger />
-                      <Popover.Body p={4}>
-                        <Popover.Title as={Text} fontSize="xs" fontWeight="bold" mb={2}>
-                          New Folder Creation
-                        </Popover.Title>
-                        <HStack gap="10px">
-                          <Input
-                            ref={folderInputRef}
-                            placeholder="Enter a folder name"
-                            value={newFolderInput}
-                            onChange={e => setNewFolderInput(e.target.value)}
-                            size="md"
-                            fontSize="xs"
-                            bg="white"
-                            onKeyDown={e => {
-                              if (e.key === "Enter" && newFolderInput.trim()) {
-                                handleCreateFolderFromPopover();
-                              }
-                            }}
-                          />
-                          <FaPlus
-                            size={24}
-                            cursor={newFolderInput.trim() ? "pointer" : "not-allowed"}
-                            color={newFolderInput.trim() ? "black" : "#ccc"}
-                            onClick={newFolderInput.trim() ? handleCreateFolderFromPopover : undefined}
-                            title={newFolderInput.trim() ? "Create folder" : "Enter a name first"}
-                          />
-                        </HStack>
-                      </Popover.Body>
-                    </Popover.Content>
-                  </Popover.Positioner>
-                </Popover.Root>
-              </HStack>
+              {view === "folders" && (
+                <HStack spacing={4}>
+                  <Popover.Root open={showNewTemplatePopover} onOpenChange={(e) => handleTemplatePopoverOpenChange(e.open)} placement="bottom-start" initialFocusRef={templateInputRef}>
+                    <Popover.Trigger asChild>
+                      <Button
+                        backgroundColor="#5797BD"
+                        color="white"
+                        w="292px"
+                      >
+                        <FaMailBulk />
+                        New Template
+                      </Button>
+                    </Popover.Trigger>
+                    <Popover.Positioner zIndex={1000}>
+                      <Popover.Content w="292px" boxShadow="lg" borderRadius="md" mt={2} p={0}>
+                        <Popover.CloseTrigger />
+                        <Popover.Body p={4}>
+                          <Popover.Title as={Text} fontSize="xs" fontWeight="bold" mb={2}>
+                            New Template Creation
+                          </Popover.Title>
+                          <HStack gap="10px">
+                            <Input
+                              ref={templateInputRef}
+                              placeholder="Enter a template name"
+                              value={newTemplateInput}
+                              onChange={e => setNewTemplateInput(e.target.value)}
+                              size="md"
+                              fontSize="xs"
+                              bg="white"
+                              onKeyDown={e => {
+                                if (e.key === "Enter" && newTemplateInput.trim()) {
+                                  handleCreateTemplateFromPopover();
+                                }
+                              }}
+                            />
+                            <FaPlus
+                              size={24}
+                              cursor={newTemplateInput.trim() ? "pointer" : "not-allowed"}
+                              color={newTemplateInput.trim() ? "black" : "#ccc"}
+                              onClick={newTemplateInput.trim() ? handleCreateTemplateFromPopover : undefined}
+                              title={newTemplateInput.trim() ? "Create template" : "Enter a name first"}
+                            />
+                          </HStack>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover.Positioner>
+                  </Popover.Root>
+                  <Popover.Root open={showNewFolderPopover} onOpenChange={(e) => handleFolderPopoverOpenChange(e.open)} placement="bottom-start" initialFocusRef={folderInputRef}>
+                    <Popover.Trigger asChild>
+                      <Button
+                        backgroundColor="#5797BD"
+                        color="white"
+                        w="292px"
+                      >
+                        <FaFolder />
+                        New Folder
+                      </Button>
+                    </Popover.Trigger>
+                    <Popover.Positioner zIndex={1000}>
+                      <Popover.Content w="292px" boxShadow="lg" borderRadius="md" mt={2} p={0}>
+                        <Popover.CloseTrigger />
+                        <Popover.Body p={4}>
+                          <Popover.Title as={Text} fontSize="xs" fontWeight="bold" mb={2}>
+                            New Folder Creation
+                          </Popover.Title>
+                          <HStack gap="10px">
+                            <Input
+                              ref={folderInputRef}
+                              placeholder="Enter a folder name"
+                              value={newFolderInput}
+                              onChange={e => setNewFolderInput(e.target.value)}
+                              size="md"
+                              fontSize="xs"
+                              bg="white"
+                              onKeyDown={e => {
+                                if (e.key === "Enter" && newFolderInput.trim()) {
+                                  handleCreateFolderFromPopover();
+                                }
+                              }}
+                            />
+                            <FaPlus
+                              size={24}
+                              cursor={newFolderInput.trim() ? "pointer" : "not-allowed"}
+                              color={newFolderInput.trim() ? "black" : "#ccc"}
+                              onClick={newFolderInput.trim() ? handleCreateFolderFromPopover : undefined}
+                              title={newFolderInput.trim() ? "Create folder" : "Enter a name first"}
+                            />
+                          </HStack>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover.Positioner>
+                  </Popover.Root>
+                </HStack>
+              )}
             </>
           ) : (
             <>
@@ -436,6 +491,9 @@ export const EmailTemplateManagement = () => {
                   px={6}
                   py={4}
                   justify="space-between"
+                  cursor="pointer"
+                  _hover={{ bg: "gray.50" }}
+                  onClick={() => handleFolderClick(folder)}
                 >
                   <Text fontWeight="medium" fontSize="lg">{folder}</Text>
                   <FaGripLines size={24} color="black" cursor="pointer" />
@@ -443,6 +501,125 @@ export const EmailTemplateManagement = () => {
               ))}
             </VStack>
           </>
+        )}
+
+        {view === "folderView" && (
+          <Flex
+            flex="1"
+            direction="column"
+            align="center"
+            justify="center"
+            minH="400px"
+          >
+            {getTemplatesInFolder().length === 0 ? (
+              <VStack spacing={4} py={16} px={12}>
+                <Icon as={FaFolder} boxSize={6} color="gray.500" />
+                <Text
+                  fontSize="xl"
+                  fontWeight="semibold"
+                  textAlign="center"
+                >
+                  You have no templates!
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.500"
+                  textAlign="center"
+                >
+                  Create a new email template by clicking below
+                </Text>
+                <Popover.Root
+                  open={showFolderViewTemplatePopover}
+                  onOpenChange={(e) => handleFolderViewTemplatePopoverOpenChange(e.open)}
+                  placement="bottom"
+                  initialFocusRef={folderViewTemplateInputRef}
+                >
+                  <Popover.Trigger asChild>
+                    <Button
+                      backgroundColor="#5797BD"
+                      color="white"
+                      px={8}
+                      py={2}
+                      mt={2}
+                    >
+                      <FaMailBulk />
+                      New Template
+                    </Button>
+                  </Popover.Trigger>
+                  <Popover.Positioner zIndex={1000}>
+                    <Popover.Content
+                      w="258px"
+                      boxShadow="0px 4px 4px 0px rgba(0,0,0,0.25)"
+                      borderRadius="md"
+                      mt={2}
+                      p={0}
+                      bg="white"
+                    >
+                      <Popover.CloseTrigger />
+                      <Popover.Body p={0}>
+                        <Text
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color="black"
+                          px="10px"
+                          pt="10px"
+                          pb="0"
+                        >
+                          New Template Creation
+                        </Text>
+                        <HStack gap="10px" p="10px">
+                          <Input
+                            ref={folderViewTemplateInputRef}
+                            placeholder="Enter a template name"
+                            value={folderViewTemplateInput}
+                            onChange={(e) => setFolderViewTemplateInput(e.target.value)}
+                            size="sm"
+                            fontSize="xs"
+                            bg="white"
+                            borderColor="#E4E4E7"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && folderViewTemplateInput.trim()) {
+                                handleCreateTemplateFromFolderView();
+                              }
+                            }}
+                          />
+                          <IconButton
+                            size="sm"
+                            borderRadius="full"
+                            variant="ghost"
+                            aria-label="Create template"
+                            cursor={folderViewTemplateInput.trim() ? "pointer" : "not-allowed"}
+                            color={folderViewTemplateInput.trim() ? "black" : "#ccc"}
+                            onClick={folderViewTemplateInput.trim() ? handleCreateTemplateFromFolderView : undefined}
+                          >
+                            <FaPlus />
+                          </IconButton>
+                        </HStack>
+                      </Popover.Body>
+                    </Popover.Content>
+                  </Popover.Positioner>
+                </Popover.Root>
+              </VStack>
+            ) : (
+              <VStack align="stretch" spacing={4} width="100%">
+                {getTemplatesInFolder().map((template) => (
+                  <Flex
+                    key={template.id}
+                    align="center"
+                    bg="white"
+                    borderRadius="md"
+                    borderColor="#E4E4E7"
+                    borderWidth="1px"
+                    px={6}
+                    py={4}
+                    justify="space-between"
+                  >
+                    <Text fontWeight="medium" fontSize="lg">{template.name}</Text>
+                  </Flex>
+                ))}
+              </VStack>
+            )}
+          </Flex>
         )}
 
         {view === "newTemplate" && (
@@ -462,7 +639,7 @@ export const EmailTemplateManagement = () => {
         )}
 
         {/* pagination at the bottom */}
-        {view === "folders" && (
+        {(view === "folders" || view === "folderView") && (
           <Box mt="auto">
             <Flex
               justify="flex-end"
