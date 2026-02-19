@@ -5,13 +5,10 @@ import {
   Button,
   Flex,
   HStack,
-  IconButton,
   Input,
   Text,
   VStack,
 } from "@chakra-ui/react";
-
-import { FaPlus } from "react-icons/fa";
 
 import {
   SearchBar,
@@ -24,6 +21,7 @@ import {
   EmptyFolderState,
   Sidebar,
   NewTemplateSection,
+  SaveTemplatePopover,
 } from "./components";
 
 export const EmailTemplateManagement = () => {
@@ -35,7 +33,6 @@ export const EmailTemplateManagement = () => {
   const [selectedFolder, setSelectedFolder] = useState("");
   const [showFolderPrompt, setShowFolderPrompt] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [_showFolderModal, setShowFolderModal] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [folders, setFolders] = useState([
     "Untitled Folder",
@@ -126,7 +123,7 @@ export const EmailTemplateManagement = () => {
     setView("newTemplate");
   };
 
-  const _handleSaveTemplate = () => {
+  const handleSaveTemplate = () => {
     // trim values
     const trimmedName = templateName.trim();
     const trimmedFolder = selectedFolder.trim();
@@ -143,10 +140,9 @@ export const EmailTemplateManagement = () => {
       return;
     }
 
-    // If folder doesn't exist → show modal
+    // If folder doesn't exist, add it
     if (!folders.includes(trimmedFolder)) {
-      setShowFolderModal(true);
-      return;
+      setFolders((prev) => [...prev, trimmedFolder]);
     }
 
     // create new template object
@@ -165,13 +161,16 @@ export const EmailTemplateManagement = () => {
     setTemplateName("Untitled Template");
     setTemplateContent("");
     setSelectedFolder("");
+    setShowFolderPrompt(false);
 
-    // go back to folders view
-    setView("folders");
+    // go back to folder view if we came from there, otherwise folders view
+    if (trimmedFolder) {
+      setCurrentFolder(trimmedFolder);
+      setView("folderView");
+    } else {
+      setView("folders");
+    }
   };
-
-  // TODO: Connect this to the save button when folder selection is complete
-  void _handleSaveTemplate;
 
   const totalPages = 6;
   const currentPage = 1;
@@ -188,7 +187,12 @@ export const EmailTemplateManagement = () => {
           view={view}
           currentFolder={currentFolder}
           templateName={templateName}
+          selectedFolder={selectedFolder}
           onNavigateToFolders={() => setView("folders")}
+          onNavigateToFolder={() => {
+            setCurrentFolder(selectedFolder);
+            setView("folderView");
+          }}
         />
 
         {/* Title and Actions */}
@@ -233,56 +237,22 @@ export const EmailTemplateManagement = () => {
                 _focus={{ boxShadow: "none" }}
               />
               <HStack spacing={4} ml="auto">
-                <Box position="relative">
-                  <Button
-                    backgroundColor="#5797BD"
-                    color="white"
-                    w="292px"
-                    onClick={() => setShowFolderPrompt((prev) => !prev)}
-                  >
-                    Save Template
-                  </Button>
-
-                  {showFolderPrompt && (
-                    <Box
-                      position="absolute"
-                      top="110%"
-                      right="0"
-                      mt={3}
-                      bg="white"
-                      boxShadow="0 4px 12px rgba(0,0,0,0.15)"
-                      borderRadius="md"
-                      p={5}
-                      width="420px"
-                      zIndex={20}
-                    >
-                      <Text fontWeight="600" mb={3}>
-                        Indicate a folder to store this template.
-                      </Text>
-
-                      <Flex gap={3}>
-                        <Input
-                          placeholder="Enter a folder name"
-                          value={newFolderName}
-                          onChange={(e) => setNewFolderName(e.target.value)}
-                        />
-
-                        <IconButton
-                          borderRadius="full"
-                          variant="outline"
-                          onClick={() => {
-                            if (!newFolderName.trim()) return;
-                            setFolders((prev) => [...prev, newFolderName]);
-                            setSelectedFolder(newFolderName);
-                            setNewFolderName("");
-                          }}
-                        >
-                          <FaPlus />
-                        </IconButton>
-                      </Flex>
-                    </Box>
-                  )}
-                </Box>
+                <SaveTemplatePopover
+                  isOpen={showFolderPrompt}
+                  onOpenChange={(open) => setShowFolderPrompt(open)}
+                  selectedFolder={selectedFolder}
+                  folders={folders}
+                  newFolderName={newFolderName}
+                  onNewFolderNameChange={setNewFolderName}
+                  onAddFolder={() => {
+                    if (!newFolderName.trim()) return;
+                    setFolders((prev) => [...prev, newFolderName]);
+                    setSelectedFolder(newFolderName);
+                    setNewFolderName("");
+                  }}
+                  onSelectFolder={(folder) => setSelectedFolder(folder)}
+                  onSave={handleSaveTemplate}
+                />
 
                 <Button
                   backgroundColor="#5797BD"

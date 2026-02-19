@@ -6,7 +6,9 @@ export const BreadcrumbNav = ({
   view,
   currentFolder,
   templateName,
+  selectedFolder,
   onNavigateToFolders,
+  onNavigateToFolder,
 }) => (
   <Breadcrumb.Root
     mb={4}
@@ -56,6 +58,21 @@ export const BreadcrumbNav = ({
               fontWeight="medium"
             >
               {currentFolder || "New Folder"}
+            </Breadcrumb.Link>
+          </Breadcrumb.Item>
+        </>
+      )}
+
+      {view === "newTemplate" && selectedFolder && (
+        <>
+          <Breadcrumb.Separator />
+          <Breadcrumb.Item>
+            <Breadcrumb.Link
+              cursor="pointer"
+              onClick={onNavigateToFolder}
+              _hover={{ color: "gray.700" }}
+            >
+              {selectedFolder}
             </Breadcrumb.Link>
           </Breadcrumb.Item>
         </>
