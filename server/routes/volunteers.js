@@ -35,8 +35,10 @@ volunteersRouter.post("/", async (req, res) => {
         `,
         [email, firebaseUid]
       );
+
       userId = userResult[0].id;
     } catch (err) {
+      // If the user already exists (unique violation), reuse their ID
       if (err.code === "23505") {
         const existingUser = await db.query(
           `
@@ -54,6 +56,7 @@ volunteersRouter.post("/", async (req, res) => {
       }
     }
 
+    // Prevent duplicate volunteer insert
     const existingVolunteer = await db.query(
       `
         SELECT *
@@ -211,44 +214,40 @@ volunteersRouter.delete("/:id", async (req, res) => {
 });
 
 //
-// Volunteer "Areas of Practice" (actually Areas of Interest) Routes
-// Table: volunteer_areas_of_practice(volunteer_id, area_of_interest_id)
-//
+// Volunteer Areas of Practice (join table)
 
-// Assign an area of interest to a volunteer
-// POST /volunteers/:volunteerId/areas-of-interest  body: { areaOfInterestId }
-volunteersRouter.post("/:volunteerId/areas-of-interest", async (req, res) => {
+// Assign an area to a volunteer
+// POST /volunteers/:volunteerId/areas-of-practice  body: { areaOfPracticeId }
+volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
-    const { areaOfInterestId } = req.body;
+    const { areaOfPracticeId } = req.body;
 
-    if (!areaOfInterestId) {
-      return res.status(400).json({ message: "areaOfInterestId is required" });
+    if (!areaOfPracticeId) {
+      return res.status(400).json({ message: "areaOfPracticeId is required" });
     }
 
     const result = await db.query(
       `
-        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_interest_id)
+        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_practice_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, areaOfInterestId]
+      [volunteerId, areaOfPracticeId]
     );
 
     res.status(201).json(keysToCamel(result[0]));
   } catch (e) {
     if (e.code === "23505") {
-      return res
-        .status(409)
-        .json({ message: "Area of interest already assigned" });
+      return res.status(409).json({ message: "Area already assigned" });
     }
     res.status(500).send(e.message);
   }
 });
 
-// List all areas of interest for a volunteer
-// GET /volunteers/:volunteerId/areas-of-interest
-volunteersRouter.get("/:volunteerId/areas-of-interest", async (req, res) => {
+// List all areas for a volunteer
+// GET /volunteers/:volunteerId/areas-of-practice
+volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
@@ -256,7 +255,7 @@ volunteersRouter.get("/:volunteerId/areas-of-interest", async (req, res) => {
       `
         SELECT aoi.id, aoi.areas_of_interest
         FROM volunteer_areas_of_practice vaop
-        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_interest_id
+        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_practice_id
         WHERE vaop.volunteer_id = $1;
       `,
       [volunteerId]
@@ -268,27 +267,25 @@ volunteersRouter.get("/:volunteerId/areas-of-interest", async (req, res) => {
   }
 });
 
-// Remove an area of interest from a volunteer
-// DELETE /volunteers/:volunteerId/areas-of-interest/:areaOfInterestId
+// Remove an area from a volunteer
+// DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
 volunteersRouter.delete(
-  "/:volunteerId/areas-of-interest/:areaOfInterestId",
+  "/:volunteerId/areas-of-practice/:areaOfPracticeId",
   async (req, res) => {
     try {
-      const { volunteerId, areaOfInterestId } = req.params;
+      const { volunteerId, areaOfPracticeId } = req.params;
 
       const result = await db.query(
         `
           DELETE FROM volunteer_areas_of_practice
-          WHERE volunteer_id = $1 AND area_of_interest_id = $2
+          WHERE volunteer_id = $1 AND area_of_practice_id = $2
           RETURNING *;
         `,
-        [volunteerId, areaOfInterestId]
+        [volunteerId, areaOfPracticeId]
       );
 
       if (!result.length) {
-        return res
-          .status(404)
-          .json({ message: "Area of interest not assigned to this volunteer" });
+        return res.status(404).json({ message: "Area not assigned to this volunteer" });
       }
 
       res.status(200).json(keysToCamel(result[0]));
@@ -298,7 +295,11 @@ volunteersRouter.delete(
   }
 );
 
+//
 // Volunteer Tags Routes
+//
+
+// Assign volunteer a tag
 volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -319,6 +320,7 @@ volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
   }
 });
 
+// Delete a tag from a volunteer
 volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
   try {
     const { volunteerId, tagId } = req.params;
@@ -338,6 +340,7 @@ volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
   }
 });
 
+// Gets all tags assigned to a volunteer
 volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -360,7 +363,11 @@ volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
   }
 });
 
+//
 // Volunteer Languages Routes
+//
+
+// Assign a language to a volunteer
 volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -378,32 +385,29 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
   }
 });
 
-volunteersRouter.delete(
-  "/:volunteerId/languages/:languageId",
-  async (req, res) => {
-    try {
-      const { volunteerId, languageId } = req.params;
+// Remove a language from a volunteer
+volunteersRouter.delete("/:volunteerId/languages/:languageId", async (req, res) => {
+  try {
+    const { volunteerId, languageId } = req.params;
 
-      const result = await db.query(
-        `DELETE FROM volunteer_language
-         WHERE volunteer_id = $1 AND language_id = $2
-         RETURNING *`,
-        [volunteerId, languageId]
-      );
+    const result = await db.query(
+      `DELETE FROM volunteer_language
+       WHERE volunteer_id = $1 AND language_id = $2
+       RETURNING *`,
+      [volunteerId, languageId]
+    );
 
-      if (!result.length) {
-        return res
-          .status(404)
-          .json({ message: "Language not assigned to this volunteer" });
-      }
-
-      res.status(200).json(keysToCamel(result[0]));
-    } catch (e) {
-      res.status(500).send(e.message);
+    if (!result.length) {
+      return res.status(404).json({ message: "Language not assigned to this volunteer" });
     }
-  }
-);
 
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// List all languages for a volunteer
 volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -421,7 +425,10 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
   }
 });
 
+//
 // Volunteer Roles Routes
+//
+
 volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -452,9 +459,7 @@ volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
     );
 
     if (deletedRelationship.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Role not assigned to this volunteer" });
+      return res.status(404).json({ message: "Role not assigned to this volunteer" });
     }
 
     res.status(200).json(keysToCamel(deletedRelationship));
@@ -480,7 +485,10 @@ volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
   }
 });
 
+//
 // Volunteer Locations Routes
+//
+
 volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -501,29 +509,24 @@ volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
   }
 });
 
-volunteersRouter.delete(
-  "/:volunteerId/locations/:locationId",
-  async (req, res) => {
-    try {
-      const { volunteerId, locationId } = req.params;
+volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
+  try {
+    const { volunteerId, locationId } = req.params;
 
-      const deletedRelationship = await db.query(
-        "DELETE FROM volunteer_locations WHERE volunteer_id = $1 AND location_id = $2 RETURNING *",
-        [volunteerId, locationId]
-      );
+    const deletedRelationship = await db.query(
+      "DELETE FROM volunteer_locations WHERE volunteer_id = $1 AND location_id = $2 RETURNING *",
+      [volunteerId, locationId]
+    );
 
-      if (deletedRelationship.length === 0) {
-        return res.status(404).json({
-          message: "Location not assigned to this volunteer",
-        });
-      }
-
-      res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (e) {
-      res.status(500).send(e.message);
+    if (deletedRelationship.length === 0) {
+      return res.status(404).json({ message: "Location not assigned to this volunteer" });
     }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (e) {
+    res.status(500).send(e.message);
   }
-);
+});
 
 volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
   try {
