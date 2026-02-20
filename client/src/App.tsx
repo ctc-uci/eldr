@@ -58,6 +58,14 @@ const App = () => {
                   path="/email"
                   element={<EmailTemplateManagement />}
                 />
+                <Route
+                  path="/email/folder/:folderId"
+                  element={<EmailTemplateManagement />}
+                />
+                <Route
+                  path="/email/template/:templateId"
+                  element={<EmailTemplateManagement />}
+                />
                 {/* <Route
                   path="/catalog"
                   element={<CaseCatalog />}

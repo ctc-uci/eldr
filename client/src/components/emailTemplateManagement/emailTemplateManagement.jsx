@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
 import {
   Box,
@@ -30,9 +31,22 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 export const EmailTemplateManagement = () => {
   const { backend } = useBackendContext();
+  const { folderId: urlFolderId, templateId: urlTemplateId } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const [view, setView] = useState("folders");
-  // "folders" | "newTemplate" | "folderView"
+  // get view from URL params
+  // /email -> "folders"
+  // /email/folder/:folderId -> "folderView"
+  // /email/template/:templateId -> "newTemplate"
+  const view = useMemo(() => {
+    if (urlTemplateId) return "newTemplate";
+    if (urlFolderId) return "folderView";
+    return "folders";
+  }, [urlFolderId, urlTemplateId]);
+
+  // get folder context from query param (for template editor)
+  const folderIdFromQuery = searchParams.get("folderId");
 
   const [templateName, setTemplateName] = useState("Untitled Template");
   const [templateSubject, setTemplateSubject] = useState("");
@@ -51,7 +65,7 @@ export const EmailTemplateManagement = () => {
   const [pendingFolderName, setPendingFolderName] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Fetch folders from backend on mount
+  // fetch folders from backend on mount
   const fetchFolders = useCallback(async () => {
     try {
       setIsLoadingFolders(true);
@@ -80,6 +94,49 @@ export const EmailTemplateManagement = () => {
       setIsLoadingTemplates(false);
     }
   }, [backend]);
+
+  // sync currentFolder when navigating
+  useEffect(() => {
+    if (urlFolderId && folders.length > 0) {
+      const folder = folders.find(f => String(f.id) === urlFolderId);
+      if (folder) {
+        setCurrentFolder(folder);
+        fetchTemplatesInFolder(folder.id);
+      }
+    }
+  }, [urlFolderId, folders, fetchTemplatesInFolder]);
+
+  // sync selectedFolder from query param (for template editor back navigation)
+  useEffect(() => {
+    if (folderIdFromQuery && folders.length > 0) {
+      const folder = folders.find(f => String(f.id) === folderIdFromQuery);
+      if (folder) {
+        setSelectedFolder(folder);
+        setCurrentFolder(folder);
+      }
+    }
+  }, [folderIdFromQuery, folders]);
+
+  // fetch template data when navigating to template editor
+  useEffect(() => {
+    const fetchTemplateData = async () => {
+      if (urlTemplateId) {
+        try {
+          const response = await backend.get(`/email-templates/${urlTemplateId}`);
+          const template = response.data;
+          setCurrentTemplateId(template.id);
+          setTemplateName(template.name);
+          setTemplateSubject(template.subject || '');
+          setTemplateContent(template.templateText || template.template_text || '');
+        } catch (error) {
+          console.error('Error fetching template:', error);
+          // navigate back to folders if template not found
+          navigate('/email');
+        }
+      }
+    };
+    fetchTemplateData();
+  }, [urlTemplateId, backend, navigate]);
 
   const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
   const [newTemplateInput, setNewTemplateInput] = useState("");
@@ -121,7 +178,7 @@ export const EmailTemplateManagement = () => {
       setShowNewFolderPopover(false);
       setNewFolderInput("");
       setCurrentFolder(newFolder);
-      setView("folderView");
+      navigate(`/email/folder/${newFolder.id}`);
     } catch (error) {
       console.error('Error creating folder:', error);
     }
@@ -131,8 +188,7 @@ export const EmailTemplateManagement = () => {
   const handleFolderClick = (folder) => {
     setCurrentFolder(folder);
     setTemplates([]);
-    fetchTemplatesInFolder(folder.id);
-    setView("folderView");
+    navigate(`/email/folder/${folder.id}`);
   };
 
   // get templates for current folder (already fetched)
@@ -142,12 +198,9 @@ export const EmailTemplateManagement = () => {
 
   // handle clicking on a template to open it in editor
   const handleTemplateClick = (template) => {
-    setCurrentTemplateId(template.id);
-    setTemplateName(template.name);
-    setTemplateSubject(template.subject || '');
-    setTemplateContent(template.templateText || '');
-    setSelectedFolder(currentFolder);
-    setView("newTemplate");
+    // navigate to template editor with folder context in query param
+    const folderParam = currentFolder?.id ? `?folderId=${currentFolder.id}` : '';
+    navigate(`/email/template/${template.id}${folderParam}`);
   };
 
   // update template content in the database
@@ -206,7 +259,7 @@ export const EmailTemplateManagement = () => {
       setSelectedFolder(currentFolder);
       setShowFolderViewTemplatePopover(false);
       setFolderViewTemplateInput("");
-      setView("newTemplate");
+      navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
     } catch (error) {
       console.error('Error creating template:', error);
     }
@@ -251,7 +304,9 @@ export const EmailTemplateManagement = () => {
       setTemplateContent(createdTemplate.templateText || '');
       setShowNewTemplatePopover(false);
       setNewTemplateInput("");
-      setView("newTemplate");
+      // Navigate to template editor with folder context if available
+      const folderParam = currentFolder?.id ? `?folderId=${currentFolder.id}` : '';
+      navigate(`/email/template/${createdTemplate.id}${folderParam}`);
     } catch (error) {
       console.error('Error creating template:', error);
     }
@@ -286,10 +341,8 @@ export const EmailTemplateManagement = () => {
       setSelectedFolder("");
       setShowFolderPrompt(false);
 
-      // go back to folder view and refresh templates
-      setCurrentFolder(targetFolder);
-      fetchTemplatesInFolder(targetFolder.id);
-      setView("folderView");
+      // go back to folder view
+      navigate(`/email/folder/${targetFolder.id}`);
     } catch (error) {
       console.error('Error saving template:', error);
       alert("Failed to save template. Please try again.");
@@ -313,8 +366,12 @@ export const EmailTemplateManagement = () => {
       setCurrentTemplateId(null);
       setShowDeleteModal(false);
 
-      // go back to folders view
-      setView("folders");
+      // go back to folder if we have context, otherwise to folders list
+      if (selectedFolder?.id) {
+        navigate(`/email/folder/${selectedFolder.id}`);
+      } else {
+        navigate('/email');
+      }
     } catch (error) {
       console.error('Error deleting template:', error);
       alert("Failed to delete template. Please try again.");
@@ -334,14 +391,6 @@ export const EmailTemplateManagement = () => {
           currentFolder={currentFolder}
           templateName={templateName}
           selectedFolder={selectedFolder}
-          onNavigateToFolders={() => setView("folders")}
-          onNavigateToFolder={() => {
-            if (selectedFolder && selectedFolder.id) {
-              setCurrentFolder(selectedFolder);
-              fetchTemplatesInFolder(selectedFolder.id);
-              setView("folderView");
-            }
-          }}
         />
 
         {/* Title and Actions */}
