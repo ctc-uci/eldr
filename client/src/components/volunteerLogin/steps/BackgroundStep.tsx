@@ -1,37 +1,92 @@
 import {
   Box,
   Button,
+  Combobox,
   Flex,
   Heading,
   HStack,
   Image,
   Input,
   Link,
+  Progress,
   Text,
+  useListCollection,
 } from "@chakra-ui/react";
 
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import {
-  LuArrowRight,
-  LuFacebook,
-  LuKeyRound,
-  LuMail,
-  LuUser,
-} from "react-icons/lu";
+import { LuArrowRight, LuFacebook, LuMail } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onNext: () => void;
-  onBack: () => void;
 };
 
 const BAR_HEIGHT = "70.54px";
 const BAR_BG = "#E8E8E8";
 
-const CreateAccountStep = ({ onNext, onBack }: Props) => {
+const US_STATES = [
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+];
+
+const BackgroundStep = ({ onNext }: Props) => {
+  const { collection, filter } = useListCollection({
+    initialItems: US_STATES,
+    filter: (item, inputValue) =>
+      item.toLowerCase().includes(inputValue.toLowerCase()),
+  });
+
   return (
     <LoginLayout>
       <Flex
@@ -44,7 +99,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         overflow="hidden"
         direction="column"
       >
-        {/* Top bar */}
         <Flex
           w="100%"
           h={BAR_HEIGHT}
@@ -65,7 +119,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           flex="1"
           overflow="hidden"
         >
-          {/* Left side */}
           <Flex
             direction="column"
             justify="space-between"
@@ -76,7 +129,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           >
             <Box>
               <Heading
-                fontSize="30px"
+                fontSize="28px"
                 fontWeight={700}
                 color="black"
                 mb="20px"
@@ -87,8 +140,8 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 fontSize="20px"
                 color="gray.600"
               >
-                Begin creating your volunteer profile by entering the
-                information prompted.
+                Please fill out your background and prior experience section.
+                Please note that each of the prompts are optional.
               </Text>
             </Box>
 
@@ -116,7 +169,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               >
                 Community Counsel Website
               </Link>
-
               <HStack
                 gap="16px"
                 mt="32px"
@@ -157,164 +209,129 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             </Box>
           </Flex>
 
-          {/* Right side - form */}
           <Flex
             direction="column"
             justify="center"
             w="50%"
             p="60px"
-            gap="16px"
+            gap="30px"
           >
-            {/* First Name */}
+            <Progress.Root
+              value={90}
+              size="xs"
+            >
+              <Progress.Track>
+                <Progress.Range bg="#4A90D9" />
+              </Progress.Track>
+            </Progress.Root>
+
             <Box>
               <Text
-                fontSize="14px"
-                fontWeight={500}
+                fontSize="16px"
                 color="black"
-                mb="6px"
+                mb="8px"
               >
-                First Name
+                Law School Graduation Year
               </Text>
-              <Flex
-                align="center"
-                border="1px solid"
+              <Input
+                placeholder="Law School Graduation Year"
                 borderColor="#E4E4E7"
                 borderRadius="6px"
-                px="12px"
+                fontSize="14px"
                 h="44px"
-                gap="8px"
-              >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter First Name"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
+                focusRingColor="gray.200"
+              />
             </Box>
 
-            {/* Last Name */}
             <Box>
               <Text
-                fontSize="14px"
-                fontWeight={500}
+                fontSize="16px"
                 color="black"
-                mb="6px"
+                mb="8px"
               >
-                Last Name
+                State Bar Certificate State
               </Text>
-              <Flex
-                align="center"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="6px"
-                px="12px"
-                h="44px"
-                gap="8px"
+              <Combobox.Root
+                collection={collection}
+                onInputValueChange={({ inputValue }) => filter(inputValue)}
+                css={{ "--focus-color": "colors.gray.200" }}
+                openOnClick
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter Last Name"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
+                <Combobox.Control>
+                  <Combobox.Input placeholder="Select a State" />
+                  <Combobox.Trigger />
+                </Combobox.Control>
+                <Combobox.Positioner>
+                  <Combobox.Content>
+                    <Combobox.Empty>No results found</Combobox.Empty>
+                    {collection.items.map((item) => (
+                      <Combobox.Item
+                        key={item}
+                        item={item}
+                      >
+                        <Combobox.ItemText>{item}</Combobox.ItemText>
+                      </Combobox.Item>
+                    ))}
+                  </Combobox.Content>
+                </Combobox.Positioner>
+              </Combobox.Root>
             </Box>
 
-            {/* Password */}
+            <Box mt="-20px">
+              <Text
+                fontSize="16px"
+                color="black"
+                mb="8px"
+              >
+                State Bar Number
+              </Text>
+              <Input
+                placeholder="Enter State Bar Number"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                fontSize="14px"
+                h="44px"
+                focusRingColor="gray.200"
+              />
+            </Box>
+
             <Box>
               <Text
-                fontSize="14px"
-                fontWeight={500}
+                fontSize="16px"
                 color="black"
-                mb="6px"
+                mb="8px"
               >
-                Password
+                Employer
               </Text>
-              <Flex
-                align="center"
-                border="1px solid"
+              <Input
+                placeholder="Enter Employer"
                 borderColor="#E4E4E7"
                 borderRadius="6px"
-                px="12px"
+                fontSize="14px"
                 h="44px"
-                gap="8px"
-              >
-                <LuKeyRound
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter Password"
-                  type="password"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
+                focusRingColor="gray.200"
+              />
             </Box>
 
-            {/* Continue button */}
             <Button
               bg="#4A90D9"
               color="white"
               h="48px"
+              w="100%"
               borderRadius="6px"
-              fontSize="14px"
+              fontSize="17px"
               fontWeight={500}
               _hover={{ bg: "#3a7bc8" }}
               justifyContent="space-between"
               px="20px"
-              mt="4px"
               onClick={onNext}
             >
               Continue
               <LuArrowRight size={16} />
             </Button>
-
-            {/* Didn't mean to come here */}
-            <Text
-              fontSize="13px"
-              color="gray.500"
-              textAlign="center"
-            >
-              Didn't mean to come here?{" "}
-              <Link
-                href="#"
-                color="blue.500"
-                textDecoration="underline"
-                onClick={onBack}
-              >
-                Go back
-              </Link>
-            </Text>
           </Flex>
         </Flex>
 
-        {/* Bottom bar */}
         <Box
           w="100%"
           h={BAR_HEIGHT}
@@ -326,4 +343,4 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   );
 };
 
-export default CreateAccountStep;
+export default BackgroundStep;

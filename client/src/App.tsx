@@ -15,7 +15,7 @@ import { Playground } from "@/components/playground/Playground";
 // import { AdminLogin } from "@/components/adminProfile/adminLogin";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
-// import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
+import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
 // import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 // import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
@@ -85,10 +85,10 @@ const App = () => {
                     />
                   }
                 /> */}
-                {/* <Route
+                {<Route
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
-                /> */}
+                />}
                 {/* <Route 
                 path="/event-catalog"
                 element={<EventCatalog />}

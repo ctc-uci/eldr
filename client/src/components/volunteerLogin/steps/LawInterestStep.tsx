@@ -1,6 +1,9 @@
+import { useState } from "react";
+
 import {
   Box,
   Button,
+  Combobox,
   Flex,
   Heading,
   HStack,
@@ -8,23 +11,38 @@ import {
   Link,
   Progress,
   Text,
+  useListCollection,
 } from "@chakra-ui/react";
 
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import { LuArrowRight, LuFacebook, LuMail, LuUser } from "react-icons/lu";
+import { LuArrowRight, LuFacebook, LuMail, LuPlus } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onNext: () => void;
+  onBack: () => void;
 };
 
 const BAR_HEIGHT = "70.54px";
 const BAR_BG = "#E8E8E8";
 
-const SuccessStep = ({ onNext }: Props) => {
+const LAW_AREAS = [
+  "Interest One",
+  "Interest Two",
+  "Interest Three",
+  "Interest Four",
+];
+
+const LawInterestStep = ({ onNext, onBack }: Props) => {
+  const [interests, setInterests] = useState<string[]>([""]);
+
+  const handleAddInterest = () => {
+    setInterests((prev) => [...prev, ""]);
+  };
+
   return (
     <LoginLayout>
       <Flex
@@ -78,8 +96,9 @@ const SuccessStep = ({ onNext }: Props) => {
                 fontSize="20px"
                 color="gray.600"
               >
-                Your account has been created! Navigate to the login page and
-                sign-in with your new credentials.
+                Select any areas of law you have interest or experience working
+                in. It is recommended to only specify areas you're comfortable
+                advising in.
               </Text>
             </Box>
 
@@ -149,14 +168,15 @@ const SuccessStep = ({ onNext }: Props) => {
 
           <Flex
             direction="column"
-            justify="center"
             w="50%"
             p="60px"
-            gap="36px"
+            pt="200px"
+            gap="0"
           >
             <Progress.Root
-              value={100}
+              value={50}
               size="xs"
+              mb="60px"
             >
               <Progress.Track>
                 <Progress.Range bg="#4A90D9" />
@@ -165,44 +185,55 @@ const SuccessStep = ({ onNext }: Props) => {
 
             <Flex
               direction="column"
-              gap="8px"
-              align="center"
+              gap="12px"
             >
-              <Heading
-                fontSize="22px"
-                fontWeight={700}
-                color="black"
-              >
-                CC Volunteer Account Created
-              </Heading>
-              <Text
-                fontSize="14px"
-                color="grey"
-                fontStyle="italic"
-              >
-                Navigate to the login page by clicking below.
-              </Text>
-            </Flex>
+              {interests.map((_, index) => (
+                <InterestCombobox
+                  key={index}
+                  items={LAW_AREAS}
+                />
+              ))}
 
-            <Button
-              bg="#4A90D9"
-              color="white"
-              h="48px"
-              w="100%"
-              borderRadius="6px"
-              fontSize="17px"
-              fontWeight={500}
-              _hover={{ bg: "#3a7bc8" }}
-              justifyContent="space-between"
-              px="20px"
-              onClick={onNext}
-            >
-              <HStack gap="10px">
-                <LuUser size={18} />
-                <span>Return to Login</span>
+              <HStack
+                gap="8px"
+                w="100%"
+                mt="4px"
+              >
+                <Button
+                  bg="#4A90D9"
+                  color="white"
+                  h="48px"
+                  flex="1"
+                  borderRadius="6px"
+                  fontSize="17px"
+                  fontWeight={500}
+                  _hover={{ bg: "#3a7bc8" }}
+                  justifyContent="space-between"
+                  px="20px"
+                  onClick={handleAddInterest}
+                >
+                  Add interest
+                  <LuPlus size={16} />
+                </Button>
+
+                <Button
+                  bg="#F3F4F6"
+                  color="black"
+                  h="48px"
+                  flex="1"
+                  borderRadius="6px"
+                  fontSize="17px"
+                  fontWeight={500}
+                  _hover={{ bg: "#E5E7EB" }}
+                  justifyContent="space-between"
+                  px="20px"
+                  onClick={onNext}
+                >
+                  Continue
+                  <LuArrowRight size={16} />
+                </Button>
               </HStack>
-              <LuArrowRight size={16} />
-            </Button>
+            </Flex>
           </Flex>
         </Flex>
 
@@ -217,4 +248,48 @@ const SuccessStep = ({ onNext }: Props) => {
   );
 };
 
-export default SuccessStep;
+const InterestCombobox = ({ items }: { items: string[] }) => {
+  const { collection, filter } = useListCollection({
+    initialItems: items,
+    filter: (item, inputValue) =>
+      item.toLowerCase().includes(inputValue.toLowerCase()),
+  });
+
+  return (
+    <Box>
+      <Text
+        fontSize="16px"
+        color="black"
+        mb="8px"
+      >
+        If any, select areas of law you are interested working in.
+      </Text>
+      <Combobox.Root
+        collection={collection}
+        onInputValueChange={({ inputValue }) => filter(inputValue)}
+        css={{ "--focus-color": "colors.gray.200" }}
+        openOnClick
+      >
+        <Combobox.Control>
+          <Combobox.Input placeholder="Type to search" />
+          <Combobox.Trigger />
+        </Combobox.Control>
+        <Combobox.Positioner>
+          <Combobox.Content>
+            <Combobox.Empty>No results found</Combobox.Empty>
+            {collection.items.map((item) => (
+              <Combobox.Item
+                key={item}
+                item={item}
+              >
+                <Combobox.ItemText>{item}</Combobox.ItemText>
+              </Combobox.Item>
+            ))}
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Combobox.Root>
+    </Box>
+  );
+};
+
+export default LawInterestStep;

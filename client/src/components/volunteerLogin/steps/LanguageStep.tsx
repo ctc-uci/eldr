@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Box,
   Button,
@@ -5,33 +7,30 @@ import {
   Heading,
   HStack,
   Image,
-  Input,
   Link,
+  Progress,
+  TagsInput,
   Text,
 } from "@chakra-ui/react";
 
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import {
-  LuArrowRight,
-  LuFacebook,
-  LuKeyRound,
-  LuMail,
-  LuUser,
-} from "react-icons/lu";
+import { LuArrowRight, LuFacebook, LuMail } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onNext: () => void;
-  onBack: () => void;
 };
 
 const BAR_HEIGHT = "70.54px";
 const BAR_BG = "#E8E8E8";
 
-const CreateAccountStep = ({ onNext, onBack }: Props) => {
+const LanguageStep = ({ onNext }: Props) => {
+  const [proficientTags, setProficientTags] = useState<string[]>([]);
+  const [literateTags, setLiterateTags] = useState<string[]>([]);
+
   return (
     <LoginLayout>
       <Flex
@@ -44,7 +43,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         overflow="hidden"
         direction="column"
       >
-        {/* Top bar */}
         <Flex
           w="100%"
           h={BAR_HEIGHT}
@@ -65,7 +63,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           flex="1"
           overflow="hidden"
         >
-          {/* Left side */}
           <Flex
             direction="column"
             justify="space-between"
@@ -76,19 +73,20 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           >
             <Box>
               <Heading
-                fontSize="30px"
+                fontSize="28px"
                 fontWeight={700}
                 color="black"
                 mb="20px"
               >
-                Community Counsel Account Manager
+                Community Council Account Manager
               </Heading>
               <Text
                 fontSize="20px"
                 color="gray.600"
               >
-                Begin creating your volunteer profile by entering the
-                information prompted.
+                Select any languages you speak and your level of proficiency.
+                Please be as accurate as possible as volunteers will be asked to
+                assist/dictate in languages they indicate.
               </Text>
             </Box>
 
@@ -116,7 +114,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               >
                 Community Counsel Website
               </Link>
-
               <HStack
                 gap="16px"
                 mt="32px"
@@ -157,164 +154,98 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             </Box>
           </Flex>
 
-          {/* Right side - form */}
           <Flex
             direction="column"
             justify="center"
             w="50%"
             p="60px"
-            gap="16px"
+            gap="36px"
           >
-            {/* First Name */}
+            <Progress.Root
+              value={15}
+              size="xs"
+            >
+              <Progress.Track>
+                <Progress.Range bg="#4A90D9" />
+              </Progress.Track>
+            </Progress.Root>
+
             <Box>
               <Text
-                fontSize="14px"
-                fontWeight={500}
+                fontSize="16px"
                 color="black"
-                mb="6px"
+                mb="8px"
               >
-                First Name
+                (If any) Select non-english languages you are proficient in.
               </Text>
-              <Flex
-                align="center"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="6px"
-                px="12px"
-                h="44px"
-                gap="8px"
+              <TagsInput.Root
+                value={proficientTags}
+                onValueChange={(e) => setProficientTags(e.value)}
+                colorPalette="gray"
+                w="100%"
+                css={{ "--focus-color": "colors.gray.200" }}
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter First Name"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
+                <TagsInput.Control>
+                  <TagsInput.Items />
+                  <TagsInput.Input
+                    placeholder={
+                      proficientTags.length === 0
+                        ? "List a language and hit enter to save as a tag"
+                        : ""
+                    }
+                    _focus={{ _placeholder: { opacity: 0 } }}
+                  />
+                </TagsInput.Control>
+              </TagsInput.Root>
             </Box>
 
-            {/* Last Name */}
             <Box>
               <Text
-                fontSize="14px"
-                fontWeight={500}
+                fontSize="16px"
                 color="black"
-                mb="6px"
+                mb="8px"
               >
-                Last Name
+                Of the languages listed, indicate in which you are literate.
               </Text>
-              <Flex
-                align="center"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="6px"
-                px="12px"
-                h="44px"
-                gap="8px"
+              <TagsInput.Root
+                value={literateTags}
+                onValueChange={(e) => setLiterateTags(e.value)}
+                colorPalette="gray"
+                w="100%"
+                css={{ "--focus-color": "colors.gray.200" }}
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter Last Name"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
+                <TagsInput.Control>
+                  <TagsInput.Items />
+                  <TagsInput.Input
+                    placeholder={
+                      literateTags.length === 0
+                        ? "List a language and hit enter to save as a tag"
+                        : ""
+                    }
+                    _focus={{ _placeholder: { opacity: 0 } }}
+                  />
+                </TagsInput.Control>
+              </TagsInput.Root>
             </Box>
 
-            {/* Password */}
-            <Box>
-              <Text
-                fontSize="14px"
-                fontWeight={500}
-                color="black"
-                mb="6px"
-              >
-                Password
-              </Text>
-              <Flex
-                align="center"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="6px"
-                px="12px"
-                h="44px"
-                gap="8px"
-              >
-                <LuKeyRound
-                  size={16}
-                  color="#9CA3AF"
-                />
-                <Input
-                  placeholder="Enter Password"
-                  type="password"
-                  border="none"
-                  outline="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Flex>
-            </Box>
-
-            {/* Continue button */}
             <Button
               bg="#4A90D9"
               color="white"
               h="48px"
               borderRadius="6px"
-              fontSize="14px"
+              fontSize="17px"
               fontWeight={500}
               _hover={{ bg: "#3a7bc8" }}
               justifyContent="space-between"
               px="20px"
-              mt="4px"
               onClick={onNext}
             >
               Continue
               <LuArrowRight size={16} />
             </Button>
-
-            {/* Didn't mean to come here */}
-            <Text
-              fontSize="13px"
-              color="gray.500"
-              textAlign="center"
-            >
-              Didn't mean to come here?{" "}
-              <Link
-                href="#"
-                color="blue.500"
-                textDecoration="underline"
-                onClick={onBack}
-              >
-                Go back
-              </Link>
-            </Text>
           </Flex>
         </Flex>
 
-        {/* Bottom bar */}
         <Box
           w="100%"
           h={BAR_HEIGHT}
@@ -326,4 +257,4 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   );
 };
 
-export default CreateAccountStep;
+export default LanguageStep;
