@@ -34,6 +34,7 @@ export const EmailTemplateManagement = () => {
 
   const [templateName, setTemplateName] = useState("Untitled Template");
   const [templateContent, setTemplateContent] = useState("");
+  const [currentTemplateId, setCurrentTemplateId] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState("");
   const [showFolderPrompt, setShowFolderPrompt] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -41,6 +42,7 @@ export const EmailTemplateManagement = () => {
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
 
   // Fetch folders from backend on mount
   const fetchFolders = useCallback(async () => {
@@ -58,6 +60,19 @@ export const EmailTemplateManagement = () => {
   useEffect(() => {
     fetchFolders();
   }, [fetchFolders]);
+
+  // fetch templates for a specific folder
+  const fetchTemplatesInFolder = useCallback(async (folderId) => {
+    try {
+      setIsLoadingTemplates(true);
+      const response = await backend.get(`/folders/${folderId}/templates`);
+      setTemplates(response.data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  }, [backend]);
 
   const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
   const [newTemplateInput, setNewTemplateInput] = useState("");
@@ -108,25 +123,46 @@ export const EmailTemplateManagement = () => {
   // navigate to folder view when clicking on a folder
   const handleFolderClick = (folder) => {
     setCurrentFolder(folder);
+    setTemplates([]);
+    fetchTemplatesInFolder(folder.id);
     setView("folderView");
   };
 
-  // get templates for current folder
+  // get templates for current folder (already fetched)
   const getTemplatesInFolder = () => {
-    if (!currentFolder) return [];
-    return templates.filter((t) => t.folderId === currentFolder.id);
+    return templates;
   };
 
-  // create new template from folder view
-  const handleCreateTemplateFromFolderView = () => {
+  // create new template from folder view (linked to current folder)
+  const handleCreateTemplateFromFolderView = async () => {
     const trimmedName = folderViewTemplateInput.trim();
     if (!trimmedName) return;
-    setSelectedFolder(currentFolder);
-    setTemplateName(trimmedName);
-    setTemplateContent("");
-    setShowFolderViewTemplatePopover(false);
-    setFolderViewTemplateInput("");
-    setView("newTemplate");
+
+    try {
+      // create the email template
+      const templateResponse = await backend.post('/email-templates', {
+        name: trimmedName,
+        template_text: '',
+        subject: null,
+      });
+      const createdTemplate = templateResponse.data;
+
+      // link the template to the current folder
+      await backend.post(`/email-templates/${createdTemplate.id}/folders`, {
+        folderId: currentFolder.id,
+      });
+
+      // set up template view for editing
+      setCurrentTemplateId(createdTemplate.id);
+      setTemplateName(createdTemplate.name);
+      setTemplateContent(createdTemplate.templateText || '');
+      setSelectedFolder(currentFolder);
+      setShowFolderViewTemplatePopover(false);
+      setFolderViewTemplateInput("");
+      setView("newTemplate");
+    } catch (error) {
+      console.error('Error creating template:', error);
+    }
   };
 
   // handle folder view template popover open change
@@ -137,64 +173,75 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  // create new template from popover
-  const handleCreateTemplateFromPopover = () => {
+  // create new template from popover (links to current folder if in folderView)
+  const handleCreateTemplateFromPopover = async () => {
     const trimmedName = newTemplateInput.trim();
     if (!trimmedName) return;
-    setTemplateName(trimmedName);
-    setTemplateContent("");
-    setSelectedFolder("");
-    setShowNewTemplatePopover(false);
-    setNewTemplateInput("");
-    setView("newTemplate");
+
+    try {
+      // create the email template without folder
+      const response = await backend.post('/email-templates', {
+        name: trimmedName,
+        template_text: '',
+        subject: null,
+      });
+      const createdTemplate = response.data;
+
+      // if in folder view, link the template to the current folder
+      if (view === "folderView" && currentFolder?.id) {
+        await backend.post(`/email-templates/${createdTemplate.id}/folders`, {
+          folderId: currentFolder.id,
+        });
+        setSelectedFolder(currentFolder);
+      } else {
+        setSelectedFolder('');
+      }
+
+      // set the current template for editing
+      setCurrentTemplateId(createdTemplate.id);
+      setTemplateName(createdTemplate.name);
+      setTemplateContent(createdTemplate.templateText || '');
+      setShowNewTemplatePopover(false);
+      setNewTemplateInput("");
+      setView("newTemplate");
+    } catch (error) {
+      console.error('Error creating template:', error);
+    }
   };
 
-  const handleSaveTemplate = () => {
-    // trim values
-    const trimmedName = templateName.trim();
-    const trimmedFolder = selectedFolder.trim();
-
-    // validate template name
-    if (!trimmedName) {
-      alert("Template name cannot be empty.");
+  const handleSaveTemplate = async () => {
+    // validate we have a template to save
+    if (!currentTemplateId) {
+      alert("No template selected.");
       return;
     }
 
-    // validate folder
-    if (!trimmedFolder) {
-      alert("Please select or enter a folder.");
+    // validate folder - selectedFolder should be a folder object
+    if (!selectedFolder || !selectedFolder.id) {
+      alert("Please select a folder.");
       return;
     }
 
-    // If folder doesn't exist, add it
-    if (!folders.includes(trimmedFolder)) {
-      setFolders((prev) => [...prev, trimmedFolder]);
-    }
+    try {
+      // link the existing template to the folder
+      await backend.post(`/email-templates/${currentTemplateId}/folders`, {
+        folderId: selectedFolder.id,
+      });
 
-    // create new template object
-    const newTemplate = {
-      id: Date.now(),
-      name: trimmedName,
-      content: templateContent,
-      folder: trimmedFolder,
-      createdAt: new Date(),
-    };
+      // reset form
+      setTemplateName("Untitled Template");
+      setTemplateContent("");
+      setCurrentTemplateId(null);
+      setSelectedFolder("");
+      setShowFolderPrompt(false);
 
-    // save template
-    setTemplates((prev) => [...prev, newTemplate]);
-
-    // reset form
-    setTemplateName("Untitled Template");
-    setTemplateContent("");
-    setSelectedFolder("");
-    setShowFolderPrompt(false);
-
-    // go back to folder view if we came from there, otherwise folders view
-    if (trimmedFolder) {
-      setCurrentFolder(trimmedFolder);
+      // go back to folder view and refresh templates
+      setCurrentFolder(selectedFolder);
+      fetchTemplatesInFolder(selectedFolder.id);
       setView("folderView");
-    } else {
-      setView("folders");
+    } catch (error) {
+      console.error('Error saving template:', error);
+      alert("Failed to save template. Please try again.");
     }
   };
 
@@ -216,8 +263,11 @@ export const EmailTemplateManagement = () => {
           selectedFolder={selectedFolder}
           onNavigateToFolders={() => setView("folders")}
           onNavigateToFolder={() => {
-            setCurrentFolder(selectedFolder);
-            setView("folderView");
+            if (selectedFolder && selectedFolder.id) {
+              setCurrentFolder(selectedFolder);
+              fetchTemplatesInFolder(selectedFolder.id);
+              setView("folderView");
+            }
           }}
         />
 
@@ -229,7 +279,7 @@ export const EmailTemplateManagement = () => {
                 {view === "folderView" ? "Manage your files" : "Manage your folders"}
               </Text>
 
-              {view === "folders" && (
+              {(view === "folders" || view === "folderView") && (
                 <HStack spacing={4}>
                   <NewTemplatePopover
                     isOpen={showNewTemplatePopover}
@@ -270,11 +320,17 @@ export const EmailTemplateManagement = () => {
                   folders={folders}
                   newFolderName={newFolderName}
                   onNewFolderNameChange={setNewFolderName}
-                  onAddFolder={() => {
+                  onAddFolder={async () => {
                     if (!newFolderName.trim()) return;
-                    setFolders((prev) => [...prev, newFolderName]);
-                    setSelectedFolder(newFolderName);
-                    setNewFolderName("");
+                    try {
+                      const response = await backend.post('/folders', { name: newFolderName.trim() });
+                      const newFolder = response.data;
+                      setFolders((prev) => [...prev, newFolder]);
+                      setSelectedFolder(newFolder);
+                      setNewFolderName("");
+                    } catch (error) {
+                      console.error('Error creating folder:', error);
+                    }
                   }}
                   onSelectFolder={(folder) => setSelectedFolder(folder)}
                   onSave={handleSaveTemplate}
@@ -314,8 +370,10 @@ export const EmailTemplateManagement = () => {
 
         {/* Folder Content View */}
         {view === "folderView" && (
-          <Flex flex="1" direction="column" align="center" justify="center" minH="400px">
-            {getTemplatesInFolder().length === 0 ? (
+          <Flex flex="1" direction="column" align="center" justify={getTemplatesInFolder().length === 0 ? "center" : "flex-start"} minH="400px">
+            {isLoadingTemplates ? (
+              <Text>Loading templates...</Text>
+            ) : getTemplatesInFolder().length === 0 ? (
               <EmptyFolderState
                 isPopoverOpen={showFolderViewTemplatePopover}
                 onPopoverOpenChange={handleFolderViewTemplatePopoverOpenChange}

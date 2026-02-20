@@ -72,7 +72,7 @@ export const BreadcrumbNav = ({
               onClick={onNavigateToFolder}
               _hover={{ color: "gray.700" }}
             >
-              {selectedFolder}
+              {selectedFolder?.name || selectedFolder}
             </Breadcrumb.Link>
           </Breadcrumb.Item>
         </>

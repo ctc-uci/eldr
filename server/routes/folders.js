@@ -56,6 +56,28 @@ foldersRouter.get("/:id", async (req, res) => {
   }
 });
 
+// GET: get all templates in a folder
+// /folders/:id/templates
+foldersRouter.get("/:id/templates", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const templates = await db.query(
+      `SELECT et.id, et.name, et.template_text, et.subject
+       FROM email_template_folders etf
+       JOIN email_templates et ON etf.email_template_id = et.id
+       WHERE etf.folder_id = $1
+       ORDER BY et.id ASC`,
+      [id]
+    );
+
+    res.status(200).json(keysToCamel(templates));
+  } catch (error) {
+    console.error("Error fetching templates for folder:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // PUT: update a folder
 // /folders/:id
 foldersRouter.put("/:id", async (req, res) => {
