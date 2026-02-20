@@ -120,7 +120,6 @@ export const EventCatalog = () => {
   // Filter and sort events
   const filteredEvents = useMemo(() => {
     let result = [...events];
-    console.log(result);
 
     // Apply search
     if (searchQuery.trim()) {
@@ -282,6 +281,7 @@ export const EventCatalog = () => {
           display={{ base: showDetails ? "flex" : "none", md: "flex" }}
           position="relative"
           direction="column"
+          overflow="hidden"
           align="start"
           px={{ base: "12px", md: "none" }}
         >

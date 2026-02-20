@@ -51,9 +51,12 @@ export const EventInfo = ({ event }) => {
       w="full"
       h="full"
       justify="space-between"
+      flex="1"
+      overflow="hidden"
     >
       {/* Event name */}
       <Text
+        flexShrink={0}
         fontSize="26px"
         fontWeight="400"
         lineHeight="44px"
@@ -66,6 +69,7 @@ export const EventInfo = ({ event }) => {
 
       {/* Event metadata */}
       <VStack
+        flexShrink={0}
         align="flex-start"
         gap="12px"
         w="full"
@@ -117,8 +121,9 @@ export const EventInfo = ({ event }) => {
 
       {/* Event tags */}
       <HStack
+        flexShrink={0}
         flexWrap="wrap"
-        my={{ base: 6, md: 0 }}
+        my={6}
         fontSize="12px"
         fontWeight={500}
         gap="10px"
@@ -154,19 +159,22 @@ export const EventInfo = ({ event }) => {
         w="full"
         overflowY="auto"
         scrollbar="hidden"
-        h="360px"
+        flex="1"
+        minH={0}
       >
         <Text whiteSpace="pre-line">{event.description}</Text>
       </Box>
 
       {/* Register Button */}
       <Flex
+        flexShrink={0}
         direction="column"
         align="center"
         justify="center"
         alignSelf="center"
         zIndex={2}
-        mb={{ base: 6, md: 1 }}
+        mt={3}
+        mb={{ base: 5, md: 1 }}
       >
         <HStack
           opacity={isRegistered ? 1 : 0}
