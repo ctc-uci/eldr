@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 import {
   Box,
@@ -24,7 +24,11 @@ import {
   SaveTemplatePopover,
 } from "./components";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 export const EmailTemplateManagement = () => {
+  const { backend } = useBackendContext();
+
   const [view, setView] = useState("folders");
   // "folders" | "newTemplate" | "folderView"
 
@@ -34,12 +38,26 @@ export const EmailTemplateManagement = () => {
   const [showFolderPrompt, setShowFolderPrompt] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [templates, setTemplates] = useState([]);
-  const [folders, setFolders] = useState([
-    "Untitled Folder",
-    "Untitled Folder",
-    "Untitled Folder",
-  ]);
+  const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(true);
+
+  // Fetch folders from backend on mount
+  const fetchFolders = useCallback(async () => {
+    try {
+      setIsLoadingFolders(true);
+      const response = await backend.get('/folders');
+      setFolders(response.data);
+    } catch (error) {
+      console.error('Error fetching folders:', error);
+    } finally {
+      setIsLoadingFolders(false);
+    }
+  }, [backend]);
+
+  useEffect(() => {
+    fetchFolders();
+  }, [fetchFolders]);
 
   const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
   const [newTemplateInput, setNewTemplateInput] = useState("");
@@ -69,26 +87,34 @@ export const EmailTemplateManagement = () => {
   };
 
   // create new folder from popover
-  const handleCreateFolderFromPopover = () => {
+  const handleCreateFolderFromPopover = async () => {
     const trimmedName = newFolderInput.trim();
     if (!trimmedName) return;
-    setFolders((prev) => [...prev, trimmedName]);
-    setShowNewFolderPopover(false);
-    setNewFolderInput("");
-    setCurrentFolder(trimmedName);
-    setView("folderView");
+
+    try {
+      const response = await backend.post('/folders', { name: trimmedName });
+      const newFolder = response.data;
+      
+      setFolders((prev) => [...prev, newFolder]);
+      setShowNewFolderPopover(false);
+      setNewFolderInput("");
+      setCurrentFolder(newFolder);
+      setView("folderView");
+    } catch (error) {
+      console.error('Error creating folder:', error);
+    }
   };
 
   // navigate to folder view when clicking on a folder
-  const handleFolderClick = (folderName) => {
-    setCurrentFolder(folderName);
+  const handleFolderClick = (folder) => {
+    setCurrentFolder(folder);
     setView("folderView");
   };
 
   // get templates for current folder
   const getTemplatesInFolder = () => {
     if (!currentFolder) return [];
-    return templates.filter((t) => t.folder === currentFolder);
+    return templates.filter((t) => t.folderId === currentFolder.id);
   };
 
   // create new template from folder view
@@ -270,13 +296,19 @@ export const EmailTemplateManagement = () => {
         {/* Folder List View */}
         {view === "folders" && (
           <VStack align="stretch" spacing={4} mb={8} flex="1">
-            {folders.map((folder, idx) => (
-              <FolderCard
-                key={idx}
-                name={folder}
-                onClick={() => handleFolderClick(folder)}
-              />
-            ))}
+            {isLoadingFolders ? (
+              <Text>Loading folders...</Text>
+            ) : folders.length === 0 ? (
+              <Text>No folders yet. Create one to get started.</Text>
+            ) : (
+              folders.map((folder) => (
+                <FolderCard
+                  key={folder.id}
+                  name={folder.name}
+                  onClick={() => handleFolderClick(folder)}
+                />
+              ))
+            )}
           </VStack>
         )}
 

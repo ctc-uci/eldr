@@ -57,7 +57,7 @@ export const BreadcrumbNav = ({
               color="gray.800"
               fontWeight="medium"
             >
-              {currentFolder || "New Folder"}
+              {currentFolder?.name || "New Folder"}
             </Breadcrumb.Link>
           </Breadcrumb.Item>
         </>
