@@ -120,6 +120,7 @@ export const EventCatalog = () => {
   // Filter and sort events
   const filteredEvents = useMemo(() => {
     let result = [...events];
+    console.log(result);
 
     // Apply search
     if (searchQuery.trim()) {
@@ -127,10 +128,10 @@ export const EventCatalog = () => {
       result = result.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
-          e.address.toLowerCase().includes(q) ||
+          e.location.toLowerCase().includes(q) ||
           e.description.toLowerCase().includes(q) ||
-          e.languages.some((l) => l.toLowerCase().includes(q)) ||
-          e.areas.some((a) => a.toLowerCase().includes(q))
+          e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
+          e.areas.some((a) => a.areasOfInterest.toLowerCase().includes(q))
       );
     }
 
