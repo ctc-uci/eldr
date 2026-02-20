@@ -77,6 +77,8 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
       >
         {events.map((event) => {
           const isSelected = selectedEvent && selectedEvent.id === event.id;
+          const statusText = isPastSection ? "Attended" : "Registered";
+
           return (
             <Flex
               as="button"
@@ -170,7 +172,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     fontWeight={500}
                     color="#111827"
                   >
-                    {event.status}
+                    {statusText}
                   </Text>
                 </HStack>
                 {event.languages.map((l, i) => (
