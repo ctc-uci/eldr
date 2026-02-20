@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button, HStack, Input, Popover, Text } from "@chakra-ui/react";
 
 import { FaPlus } from "react-icons/fa";
@@ -5,9 +6,6 @@ import { FaPlus } from "react-icons/fa";
 export const InputPopover = ({
   isOpen,
   onOpenChange,
-  inputRef,
-  inputValue,
-  onInputChange,
   onSubmit,
   onTriggerClick,
   // Trigger button props
@@ -21,6 +19,8 @@ export const InputPopover = ({
   popoverWidth = "292px",
   placement = "bottom-start",
 }) => {
+  const [inputValue, setInputValue] = useState("");
+
   const handleTriggerClick = async (e) => {
     if (onTriggerClick) {
       e.preventDefault();
@@ -28,12 +28,24 @@ export const InputPopover = ({
     }
   };
 
+  const handleSubmit = () => {
+    if (!inputValue.trim()) return;
+    onSubmit(inputValue.trim());
+    setInputValue("");
+  };
+
+  const handleOpenChange = (e) => {
+    onOpenChange(e.open);
+    if (!e.open) {
+      setInputValue("");
+    }
+  };
+
   return (
     <Popover.Root
       open={isOpen}
-      onOpenChange={(e) => onOpenChange(e.open)}
+      onOpenChange={handleOpenChange}
       placement={placement}
-      initialFocusEl={() => inputRef?.current}
     >
       <Popover.Trigger asChild>
         <Button
@@ -63,24 +75,22 @@ export const InputPopover = ({
           </Text>
           <HStack gap="10px">
             <Input
-              ref={inputRef}
+              autoFocus
               placeholder={inputPlaceholder}
               value={inputValue}
-              onChange={(e) => onInputChange(e.target.value)}
+              onChange={(e) => setInputValue(e.target.value)}
               size="md"
               fontSize="xs"
               bg="white"
               onKeyDown={(e) => {
-                if (e.key === "Enter" && inputValue.trim()) {
-                  onSubmit();
-                }
+                if (e.key === "Enter") handleSubmit();
               }}
             />
             <FaPlus
               size={24}
               cursor={inputValue.trim() ? "pointer" : "not-allowed"}
               color={inputValue.trim() ? "black" : "#ccc"}
-              onClick={inputValue.trim() ? onSubmit : undefined}
+              onClick={handleSubmit}
               title={inputValue.trim() ? `Create ${triggerLabel?.toLowerCase() || "item"}` : "Enter a name first"}
             />
           </HStack>

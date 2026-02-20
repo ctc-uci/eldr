@@ -3,18 +3,12 @@ import { InputPopover } from "./InputPopover";
 export const SaveTemplatePopover = ({
   isOpen,
   onOpenChange,
-  inputRef,
-  newFolderName,
-  onNewFolderNameChange,
   onAddFolder,
   onTriggerClick,
 }) => (
   <InputPopover
     isOpen={isOpen}
     onOpenChange={onOpenChange}
-    inputRef={inputRef}
-    inputValue={newFolderName}
-    onInputChange={onNewFolderNameChange}
     onSubmit={onAddFolder}
     onTriggerClick={onTriggerClick}
     triggerLabel="Save Template"

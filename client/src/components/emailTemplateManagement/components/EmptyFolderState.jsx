@@ -7,9 +7,6 @@ import { InputPopover } from "./InputPopover";
 export const EmptyFolderState = ({
   isPopoverOpen,
   onPopoverOpenChange,
-  inputRef,
-  inputValue,
-  onInputChange,
   onCreateTemplate,
 }) => (
   <VStack
@@ -39,9 +36,6 @@ export const EmptyFolderState = ({
     <InputPopover
       isOpen={isPopoverOpen}
       onOpenChange={onPopoverOpenChange}
-      inputRef={inputRef}
-      inputValue={inputValue}
-      onInputChange={onInputChange}
       onSubmit={onCreateTemplate}
       triggerIcon={<FaMailBulk />}
       triggerLabel="New Template"

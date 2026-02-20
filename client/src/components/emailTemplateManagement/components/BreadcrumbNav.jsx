@@ -6,7 +6,6 @@ export const BreadcrumbNav = ({
   view,
   currentFolder,
   templateName,
-  selectedFolder,
 }) => {
   return (
     <Breadcrumb.Root
@@ -62,16 +61,16 @@ export const BreadcrumbNav = ({
           </>
         )}
 
-        {view === "newTemplate" && selectedFolder && (
+        {view === "newTemplate" && currentFolder && (
           <>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
               <Breadcrumb.Link
                 as={Link}
-                to={`/email/folder/${selectedFolder?.id}`}
+                to={`/email/folder/${currentFolder?.id}`}
                 _hover={{ color: "gray.700" }}
               >
-                {selectedFolder?.name || selectedFolder}
+                {currentFolder?.name}
               </Breadcrumb.Link>
             </Breadcrumb.Item>
           </>

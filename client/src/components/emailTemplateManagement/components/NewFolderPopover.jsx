@@ -5,18 +5,12 @@ import { InputPopover } from "./InputPopover";
 export const NewFolderPopover = ({
   isOpen,
   onOpenChange,
-  inputRef,
-  inputValue,
-  onInputChange,
   onSubmit,
   buttonProps = {},
 }) => (
   <InputPopover
     isOpen={isOpen}
     onOpenChange={onOpenChange}
-    inputRef={inputRef}
-    inputValue={inputValue}
-    onInputChange={onInputChange}
     onSubmit={onSubmit}
     triggerIcon={<FaFolder />}
     triggerLabel="New Folder"
