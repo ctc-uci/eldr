@@ -11,19 +11,88 @@ import {
   Image,
   IconButton,
   HStack,
-  Separator
+  Separator,
+  Card,
+  CloseButton
 } from "@chakra-ui/react";
 
-import { FaArrowRight, FaInstagram } from "react-icons/fa";
+import { FaArrowRight, FaInstagram, FaLock } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import logo from "./ELDR_Logo.png";
 
 export const AdminForgotPass: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const { backend } = useBackendContext();
+  const [currUsers, setCurrUsers] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const fetchUsers = async () => {
+    try{
+      const response = await backend.get(`/users`);
+      setCurrUsers(response.data);
+    }
+    catch (error){
+        console.log(error);
+    }
+  }
+
+
+  const verifyEmail = (email: string, currUsers: string[]) => {
+    return currUsers.some(curr => curr.email === email);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const Popup = () => (
+      <Flex
+        position="fixed"
+        top="0"
+        left="0"
+        w="100vw"
+        h="100vh"
+        bg="rgba(0,0,0,0.4)"
+        align="center"
+        justify="center"
+        zIndex={9999}
+      >
+        <Card.Root
+          w="500px"
+          p={6}
+          borderRadius="md"
+          boxShadow="xl"
+        >
+          <Card.Header p={0}>
+            <HStack w="100%" align="center">
+              <HStack gap={2}>
+                <Icon as={FaLock}/>
+                
+                <Text fontWeight="bold">
+                  Account Verification Error
+                </Text>
+              </HStack>
+  
+              <CloseButton
+                ml="auto"
+                boxSize="20px"
+                onClick={() => setShowPopup(false)}
+                _hover = {{bg: "white"}}
+              />
+            </HStack>
+          </Card.Header>
+          <Card.Body px={1} py={5}>
+            <Text>
+              Please enter a valid email to send your password reset link to.
+            </Text>
+          </Card.Body>
+        </Card.Root>
+      </Flex>
+    );
 
   return (
     <Flex 
@@ -80,23 +149,27 @@ export const AdminForgotPass: React.FC = () => {
                 as={FiFacebook} 
                 variant="ghost"
                 onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FiLinkedin} 
                 variant="ghost"
                 onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FaInstagram} 
                 variant="ghost"
                 onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={MdOutlineEmail} 
                 variant="ghost"
+                _hover = {{bg: "white"}}
               />
             </HStack>
           </VStack>
@@ -131,7 +204,10 @@ export const AdminForgotPass: React.FC = () => {
               disabled={!email}
               _hover={email ? { bg: "#5797BD" } : {}}
               mb={4}
-              onClick={() => navigate("/adminPassReset")}
+              onClick={() => {
+                  const valid = verifyEmail(email, currUsers);
+                  valid ? navigate("/adminPassReset") : setShowPopup(true);
+                }}
             >
               Continue
               <Icon
@@ -142,6 +218,7 @@ export const AdminForgotPass: React.FC = () => {
                 transform="translateY(-50%)"
               />
             </Button>
+            {showPopup && <Popup></Popup>}
             <Flex align= "center" justify = "center">
               <Text fontSize="sm">
                 Go back to{" "}

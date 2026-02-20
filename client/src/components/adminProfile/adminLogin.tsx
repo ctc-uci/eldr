@@ -9,7 +9,6 @@ import {
   Button, 
   HStack, 
   Separator,
-  NativeSelect,
   IconButton, 
   List,
   Link,
@@ -26,18 +25,6 @@ import { HiOutlineKey } from "react-icons/hi";
 
 import { useNavigate } from "react-router-dom";
 import logo from "./ELDR_Logo.png";
-
-const DomainSelect = () => (
-  <NativeSelect.Root >
-    <NativeSelect.Field width = "100%" placeholder = "--"  borderWidth="0px" height = "100%">
-      <option value="gmail">gmail.com</option>
-      <option value="yahoo">yahoo.com</option>
-      <option value="rediffmail">rediffmail.com</option>
-      <option value = "hotmail">hotmail.com</option>
-    </NativeSelect.Field>
-    <NativeSelect.Indicator />
-  </NativeSelect.Root>
-)
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -136,6 +123,7 @@ export const AdminLogin: React.FC = () => {
                 as = {FiFacebook} 
                 variant = "ghost"
                 onClick = {() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
+                _hover = {{bg: "white"}}
               >
               </IconButton>
               <IconButton 
@@ -143,6 +131,7 @@ export const AdminLogin: React.FC = () => {
                 as = {FiLinkedin} 
                 variant = "ghost"
                 onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                _hover = {{bg: "white"}}
                 >
               </IconButton>
               <IconButton 
@@ -150,12 +139,14 @@ export const AdminLogin: React.FC = () => {
                 as = {FaInstagram} 
                 variant = "ghost"
                 onClick = {() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
+                _hover = {{bg: "white"}}
               >
               </IconButton>
               <IconButton 
                 boxSize="20px" 
                 as = {MdOutlineEmail} 
                 variant = "ghost"
+                _hover = {{bg: "white"}}
               >
               </IconButton>
             </HStack>
@@ -183,10 +174,9 @@ export const AdminLogin: React.FC = () => {
                 width = "30vw" 
                 height = "2vw" 
                 startElement={<MdOutlineEmail/>} 
-                endElement = {<DomainSelect/>}
               >
                 <Input 
-                  placeholder="example@"
+                  placeholder="example@hotmail.com"
                   variant="outline"
                   borderColor="#E4E4E7"
                   borderWidth="1px"
@@ -218,6 +208,7 @@ export const AdminLogin: React.FC = () => {
                     boxSize="20px"
                     onClick={() => setShowPassword(prev => !prev)}
                     aria-label="Toggle password visibility"
+                    _hover = {{bg: "white"}}
                   >
                     {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                   </IconButton>

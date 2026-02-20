@@ -69,6 +69,7 @@ export const AdminPassReset: React.FC = () => {
               ml="auto"
               boxSize="20px"
               onClick={() => setShowPopup(false)}
+              _hover = {{bg: "white"}}
             />
           </HStack>
         </Card.Header>
@@ -159,23 +160,27 @@ export const AdminPassReset: React.FC = () => {
                 as={FiFacebook} 
                 variant="ghost"
                 onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FiLinkedin} 
                 variant="ghost"
                 onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FaInstagram} 
                 variant="ghost"
                 onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
+                _hover = {{bg: "white"}}
               />
               <IconButton 
                 boxSize="20px" 
                 as={MdOutlineEmail} 
                 variant="ghost"
+                _hover = {{bg: "white"}}
               />
             </HStack>
           </VStack>
@@ -197,6 +202,7 @@ export const AdminPassReset: React.FC = () => {
                       boxSize="20px"
                       onClick={() => setShowNewPassword(prev => !prev)}
                       aria-label="Toggle password visibility"
+                      _hover = {{bg: "white"}}
                     >
                       {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                     </IconButton>
@@ -233,6 +239,7 @@ export const AdminPassReset: React.FC = () => {
                       boxSize="20px"
                       onClick={() => setShowConfirmPassword(prev => !prev)}
                       aria-label="Toggle password visibility"
+                      _hover = {{bg: "white"}}
                     >
                       {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                     </IconButton>
