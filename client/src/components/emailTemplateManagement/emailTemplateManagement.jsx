@@ -23,6 +23,7 @@ import {
   NewTemplateSection,
   SaveTemplatePopover,
   FolderNotFoundModal,
+  DeleteTemplateModal,
 } from "./components";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -48,6 +49,7 @@ export const EmailTemplateManagement = () => {
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [showFolderNotFoundModal, setShowFolderNotFoundModal] = useState(false);
   const [pendingFolderName, setPendingFolderName] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch folders from backend on mount
   const fetchFolders = useCallback(async () => {
@@ -199,6 +201,7 @@ export const EmailTemplateManagement = () => {
       // set up template view for editing
       setCurrentTemplateId(createdTemplate.id);
       setTemplateName(createdTemplate.name);
+      setTemplateSubject('');
       setTemplateContent(createdTemplate.templateText || '');
       setSelectedFolder(currentFolder);
       setShowFolderViewTemplatePopover(false);
@@ -244,6 +247,7 @@ export const EmailTemplateManagement = () => {
       // set the current template for editing
       setCurrentTemplateId(createdTemplate.id);
       setTemplateName(createdTemplate.name);
+      setTemplateSubject('');
       setTemplateContent(createdTemplate.templateText || '');
       setShowNewTemplatePopover(false);
       setNewTemplateInput("");
@@ -294,6 +298,28 @@ export const EmailTemplateManagement = () => {
 
   const totalPages = 6;
   const currentPage = 1;
+
+  // delete template handler
+  const handleDeleteTemplate = async () => {
+    if (!currentTemplateId) return;
+
+    try {
+      await backend.delete(`/email-templates/${currentTemplateId}`);
+      
+      // reset form
+      setTemplateName("Untitled Template");
+      setTemplateSubject("");
+      setTemplateContent("");
+      setCurrentTemplateId(null);
+      setShowDeleteModal(false);
+
+      // go back to folders view
+      setView("folders");
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert("Failed to delete template. Please try again.");
+    }
+  };
 
   return (
     <Flex minH="100vh" bg="#FAFBFC">
@@ -398,7 +424,7 @@ export const EmailTemplateManagement = () => {
                   backgroundColor="#5797BD"
                   color="white"
                   w="292px"
-                  onClick={() => setView("folders")}
+                  onClick={() => setShowDeleteModal(true)}
                 >
                   Delete Template
                 </Button>
@@ -492,6 +518,13 @@ export const EmailTemplateManagement = () => {
             console.error('Error creating folder:', error);
           }
         }}
+      />
+
+      {/* Delete Template Modal */}
+      <DeleteTemplateModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onDelete={handleDeleteTemplate}
       />
     </Flex>
   );

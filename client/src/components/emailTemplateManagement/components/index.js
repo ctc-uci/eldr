@@ -11,3 +11,4 @@ export { Sidebar } from "./Sidebar";
 export { NewTemplateSection } from "./NewTemplateSection";
 export { SaveTemplatePopover } from "./SaveTemplatePopover";
 export { FolderNotFoundModal } from "./FolderNotFoundModal";
+export { DeleteTemplateModal } from "./DeleteTemplateModal";
