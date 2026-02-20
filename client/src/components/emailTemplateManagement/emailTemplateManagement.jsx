@@ -352,7 +352,7 @@ export const EmailTemplateManagement = () => {
                 {view === "folderView" ? "Manage your files" : "Manage your folders"}
               </Text>
 
-              {(view === "folders" || view === "folderView") && (
+              {(view === "folders" || (view === "folderView" && getTemplatesInFolder().length != 0)) && (
                 <HStack spacing={4}>
                   <NewTemplatePopover
                     isOpen={showNewTemplatePopover}
@@ -397,7 +397,7 @@ export const EmailTemplateManagement = () => {
                     if (!newFolderName.trim()) return;
                     
                     try {
-                      // search for folder by name via API
+                      // search for folder by name
                       console.log('Searching for folder with name:', newFolderName.trim());
                       console.log('GET /folders/search?name=' + encodeURIComponent(newFolderName.trim()));
                       const response = await backend.get(`/folders/search?name=${encodeURIComponent(newFolderName.trim())}`);
@@ -405,12 +405,11 @@ export const EmailTemplateManagement = () => {
 
                       console.log('Folder search response:', existingFolder);
                       
-                      // Folder exists, link template to it
+                      // folder exists, link template to it
                       await handleSaveTemplate(existingFolder);
                       setNewFolderName("");
                     } catch (error) {
                       if (error.response?.status === 404) {
-                        // Folder doesn't exist, show modal
                         setPendingFolderName(newFolderName.trim());
                         setShowFolderNotFoundModal(true);
                       } else {
