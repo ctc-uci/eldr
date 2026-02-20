@@ -9,6 +9,7 @@ export const InputPopover = ({
   inputValue,
   onInputChange,
   onSubmit,
+  onTriggerClick,
   // Trigger button props
   triggerIcon,
   triggerLabel,
@@ -19,24 +20,33 @@ export const InputPopover = ({
   inputPlaceholder,
   popoverWidth = "292px",
   placement = "bottom-start",
-}) => (
-  <Popover.Root
-    open={isOpen}
-    onOpenChange={(e) => onOpenChange(e.open)}
-    placement={placement}
-    initialFocusEl={() => inputRef?.current}
-  >
-    <Popover.Trigger asChild>
-      <Button
-        backgroundColor="#5797BD"
-        color="white"
-        w={triggerWidth}
-        {...buttonProps}
-      >
-        {triggerIcon}
-        {triggerLabel}
-      </Button>
-    </Popover.Trigger>
+}) => {
+  const handleTriggerClick = async (e) => {
+    if (onTriggerClick) {
+      e.preventDefault();
+      await onTriggerClick();
+    }
+  };
+
+  return (
+    <Popover.Root
+      open={isOpen}
+      onOpenChange={(e) => onOpenChange(e.open)}
+      placement={placement}
+      initialFocusEl={() => inputRef?.current}
+    >
+      <Popover.Trigger asChild>
+        <Button
+          backgroundColor="#5797BD"
+          color="white"
+          w={triggerWidth}
+          onClick={handleTriggerClick}
+          {...buttonProps}
+        >
+          {triggerIcon}
+          {triggerLabel}
+        </Button>
+      </Popover.Trigger>
     <Popover.Positioner zIndex={1000}>
       <Popover.Content
         w={popoverWidth}
@@ -78,4 +88,5 @@ export const InputPopover = ({
       </Popover.Content>
     </Popover.Positioner>
   </Popover.Root>
-);
+  );
+};

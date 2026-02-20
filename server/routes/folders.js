@@ -37,6 +37,32 @@ foldersRouter.post("/", async (req, res) => {
   }
 });
 
+// GET: search for folder by name
+// /folders/search?name=xxx
+foldersRouter.get("/search", async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name query parameter is required" });
+    }
+
+    const folder = await db.oneOrNone(
+      "SELECT * FROM folders WHERE LOWER(name) = LOWER($1)",
+      [name]
+    );
+    
+    if (folder) {
+      res.status(200).json(keysToCamel(folder));
+    } else {
+      res.status(404).json({ message: "Folder not found" });
+    }
+  } catch (error) {
+    console.error("Error searching for folder:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // GET: get one folder by id
 // /folders/:id
 foldersRouter.get("/:id", async (req, res) => {

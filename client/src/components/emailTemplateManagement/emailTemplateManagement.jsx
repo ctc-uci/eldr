@@ -22,6 +22,7 @@ import {
   Sidebar,
   NewTemplateSection,
   SaveTemplatePopover,
+  FolderNotFoundModal,
 } from "./components";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -33,6 +34,7 @@ export const EmailTemplateManagement = () => {
   // "folders" | "newTemplate" | "folderView"
 
   const [templateName, setTemplateName] = useState("Untitled Template");
+  const [templateSubject, setTemplateSubject] = useState("");
   const [templateContent, setTemplateContent] = useState("");
   const [currentTemplateId, setCurrentTemplateId] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState("");
@@ -43,6 +45,9 @@ export const EmailTemplateManagement = () => {
   const [currentFolder, setCurrentFolder] = useState(null);
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [showFolderNotFoundModal, setShowFolderNotFoundModal] = useState(false);
+  const [pendingFolderName, setPendingFolderName] = useState("");
 
   // Fetch folders from backend on mount
   const fetchFolders = useCallback(async () => {
@@ -133,6 +138,45 @@ export const EmailTemplateManagement = () => {
     return templates;
   };
 
+  // handle clicking on a template to open it in editor
+  const handleTemplateClick = (template) => {
+    setCurrentTemplateId(template.id);
+    setTemplateName(template.name);
+    setTemplateSubject(template.subject || '');
+    setTemplateContent(template.templateText || '');
+    setSelectedFolder(currentFolder);
+    setView("newTemplate");
+  };
+
+  // update template content in the database
+  const updateTemplateInDb = async () => {
+    if (!currentTemplateId) return;
+
+    try {
+      setIsSavingTemplate(true);
+      await backend.put(`/email-templates/${currentTemplateId}`, {
+        name: templateName.trim(),
+        template_text: templateContent,
+        subject: templateSubject.trim() || null,
+      });
+    } catch (error) {
+      console.error('Error updating template:', error);
+      throw error;
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  // handle save button click - save to db and show folder popover
+  const handleSaveButtonClick = async () => {
+    try {
+      await updateTemplateInDb();
+      setShowFolderPrompt(true);
+    } catch (error) {
+      alert('Failed to save template. Please try again.');
+    }
+  };
+
   // create new template from folder view (linked to current folder)
   const handleCreateTemplateFromFolderView = async () => {
     const trimmedName = folderViewTemplateInput.trim();
@@ -209,23 +253,26 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = async (folderToLink = null) => {
     // validate we have a template to save
     if (!currentTemplateId) {
       alert("No template selected.");
       return;
     }
 
-    // validate folder - selectedFolder should be a folder object
-    if (!selectedFolder || !selectedFolder.id) {
+    const targetFolder = folderToLink || selectedFolder;
+
+    // validate folder - should be a folder object
+    if (!targetFolder || !targetFolder.id) {
       alert("Please select a folder.");
       return;
     }
 
     try {
+      console.log('Saving template with id', currentTemplateId, 'to folder', targetFolder.id);
       // link the existing template to the folder
       await backend.post(`/email-templates/${currentTemplateId}/folders`, {
-        folderId: selectedFolder.id,
+        folderId: targetFolder.id,
       });
 
       // reset form
@@ -236,8 +283,8 @@ export const EmailTemplateManagement = () => {
       setShowFolderPrompt(false);
 
       // go back to folder view and refresh templates
-      setCurrentFolder(selectedFolder);
-      fetchTemplatesInFolder(selectedFolder.id);
+      setCurrentFolder(targetFolder);
+      fetchTemplatesInFolder(targetFolder.id);
       setView("folderView");
     } catch (error) {
       console.error('Error saving template:', error);
@@ -303,8 +350,9 @@ export const EmailTemplateManagement = () => {
           ) : (
             <>
               <Input
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
+                value={templateSubject}
+                onChange={(e) => setTemplateSubject(e.target.value)}
+                placeholder="Untitled Template"
                 variant="unstyled"
                 fontSize="3xl"
                 fontWeight="600"
@@ -316,24 +364,34 @@ export const EmailTemplateManagement = () => {
                 <SaveTemplatePopover
                   isOpen={showFolderPrompt}
                   onOpenChange={(open) => setShowFolderPrompt(open)}
-                  selectedFolder={selectedFolder}
-                  folders={folders}
                   newFolderName={newFolderName}
                   onNewFolderNameChange={setNewFolderName}
+                  onTriggerClick={handleSaveButtonClick}
                   onAddFolder={async () => {
                     if (!newFolderName.trim()) return;
+                    
                     try {
-                      const response = await backend.post('/folders', { name: newFolderName.trim() });
-                      const newFolder = response.data;
-                      setFolders((prev) => [...prev, newFolder]);
-                      setSelectedFolder(newFolder);
+                      // search for folder by name via API
+                      console.log('Searching for folder with name:', newFolderName.trim());
+                      console.log('GET /folders/search?name=' + encodeURIComponent(newFolderName.trim()));
+                      const response = await backend.get(`/folders/search?name=${encodeURIComponent(newFolderName.trim())}`);
+                      const existingFolder = response.data;
+
+                      console.log('Folder search response:', existingFolder);
+                      
+                      // Folder exists, link template to it
+                      await handleSaveTemplate(existingFolder);
                       setNewFolderName("");
                     } catch (error) {
-                      console.error('Error creating folder:', error);
+                      if (error.response?.status === 404) {
+                        // Folder doesn't exist, show modal
+                        setPendingFolderName(newFolderName.trim());
+                        setShowFolderNotFoundModal(true);
+                      } else {
+                        console.error('Error searching for folder:', error);
+                      }
                     }
                   }}
-                  onSelectFolder={(folder) => setSelectedFolder(folder)}
-                  onSave={handleSaveTemplate}
                 />
 
                 <Button
@@ -385,7 +443,11 @@ export const EmailTemplateManagement = () => {
             ) : (
               <VStack align="stretch" spacing={4} width="100%">
                 {getTemplatesInFolder().map((template) => (
-                  <TemplateCard key={template.id} name={template.name} />
+                  <TemplateCard
+                    key={template.id}
+                    name={template.name}
+                    onClick={() => handleTemplateClick(template)}
+                  />
                 ))}
               </VStack>
             )}
@@ -407,6 +469,30 @@ export const EmailTemplateManagement = () => {
           <Pagination totalPages={totalPages} currentPage={currentPage} />
         )}
       </Flex>
+
+      {/* Folder Not Found Modal */}
+      <FolderNotFoundModal
+        isOpen={showFolderNotFoundModal}
+        onClose={() => {
+          setShowFolderNotFoundModal(false);
+          setPendingFolderName("");
+        }}
+        folderName={pendingFolderName}
+        onCreateFolder={async () => {
+          try {
+            const response = await backend.post('/folders', { name: pendingFolderName });
+            const newFolder = response.data;
+            setFolders((prev) => [...prev, newFolder]);
+            setNewFolderName("");
+            setShowFolderNotFoundModal(false);
+            setPendingFolderName("");
+            // link the template to the newly created folder
+            await handleSaveTemplate(newFolder);
+          } catch (error) {
+            console.error('Error creating folder:', error);
+          }
+        }}
+      />
     </Flex>
   );
 };

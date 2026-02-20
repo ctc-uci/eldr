@@ -7,6 +7,7 @@ export const SaveTemplatePopover = ({
   newFolderName,
   onNewFolderNameChange,
   onAddFolder,
+  onTriggerClick,
 }) => (
   <InputPopover
     isOpen={isOpen}
@@ -15,6 +16,7 @@ export const SaveTemplatePopover = ({
     inputValue={newFolderName}
     onInputChange={onNewFolderNameChange}
     onSubmit={onAddFolder}
+    onTriggerClick={onTriggerClick}
     triggerLabel="Save Template"
     popoverTitle="Indicate a folder to store this template."
     inputPlaceholder="Enter a folder name"
