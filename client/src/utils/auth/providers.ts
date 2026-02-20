@@ -9,7 +9,7 @@ import { auth } from "./firebase";
 
 const facebookProvider = new FacebookAuthProvider();
 const googleProvider = new GoogleAuthProvider();
-// const microsoftProvider = new OAuthProvider("microsoft.com");
+const microsoftProvider = new OAuthProvider("microsoft.com");
 
 /**
  * `signInWithRedirect` is patched!
@@ -26,6 +26,6 @@ export async function authenticateGoogleUser() {
   await patchedSignInWithRedirect(auth, googleProvider);
 }
 
-// export async function authenticateMicrosoftUser() {
-//   await patchedSignInWithRedirect(auth, microsoftProvider);
-// }
+export async function authenticateMicrosoftUser() {
+  await patchedSignInWithRedirect(auth, microsoftProvider);
+}

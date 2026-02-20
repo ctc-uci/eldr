@@ -19,7 +19,7 @@ import { z } from "zod";
 import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { authenticateGoogleUser } from "@/utils/auth/providers";
+import { authenticateGoogleUser, authenticateMicrosoftUser } from "@/utils/auth/providers";
 
 const signinSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -116,11 +116,15 @@ export const VolunteerLogin = () => {
   };
 
   const handleMicrosoftLogin = async () => {
-    toaster.error({
-      title: "Microsoft login not yet implemented",
-      description: "Please use email/password or Google login.",
-    });
+    await authenticateMicrosoftUser();
   };
+
+  // const handleMicrosoftLogin = async () => {
+  //   toaster.error({
+  //     title: "Microsoft login not yet implemented",
+  //     description: "Please use email/password or Google login.",
+  //   });
+  // };
 
   const handleCreateAccount = () => {
     // TODO: Navigate to signup or implement signup flow
