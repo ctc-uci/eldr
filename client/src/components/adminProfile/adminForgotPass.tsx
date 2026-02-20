@@ -206,7 +206,8 @@ export const AdminForgotPass: React.FC = () => {
               mb={4}
               onClick={() => {
                   const valid = verifyEmail(email, currUsers);
-                  valid ? navigate("/adminPassReset") : setShowPopup(true);
+                  valid ? navigate("/adminPassReset", { state: { email } }) : setShowPopup(true);
+                  
                 }}
             >
               Continue

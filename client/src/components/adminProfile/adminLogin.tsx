@@ -15,22 +15,47 @@ import {
   Image
 } from "@chakra-ui/react";
 
-import {
-    useState
-} from "react"
+import { useState, useEffect } from "react"
 import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye, FaGoogle, FaMicrosoft } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
 import { HiOutlineKey } from "react-icons/hi";
 
 import { useNavigate } from "react-router-dom";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import logo from "./ELDR_Logo.png";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
+  const { backend } = useBackendContext();
   const [userFilled, setUserFilled] = useState(false);
   const [passFilled, setPassFilled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [currUsers, setCurrUsers] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const auth = getAuth();
+
+  const fetchUsers = async () => {
+    try{
+      const response = await backend.get('/users');
+      setCurrUsers(response.data);
+    }
+    catch (error){
+      console.log(error);
+    }
+  }
+
+  const isAdmin = (email: string, currUsers: string[]) => {
+    return currUsers.some(curr => curr.email === email && curr.role === "admin");
+  }
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   return (
     <Flex 
       minH="100vh"
@@ -175,16 +200,17 @@ export const AdminLogin: React.FC = () => {
                 height = "2vw" 
                 startElement={<MdOutlineEmail/>} 
               >
-                <Input 
+                <Input
                   placeholder="example@hotmail.com"
                   variant="outline"
                   borderColor="#E4E4E7"
                   borderWidth="1px"
                   borderRadius="md"
-                  _placeholder={{ color: "A1A1AA", opacity: 1 }}
+                  _placeholder={{ color: "#A1A1AA", opacity: 1 }}
                   onChange={(e) => {
                     const value = e.target.value;
                     setUserFilled(value.length > 0);
+                    setEmail(value);
                   }}
                 />
               </InputGroup>
@@ -227,6 +253,7 @@ export const AdminLogin: React.FC = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   setPassFilled(value.length > 0);
+                  setPassword(value);
                 }}
               />
             </InputGroup>
@@ -251,7 +278,16 @@ export const AdminLogin: React.FC = () => {
             color="white"
             _hover={{ bg: "#5797BD" }}
             disabled = {!(userFilled && passFilled)}
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                  console.log("Logged in:", userCredential.user.uid);
+                  isAdmin(email, currUsers) ? navigate("/adminDashboard") : null; // or wherever
+                })
+                .catch((error) => {
+                  console.log("Authentication failed:", error.message);
+                });
+            }}
           >
             Login
             <Icon
