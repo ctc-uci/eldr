@@ -54,7 +54,7 @@ export const AdminForgotPass: React.FC = () => {
               Account Confirmation Verification
             </Text>
             
-            <Text mb={6} pb = "15%">
+            <Text mb={6} pb = "35%">
               Enter your ELDR account email and we'll send you a link to reset your password.
             </Text>
             
@@ -79,19 +79,19 @@ export const AdminForgotPass: React.FC = () => {
                 boxSize="20px" 
                 as={FiFacebook} 
                 variant="ghost"
-                onClick={() => navigate("https://www.facebook.com/ELDRCenter/photos/")}
+                onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FiLinkedin} 
                 variant="ghost"
-                onClick={() => navigate("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FaInstagram} 
                 variant="ghost"
-                onClick={() => navigate("https://www.instagram.com/eldr_center/?hl=en")}
+                onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
               />
               <IconButton 
                 boxSize="20px" 
@@ -110,7 +110,7 @@ export const AdminForgotPass: React.FC = () => {
             <InputGroup pb = "3%" w = "30vw" startElement={<MdOutlineEmail />}>
               <Input 
                 placeholder="Enter an email"
-                height = "2vw"
+                height = "40px"
                 variant="outline"
                 borderColor="#E4E4E7"
                 borderWidth="1px"

@@ -19,7 +19,7 @@ import {
 import {
     useState
 } from "react"
-import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye } from "react-icons/fa";
+import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye, FaGoogle, FaMicrosoft } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
 import { HiOutlineKey } from "react-icons/hi";
@@ -28,8 +28,8 @@ import { useNavigate } from "react-router-dom";
 import logo from "./ELDR_Logo.png";
 
 const DomainSelect = () => (
-  <NativeSelect.Root height = "100%" bg = "#F6F6F6">
-    <NativeSelect.Field placeholder = "--">
+  <NativeSelect.Root >
+    <NativeSelect.Field width = "100%" placeholder = "--"  borderWidth="0px" height = "100%">
       <option value="gmail">gmail.com</option>
       <option value="yahoo">yahoo.com</option>
       <option value="rediffmail">rediffmail.com</option>
@@ -63,13 +63,39 @@ export const AdminLogin: React.FC = () => {
         borderRadius="50%"
         zIndex={0}
       />
-      <VStack minH="80vh" borderWidth="1px" borderRadius = "sm" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
-        <Flex w = "80vw" bg = "#F6F6F6" h = "70px" align = "left" px = "2%" py = "1%">
+      <VStack 
+        minH="80vh" 
+        borderWidth="1px" 
+        borderRadius = "sm" 
+        borderColor = "#E4E4E7" 
+        zIndex={1} 
+        gap = {0}
+      >
+        <Flex 
+          w = "80vw" 
+          bg = "#F6F6F6" 
+          h = "70px" 
+          align = "left" 
+          px = "2%" 
+          py = "1%"
+        >
           <Image src = {logo}></Image>
         </Flex>
-        <Flex flex="1" w="100%" bg="white">
-          <VStack align = "left" width = "50%" px = "5%" gap = {1}>
-            <Text fontWeight="bold" fontSize="30px" pt = "15%">
+        <Flex 
+          flex="1" 
+          w="100%" 
+          bg="white"
+        >
+          <VStack 
+            align = "left" 
+            width = "50%" 
+            px = "5%" 
+            gap = {1}
+          >
+            <Text 
+              fontWeight="bold" 
+              fontSize="30px" pt = "15%"
+            >
               Welcome to CC Staff Portal by Community Counsel
             </Text>
             <List.Root color = "black" pt = "5%">
@@ -101,26 +127,29 @@ export const AdminLogin: React.FC = () => {
             >
               Community Counsel Website
             </Link>
-            <HStack pt = "15%" gap = {0}>
+            <HStack 
+              pt = "15%" 
+              gap = {0}
+            >
               <IconButton 
                 boxSize="20px" 
                 as = {FiFacebook} 
                 variant = "ghost"
-                onClick = {() => navigate("https://www.facebook.com/ELDRCenter/photos/")}
+                onClick = {() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
               >
               </IconButton>
               <IconButton 
                 boxSize="20px" 
                 as = {FiLinkedin} 
                 variant = "ghost"
-                onClick={() => navigate("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
                 >
               </IconButton>
               <IconButton 
                 boxSize="20px" 
                 as = {FaInstagram} 
                 variant = "ghost"
-                onClick = {() => navigate("https://www.instagram.com/eldr_center/?hl=en")}
+                onClick = {() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
               >
               </IconButton>
               <IconButton 
@@ -132,14 +161,30 @@ export const AdminLogin: React.FC = () => {
             </HStack>
           </VStack>
           <Separator orientation = "vertical"></Separator>
-          <VStack w="50%" bg="#FFFFFF" h="100%" align="left" justify="center" px = "5%" py = "10%">
+          <VStack 
+            w="50%" 
+            bg="#FFFFFF" 
+            h="100%" 
+            align="left" 
+            justify="center" 
+            px = "5%" 
+            py = "10%"
+          >
             <Box>
               <Text fontWeight="bold">
                 Email
               </Text>
             </Box>
-            <Box w="80%" h="40px">
-              <InputGroup width = "30vw" height = "2vw" startElement={<MdOutlineEmail/>} endElement = {<DomainSelect/>}>
+            <Box 
+              w="80%" 
+              h="40px"
+            >
+              <InputGroup 
+                width = "30vw" 
+                height = "2vw" 
+                startElement={<MdOutlineEmail/>} 
+                endElement = {<DomainSelect/>}
+              >
                 <Input 
                   placeholder="example@"
                   variant="outline"
@@ -159,7 +204,10 @@ export const AdminLogin: React.FC = () => {
               Password
             </Text>
           </Box>
-          <Box w="80%" h="40px">
+          <Box 
+            w="80%" 
+            h="40px"
+          >
             <InputGroup
               width = "30vw"
               startElement={<HiOutlineKey />}
@@ -178,7 +226,7 @@ export const AdminLogin: React.FC = () => {
             >
               <Input
                 type={showPassword ? "text" : "password"}
-                height = "2vw"
+                height = "40px"
                 placeholder="Enter Password"
                 variant="outline"
                 borderColor="#E4E4E7"
@@ -195,9 +243,10 @@ export const AdminLogin: React.FC = () => {
           <Link
             textDecoration="underline"
             color="#3182CE"
-            ml="60%"
             background = "white"
+            ml = "69%"
             href="/adminForgotPass"
+            pb = "2%"
           >
             Forgot Password?
           </Link>
@@ -222,8 +271,18 @@ export const AdminLogin: React.FC = () => {
               transform="translateY(-50%)"
             />
           </Button>
-            <VStack  w="100%" align="center" mt={4} >
-              <Text fontSize="md" fontWeight="bold" pb="4%">or continue with</Text>
+            <VStack  
+              w="100%" 
+              align="center" 
+              mt={4} 
+            >
+              <Text 
+                fontSize="md" 
+                fontWeight="bold" 
+                pb="4%"
+              >
+                or continue with
+              </Text>
               <Button variant="outline" 
                 bg="#3182CE"
                 borderWidth="2px"
@@ -233,7 +292,21 @@ export const AdminLogin: React.FC = () => {
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
               >
+                <Icon
+                  as={FaGoogle}
+                  position="absolute"
+                  left="16px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                />
                 Google
+              <Icon
+                as={FaArrowRight}
+                position="absolute"
+                right="16px"
+                top="50%"
+                transform="translateY(-50%)"
+              />
               </Button>
               <Button variant="outline" 
                 bg="#3182CE"
@@ -244,12 +317,31 @@ export const AdminLogin: React.FC = () => {
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
               >
+                <Icon
+                  as={FaMicrosoft}
+                  position="absolute"
+                  left="16px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                />
                 Microsoft
+                <Icon
+                  as={FaArrowRight}
+                  position="absolute"
+                  right="16px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                />
               </Button>
             </VStack>
           </VStack>
         </Flex>
-        <Flex w = "80vw" bg = "#F6F6F6" h = "70px"></Flex>
+        <Flex 
+          w = "80vw" 
+          bg = "#F6F6F6" 
+          h = "70px"
+        >
+        </Flex>
       </VStack>
     </Flex>
   );

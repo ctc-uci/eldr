@@ -11,16 +11,20 @@ import {
   Image,
   IconButton,
   HStack,
-  Separator
+  Separator,
+  Card,
+  CloseButton
 } from "@chakra-ui/react";
 
-import { FaArrowRight, FaInstagram, FaRegEyeSlash, FaRegEye } from "react-icons/fa";
+import { FaArrowRight, FaInstagram, FaRegEyeSlash, FaRegEye, FaLock } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { HiOutlineKey } from "react-icons/hi";
 import { MdOutlineEmail } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "./ELDR_Logo.png"
+
+
 
 export const AdminPassReset: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +32,72 @@ export const AdminPassReset: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const matching = (newPassword === confirmPassword);
+
+  const Popup = () => (
+    <Flex
+      position="fixed"
+      top="0"
+      left="0"
+      w="100vw"
+      h="100vh"
+      bg="rgba(0,0,0,0.4)"
+      align="center"
+      justify="center"
+      zIndex={9999}
+    >
+      <Card.Root
+        w="500px"
+        p={6}
+        borderRadius="md"
+        boxShadow="xl"
+      >
+        <Card.Header p={0}>
+          <HStack w="100%" align="center">
+            <HStack gap={2}>
+              {!matching && <Icon as={FaLock} />}
+              
+              <Text fontWeight="bold">
+                {matching
+                  ? "Password Confirmation"
+                  : "Password Reset Failed"}
+              </Text>
+            </HStack>
+
+            <CloseButton
+              ml="auto"
+              boxSize="20px"
+              onClick={() => setShowPopup(false)}
+            />
+          </HStack>
+        </Card.Header>
+        <Card.Body px={1} py={5}>
+          <Text>
+            {matching
+              ? "Your password has been changed. Sign in using your updated credentials."
+              : "Please make sure your new password and confirmation entries match."}
+          </Text>
+        </Card.Body>
+        <Card.Footer p={1}>
+          <Flex justify="flex-end" w="100%">
+            {matching && (
+              <Button
+                bg="#3182CE"
+                color="white"
+                onClick={() => {
+                  setShowPopup(false);
+                  navigate("/adminLogin");
+                }}
+              >
+                Return to Login
+              </Button>
+            )}
+          </Flex>
+        </Card.Footer>
+      </Card.Root>
+    </Flex>
+  );
 
   return (
     <Flex 
@@ -55,19 +125,19 @@ export const AdminPassReset: React.FC = () => {
         
         <Flex flex="1" w="100%" bg="white">
           <VStack align = "left" width = "50%" px = "5%" gap = {1}>
-            <Text fontWeight="bold" fontSize="30px">
+            <Text fontWeight="bold" fontSize="30px" pt = "15%">
               Community Counsel Password Manager
             </Text>
             
-            <Text mb={6}>
+            <Text mb={6} pt = "10%">
               Enter your new password below, and confirm where prompted.
             </Text>
 
             <Text mb={6}>
-              Recommended min. 8 characters with 1 special character.
+              Recommended: minimum 8 characters with 1 special character.
             </Text>
             
-            <Text fontWeight="bold">
+            <Text fontWeight="bold" pt = "25%">
               Need help?
             </Text>
             <Text fontWeight="bold">
@@ -78,28 +148,29 @@ export const AdminPassReset: React.FC = () => {
               color="#3182CE"
               bg="white"
               href="https://eldrcenter.org/"
+              pt = "2%"
             >
               Community Counsel Website
             </Link>
             
-            <HStack>
+            <HStack pt = "15%" align = "left">
               <IconButton 
                 boxSize="20px" 
                 as={FiFacebook} 
                 variant="ghost"
-                onClick={() => navigate("https://www.facebook.com/ELDRCenter/photos/")}
+                onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FiLinkedin} 
                 variant="ghost"
-                onClick={() => navigate("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
+                onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
               />
               <IconButton 
                 boxSize="20px" 
                 as={FaInstagram} 
                 variant="ghost"
-                onClick={() => navigate("https://www.instagram.com/eldr_center/?hl=en")}
+                onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
               />
               <IconButton 
                 boxSize="20px" 
@@ -193,6 +264,7 @@ export const AdminPassReset: React.FC = () => {
               disabled={!newPassword || !confirmPassword}
               _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
               mb={4}
+              onClick={() => setShowPopup(true)}
             >
               Continue
               <Icon
@@ -203,6 +275,7 @@ export const AdminPassReset: React.FC = () => {
                 transform="translateY(-50%)"
               />
             </Button>
+            {showPopup && <Popup />}
 
             <Text fontSize="sm" color="gray.600">
               Go back to{" "}
