@@ -137,7 +137,7 @@ export const AdminPassReset: React.FC = () => {
               Recommended: minimum 8 characters with 1 special character.
             </Text>
             
-            <Text fontWeight="bold" pt = "25%">
+            <Text fontWeight="bold" pt = "10%">
               Need help?
             </Text>
             <Text fontWeight="bold">

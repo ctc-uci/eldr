@@ -54,7 +54,7 @@ export const AdminForgotPass: React.FC = () => {
               Account Confirmation Verification
             </Text>
             
-            <Text mb={6} pb = "35%">
+            <Text mb={6} pb = "15%">
               Enter your ELDR account email and we'll send you a link to reset your password.
             </Text>
             
