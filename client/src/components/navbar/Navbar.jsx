@@ -1,13 +1,6 @@
-import React from "react";
+import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
-import {
-  Avatar,
-  Flex,
-  HStack,
-  Image,
-  Link,
-  Text,
-} from "@chakra-ui/react";
+import { BriefcaseBusiness, ClipboardList } from "lucide-react";
 
 export const Navbar = () => {
   return (
@@ -43,7 +36,7 @@ export const Navbar = () => {
           color="#374151"
           _hover={{ color: "#111827", textDecoration: "none" }}
         >
-          <Image src="/clipboard-list.svg" alt="Events" w="18px" h="18px" />
+          <ClipboardList size={18} />
           <Text>Events</Text>
         </Link>
 
@@ -57,7 +50,7 @@ export const Navbar = () => {
           color="#374151"
           _hover={{ color: "#111827", textDecoration: "none" }}
         >
-          <Image src="/briefcase-business.svg" alt="Cases" w="18px" h="18px" />
+          <BriefcaseBusiness size={18} />
           <Text>Cases</Text>
         </Link>
 
