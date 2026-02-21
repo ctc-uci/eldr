@@ -55,6 +55,7 @@ export const EmailTemplateManagement = () => {
   const [templateContent, setTemplateContent] = useState("");
   const [currentTemplateId, setCurrentTemplateId] = useState(null);
   const [showFolderPrompt, setShowFolderPrompt] = useState(false);
+  const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [folders, setFolders] = useState([]);
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
@@ -110,6 +111,10 @@ export const EmailTemplateManagement = () => {
   useEffect(() => {
     const fetchTemplateData = async () => {
       if (urlTemplateId) {
+        // skip fetching for new unsaved templates (temp IDs start with 'new-')
+        if (urlTemplateId.startsWith('new-')) {
+          return;
+        }
         try {
           const response = await backend.get(`/email-templates/${urlTemplateId}`);
           const template = response.data;
@@ -117,6 +122,7 @@ export const EmailTemplateManagement = () => {
           setTemplateName(template.name);
           setTemplateSubject(template.subject || '');
           setTemplateContent(template.templateText || template.template_text || '');
+          setIsNewTemplate(false);
         } catch (error) {
           console.error('Error fetching template:', error);
           // navigate back to folders if template not found
@@ -194,12 +200,16 @@ export const EmailTemplateManagement = () => {
     setTemplateSubject("");
     setTemplateContent("");
     setCurrentTemplateId(null);
+    setIsNewTemplate(false);
   };
 
-  // handle save button click - save to db and show folder popover
+  // handle save button click - save to db (if existing) and show folder popover
   const handleSaveButtonClick = async () => {
     try {
-      await updateTemplateInDb();
+      // only update DB if this is an existing template
+      if (!isNewTemplate && currentTemplateId) {
+        await updateTemplateInDb();
+      }
       setShowFolderPrompt(true);
     } catch (error) {
       alert('Failed to save template. Please try again.');
@@ -237,42 +247,44 @@ export const EmailTemplateManagement = () => {
   // create new template from popover (links to current folder if in folderView)
   const handleCreateTemplateFromPopover = async (name) => {
     try {
-      // create the email template without folder
-      const response = await backend.post('/email-templates', {
-        name,
-        template_text: '',
-        subject: null,
-      });
-      const createdTemplate = response.data;
-
-      // if in folder view, link the template to the current folder
+      // if in folder view with a folder, create and link immediately
       if (view === "folderView" && currentFolder?.id) {
+        const response = await backend.post('/email-templates', {
+          name,
+          template_text: '',
+          subject: null,
+        });
+        const createdTemplate = response.data;
+
         await backend.post(`/email-templates/${createdTemplate.id}/folders`, {
           folderId: currentFolder.id,
         });
-      }
 
-      // set the current template for editing
-      setCurrentTemplateId(createdTemplate.id);
-      setTemplateName(createdTemplate.name);
-      setTemplateSubject('');
-      setTemplateContent(createdTemplate.templateText || '');
-      setShowNewTemplatePopover(false);
-      // Navigate to template editor with folder context if available
-      const folderParam = currentFolder?.id ? `?folderId=${currentFolder.id}` : '';
-      navigate(`/email/template/${createdTemplate.id}${folderParam}`);
+        setCurrentTemplateId(createdTemplate.id);
+        setTemplateName(createdTemplate.name);
+        setTemplateSubject('');
+        setTemplateContent('');
+        setIsNewTemplate(false);
+        setShowNewTemplatePopover(false);
+        navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
+      } else {
+        // from folders view: keep template in local state only until user saves to folder
+        // use a temporary ID for routing (will be replaced when saved)
+        const tempId = `new-${Date.now()}`;
+        setCurrentTemplateId(null); // no DB id yet
+        setTemplateName(name);
+        setTemplateSubject('');
+        setTemplateContent('');
+        setIsNewTemplate(true);
+        setShowNewTemplatePopover(false);
+        navigate(`/email/template/${tempId}`);
+      }
     } catch (error) {
       console.error('Error creating template:', error);
     }
   };
 
   const handleSaveTemplate = async (folderToLink = null) => {
-    // validate we have a template to save
-    if (!currentTemplateId) {
-      alert("No template selected.");
-      return;
-    }
-
     const targetFolder = folderToLink || currentFolder;
 
     // validate folder - should be a folder object
@@ -282,8 +294,26 @@ export const EmailTemplateManagement = () => {
     }
 
     try {
-      // link the existing template to the folder
-      await backend.post(`/email-templates/${currentTemplateId}/folders`, {
+      let templateId = currentTemplateId;
+
+      if (isNewTemplate) {
+        // create the template in DB now
+        const response = await backend.post('/email-templates', {
+          name: templateName.trim(),
+          template_text: templateContent,
+          subject: templateSubject.trim() || null,
+        });
+        templateId = response.data.id;
+      } else if (templateId) {
+        // update existing template
+        await updateTemplateInDb();
+      } else {
+        alert("No template to save.");
+        return;
+      }
+
+      // link the template to the folder
+      await backend.post(`/email-templates/${templateId}/folders`, {
         folderId: targetFolder.id,
       });
 
