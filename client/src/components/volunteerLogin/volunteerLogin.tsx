@@ -119,13 +119,6 @@ export const VolunteerLogin = () => {
     await authenticateMicrosoftUser();
   };
 
-  // const handleMicrosoftLogin = async () => {
-  //   toaster.error({
-  //     title: "Microsoft login not yet implemented",
-  //     description: "Please use email/password or Google login.",
-  //   });
-  // };
-
   const handleCreateAccount = () => {
     // TODO: Navigate to signup or implement signup flow
     toaster.info({
