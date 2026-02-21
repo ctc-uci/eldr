@@ -37,7 +37,7 @@ export const Pagination = ({ totalPages, currentPage, onPageChange }) => (
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => onPageChange?.(currentPage + 1)}
+          onClick={() => onPageChange?.(Math.min(currentPage + 1, totalPages))}
         >
           <FaArrowRight size={24} />
         </Button>

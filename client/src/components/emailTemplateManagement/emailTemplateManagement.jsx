@@ -34,6 +34,8 @@ export const EmailTemplateManagement = () => {
   const { folderId: urlFolderId, templateId: urlTemplateId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
   // get view from URL params
   // /email -> "folders"
@@ -320,6 +322,19 @@ export const EmailTemplateManagement = () => {
     }
   };
 
+  const paginatedFolders = folders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const paginatedTemplates = templates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const totalFolderPages = Math.ceil(folders.length / itemsPerPage) || 1;
+  const totalTemplatePages = Math.ceil(templates.length / itemsPerPage) || 1;
+
   return (
     <Flex minH="100vh" bg="#FAFBFC">
       <Sidebar />
@@ -399,7 +414,7 @@ export const EmailTemplateManagement = () => {
             ) : folders.length === 0 ? (
               <Text>No folders yet. Create one to get started.</Text>
             ) : (
-              folders.map((folder) => (
+              paginatedFolders.map((folder) => (
                 <FolderCard
                   key={folder.id}
                   name={folder.name}
@@ -423,7 +438,7 @@ export const EmailTemplateManagement = () => {
               />
             ) : (
               <VStack align="stretch" spacing={4} width="100%">
-                {templates.map((template) => (
+                {paginatedTemplates.map((template) => (
                   <TemplateCard
                     key={template.id}
                     name={template.name}
@@ -448,7 +463,11 @@ export const EmailTemplateManagement = () => {
 
         {/* Pagination - TODO: implement real pagination */}
         {(view === "folders" || view === "folderView") && (
-          <Pagination totalPages={1} currentPage={1} />
+          <Pagination
+            totalPages={view === "folders" ? totalFolderPages : totalTemplatePages}
+            currentPage={currentPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         )}
       </Flex>
 
