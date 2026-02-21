@@ -36,6 +36,8 @@ export const EmailTemplateManagement = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
+  const [folderSearch, setFolderSearch] = useState("");
+  const [templateSearch, setTemplateSearch] = useState("");
 
   // get view from URL params
   // /email -> "folders"
@@ -322,25 +324,53 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  const paginatedFolders = folders.slice(
+  const filteredFolders = folders.filter(folder =>
+    folder.name.toLowerCase().includes(folderSearch.toLowerCase())
+  );
+  
+  const paginatedFolders = filteredFolders.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   
-  const paginatedTemplates = templates.slice(
+  const filteredTemplates = templates.filter(template =>
+    template.name.toLowerCase().includes(templateSearch.toLowerCase())
+  );
+  
+  const paginatedTemplates = filteredTemplates.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
-  const totalFolderPages = Math.ceil(folders.length / itemsPerPage) || 1;
-  const totalTemplatePages = Math.ceil(templates.length / itemsPerPage) || 1;
+    
+  const totalFolderPages = Math.ceil(filteredFolders.length / itemsPerPage) || 1;
+  const totalTemplatePages = Math.ceil(filteredTemplates.length / itemsPerPage) || 1;
 
   return (
     <Flex minH="100vh" bg="#FAFBFC">
       <Sidebar />
       <Flex direction="column" flex="1" px={10} py={8} minH="100vh">
         {/* Search Bar */}
-        <SearchBar />
+        {view === "folders" && (
+          <SearchBar
+            placeholder="Search folders..."
+            value={folderSearch}
+            onChange={(e) => {
+              setFolderSearch(e.target.value);
+              setCurrentPage(1); // reset pagination on search
+            }}
+          />
+        )}
+
+        {view === "folderView" && (
+          <SearchBar
+            placeholder="Search files..."
+            value={templateSearch}
+            onChange={(e) => {
+              setTemplateSearch(e.target.value);
+              setCurrentPage(1); // reset pagination on search
+            }}
+          />
+        )}
 
         {/* Breadcrumbs */}
         <BreadcrumbNav
