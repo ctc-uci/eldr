@@ -190,18 +190,17 @@ clinicsRouter.get("/:clinicId/languages", async (req, res) => {
   }
 });
 
-// Workshop Attendance Routes
-// WorkshopAttendance (Volunteer ↔ Workshop)
-clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
+// Workshop Registration Routes
+clinicsRouter.get("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const data = await db.query(
       `
         SELECT 
-            v.*
+            v.*, cr.has_attended
         FROM clinics c
-        JOIN clinic_attendance wa ON wa.clinic_id = c.id
-        JOIN volunteers v ON v.id = wa.volunteer_id
+        JOIN clinic_registration cr ON cr.clinic_id = c.id
+        JOIN volunteers v ON v.id = cr.volunteer_id
         WHERE c.id = $1;
         `,
       [clinicId]
@@ -213,14 +212,14 @@ clinicsRouter.get("/:clinicId/attendees", async (req, res) => {
   }
 });
 
-clinicsRouter.post("/:clinicId/attendees", async (req, res) => {
+clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
     const data = await db.query(
       `
-        INSERT INTO clinic_attendance (volunteer_id, clinic_id)
-        VALUES ($1, $2)
+        INSERT INTO clinic_registration (volunteer_id, clinic_id)
+        VALUES ($1, $2, false)
         RETURNING *;
         `,
       [volunteerId, clinicId]
@@ -232,27 +231,58 @@ clinicsRouter.post("/:clinicId/attendees", async (req, res) => {
   }
 });
 
-clinicsRouter.delete("/:clinicId/attendees/:volunteerId", async (req, res) => {
-  try {
-    const { clinicId, volunteerId } = req.params;
-    const data = await db.query(
-      `
-            DELETE FROM clinic_attendance
+clinicsRouter.delete(
+  "/:clinicId/registrations/:volunteerId",
+  async (req, res) => {
+    try {
+      const { clinicId, volunteerId } = req.params;
+      const data = await db.query(
+        `
+            DELETE FROM clinic_registration
             WHERE clinic_id = $1 AND volunteer_id = $2
             RETURNING *
             `,
-      [clinicId, volunteerId]
-    );
+        [clinicId, volunteerId]
+      );
 
-    if (!data.length) {
-      return res.status(404).send("Volunteer not found for this clinic");
+      if (!data.length) {
+        return res.status(404).send("Volunteer not found for this clinic");
+      }
+
+      res.status(200).json(keysToCamel(data));
+    } catch (err) {
+      res.status(500).send(err.message);
     }
-
-    res.status(200).json(keysToCamel(data));
-  } catch (err) {
-    res.status(500).send(err.message);
   }
-});
+);
+
+clinicsRouter.patch(
+  "/:clinicId/registrations/:volunteerId/attendance",
+  async (req, res) => {
+    try {
+      const { clinicId, volunteerId } = req.params;
+      const { hasAttended } = req.body; // Expecting boolean true/false
+
+      const data = await db.query(
+        `
+        UPDATE clinic_registration
+        SET has_attended = $1
+        WHERE clinic_id = $2 AND volunteer_id = $3
+        RETURNING *;
+        `,
+        [hasAttended, clinicId, volunteerId]
+      );
+
+      if (!data.length) {
+        return res.status(404).send("Registration record not found");
+      }
+
+      res.status(200).json(keysToCamel(data[0]));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
 
 // Workshop Areas of Interest Routes
 // POST: assign an area to a workshop
@@ -325,62 +355,64 @@ clinicsRouter.get("/:clinicId/areas-of-interest", async (req, res) => {
 // POST: assign a role to a clinic
 // /clinics/{clinicId}/roles
 clinicsRouter.post("/:clinicId/roles", async (req, res) => {
-    try {
-        const { roleId } = req.body; // get JSON body
-        const { clinicId } = req.params; // get URL parameters
+  try {
+    const { roleId } = req.body; // get JSON body
+    const { clinicId } = req.params; // get URL parameters
 
-        if (!roleId){
-            return res.status(400).json({ message: "Role ID is required" });
-        }
-
-        const newRelationship = await db.query(
-            "INSERT INTO clinic_roles (clinic_id, role_id) VALUES ($1, $2) RETURNING *",
-            [clinicId, roleId]
-        );
-
-        res.status(201).json(keysToCamel(newRelationship));
-    } catch (err){
-        res.status(500).send(err.message);
+    if (!roleId) {
+      return res.status(400).json({ message: "Role ID is required" });
     }
+
+    const newRelationship = await db.query(
+      "INSERT INTO clinic_roles (clinic_id, role_id) VALUES ($1, $2) RETURNING *",
+      [clinicId, roleId]
+    );
+
+    res.status(201).json(keysToCamel(newRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // DELETE: remove a role from a clinic
 // /clinics/{clinicId}/roles/{roleId}
-clinicsRouter.delete("/:clinicId/roles/:roleId", async(req, res) => {
-    try {
-        const { clinicId, roleId } = req.params;
+clinicsRouter.delete("/:clinicId/roles/:roleId", async (req, res) => {
+  try {
+    const { clinicId, roleId } = req.params;
 
-        const deletedRelationship = await db.query(
-            "DELETE FROM clinic_roles WHERE clinic_id = $1 AND role_id = $2 RETURNING *",
-            [clinicId, roleId]
-        );
+    const deletedRelationship = await db.query(
+      "DELETE FROM clinic_roles WHERE clinic_id = $1 AND role_id = $2 RETURNING *",
+      [clinicId, roleId]
+    );
 
-        if (deletedRelationship.length === 0) {
-            return res.status(404).json({ message: "Role not assigned to this clinic" });
-        }
-
-        res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (err) {
-        res.status(500).send(err.message);
+    if (deletedRelationship.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Role not assigned to this clinic" });
     }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // GET: list all roles for a clinic, including role IDs and text
 // /clinics/{clinicId}/roles
 clinicsRouter.get("/:clinicId/roles", async (req, res) => {
-    try {
-        const { clinicId } = req.params;
+  try {
+    const { clinicId } = req.params;
 
-        const listAll = await db.query(
-            `SELECT r.id, r.role_name
+    const listAll = await db.query(
+      `SELECT r.id, r.role_name
              FROM clinic_roles cr
              JOIN roles r ON cr.role_id = r.id
              WHERE cr.clinic_id = $1`,
-            [clinicId]
-        );
+      [clinicId]
+    );
 
-        res.status(200).json(keysToCamel(listAll));
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
+    res.status(200).json(keysToCamel(listAll));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });

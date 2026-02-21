@@ -73,14 +73,14 @@ export const EventCatalog = () => {
         // Map over events and create promises for the extra data
         const fullEvents = await Promise.all(
           baseEvents.map(async (event) => {
-            const [langRes, areaRes, attendeeRes] = await Promise.all([
+            const [langRes, areaRes, regRes] = await Promise.all([
               backend.get(`/clinics/${event.id}/languages`),
               backend.get(`/clinics/${event.id}/areas-of-interest`),
-              backend.get(`/clinics/${event.id}/attendees`),
+              backend.get(`/clinics/${event.id}/registrations`),
             ]);
 
-            const isRegistered = attendeeRes.data.some(
-              (attendee) => attendee.id === volunteerId
+            const myRegistration = regRes.data.find(
+              (reg) => reg.id === volunteerId
             );
 
             // Format Date
@@ -103,7 +103,8 @@ export const EventCatalog = () => {
               areas: areaRes.data,
               displayDate,
               displayTime,
-              isRegistered,
+              isRegistered: !!myRegistration,
+              hasAttended: myRegistration ? myRegistration.hasAttended : false,
             };
           })
         );

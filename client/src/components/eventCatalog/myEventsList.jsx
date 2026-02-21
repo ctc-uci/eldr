@@ -77,7 +77,17 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
       >
         {events.map((event) => {
           const isSelected = selectedEvent && selectedEvent.id === event.id;
-          const statusText = isPastSection ? "Attended" : "Registered";
+          let statusLabel = "Registered";
+          let statusColor = "#22C55E";
+
+          if (isPastSection) {
+            if (event.hasAttended) {
+              statusLabel = "Attended";
+            } else {
+              statusLabel = "Missed";
+              statusColor = "#DC2626";
+            }
+          }
 
           return (
             <Flex
@@ -165,14 +175,14 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                 <HStack gap="6px">
                   <Circle
                     size="8px"
-                    bg="#22C55E"
+                    bg={statusColor}
                   />
                   <Text
                     fontSize="14px"
                     fontWeight={500}
                     color="#111827"
                   >
-                    {statusText}
+                    {statusLabel}
                   </Text>
                 </HStack>
                 {event.languages.map((l, i) => (
