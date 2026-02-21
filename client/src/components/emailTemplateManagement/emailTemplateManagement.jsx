@@ -36,8 +36,10 @@ export const EmailTemplateManagement = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
-  const [folderSearch, setFolderSearch] = useState("");
-  const [templateSearch, setTemplateSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [allTemplates, setAllTemplates] = useState([]);
+
 
   // get view from URL params
   // /email -> "folders"
@@ -124,6 +126,20 @@ export const EmailTemplateManagement = () => {
     };
     fetchTemplateData();
   }, [urlTemplateId, backend, navigate]);
+
+  // fetch all templates on mount
+  useEffect(() => {
+    const fetchAllTemplates = async () => {
+      try {
+        const response = await backend.get('/email-templates');
+        setAllTemplates(response.data);
+      } catch (error) {
+        console.error('Error fetching all templates:', error);
+      }
+    };
+  
+    fetchAllTemplates();
+  }, [backend]);
 
   const [showNewTemplatePopover, setShowNewTemplatePopover] = useState(false);
   const [showNewFolderPopover, setShowNewFolderPopover] = useState(false);
@@ -324,53 +340,126 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  const filteredFolders = folders.filter(folder =>
-    folder.name.toLowerCase().includes(folderSearch.toLowerCase())
-  );
-  
-  const paginatedFolders = filteredFolders.slice(
+  // Filtered Data
+  const suggestedFolders = searchTerm
+  ? folders.filter(folder =>
+      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  : [];
+
+  const suggestedTemplates = searchTerm
+  ? allTemplates.filter(template =>
+      template.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  : [];
+
+  // Pagination
+  const paginatedFolders = folders.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
-  const filteredTemplates = templates.filter(template =>
-    template.name.toLowerCase().includes(templateSearch.toLowerCase())
-  );
-  
-  const paginatedTemplates = filteredTemplates.slice(
+
+  const paginatedTemplates = templates.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-    
-  const totalFolderPages = Math.ceil(filteredFolders.length / itemsPerPage) || 1;
-  const totalTemplatePages = Math.ceil(filteredTemplates.length / itemsPerPage) || 1;
+
+  const totalFolderPages = Math.ceil(folders.length / itemsPerPage) || 1;
+  const totalTemplatePages = Math.ceil(templates.length / itemsPerPage) || 1;
 
   return (
     <Flex minH="100vh" bg="#FAFBFC">
       <Sidebar />
       <Flex direction="column" flex="1" px={10} py={8} minH="100vh">
         {/* Search Bar */}
-        {view === "folders" && (
+        <Box position="relative" width="100%">
           <SearchBar
-            placeholder="Search folders..."
-            value={folderSearch}
+            value={searchTerm}
             onChange={(e) => {
-              setFolderSearch(e.target.value);
-              setCurrentPage(1); // reset pagination on search
+              const value = e.target.value;
+              setSearchTerm(value);
+              setShowSearchDropdown(value.length > 0);
+            }}
+            onFocus={() => {
+              if (searchTerm.length > 0) setShowSearchDropdown(true);
+            }}
+            onBlur={() => {
+              setTimeout(() => setShowSearchDropdown(false), 150);
             }}
           />
-        )}
 
-        {view === "folderView" && (
-          <SearchBar
-            placeholder="Search files..."
-            value={templateSearch}
-            onChange={(e) => {
-              setTemplateSearch(e.target.value);
-              setCurrentPage(1); // reset pagination on search
-            }}
-          />
-        )}
+          {showSearchDropdown && (
+            <Box
+              position="absolute"
+              top="100%"
+              left="0"
+              width="100%"
+              bg="white"
+              borderRadius="md"
+              boxShadow="lg"
+              zIndex="20"
+              maxH="300px"
+              overflowY="auto"
+            >
+              {suggestedFolders.length > 0 && (
+                <>
+                  <Box px={4} py={2} fontSize="xs" fontWeight="bold" color="gray.500">
+                    Folders
+                  </Box>
+                  {suggestedFolders.slice(0, 5).map(folder => (
+                    <Box
+                      key={folder.id}
+                      px={4}
+                      py={2}
+                      cursor="pointer"
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => {
+                        setSearchTerm("");
+                        setShowSearchDropdown(false);
+                        handleFolderClick(folder);
+                      }}
+                    >
+                      {folder.name}
+                    </Box>
+                  ))}
+                </>
+              )}
+
+              {suggestedTemplates.length > 0 && (
+                <>
+                  <Box px={4} py={2} fontSize="xs" fontWeight="bold" color="gray.500">
+                    Files
+                  </Box>
+                  {suggestedTemplates.slice(0, 5).map(template => (
+                    <Box
+                      key={template.id}
+                      px={4}
+                      py={2}
+                      cursor="pointer"
+                      _hover={{ bg: "gray.100" }}
+                      onClick={() => {
+                        setSearchTerm("");
+                        setShowSearchDropdown(false);
+                        handleTemplateClick(template);
+                      }}
+                    >
+                      {template.name}
+                    </Box>
+                  ))}
+                </>
+              )}
+
+              {suggestedFolders.length === 0 &&
+                suggestedTemplates.length === 0 && (
+                  <Box px={4} py={3} color="gray.500">
+                    No results found
+                  </Box>
+                )}
+            </Box>
+          )}
+        </Box>
+
+        <Box borderBottom="1px solid" borderColor="gray.200" mt={5} mb={6} />
 
         {/* Breadcrumbs */}
         <BreadcrumbNav
@@ -405,8 +494,8 @@ export const EmailTemplateManagement = () => {
           ) : (
             <>
               <Input
-                value={templateSubject}
-                onChange={(e) => setTemplateSubject(e.target.value)}
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
                 placeholder="Untitled Template"
                 variant="unstyled"
                 fontSize="3xl"
