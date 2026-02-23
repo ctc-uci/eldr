@@ -12,7 +12,9 @@ import { Playground } from "@/components/playground/Playground";
 // Dev-made Components!
 // import { AdminProfile } from "@/components/adminProfile/adminProfile";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
+import { AdminLogin } from "@/components/adminProfile/adminLogin";
+import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
+import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 // import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
@@ -44,10 +46,21 @@ const App = () => {
             <Router>
               <Routes>
                 {/* Dev-made Routes! */}
-                {/* <Route
+                <Route
                   path="/adminLogin"
-                  element={<AdminLogin />}
-                /> */}
+                  element={<AdminLogin/>}
+                />
+                <Route
+                  path = "/adminForgotPass"
+                  element = {<AdminForgotPass/>}
+                >
+                </Route>
+
+                <Route
+                  path = "/adminPassReset"
+                  element = {<AdminPassReset/>}
+                >
+                </Route>
                 
                 {/* <Route
                   path="/volunteerProfile"
