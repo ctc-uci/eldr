@@ -24,9 +24,6 @@ type Props = {
   onNext: () => void;
 };
 
-const BAR_HEIGHT = "70.54px";
-const BAR_BG = "#E8E8E8";
-
 const US_STATES = [
   "AL",
   "AK",
@@ -90,10 +87,11 @@ const BackgroundStep = ({ onNext }: Props) => {
   return (
     <LoginLayout>
       <Flex
-        w="1091.62px"
-        h="914.39px"
+        w="100%"
+        maxW="1091px"
+        minH={{ base: "auto", lg: "914px" }}
         bg="#FFFFFF"
-        borderRadius="4.41px"
+        borderRadius={{ base: "8px", md: "4px" }}
         border="1px solid"
         borderColor="#E4E4E7"
         overflow="hidden"
@@ -101,35 +99,38 @@ const BackgroundStep = ({ onNext }: Props) => {
       >
         <Flex
           w="100%"
-          h={BAR_HEIGHT}
-          bg={BAR_BG}
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
           flexShrink={0}
           align="center"
-          px="24px"
+          px={{ base: "16px", md: "24px" }}
         >
           <Image
             src={logo}
             alt="ELDR Logo"
-            h="45px"
+            h={{ base: "32px", md: "45px" }}
             objectFit="contain"
           />
         </Flex>
 
         <Flex
           flex="1"
+          direction={{ base: "column", md: "row" }}
           overflow="hidden"
         >
           <Flex
             direction="column"
             justify="space-between"
-            w="50%"
-            p="60px"
-            borderRight="1px solid"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
+            borderRight={{ base: "none", md: "1px solid" }}
+            borderBottom={{ base: "1px solid", md: "none" }}
             borderColor="#E4E4E7"
+            gap={{ base: "32px", md: "0" }}
           >
             <Box>
               <Heading
-                fontSize="28px"
+                fontSize={{ base: "18px", md: "22px", lg: "28px" }}
                 fontWeight={700}
                 color="black"
                 mb="20px"
@@ -137,7 +138,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                 Community Counsel Account Manager
               </Heading>
               <Text
-                fontSize="20px"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
                 Please fill out your background and prior experience section.
@@ -148,14 +149,14 @@ const BackgroundStep = ({ onNext }: Props) => {
             <Box>
               <Text
                 fontWeight={700}
-                fontSize="22px"
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
                 color="black"
               >
                 Need help?
               </Text>
               <Text
                 fontWeight={700}
-                fontSize="22px"
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
                 color="black"
                 mb="8px"
               >
@@ -164,14 +165,14 @@ const BackgroundStep = ({ onNext }: Props) => {
               <Link
                 href="#"
                 color="blue.500"
-                fontSize="20px"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 textDecoration="underline"
               >
                 Community Counsel Website
               </Link>
               <HStack
-                gap="16px"
-                mt="32px"
+                gap={{ base: "12px", md: "16px" }}
+                mt={{ base: "20px", md: "32px" }}
               >
                 <Box
                   as="a"
@@ -179,7 +180,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <LuFacebook size={22} />
+                  <LuFacebook size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -187,7 +188,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <FiLinkedin size={22} />
+                  <FiLinkedin size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -195,7 +196,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <BsInstagram size={22} />
+                  <BsInstagram size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -203,7 +204,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <LuMail size={22} />
+                  <LuMail size={20} />
                 </Box>
               </HStack>
             </Box>
@@ -212,9 +213,9 @@ const BackgroundStep = ({ onNext }: Props) => {
           <Flex
             direction="column"
             justify="center"
-            w="50%"
-            p="60px"
-            gap="30px"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
+            gap={{ base: "20px", md: "30px" }}
           >
             <Progress.Root
               value={90}
@@ -227,7 +228,7 @@ const BackgroundStep = ({ onNext }: Props) => {
 
             <Box>
               <Text
-                fontSize="16px"
+                fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
               >
@@ -238,14 +239,14 @@ const BackgroundStep = ({ onNext }: Props) => {
                 borderColor="#E4E4E7"
                 borderRadius="6px"
                 fontSize="14px"
-                h="44px"
+                h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
             </Box>
 
             <Box>
               <Text
-                fontSize="16px"
+                fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
               >
@@ -277,9 +278,9 @@ const BackgroundStep = ({ onNext }: Props) => {
               </Combobox.Root>
             </Box>
 
-            <Box mt="-20px">
+            <Box mt="-10px">
               <Text
-                fontSize="16px"
+                fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
               >
@@ -290,14 +291,14 @@ const BackgroundStep = ({ onNext }: Props) => {
                 borderColor="#E4E4E7"
                 borderRadius="6px"
                 fontSize="14px"
-                h="44px"
+                h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
             </Box>
 
             <Box>
               <Text
-                fontSize="16px"
+                fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
               >
@@ -308,7 +309,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                 borderColor="#E4E4E7"
                 borderRadius="6px"
                 fontSize="14px"
-                h="44px"
+                h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
             </Box>
@@ -316,10 +317,10 @@ const BackgroundStep = ({ onNext }: Props) => {
             <Button
               bg="#4A90D9"
               color="white"
-              h="48px"
+              h={{ base: "40px", md: "48px" }}
               w="100%"
               borderRadius="6px"
-              fontSize="17px"
+              fontSize={{ base: "13px", md: "17px" }}
               fontWeight={500}
               _hover={{ bg: "#3a7bc8" }}
               justifyContent="space-between"
@@ -334,8 +335,8 @@ const BackgroundStep = ({ onNext }: Props) => {
 
         <Box
           w="100%"
-          h={BAR_HEIGHT}
-          bg={BAR_BG}
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
           flexShrink={0}
         />
       </Flex>

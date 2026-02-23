@@ -6,19 +6,34 @@ type Props = {
 
 const LoginLayout = ({ children }: Props) => {
   return (
-    <Box w="100%" h="100vh" bg="#EEF3F8" position="relative" overflow="hidden">
+    <Box
+      w="100%"
+      minH="100vh"
+      bg="#EEF3F8"
+      position="relative"
+      overflow="hidden"
+    >
       <Box
         position="absolute"
         top="-400px"
         left="-400px"
-        w="1200px"
-        h="1200px"
+        w={{ base: "600px", md: "900px", lg: "1200px" }}
+        h={{ base: "600px", md: "900px", lg: "1200px" }}
         bg="#D6E4F0"
         borderRadius="50%"
         zIndex={0}
       />
 
-      <Flex w="100%" h="100%" align="center" justify="center" zIndex={1} position="relative">
+      <Flex
+        w="100%"
+        minH="100vh"
+        align="center"
+        justify="center"
+        zIndex={1}
+        position="relative"
+        py={{ base: "24px", md: "32px" }}
+        px={{ base: "16px", md: "24px" }}
+      >
         {children}
       </Flex>
     </Box>

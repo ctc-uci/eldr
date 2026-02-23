@@ -27,17 +27,15 @@ type Props = {
   onNext: () => void;
 };
 
-const BAR_HEIGHT = "70.54px";
-const BAR_BG = "#E8E8E8";
-
 const WelcomeStep = ({ onNext }: Props) => {
   return (
     <LoginLayout>
       <Flex
-        w="1091.62px"
-        h="914.39px"
+        w="100%"
+        maxW="1091px"
+        minH={{ base: "auto", lg: "914px" }}
         bg="#FFFFFF"
-        borderRadius="4.41px"
+        borderRadius={{ base: "8px", md: "4px" }}
         border="1px solid"
         borderColor="#E4E4E7"
         overflow="hidden"
@@ -46,35 +44,38 @@ const WelcomeStep = ({ onNext }: Props) => {
         {/* Top gray bar */}
         <Flex
           w="100%"
-          h={BAR_HEIGHT}
-          bg={BAR_BG}
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
           flexShrink={0}
           align="center"
-          px="24px"
+          px={{ base: "16px", md: "24px" }}
         >
           <Image
             src={logo}
             alt="ELDR Logo"
-            h="45px"
+            h={{ base: "32px", md: "45px" }}
             objectFit="contain"
           />
         </Flex>
 
         <Flex
           flex="1"
+          direction={{ base: "column", md: "row" }}
           overflow="hidden"
         >
           <Flex
             direction="column"
             justify="space-between"
-            w="50%"
-            p="60px"
-            borderRight="1px solid"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
+            borderRight={{ base: "none", md: "1px solid" }}
+            borderBottom={{ base: "1px solid", md: "none" }}
             borderColor="#E4E4E7"
+            gap={{ base: "32px", md: "0" }}
           >
             <Box>
               <Heading
-                fontSize="30px"
+                fontSize={{ base: "18px", md: "24px", lg: "30px" }}
                 fontWeight={700}
                 color="black"
                 mb="20px"
@@ -82,7 +83,7 @@ const WelcomeStep = ({ onNext }: Props) => {
                 Welcome to CC Login Portal by Community Counsel
               </Heading>
               <Text
-                fontSize="20px"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
                 Indicate whether you are a staff member or volunteer
@@ -92,14 +93,14 @@ const WelcomeStep = ({ onNext }: Props) => {
             <Box>
               <Text
                 fontWeight={700}
-                fontSize="22px"
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
                 color="black"
               >
                 Need help?
               </Text>
               <Text
                 fontWeight={700}
-                fontSize="22px"
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
                 color="black"
                 mb="8px"
               >
@@ -108,15 +109,14 @@ const WelcomeStep = ({ onNext }: Props) => {
               <Link
                 href="#"
                 color="blue.500"
-                fontSize="20px"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 textDecoration="underline"
               >
                 Community Counsel Website
               </Link>
-
               <HStack
-                gap="16px"
-                mt="32px"
+                gap={{ base: "12px", md: "16px" }}
+                mt={{ base: "20px", md: "32px" }}
               >
                 <Box
                   as="a"
@@ -124,7 +124,7 @@ const WelcomeStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <LuFacebook size={22} />
+                  <LuFacebook size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -132,7 +132,7 @@ const WelcomeStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <FiLinkedin size={22} />
+                  <FiLinkedin size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -140,7 +140,7 @@ const WelcomeStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <BsInstagram size={22} />
+                  <BsInstagram size={20} />
                 </Box>
                 <Box
                   as="a"
@@ -148,7 +148,7 @@ const WelcomeStep = ({ onNext }: Props) => {
                   color="gray.600"
                   cursor="pointer"
                 >
-                  <LuMail size={22} />
+                  <LuMail size={20} />
                 </Box>
               </HStack>
             </Box>
@@ -157,11 +157,11 @@ const WelcomeStep = ({ onNext }: Props) => {
           <Flex
             direction="column"
             justify="center"
-            w="50%"
-            p="60px"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
           >
             <Heading
-              fontSize="24px"
+              fontSize={{ base: "18px", md: "22px", lg: "24px" }}
               fontWeight={600}
               color="black"
               mb="6px"
@@ -169,9 +169,9 @@ const WelcomeStep = ({ onNext }: Props) => {
               Welcome!
             </Heading>
             <Text
-              fontSize="18px"
+              fontSize={{ base: "14px", md: "16px", lg: "18px" }}
               color="gray.500"
-              mb="32px"
+              mb={{ base: "24px", md: "32px" }}
               fontStyle="italic"
             >
               Choose from the options below to continue.
@@ -184,9 +184,9 @@ const WelcomeStep = ({ onNext }: Props) => {
               <Button
                 bg="#4A90D9"
                 color="white"
-                h="52px"
+                h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
-                fontSize="14px"
+                fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
                 _hover={{ bg: "#3a7bc8" }}
                 justifyContent="space-between"
@@ -202,9 +202,9 @@ const WelcomeStep = ({ onNext }: Props) => {
               <Button
                 bg="#4A90D9"
                 color="white"
-                h="52px"
+                h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
-                fontSize="14px"
+                fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
                 _hover={{ bg: "#3a7bc8" }}
                 justifyContent="space-between"
@@ -223,8 +223,8 @@ const WelcomeStep = ({ onNext }: Props) => {
 
         <Box
           w="100%"
-          h={BAR_HEIGHT}
-          bg={BAR_BG}
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
           flexShrink={0}
         />
       </Flex>
