@@ -77,14 +77,17 @@ export const AdminLogin: React.FC = () => {
       />
       <VStack 
         minH="80vh" 
+        w="80vw"
+        maxW="1200px"
         borderWidth="1px" 
         borderRadius = "sm" 
         borderColor = "#E4E4E7" 
         zIndex={1} 
         gap = {0}
+        overflow="hidden"
       >
         <Flex 
-          w = "80vw" 
+          w = "100%" 
           bg = "#F6F6F6" 
           h = "70px" 
           align = "left" 
@@ -364,7 +367,7 @@ export const AdminLogin: React.FC = () => {
           </VStack>
         </Flex>
         <Flex 
-          w = "80vw" 
+          w = "100%" 
           bg = "#F6F6F6" 
           h = "70px"
         >
