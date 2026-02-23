@@ -186,127 +186,125 @@ export const AdminLogin: React.FC = () => {
             px = "5%" 
             py = "10%"
           >
-            <Box>
-              <Text fontWeight="bold">
-                Email
-              </Text>
-            </Box>
-            <Box 
-              w="80%" 
-              h="40px"
-            >
-              <InputGroup 
-                width = "30vw" 
-                height = "2vw" 
-                startElement={<MdOutlineEmail/>} 
+            <VStack w="30vw" minW="320px" align="stretch" gap={3}>
+              <Box>
+                <Text fontWeight="bold">
+                  Email
+                </Text>
+              </Box>
+              <Box h="40px">
+                <InputGroup
+                  width="100%"
+                  height="2vw"
+                  startElement={<MdOutlineEmail />}
+                >
+                  <Input
+                    placeholder="example@hotmail.com"
+                    variant="outline"
+                    borderColor="#E4E4E7"
+                    borderWidth="1px"
+                    borderRadius="md"
+                    _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUserFilled(value.length > 0);
+                      setEmail(value);
+                    }}
+                  />
+                </InputGroup>
+              </Box>
+              <Box>
+                <Text fontWeight="bold">
+                  Password
+                </Text>
+              </Box>
+              <Box h="40px">
+                <InputGroup
+                  width="100%"
+                  startElement={<HiOutlineKey />}
+                  endElement={
+                    passFilled ? (
+                      <IconButton
+                        variant="ghost"
+                        boxSize="20px"
+                        onClick={() => setShowPassword(prev => !prev)}
+                        aria-label="Toggle password visibility"
+                        _hover={{ bg: "white" }}
+                      >
+                        {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                      </IconButton>
+                    ) : null
+                  }
+                >
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    height="40px"
+                    placeholder="Enter Password"
+                    variant="outline"
+                    borderColor="#E4E4E7"
+                    borderWidth="1px"
+                    borderRadius="md"
+                    _placeholder={{ color: "A1A1AA", opacity: 1 }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPassFilled(value.length > 0);
+                      setPassword(value);
+                    }}
+                  />
+                </InputGroup>
+              </Box>
+              <Link
+                textDecoration="underline"
+                color="#3182CE"
+                background="white"
+                href="/adminForgotPass"
+                alignSelf="flex-end"
+                pb="2%"
               >
-                <Input
-                  placeholder="example@hotmail.com"
-                  variant="outline"
-                  borderColor="#E4E4E7"
-                  borderWidth="1px"
-                  borderRadius="md"
-                  _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setUserFilled(value.length > 0);
-                    setEmail(value);
-                  }}
-                />
-              </InputGroup>
-            </Box>
-          <Box>
-            <Text fontWeight="bold">
-              Password
-            </Text>
-          </Box>
-          <Box 
-            w="80%" 
-            h="40px"
-          >
-            <InputGroup
-              width = "30vw"
-              startElement={<HiOutlineKey />}
-              endElement={
-                passFilled ? (
-                  <IconButton
-                    variant="ghost"
-                    boxSize="20px"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    aria-label="Toggle password visibility"
-                    _hover = {{bg: "white"}}
-                  >
-                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                  </IconButton>
-                ) : null
-              }
-            >
-              <Input
-                type={showPassword ? "text" : "password"}
-                height = "40px"
-                placeholder="Enter Password"
+                Forgot Password?
+              </Link>
+              <Button
+                position="relative"
                 variant="outline"
-                borderColor="#E4E4E7"
-                borderWidth="1px"
                 borderRadius="md"
-                _placeholder={{ color: "A1A1AA", opacity: 1 }}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setPassFilled(value.length > 0);
-                  setPassword(value);
+                background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
+                w="100%"
+                h="3vw"
+                color="white"
+                _hover={{ bg: "#5797BD" }}
+                disabled = {!(userFilled && passFilled)}
+                onClick={() => {
+                  signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                      console.log("Logged in:", userCredential.user.uid);
+                      isAdmin(email, currUsers) ? navigate("/adminDashboard") : null; // or wherever
+                    })
+                    .catch((error) => {
+                      console.log("Authentication failed:", error.message);
+                    });
                 }}
-              />
-            </InputGroup>
-          </Box>
-          <Link
-            textDecoration="underline"
-            color="#3182CE"
-            background = "white"
-            ml = "69%"
-            href="/adminForgotPass"
-            pb = "2%"
-          >
-            Forgot Password?
-          </Link>
-          <Button
-            position="relative"
-            variant="outline"
-            borderRadius="md"
-            background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
-            w="30vw"
-            h="3vw"
-            color="white"
-            _hover={{ bg: "#5797BD" }}
-            disabled = {!(userFilled && passFilled)}
-            onClick={() => {
-              signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                  console.log("Logged in:", userCredential.user.uid);
-                  isAdmin(email, currUsers) ? navigate("/adminDashboard") : null; // or wherever
-                })
-                .catch((error) => {
-                  console.log("Authentication failed:", error.message);
-                });
-            }}
-          >
-            Login
-            <Icon
-              as={FaArrowRight}
-              position="absolute"
-              right="16px"
-              top="50%"
-              transform="translateY(-50%)"
-            />
-          </Button>
-            <VStack  
-              w="100%" 
-              align="center" 
-              mt={4} 
+              >
+                Login
+                <Icon
+                  as={FaArrowRight}
+                  position="absolute"
+                  right="16px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                />
+              </Button>
+            </VStack>
+            <VStack
+              w="30vw"
+              minW="320px"
+              align="stretch"
+              mt={4}
             >
               <Text 
                 fontSize="md" 
                 fontWeight="bold" 
                 pb="4%"
+                textAlign="center"
               >
                 or continue with
               </Text>
@@ -314,7 +312,8 @@ export const AdminLogin: React.FC = () => {
                 bg="#3182CE"
                 borderWidth="2px"
                 borderRadius="md"
-                w="60%"
+                w="80%"
+                alignSelf="center"
                 h="50px"
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
@@ -339,7 +338,8 @@ export const AdminLogin: React.FC = () => {
                 bg="#3182CE"
                 borderWidth="2px"
                 borderRadius="md"
-                w="60%"
+                w="80%"
+                alignSelf="center"
                 h="50px"
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
