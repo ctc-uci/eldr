@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -9,33 +9,27 @@ import {
   Input,
   Link,
   Text,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import {
-  LuArrowRight,
-  LuFacebook,
-  LuKeyRound,
-  LuMail,
-  LuUser,
-} from "react-icons/lu";
+import { LuArrowRight, LuFacebook, LuKeyRound, LuMail, LuUser } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
-
-import {useBackendContext} from "@/contexts/hooks/useBackendContext";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 type Props = {
-  onNext: () => void;
+  onNext: (volunteerId: number) => void;
   onBack: () => void;
 };
 
-const BAR_HEIGHT = "70.54px";
+const BAR_HEIGHT = { base: "56px", md: "70px" };
 const BAR_BG = "#E8E8E8";
 
 const CreateAccountStep = ({ onNext, onBack }: Props) => {
-  const {backend} = useBackendContext();
+  const { backend } = useBackendContext();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -45,183 +39,185 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    const handleContinue = async () => {
-      setErrorMsg(null);
+  const leftPad = useBreakpointValue({ base: "24px", md: "60px" });
+  const rightPad = useBreakpointValue({ base: "24px", md: "60px" });
 
-      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-        setErrorMsg("Please fill out first name, last name, and email.");
-        return;
+  const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+
+  const isValidEmail = (value: string) => {
+    // simple check, good enough for UI validation
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const handleContinue = async () => {
+    setErrorMsg(null);
+
+    if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
+      setErrorMsg("Please fill out first name, last name, and email.");
+      return;
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const resp = await backend.post("/volunteers", {
+        // Replace with the real firebase uid once login flow is wired.
+        firebaseUid: 3,
+
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: normalizedEmail,
+
+        phone_number: null,
+        form_completed: false,
+        form_link: null,
+
+        is_signed_confidentiality: new Date().toISOString(),
+        is_attorney: false, // ignoring 
+        is_notary: false, // updated later in NotaryStep
+      });
+
+      const volunteerId = resp?.data?.id;
+      if (!volunteerId) {
+        throw new Error("Volunteer created but no id returned.");
       }
 
-      setIsSubmitting(true);
-      try {
-        await backend.post("/volunteers", {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          email: email.trim(),
+      localStorage.setItem("volunteerId", String(volunteerId));
+      onNext(volunteerId);
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.message ||
+        e?.response?.data ||
+        e?.message ||
+        "Failed to create account.";
+      setErrorMsg(typeof msg === "string" ? msg : "Failed to create account.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-          phone_number: null,
-          form_completed: false,
-          form_link: null,
-          // need to figure out what this does
-          is_signed_confidentiality: new Date().toISOString(),
-          is_attorney: false,
-          is_notary: false,
-        });
-
-
-        onNext();
-      } catch (e: any) {
-        const msg =
-          e?.response?.data?.message ||
-          e?.response?.data ||
-          e?.message ||
-          "Failed to create account.";
-        setErrorMsg(typeof msg === "string" ? msg : "Failed to create account.");
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
   return (
     <LoginLayout>
       <Flex
-        w="1091.62px"
-        h="914.39px"
-        bg="#FFFFFF"
-        borderRadius="4.41px"
-        border="1px solid"
-        borderColor="#E4E4E7"
-        overflow="hidden"
-        direction="column"
+        w="full"
+        minH="100vh"
+        align="center"
+        justify="center"
+        px={{ base: 4, md: 8 }}
+        py={{ base: 6, md: 10 }}
       >
-        {/* Top bar */}
         <Flex
-          w="100%"
-          h={BAR_HEIGHT}
-          bg={BAR_BG}
-          flexShrink={0}
-          align="center"
-          px="24px"
-        >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h="45px"
-            objectFit="contain"
-          />
-        </Flex>
-
-        <Flex
-          flex="1"
+          w="full"
+          maxW="6xl"
+          bg="#FFFFFF"
+          borderRadius={{ base: "12px", md: "10px" }}
+          border="1px solid"
+          borderColor="#E4E4E7"
           overflow="hidden"
+          direction="column"
         >
-          {/* Left side */}
+          {/* Top bar */}
           <Flex
-            direction="column"
-            justify="space-between"
-            w="50%"
-            p="60px"
-            borderRight="1px solid"
-            borderColor="#E4E4E7"
+            w="100%"
+            h={BAR_HEIGHT}
+            bg={BAR_BG}
+            flexShrink={0}
+            align="center"
+            px={{ base: 4, md: 6 }}
           >
-            <Box>
-              <Heading
-                fontSize="30px"
-                fontWeight={700}
-                color="black"
-                mb="20px"
-              >
-                Community Counsel Account Manager
-              </Heading>
-              <Text
-                fontSize="20px"
-                color="gray.600"
-              >
-                Begin creating your volunteer profile by entering the
-                information prompted.
-              </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize="22px"
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize="22px"
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="#"
-                color="blue.500"
-                fontSize="20px"
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-
-              <HStack
-                gap="16px"
-                mt="32px"
-              >
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={22} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={22} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={22} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={22} />
-                </Box>
-              </HStack>
-            </Box>
+            <Image
+              src={logo}
+              alt="ELDR Logo"
+              h={{ base: "34px", md: "45px" }}
+              objectFit="contain"
+            />
           </Flex>
 
-          {/* Right side - form */}
-          <Flex
-            direction="column"
-            justify="center"
-            w="50%"
-            p="60px"
-            gap="16px"
-          >
-            {/* First Name */}
-            <Box>
-              <Text fontSize="14px" fontWeight={500} color="black" mb="6px">
-                First Name
-              </Text>
-              <Flex align="center" border="1px solid" borderColor="#E4E4E7" borderRadius="6px" px="12px" h="44px" gap="8px">
-                <LuUser size={16} color="#9CA3AF" />
+          <Flex flex="1" direction={{ base: "column", md: "row" }}>
+            {/* Left side */}
+            <Flex
+              direction="column"
+              justify="space-between"
+              w={{ base: "100%", md: "50%" }}
+              p={leftPad}
+              borderRight={{ base: "none", md: "1px solid" }}
+              borderBottom={{ base: "1px solid", md: "none" }}
+              borderColor="#E4E4E7"
+              gap={{ base: 10, md: 0 }}
+            >
+              <Box>
+                <Heading
+                  fontSize={{ base: "22px", md: "30px" }}
+                  fontWeight={700}
+                  color="black"
+                  mb="16px"
+                >
+                  Community Counsel Account Manager
+                </Heading>
+                <Text fontSize={{ base: "15px", md: "20px" }} color="gray.600">
+                  Begin creating your volunteer profile by entering the information prompted.
+                </Text>
+              </Box>
+
+              <Box>
+                <Text fontWeight={700} fontSize={{ base: "16px", md: "22px" }} color="black">
+                  Need help?
+                </Text>
+                <Text
+                  fontWeight={700}
+                  fontSize={{ base: "16px", md: "22px" }}
+                  color="black"
+                  mb="8px"
+                >
+                  Visit our website
+                </Text>
+                <Link
+                  href="#"
+                  color="blue.500"
+                  fontSize={{ base: "14px", md: "20px" }}
+                  textDecoration="underline"
+                >
+                  Community Counsel Website
+                </Link>
+
+                <HStack gap="16px" mt="24px">
+                  <Box as="a" href="#" color="gray.600" cursor="pointer">
+                    <LuFacebook size={22} />
+                  </Box>
+                  <Box as="a" href="#" color="gray.600" cursor="pointer">
+                    <FiLinkedin size={22} />
+                  </Box>
+                  <Box as="a" href="#" color="gray.600" cursor="pointer">
+                    <BsInstagram size={22} />
+                  </Box>
+                  <Box as="a" href="#" color="gray.600" cursor="pointer">
+                    <LuMail size={22} />
+                  </Box>
+                </HStack>
+              </Box>
+            </Flex>
+
+            {/* Right side */}
+            <Flex
+              direction="column"
+              justify="center"
+              w={{ base: "100%", md: "50%" }}
+              p={rightPad}
+              gap="16px"
+            >
+              {errorMsg && (
+                <Box border="1px solid" borderColor="red.200" bg="red.50" p="10px" borderRadius="8px">
+                  <Text color="red.700" fontSize="14px">
+                    {errorMsg}
+                  </Text>
+                </Box>
+              )}
+
+              <Field label="First Name" icon={<LuUser size={16} color="#9CA3AF" />}>
                 <Input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -234,16 +230,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
                 />
-              </Flex>
-            </Box>
+              </Field>
 
-            {/* Last Name */}
-            <Box>
-              <Text fontSize="14px" fontWeight={500} color="black" mb="6px">
-                Last Name
-              </Text>
-              <Flex align="center" border="1px solid" borderColor="#E4E4E7" borderRadius="6px" px="12px" h="44px" gap="8px">
-                <LuUser size={16} color="#9CA3AF" />
+              <Field label="Last Name" icon={<LuUser size={16} color="#9CA3AF" />}>
                 <Input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -256,15 +245,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
                 />
-              </Flex>
-            </Box>
-            {/* Email */}
-            <Box>
-              <Text fontSize="14px" fontWeight={500} color="black" mb="6px">
-                Email
-              </Text>
-              <Flex align="center" border="1px solid" borderColor="#E4E4E7" borderRadius="6px" px="12px" h="44px" gap="8px">
-                <LuMail size={16} color="#9CA3AF" />
+              </Field>
+
+              <Field label="Email" icon={<LuMail size={16} color="#9CA3AF" />}>
                 <Input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -278,16 +261,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
                 />
-              </Flex>
-            </Box>
+              </Field>
 
-            {/* Password */}
-            <Box>
-              <Text fontSize="14px" fontWeight={500} color="black" mb="6px">
-                Password
-              </Text>
-              <Flex align="center" border="1px solid" borderColor="#E4E4E7" borderRadius="6px" px="12px" h="44px" gap="8px">
-                <LuKeyRound size={16} color="#9CA3AF" />
+              <Field label="Password" icon={<LuKeyRound size={16} color="#9CA3AF" />}>
                 <Input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -301,46 +277,68 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
                 />
-              </Flex>
-            </Box>
+              </Field>
 
-            {/* Continue button */}
-            <Button
-              bg="#4A90D9"
-              color="white"
-              h="48px"
-              borderRadius="6px"
-              fontSize="14px"
-              fontWeight={500}
-              _hover={{ bg: "#3a7bc8" }}
-              justifyContent="space-between"
-              px="20px"
-              mt="4px"
-              onClick={handleContinue}
-              loading={isSubmitting}
-            >
-              Continue
-              <LuArrowRight size={16} />
-            </Button>
-
-            <Text fontSize="13px" color="gray.500" textAlign="center">
-              Didn't mean to come here?{" "}
-              <Link
-                href="#"
-                color="blue.500"
-                textDecoration="underline"
-                onClick={onBack}
+              <Button
+                bg="#4A90D9"
+                color="white"
+                h="48px"
+                borderRadius="8px"
+                fontSize="14px"
+                fontWeight={600}
+                _hover={{ bg: "#3a7bc8" }}
+                justifyContent="space-between"
+                px="20px"
+                mt="4px"
+                onClick={handleContinue}
+                loading={isSubmitting}
               >
-                Go back
-              </Link>
-            </Text>
-          </Flex>
-        </Flex>
+                Continue
+                <LuArrowRight size={16} />
+              </Button>
 
-        <Box w="100%" h={BAR_HEIGHT} bg={BAR_BG} flexShrink={0} />
+              <Text fontSize="13px" color="gray.500" textAlign="center">
+                Didn&apos;t mean to come here?{" "}
+                <Link href="#" color="blue.500" textDecoration="underline" onClick={onBack}>
+                  Go back
+                </Link>
+              </Text>
+            </Flex>
+          </Flex>
+
+          <Box w="100%" h={BAR_HEIGHT} bg={BAR_BG} flexShrink={0} />
+        </Flex>
       </Flex>
     </LoginLayout>
   );
 };
+
+const Field = ({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <Box>
+    <Text fontSize="14px" fontWeight={600} color="black" mb="6px">
+      {label}
+    </Text>
+    <Flex
+      align="center"
+      border="1px solid"
+      borderColor="#E4E4E7"
+      borderRadius="10px"
+      px="12px"
+      h="44px"
+      gap="8px"
+    >
+      {icon}
+      {children}
+    </Flex>
+  </Box>
+);
 
 export default CreateAccountStep;
