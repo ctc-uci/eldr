@@ -24,20 +24,19 @@ import {
   Users,
 } from "lucide-react";
 
-export const EventInfo = ({ event }) => {
-  const [isRegistered, setIsRegistered] = useState(false);
+export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
 
   const handleRegistration = () => {
-    if (isRegistered) {
+    if (event.isRegistered) {
       setOpen(true);
     } else {
-      setIsRegistered(true);
+      onRegister?.(event.id);
     }
   };
 
   const confirmUnregister = () => {
-    setIsRegistered(false);
+    onUnregister?.(event.id);
     setOpen(false);
   };
 
@@ -177,7 +176,7 @@ export const EventInfo = ({ event }) => {
         mb={{ base: 5, md: 1 }}
       >
         <HStack
-          opacity={isRegistered ? 1 : 0}
+          opacity={event.isRegistered ? 1 : 0}
           transition="opacity 0.2s"
           gap={1}
           fontSize="12px"
@@ -193,13 +192,13 @@ export const EventInfo = ({ event }) => {
           size="xs"
         >
           <Button
-            variant={isRegistered ? "surface" : "solid"}
-            colorPalette={isRegistered ? "red" : "blue"}
+            variant={event.isRegistered ? "surface" : "solid"}
+            colorPalette={event.isRegistered ? "red" : "blue"}
             px="18px"
             py="6px"
             onClick={handleRegistration}
           >
-            {isRegistered ? (
+            {event.isRegistered ? (
               <>
                 <CalendarX /> Unregister
               </>

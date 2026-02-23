@@ -216,9 +216,9 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
-    const data = await db.query(
+      const data = await db.query(
       `
-        INSERT INTO clinic_registration (volunteer_id, clinic_id)
+        INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
         RETURNING *;
         `,

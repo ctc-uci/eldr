@@ -11,14 +11,47 @@ import {
 export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
   const now = new Date();
 
+  // Helper: combine the calendar day from e.date with the time-of-day from e.endTime.
+  // This is necessary because startTime/endTime in the DB can have incorrect date portions.
+  const getEventEndDateTime = (e) => {
+    const dateObj = e.date ? new Date(e.date) : null;
+
+    if (dateObj && e.endTime) {
+      const endObj = new Date(e.endTime);
+      // Take year/month/day from e.date (UTC) and hours/minutes from e.endTime (UTC)
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(),
+        dateObj.getUTCMonth(),
+        dateObj.getUTCDate(),
+        endObj.getUTCHours(),
+        endObj.getUTCMinutes(),
+        endObj.getUTCSeconds()
+      ));
+    }
+
+    if (dateObj) {
+      // No endTime — treat end-of-day as the cutoff
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(),
+        dateObj.getUTCMonth(),
+        dateObj.getUTCDate(),
+        23, 59, 59
+      ));
+    }
+
+    return null;
+  };
+
   const upcoming = myEvents.filter((e) => {
-    if (!e.startTime) return true;
-    return new Date(e.startTime) >= now;
+    const endDateTime = getEventEndDateTime(e);
+    if (!endDateTime) return true;
+    return endDateTime >= now;
   });
 
   const past = myEvents.filter((e) => {
-    if (!e.startTime) return false;
-    return new Date(e.startTime) < now;
+    const endDateTime = getEventEndDateTime(e);
+    if (!endDateTime) return false;
+    return endDateTime < now;
   });
 
   return (

@@ -44,6 +44,7 @@ export const EventCatalog = () => {
   const [sortBy, setSortBy] = useState("upcoming");
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [events, setEvents] = useState([]);
+  const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
 
@@ -52,6 +53,7 @@ export const EventCatalog = () => {
       try {
         const userRes = await backend.get(`/users/${currentUser.uid}`);
         const volunteerId = userRes.data[0].id;
+        setVolunteerId(volunteerId);
 
         const res = await backend.get("/clinics");
         const baseEvents = res.data;
@@ -200,6 +202,44 @@ export const EventCatalog = () => {
     setShowDetails(true);
   };
 
+  const handleRegister = async (clinicId) => {
+    if (!volunteerId) return;
+    try {
+      await backend.post(`/clinics/${clinicId}/registrations`, {
+        volunteerId,
+      });
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === clinicId ? { ...e, isRegistered: true } : e
+        )
+      );
+      if (selectedEvent && selectedEvent.id === clinicId) {
+        setSelectedEvent({ ...selectedEvent, isRegistered: true });
+      }
+    } catch (error) {
+      console.error("Failed to register for event:", error);
+      console.error(error.response?.data || error);
+    }
+  };
+
+  const handleUnregister = async (clinicId) => {
+    if (!volunteerId) return;
+    try {
+      await backend.delete(`/clinics/${clinicId}/registrations/${volunteerId}`);
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === clinicId ? { ...e, isRegistered: false } : e
+        )
+      );
+      if (selectedEvent && selectedEvent.id === clinicId) {
+        setSelectedEvent({ ...selectedEvent, isRegistered: false });
+      }
+    } catch (error) {
+      console.error("Failed to unregister from event:", error);
+      console.error(error.response?.data || error);
+    }
+  };
+
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
@@ -304,7 +344,11 @@ export const EventCatalog = () => {
             </Button>
           )}
 
-          <EventInfo event={selectedEvent} />
+          <EventInfo 
+            event={selectedEvent} 
+            onRegister={handleRegister}
+            onUnregister={handleUnregister}
+          />
         </Flex>
       </Flex>
     </Flex>
