@@ -19,40 +19,56 @@ export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
     if (dateObj && e.endTime) {
       const endObj = new Date(e.endTime);
       // Take year/month/day from e.date (UTC) and hours/minutes from e.endTime (UTC)
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(),
-        dateObj.getUTCMonth(),
-        dateObj.getUTCDate(),
-        endObj.getUTCHours(),
-        endObj.getUTCMinutes(),
-        endObj.getUTCSeconds()
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          endObj.getUTCHours(),
+          endObj.getUTCMinutes(),
+          endObj.getUTCSeconds()
+        )
+      );
     }
 
     if (dateObj) {
       // No endTime — treat end-of-day as the cutoff
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(),
-        dateObj.getUTCMonth(),
-        dateObj.getUTCDate(),
-        23, 59, 59
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          23,
+          59,
+          59
+        )
+      );
     }
 
     return null;
   };
 
-  const upcoming = myEvents.filter((e) => {
-    const endDateTime = getEventEndDateTime(e);
-    if (!endDateTime) return true;
-    return endDateTime >= now;
-  });
+  // Filter and sort Upcoming: chronological (closest to now first)
+  const upcoming = myEvents
+    .filter((e) => {
+      if (!e.startTime) return true;
+      return new Date(e.startTime) >= now;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
 
-  const past = myEvents.filter((e) => {
-    const endDateTime = getEventEndDateTime(e);
-    if (!endDateTime) return false;
-    return endDateTime < now;
-  });
+  // Filter and sort Past: reverse chronological (most recent first)
+  const past = myEvents
+    .filter((e) => {
+      if (!e.startTime) return false;
+      return new Date(e.startTime) < now;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
 
   return (
     <VStack
