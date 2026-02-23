@@ -248,6 +248,11 @@ export const AdminLogin: React.FC = () => {
                     borderWidth="1px"
                     borderRadius="md"
                     _placeholder={{ color: "A1A1AA", opacity: 1 }}
+                    css={{
+                      "&::-ms-reveal, &::-ms-clear": {
+                        display: "none",
+                      },
+                    }}
                     onChange={(e) => {
                       const value = e.target.value;
                       setPassFilled(value.length > 0);

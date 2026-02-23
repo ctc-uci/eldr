@@ -209,6 +209,11 @@ export const AdminPassReset: React.FC = () => {
                   borderWidth="1px"
                   borderRadius="md"
                   _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                  css={{
+                    "&::-ms-reveal, &::-ms-clear": {
+                      display: "none",
+                    },
+                  }}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
@@ -246,6 +251,11 @@ export const AdminPassReset: React.FC = () => {
                   borderWidth="1px"
                   borderRadius="md"
                   _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                  css={{
+                    "&::-ms-reveal, &::-ms-clear": {
+                      display: "none",
+                    },
+                  }}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
