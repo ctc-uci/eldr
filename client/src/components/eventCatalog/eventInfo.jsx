@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 
 import {
+  CalendarCheck,
   CalendarClock,
   CalendarDays,
   CalendarPlus,
@@ -41,6 +42,26 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
   };
 
   if (!event) return <Box p={10}>Please select an event to view details!</Box>;
+
+  // Determine if this is a past event using the same logic as MyEventsList
+  const getEventEndDateTime = () => {
+    const dateObj = event.date ? new Date(event.date) : null;
+    if (dateObj && event.endTime) {
+      const endObj = new Date(event.endTime);
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(),
+        endObj.getUTCHours(), endObj.getUTCMinutes(), endObj.getUTCSeconds()
+      ));
+    }
+    if (dateObj) {
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 23, 59, 59
+      ));
+    }
+    return null;
+  };
+  const endDateTime = getEventEndDateTime();
+  const isPastEvent = endDateTime ? endDateTime < new Date() : false;
 
   return (
     <Flex
@@ -175,15 +196,37 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         mt={3}
         mb={{ base: 5, md: 1 }}
       >
-        <HStack
-          opacity={event.isRegistered ? 1 : 0}
-          transition="opacity 0.2s"
-          gap={1}
-          fontSize="12px"
-          mb={2}
-        >
-          <Check size={16} /> You are attending
-        </HStack>
+        {!isPastEvent && (
+          <HStack
+            opacity={event.isRegistered ? 1 : 0}
+            transition="opacity 0.2s"
+            gap={1}
+            fontSize="12px"
+            mb={2}
+          >
+            <Check size={16} /> You are attending
+          </HStack>
+        )}
+        {isPastEvent ? (
+          <Button
+            variant="surface"
+            colorPalette={event.hasAttended ? "blue" : "red"}
+            px="18px"
+            py="6px"
+            disabled
+            cursor="default"
+          >
+            {event.hasAttended ? (
+              <>
+                <CalendarCheck /> Attended
+              </>
+            ) : (
+              <>
+                <CalendarX /> Missed
+              </>
+            )}
+          </Button>
+        ) : (
         <Dialog.Root
           open={open}
           onOpenChange={(e) => setOpen(e.open)}
@@ -239,6 +282,7 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             </Dialog.Positioner>
           </Portal>
         </Dialog.Root>
+        )}
       </Flex>
 
       {/* Gradient overlay - fixed at bottom */}
