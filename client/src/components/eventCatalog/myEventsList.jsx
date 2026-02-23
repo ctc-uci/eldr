@@ -132,6 +132,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
           if (isPastSection) {
             if (event.hasAttended) {
               statusLabel = "Attended";
+              statusColor = "#22C55E";
             } else {
               statusLabel = "Missed";
               statusColor = "#DC2626";
