@@ -15,7 +15,7 @@ import {
   Image
 } from "@chakra-ui/react";
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye, FaGoogle, FaMicrosoft } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
@@ -24,8 +24,17 @@ import { HiOutlineKey } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { toaster } from "@/components/ui/toaster";
+import {
+  authenticateGoogleUser,
+  authenticateMicrosoftUser,
+} from "@/utils/auth/providers";
 import logo from "./ELDR_Logo.png";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  getRedirectResult,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 
 type UserRecord = {
   email?: string;
@@ -89,6 +98,55 @@ export const AdminLogin: React.FC = () => {
       });
     }
   };
+
+  const handleGoogleSso = async () => {
+    await authenticateGoogleUser();
+  };
+
+  const handleMicrosoftSso = async () => {
+    await authenticateMicrosoftUser();
+  };
+
+  useEffect(() => {
+    const handleAdminRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (!result) return;
+
+        const ssoEmail = (result.user.email ?? "").trim().toLowerCase();
+        if (!ssoEmail) {
+          await signOut(auth);
+          toaster.error({
+            title: "Unable to sign in",
+            description: "No admin account exists with those credentials.",
+          });
+          return;
+        }
+
+        const usersResponse = await backend.get("/users");
+        const latestUsers = (usersResponse.data ?? []) as UserRecord[];
+
+        if (!isAdmin(ssoEmail, latestUsers)) {
+          await signOut(auth);
+          toaster.error({
+            title: "Unable to sign in",
+            description: "No admin account exists with those credentials.",
+          });
+          return;
+        }
+
+        navigate("/adminDashboard");
+      } catch (error: unknown) {
+        const firebaseError = error as { message?: string };
+        toaster.error({
+          title: "Sign in failed",
+          description: firebaseError.message ?? "Please try again.",
+        });
+      }
+    };
+
+    void handleAdminRedirectResult();
+  }, [auth, backend, navigate]);
 
   return (
     <Flex 
@@ -351,6 +409,7 @@ export const AdminLogin: React.FC = () => {
                 h="50px"
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
+                onClick={handleGoogleSso}
               >
                 <Icon
                   as={FaGoogle}
@@ -377,6 +436,7 @@ export const AdminLogin: React.FC = () => {
                 h="50px"
                 color = "white"
                 _hover = {{bg: "#5797BD"}}
+                onClick={handleMicrosoftSso}
               >
                 <Icon
                   as={FaMicrosoft}
