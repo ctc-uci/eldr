@@ -128,7 +128,24 @@ export const VolunteerLogin = () => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate);
+    handleRedirectResult(backend, navigate, {
+      onAccountConflict: (existingProviderId: string | null) => {
+        const providerMap: Record<string, string> = {
+          "google.com": "Google",
+          "microsoft.com": "Microsoft",
+        };
+        const providerName = existingProviderId
+          ? (providerMap[existingProviderId] ?? existingProviderId)
+          : null;
+        toaster.error({
+          title: "Account already exists with a different provider",
+          description: providerName
+            ? `This email is already associated with a ${providerName} account. Please sign in using the ${providerName} button below to link the accounts.`
+            : "This email is already associated with a different sign-in method. Please try another provider.",
+          duration: 8000,
+        });
+      },
+    });
   }, [backend, handleRedirectResult, navigate]);
 
   return (
