@@ -15,7 +15,7 @@ import {
   Image
 } from "@chakra-ui/react";
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { FaInstagram, FaArrowRight, FaRegEyeSlash, FaRegEye, FaGoogle, FaMicrosoft } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
@@ -23,8 +23,14 @@ import { HiOutlineKey } from "react-icons/hi";
 
 import { useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { toaster } from "@/components/ui/toaster";
 import logo from "./ELDR_Logo.png";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+
+type UserRecord = {
+  email?: string;
+  role?: string;
+};
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -34,27 +40,55 @@ export const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [currUsers, setCurrUsers] = useState([]);
-  const [showPopup, setShowPopup] = useState(false);
   const auth = getAuth();
 
-  const fetchUsers = async () => {
-    try{
-      const response = await backend.get('/users');
-      setCurrUsers(response.data);
-    }
-    catch (error){
-      console.log(error);
-    }
+  const isAdmin = (lookupEmail: string, users: UserRecord[]) => {
+    const normalizedEmail = lookupEmail.trim().toLowerCase();
+    return users.some(
+      (curr) =>
+        (curr.email ?? "").trim().toLowerCase() === normalizedEmail &&
+        curr.role === "admin"
+    );
   }
 
-  const isAdmin = (email: string, currUsers: string[]) => {
-    return currUsers.some(curr => curr.email === email && curr.role === "admin");
-  }
+  const handleAdminLogin = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+    try {
+      const usersResponse = await backend.get("/users");
+      const latestUsers = (usersResponse.data ?? []) as UserRecord[];
+
+      if (!isAdmin(normalizedEmail, latestUsers)) {
+        toaster.error({
+          title: "Unable to sign in",
+          description: "No admin account exists with those credentials.",
+        });
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      navigate("/adminDashboard");
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string; message?: string };
+      if (
+        firebaseError.code === "auth/invalid-credential" ||
+        firebaseError.code === "auth/wrong-password" ||
+        firebaseError.code === "auth/user-not-found" ||
+        firebaseError.code === "auth/invalid-email"
+      ) {
+        toaster.error({
+          title: "Unable to sign in",
+          description: "No admin account exists with those credentials.",
+        });
+        return;
+      }
+
+      toaster.error({
+        title: "Sign in failed",
+        description: firebaseError.message ?? "Please try again.",
+      });
+    }
+  };
 
   return (
     <Flex 
@@ -282,16 +316,7 @@ export const AdminLogin: React.FC = () => {
                 color="white"
                 _hover={{ bg: "#5797BD" }}
                 disabled = {!(userFilled && passFilled)}
-                onClick={() => {
-                  signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                      console.log("Logged in:", userCredential.user.uid);
-                      isAdmin(email, currUsers) ? navigate("/adminDashboard") : null; // or wherever
-                    })
-                    .catch((error) => {
-                      console.log("Authentication failed:", error.message);
-                    });
-                }}
+                onClick={handleAdminLogin}
               >
                 Login
                 <Icon
