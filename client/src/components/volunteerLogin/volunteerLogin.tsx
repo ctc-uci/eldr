@@ -8,14 +8,13 @@ import LawInterestStep from "./steps/LawInterestStep";
 import LoginStep from "./steps/LoginStep";
 import NotaryStep from "./steps/NotaryStep";
 import SuccessStep from "./steps/SuccessStep";
-import WelcomeStep from "./steps/WelcomeStep";
 
 export const VolunteerLogin = () => {
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(1);
   const [volunteerId, setVolunteerId] = useState<number | undefined>(undefined);
 
   const next = () => setStepIndex((prev) => Math.min(prev + 1, 7));
-  const back = () => setStepIndex((prev) => Math.max(prev - 1, 0));
+  const back = () => setStepIndex((prev) => Math.max(prev - 1, 1));
 
   const handleCreateAccountNext = (id: number) => {
     setVolunteerId(id);
@@ -27,7 +26,6 @@ export const VolunteerLogin = () => {
       w="100%"
       minH="100vh"
     >
-      {stepIndex === 0 && <WelcomeStep onNext={next} />}
       {stepIndex === 1 && (
         <LoginStep
           onNext={next}

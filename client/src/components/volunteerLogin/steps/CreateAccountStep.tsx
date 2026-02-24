@@ -145,7 +145,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             justify="space-between"
             w={{ base: "100%", md: "50%" }}
             px="5%"
-            py="10%"
+            py="8%"
             borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
             borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
             borderColor="#E4E4E7"
@@ -153,15 +153,15 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           >
             <Box>
               <Heading
-                fontSize={{ base: "18px", md: "22px", lg: "30px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
                 fontWeight={700}
                 color="black"
-                mb="16px"
+                mb="12px"
               >
                 Community Counsel Account Manager
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
                 color="gray.600"
               >
                 Begin creating your volunteer profile by entering the
