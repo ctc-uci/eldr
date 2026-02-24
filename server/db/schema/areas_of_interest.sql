@@ -14,3 +14,4 @@ CREATE TABLE clinic_areas_of_interest (
     area_of_interest_id INTEGER REFERENCES areas_of_interest(id) ON DELETE CASCADE,
     PRIMARY KEY (clinic_id, area_of_interest_id)
 );
+

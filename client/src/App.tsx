@@ -17,7 +17,7 @@ import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
-import { VolunteerLogin } from "./components/volunteerLogin/VolunteerLogin";
+import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 // import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";

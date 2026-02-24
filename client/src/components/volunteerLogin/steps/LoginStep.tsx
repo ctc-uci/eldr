@@ -1,140 +1,501 @@
 import {
-  AbsoluteCenter,
   Box,
   Button,
-  Center,
-  Separator,
   Flex,
   Heading,
+  HStack,
+  Image,
   Input,
+  Link,
+  Separator,
   Text,
-  VStack,
 } from "@chakra-ui/react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { BsInstagram } from "react-icons/bs";
+import { FaGoogle } from "react-icons/fa";
+import { FiLinkedin } from "react-icons/fi";
+import {
+  LuArrowRight,
+  LuFacebook,
+  LuKeyRound,
+  LuMail,
+  LuUser,
+} from "react-icons/lu";
+import { RiMicrosoftLine } from "react-icons/ri";
+import { toaster } from "@/components/ui/toaster";
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import {
+  authenticateGoogleUser,
+  authenticateMicrosoftUser,
+} from "@/utils/auth/providers";
+
+import logo from "../../../assets/EldrLogo.png";
+import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onNext: () => void;
   onBack: () => void;
 };
 
-const WelcomeStep = ({ onNext, onBack }: Props) => {
+const LoginStep = ({ onNext, onBack }: Props) => {
+  const navigate = useNavigate();
+  const { backend } = useBackendContext();
+  const { login, handleRedirectResult } = useAuthContext();
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
+
+  const toastLoginError = useCallback((msg: string) => {
+    toaster.error({
+      title: "An error occurred while signing in",
+      description: msg,
+    });
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      if (!firstName.trim() || !lastName.trim() || !password) {
+        toastLoginError("Please enter first name, last name, and password.");
+        return;
+      }
+
+      const response = await backend.get("/volunteers");
+      const volunteers = response.data;
+
+      const volunteer = volunteers.find(
+        (v: {
+          firstName?: string;
+          lastName?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+        }) => {
+          const volunteerFirstName = (v.firstName ?? v.first_name ?? "").toLowerCase();
+          const volunteerLastName = (v.lastName ?? v.last_name ?? "").toLowerCase();
+          return (
+            volunteerFirstName === firstName.trim().toLowerCase() &&
+            volunteerLastName === lastName.trim().toLowerCase()
+          );
+        }
+      );
+
+      if (!volunteer?.email) {
+        toastLoginError(
+          "No account found with this first and last name. Please check your information or create an account."
+        );
+        return;
+      }
+
+      await login({
+        email: volunteer.email,
+        password,
+      });
+
+      navigate("/dashboard");
+    } catch (err: any) {
+      const errorCode = err?.code;
+      const firebaseErrorMsg = err?.message;
+
+      switch (errorCode) {
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+        case "auth/invalid-email":
+        case "auth/user-not-found":
+          toastLoginError("First name, last name, or password does not match our records!");
+          break;
+        case "auth/unverified-email":
+          toastLoginError("Please verify your email address.");
+          break;
+        case "auth/user-disabled":
+          toastLoginError("This account has been disabled.");
+          break;
+        case "auth/too-many-requests":
+          toastLoginError("Too many attempts. Please try again later.");
+          break;
+        case "auth/user-signed-out":
+          toastLoginError("You have been signed out. Please sign in again.");
+          break;
+        default:
+          toastLoginError(firebaseErrorMsg ?? "Unable to sign in.");
+      }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    await authenticateGoogleUser();
+  };
+
+  const handleMicrosoftLogin = async () => {
+    await authenticateMicrosoftUser();
+  };
+
+  useEffect(() => {
+    handleRedirectResult(backend, navigate);
+  }, [backend, handleRedirectResult, navigate]);
+
   return (
-    <Flex
-      w="100%"
-      h="100%"
-    >
-      <Center
-        bg="#E8E8E8"
-        w="43%"
-      >
-        <Box
-          w="323px"
-          h="294px"
-          bg="#D9D9D9"
-        ></Box>
-      </Center>
+    <LoginLayout>
       <Flex
-        flex="1"
+        w="100%"
+        maxW="1091px"
+        minH={{ base: "auto", lg: "914px" }}
+        bg="#FFFFFF"
+        borderRadius={{ base: "8px", md: "4px" }}
+        border="1px solid"
+        borderColor="#E4E4E7"
         direction="column"
-        alignItems="center"
-        justifyContent="center"
-        gap="6"
       >
-        <Heading
-          fontWeight={500}
-          fontSize="50px"
-          mb="50px"
+        <Flex
+          w="100%"
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
+          flexShrink={0}
+          align="center"
+          px={{ base: "16px", md: "24px" }}
         >
-          ELDR Volunteer Portal
-        </Heading>
-        <VStack spacing="10px">
-          <Input
-            placeholder="Enter first name"
-            w="704px"
-            border="2px"
+          <Image
+            src={logo}
+            alt="ELDR Logo"
+            h={{ base: "32px", md: "45px" }}
+            objectFit="contain"
           />
-          <Input
-            placeholder="Enter last name"
-            w="704px"
-            border="2px"
-          />
-          <Input
-            placeholder="Enter email"
-            w="704px"
-            border="2px"
-          />
+        </Flex>
+
+        <Flex
+          flex="1"
+          direction={{ base: "column", md: "row" }}
+        >
           <Flex
-            w="704px"
-            justifyContent="end"
+            direction="column"
+            justify="space-between"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
+            borderRight={{ base: "none", md: "1px solid" }}
+            borderBottom={{ base: "1px solid", md: "none" }}
+            borderColor="#E4E4E7"
+            gap={{ base: "32px", md: "0" }}
           >
-            <Button
-              variant="link"
-              textDecoration="underline"
-              color="black"
-              onClick={onBack}
-            >
-              Return to Menu
-            </Button>
-          </Flex>
-        </VStack>
-        <VStack spacing="14px">
-          <Button
-            bg="#FAFAFA"
-            w="297px"
-            h="49px"
-            borderWidth="3px"
-            borderColor="black"
-          >
-            Login
-          </Button>
-          <Flex
-            align="center"
-            w="100%"
-          >
-            <Separator borderColor="black" />
-            <Text padding="2">OR</Text>
-            <Separator borderColor="black" />
-          </Flex>
-          <Button
-            bg="#FAFAFA"
-            w="297px"
-            h="49px"
-            borderWidth="3px"
-            borderColor="black"
-          >
-            Google SSO
-          </Button>
-          <Button
-            bg="#FAFAFA"
-            w="297px"
-            h="49px"
-            borderWidth="3px"
-            borderColor="black"
-          >
-            Office 365
-          </Button>
-          <Button
-            variant="link"
-            textDecoration="underline"
-            color="black"
-            onClick={onNext}
-          >
-            <Text
-              as="span"
-              fontWeight={400}
-            >
-              Don't have an account? Create one{" "}
-              <Text
-                as="span"
-                fontWeight="bold"
+            <Box>
+              <Heading
+                fontSize={{ base: "18px", md: "24px", lg: "30px" }}
+                fontWeight={700}
+                color="black"
+                mb="20px"
               >
-                here
+                Welcome to Volunteer Portal by Community Counsel
+              </Heading>
+              <Text
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
+                color="gray.600"
+              >
+                Log in using your CC Credentials. If you don't have one, click
+                on the create link below. If you need to reset your password,
+                click "Forgot Password".
               </Text>
+            </Box>
+
+            <Box>
+              <Text
+                fontWeight={700}
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
+                color="black"
+              >
+                Need help?
+              </Text>
+              <Text
+                fontWeight={700}
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
+                color="black"
+                mb="8px"
+              >
+                Visit our website
+              </Text>
+              <Link
+                href="#"
+                color="blue.500"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
+                textDecoration="underline"
+              >
+                Community Counsel Website
+              </Link>
+              <HStack
+                gap={{ base: "12px", md: "16px" }}
+                mt={{ base: "20px", md: "32px" }}
+              >
+                <Link
+                  href="#"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <LuFacebook size={20} />
+                </Link>
+                <Link
+                  href="#"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <FiLinkedin size={20} />
+                </Link>
+                <Link
+                  href="#"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <BsInstagram size={20} />
+                </Link>
+                <Link
+                  href="#"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <LuMail size={20} />
+                </Link>
+              </HStack>
+            </Box>
+          </Flex>
+
+          <Flex
+            direction="column"
+            justify="center"
+            w={{ base: "100%", md: "50%" }}
+            p={{ base: "24px", md: "40px", lg: "60px" }}
+            gap={{ base: "12px", md: "16px" }}
+          >
+            <Box>
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight={500}
+                color="black"
+                mb="6px"
+              >
+                First Name
+              </Text>
+              <Flex
+                align="center"
+                border="1px solid"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                px="12px"
+                h={{ base: "40px", md: "44px" }}
+                gap="8px"
+              >
+                <LuUser
+                  size={16}
+                  color="#9CA3AF"
+                />
+                <Input
+                  placeholder="Enter First Name"
+                  border="none"
+                  outline="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </Flex>
+            </Box>
+
+            <Box>
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight={500}
+                color="black"
+                mb="6px"
+              >
+                Last Name
+              </Text>
+              <Flex
+                align="center"
+                border="1px solid"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                px="12px"
+                h={{ base: "40px", md: "44px" }}
+                gap="8px"
+              >
+                <LuUser
+                  size={16}
+                  color="#9CA3AF"
+                />
+                <Input
+                  placeholder="Enter Last Name"
+                  border="none"
+                  outline="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </Flex>
+            </Box>
+
+            <Box>
+              <Flex
+                justify="space-between"
+                align="center"
+                mb="6px"
+              >
+                <Text
+                  fontSize={{ base: "13px", md: "14px" }}
+                  fontWeight={500}
+                  color="black"
+                >
+                  Password
+                </Text>
+                <Link
+                  href="#"
+                  fontSize="13px"
+                  color="blue.500"
+                  textDecoration="underline"
+                  onClick={onBack}
+                >
+                  Forgot Password?
+                </Link>
+              </Flex>
+              <Flex
+                align="center"
+                border="1px solid"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                px="12px"
+                h={{ base: "40px", md: "44px" }}
+                gap="8px"
+              >
+                <LuKeyRound
+                  size={16}
+                  color="#9CA3AF"
+                />
+                <Input
+                  placeholder="Enter Password"
+                  type="password"
+                  border="none"
+                  outline="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Flex>
+            </Box>
+
+            <Button
+              bg="#4A90D9"
+              color="white"
+              h={{ base: "40px", md: "48px" }}
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _hover={{ bg: "#3a7bc8" }}
+              justifyContent="space-between"
+              px="20px"
+              mt="4px"
+              onClick={handleLogin}
+            >
+              Login
+              <LuArrowRight size={16} />
+            </Button>
+
+            <Flex
+              align="center"
+              gap="3"
+            >
+              <Separator
+                flex="1"
+                borderColor="#E4E4E7"
+              />
+              <Text
+                fontSize={{ base: "14px", md: "17px" }}
+                color="gray.400"
+              >
+                or continue with
+              </Text>
+              <Separator
+                flex="1"
+                borderColor="#E4E4E7"
+              />
+            </Flex>
+
+            <Button
+              bg="#4A90D9"
+              color="white"
+              h={{ base: "40px", md: "48px" }}
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _hover={{ bg: "#3a7bc8" }}
+              justifyContent="space-between"
+              px="20px"
+              onClick={handleGoogleLogin}
+            >
+              <HStack gap="10px">
+                <FaGoogle size={18} />
+                <span>Google</span>
+              </HStack>
+              <LuArrowRight size={16} />
+            </Button>
+
+            <Button
+              bg="#4A90D9"
+              color="white"
+              h={{ base: "40px", md: "48px" }}
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _hover={{ bg: "#3a7bc8" }}
+              justifyContent="space-between"
+              px="20px"
+              onClick={handleMicrosoftLogin}
+            >
+              <HStack gap="10px">
+                <RiMicrosoftLine size={18} />
+                <span>Microsoft</span>
+              </HStack>
+              <LuArrowRight size={16} />
+            </Button>
+
+            <Text
+              fontSize="13px"
+              color="gray.500"
+              textAlign="center"
+            >
+              <Link
+                href="#"
+                color="blue.500"
+                textDecoration="underline"
+                onClick={onNext}
+              >
+                Create
+              </Link>{" "}
+              an Account
             </Text>
-          </Button>
-        </VStack>
+          </Flex>
+        </Flex>
+
+        <Box
+          w="100%"
+          h={{ base: "56px", md: "70px" }}
+          bg="#E8E8E8"
+          flexShrink={0}
+        />
       </Flex>
-    </Flex>
+    </LoginLayout>
   );
 };
 
-export default WelcomeStep;
+export default LoginStep;
