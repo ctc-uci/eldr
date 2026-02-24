@@ -11,7 +11,6 @@ const LoginLayout = ({ children }: Props) => {
       minH="100vh"
       bg="#EEF3F8"
       position="relative"
-      overflow="hidden"
     >
       <Box
         position="absolute"

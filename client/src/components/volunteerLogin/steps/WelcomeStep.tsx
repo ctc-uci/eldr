@@ -38,7 +38,6 @@ const WelcomeStep = ({ onNext }: Props) => {
         borderRadius={{ base: "8px", md: "4px" }}
         border="1px solid"
         borderColor="#E4E4E7"
-        overflow="hidden"
         direction="column"
       >
         {/* Top gray bar */}
@@ -61,7 +60,6 @@ const WelcomeStep = ({ onNext }: Props) => {
         <Flex
           flex="1"
           direction={{ base: "column", md: "row" }}
-          overflow="hidden"
         >
           <Flex
             direction="column"

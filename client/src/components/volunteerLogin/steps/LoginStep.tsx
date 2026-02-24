@@ -43,7 +43,6 @@ const LoginStep = ({ onNext, onBack }: Props) => {
         borderRadius={{ base: "8px", md: "4px" }}
         border="1px solid"
         borderColor="#E4E4E7"
-        overflow="hidden"
         direction="column"
       >
         <Flex
@@ -65,7 +64,6 @@ const LoginStep = ({ onNext, onBack }: Props) => {
         <Flex
           flex="1"
           direction={{ base: "column", md: "row" }}
-          overflow="hidden"
         >
           <Flex
             direction="column"

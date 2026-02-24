@@ -426,7 +426,6 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
         borderRadius={{ base: "8px", md: "4px" }}
         border="1px solid"
         borderColor="#E4E4E7"
-        overflow="hidden"
         direction="column"
       >
         {/* Top bar */}
