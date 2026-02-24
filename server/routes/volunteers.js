@@ -231,9 +231,9 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
 
     const result = await db.query(
       `
-        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_interest_id)
+        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_practice_id)
         VALUES ($1, $2)
-        ON CONFLICT (volunteer_id, area_of_interest_id) DO NOTHING
+        ON CONFLICT (volunteer_id, area_of_practice_id) DO NOTHING
         RETURNING *;
       `,
       [volunteerId, areaOfInterestId]
@@ -259,7 +259,7 @@ volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
       `
         SELECT aoi.id, aoi.areas_of_interest
         FROM volunteer_areas_of_practice vaop
-        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_interest_id
+        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_practice_id
         WHERE vaop.volunteer_id = $1
         ORDER BY aoi.areas_of_interest ASC;
       `,
@@ -390,20 +390,26 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     }
 
     const valuesSql = languages
-      .map((_, idx) => `($1, $${idx * 2 + 2}, $${idx * 2 + 3})`)
+      .map((_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`)
       .join(", ");
 
     const params = [volunteerId];
     for (const entry of languages) {
-      params.push(entry.languageId, entry.isLiterate);
+      const proficiency = entry.isLiterate ? "proficient" : "proficient";
+      params.push(entry.languageId, entry.isLiterate, proficiency);
     }
 
     const result = await db.query(
       `
-        INSERT INTO volunteer_languages (volunteer_id, language_id, is_literate)
+        INSERT INTO volunteer_language (volunteer_id, language_id, is_literate, proficiency)
         VALUES ${valuesSql}
         ON CONFLICT (volunteer_id, language_id)
-        DO UPDATE SET is_literate = EXCLUDED.is_literate
+        DO UPDATE SET
+          is_literate = EXCLUDED.is_literate,
+          proficiency = CASE
+            WHEN EXCLUDED.is_literate THEN 'proficient'::proficiency_level
+            ELSE 'proficient'::proficiency_level
+          END
         RETURNING *;
       `,
       params
@@ -422,8 +428,8 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
 
     const languages = await db.query(
       `
-        SELECT l.id, l.language, vl.is_literate
-        FROM volunteer_languages vl
+        SELECT l.id, l.language, vl.proficiency
+        FROM volunteer_language vl
         JOIN languages l ON l.id = vl.language_id
         WHERE vl.volunteer_id = $1
         ORDER BY l.language ASC;
@@ -446,7 +452,7 @@ volunteersRouter.delete(
 
       const result = await db.query(
         `
-          DELETE FROM volunteer_languages
+          DELETE FROM volunteer_language
           WHERE volunteer_id = $1 AND language_id = $2
           RETURNING *;
         `,

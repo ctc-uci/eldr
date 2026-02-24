@@ -66,7 +66,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
     try {
       const resp = await backend.post("/volunteers", {
         // Replace with the real firebase uid once login flow is wired.
-        firebaseUid: 7,
+        firebaseUid: 9,
 
         first_name: firstName.trim(),
         last_name: lastName.trim(),
