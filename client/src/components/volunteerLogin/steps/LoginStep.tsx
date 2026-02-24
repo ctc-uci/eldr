@@ -140,22 +140,24 @@ const LoginStep = ({ onNext, onBack }: Props) => {
   return (
     <LoginLayout>
       <Flex
-        w="100%"
-        maxW="1091px"
-        minH={{ base: "auto", lg: "914px" }}
+        w="80vw"
+        maxW="1200px"
+        minH="80vh"
         bg="#FFFFFF"
-        borderRadius={{ base: "8px", md: "4px" }}
+        borderRadius="sm"
         border="1px solid"
         borderColor="#E4E4E7"
         direction="column"
+        overflow="hidden"
       >
         <Flex
           w="100%"
-          h={{ base: "56px", md: "70px" }}
-          bg="#E8E8E8"
+          h="70px"
+          bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px={{ base: "16px", md: "24px" }}
+          px="2%"
+          py="1%"
         >
           <Image
             src={logo}
@@ -173,9 +175,10 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             direction="column"
             justify="space-between"
             w={{ base: "100%", md: "50%" }}
-            p={{ base: "24px", md: "40px", lg: "60px" }}
-            borderRight={{ base: "none", md: "1px solid" }}
-            borderBottom={{ base: "1px solid", md: "none" }}
+            px="5%"
+            py="10%"
+            borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
+            borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
@@ -215,8 +218,8 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 Visit our website
               </Text>
               <Link
-                href="#"
-                color="blue.500"
+                href="https://eldrcenter.org/"
+                color="#3182CE"
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 textDecoration="underline"
               >
@@ -227,21 +230,21 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 mt={{ base: "20px", md: "32px" }}
               >
                 <Link
-                  href="#"
+                  href="https://www.facebook.com/ELDRCenter/photos/"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <LuFacebook size={20} />
                 </Link>
                 <Link
-                  href="#"
+                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <FiLinkedin size={20} />
                 </Link>
                 <Link
-                  href="#"
+                  href="https://www.instagram.com/eldr_center/?hl=en"
                   color="gray.600"
                   cursor="pointer"
                 >
@@ -262,10 +265,12 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             direction="column"
             justify="center"
             w={{ base: "100%", md: "50%" }}
-            p={{ base: "24px", md: "40px", lg: "60px" }}
+            px="5%"
+            py="10%"
             gap={{ base: "12px", md: "16px" }}
+            align="center"
           >
-            <Box>
+            <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
@@ -303,7 +308,7 @@ const LoginStep = ({ onNext, onBack }: Props) => {
               </Flex>
             </Box>
 
-            <Box>
+            <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
@@ -341,7 +346,7 @@ const LoginStep = ({ onNext, onBack }: Props) => {
               </Flex>
             </Box>
 
-            <Box>
+            <Box w="30vw" minW="320px" maxW="460px">
               <Flex
                 justify="space-between"
                 align="center"
@@ -395,13 +400,16 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             </Box>
 
             <Button
-              bg="#4A90D9"
+              bg="#3182CE"
               color="white"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#3a7bc8" }}
+              _hover={{ bg: "#5797BD" }}
               justifyContent="space-between"
               px="20px"
               mt="4px"
@@ -432,13 +440,16 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             </Flex>
 
             <Button
-              bg="#4A90D9"
+              bg="#3182CE"
               color="white"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#3a7bc8" }}
+              _hover={{ bg: "#5797BD" }}
               justifyContent="space-between"
               px="20px"
               onClick={handleGoogleLogin}
@@ -451,13 +462,16 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             </Button>
 
             <Button
-              bg="#4A90D9"
+              bg="#3182CE"
               color="white"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#3a7bc8" }}
+              _hover={{ bg: "#5797BD" }}
               justifyContent="space-between"
               px="20px"
               onClick={handleMicrosoftLogin}
@@ -476,7 +490,7 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             >
               <Link
                 href="#"
-                color="blue.500"
+                color="#3182CE"
                 textDecoration="underline"
                 onClick={onNext}
               >
@@ -489,8 +503,8 @@ const LoginStep = ({ onNext, onBack }: Props) => {
 
         <Box
           w="100%"
-          h={{ base: "56px", md: "70px" }}
-          bg="#E8E8E8"
+          h="70px"
+          bg="#F6F6F6"
           flexShrink={0}
         />
       </Flex>

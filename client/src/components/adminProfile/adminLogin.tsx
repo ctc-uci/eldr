@@ -64,6 +64,7 @@ export const AdminLogin: React.FC = () => {
       align="center"
       justify="center"
       position="relative"
+      p="3vh"
     >
       <Box
         position="absolute"

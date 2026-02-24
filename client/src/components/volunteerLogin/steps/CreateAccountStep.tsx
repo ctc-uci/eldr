@@ -66,7 +66,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
     try {
       const resp = await backend.post("/volunteers", {
         // Replace with the real firebase uid once login flow is wired.
-        firebaseUid: 9,
+        firebaseUid: 12,
 
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -88,11 +88,15 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
       localStorage.setItem("volunteerId", String(volunteerId));
       onNext(volunteerId);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as {
+        response?: { data?: { message?: string } | string };
+        message?: string;
+      };
       const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
+        (typeof err.response?.data === "object" ? err.response?.data?.message : undefined) ||
+        err.response?.data ||
+        err.message ||
         "Failed to create account.";
       setErrorMsg(typeof msg === "string" ? msg : "Failed to create account.");
     } finally {
@@ -103,23 +107,25 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   return (
     <LoginLayout>
       <Flex
-        w="100%"
-        maxW="1091px"
-        minH={{ base: "auto", lg: "914px" }}
+        w="80vw"
+        maxW="1200px"
+        minH="80vh"
         bg="#FFFFFF"
-        borderRadius={{ base: "8px", md: "4px" }}
+        borderRadius="sm"
         border="1px solid"
         borderColor="#E4E4E7"
         direction="column"
+        overflow="hidden"
       >
         {/* Top bar */}
         <Flex
           w="100%"
-          h={{ base: "56px", md: "70px" }}
-          bg="#E8E8E8"
+          h="70px"
+          bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px={{ base: "16px", md: "24px" }}
+          px="2%"
+          py="1%"
         >
           <Image
             src={logo}
@@ -138,9 +144,10 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             direction="column"
             justify="space-between"
             w={{ base: "100%", md: "50%" }}
-            p={{ base: "24px", md: "40px", lg: "60px" }}
-            borderRight={{ base: "none", md: "1px solid" }}
-            borderBottom={{ base: "1px solid", md: "none" }}
+            px="5%"
+            py="10%"
+            borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
+            borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
@@ -179,8 +186,8 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 Visit our website
               </Text>
               <Link
-                href="#"
-                color="blue.500"
+                href="https://eldrcenter.org/"
+                color="#3182CE"
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 textDecoration="underline"
               >
@@ -190,38 +197,34 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 gap={{ base: "12px", md: "16px" }}
                 mt={{ base: "20px", md: "24px" }}
               >
-                <Box
-                  as="a"
-                  href="#"
+                <Link
+                  href="https://www.facebook.com/ELDRCenter/photos/"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <LuFacebook size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
+                </Link>
+                <Link
+                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <FiLinkedin size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
+                </Link>
+                <Link
+                  href="https://www.instagram.com/eldr_center/?hl=en"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <BsInstagram size={20} />
-                </Box>
-                <Box
-                  as="a"
+                </Link>
+                <Link
                   href="#"
                   color="gray.600"
                   cursor="pointer"
                 >
                   <LuMail size={20} />
-                </Box>
+                </Link>
               </HStack>
             </Box>
           </Flex>
@@ -231,11 +234,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             direction="column"
             justify="center"
             w={{ base: "100%", md: "50%" }}
-            p={{ base: "24px", md: "40px", lg: "60px" }}
+            px="5%"
+            py="10%"
             gap={{ base: "12px", md: "16px" }}
+            align="center"
           >
             {errorMsg && (
               <Box
+                w="30vw"
+                minW="320px"
+                maxW="460px"
                 border="1px solid"
                 borderColor="red.200"
                 bg="red.50"
@@ -251,108 +259,119 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Box>
             )}
 
-            <Field
-              label="First Name"
-              icon={
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Field
+                label="First Name"
+                icon={
+                  <LuUser
+                    size={16}
+                    color="#9CA3AF"
+                  />
+                }
+              >
+                <Input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Enter First Name"
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
                 />
-              }
-            >
-              <Input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Enter First Name"
-                border="none"
-                p="0"
-                h="100%"
-                fontSize="14px"
-                color="black"
-                _placeholder={{ color: "gray.400" }}
-                focusRingColor="transparent"
-              />
-            </Field>
+              </Field>
+            </Box>
 
-            <Field
-              label="Last Name"
-              icon={
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Field
+                label="Last Name"
+                icon={
+                  <LuUser
+                    size={16}
+                    color="#9CA3AF"
+                  />
+                }
+              >
+                <Input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Enter Last Name"
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
                 />
-              }
-            >
-              <Input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Enter Last Name"
-                border="none"
-                p="0"
-                h="100%"
-                fontSize="14px"
-                color="black"
-                _placeholder={{ color: "gray.400" }}
-                focusRingColor="transparent"
-              />
-            </Field>
+              </Field>
+            </Box>
 
-            <Field
-              label="Email"
-              icon={
-                <LuMail
-                  size={16}
-                  color="#9CA3AF"
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Field
+                label="Email"
+                icon={
+                  <LuMail
+                    size={16}
+                    color="#9CA3AF"
+                  />
+                }
+              >
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter Email"
+                  type="email"
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
                 />
-              }
-            >
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter Email"
-                type="email"
-                border="none"
-                p="0"
-                h="100%"
-                fontSize="14px"
-                color="black"
-                _placeholder={{ color: "gray.400" }}
-                focusRingColor="transparent"
-              />
-            </Field>
+              </Field>
+            </Box>
 
-            <Field
-              label="Password"
-              icon={
-                <LuKeyRound
-                  size={16}
-                  color="#9CA3AF"
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Field
+                label="Password"
+                icon={
+                  <LuKeyRound
+                    size={16}
+                    color="#9CA3AF"
+                  />
+                }
+              >
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter Password"
+                  type="password"
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
                 />
-              }
-            >
-              <Input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter Password"
-                type="password"
-                border="none"
-                p="0"
-                h="100%"
-                fontSize="14px"
-                color="black"
-                _placeholder={{ color: "gray.400" }}
-                focusRingColor="transparent"
-              />
-            </Field>
+              </Field>
+            </Box>
 
             <Button
-              bg="#4A90D9"
+              bg="#3182CE"
               color="white"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
               borderRadius="8px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={600}
-              _hover={{ bg: "#3a7bc8" }}
+              _hover={{ bg: "#5797BD" }}
               justifyContent="space-between"
               px="20px"
               mt="4px"
@@ -367,11 +386,14 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               fontSize="13px"
               color="gray.500"
               textAlign="center"
+              w="30vw"
+              minW="320px"
+              maxW="460px"
             >
               Didn&apos;t mean to come here?{" "}
               <Link
                 href="#"
-                color="blue.500"
+                color="#3182CE"
                 textDecoration="underline"
                 onClick={onBack}
               >
@@ -383,8 +405,8 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
         <Box
           w="100%"
-          h={{ base: "56px", md: "70px" }}
-          bg="#E8E8E8"
+          h="70px"
+          bg="#F6F6F6"
           flexShrink={0}
         />
       </Flex>

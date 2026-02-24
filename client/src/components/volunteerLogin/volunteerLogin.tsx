@@ -24,8 +24,8 @@ export const VolunteerLogin = () => {
 
   return (
     <Flex
-      w="100vw"
-      h="100vh"
+      w="100%"
+      minH="100vh"
     >
       {stepIndex === 0 && <WelcomeStep onNext={next} />}
       {stepIndex === 1 && (
