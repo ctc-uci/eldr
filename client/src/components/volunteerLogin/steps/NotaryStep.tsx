@@ -217,10 +217,14 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
             px="5%"
             py="10%"
             gap={{ base: "16px", md: "18px" }}
+            align="center"
           >
             <Progress.Root
               value={75}
               size="xs"
+              w="30vw"
+              minW="320px"
+              maxW="460px"
             >
               <Progress.Track>
                 <Progress.Range bg="#3182CE" />
@@ -234,6 +238,9 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                 bg="red.50"
                 p="10px"
                 borderRadius="8px"
+                w="30vw"
+                minW="320px"
+                maxW="460px"
               >
                 <Text
                   color="red.700"
@@ -244,7 +251,11 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               </Box>
             )}
 
-            <Box>
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={600}
@@ -256,14 +267,37 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               <Combobox.Root
                 collection={collection}
                 onInputValueChange={({ inputValue }) => filter(inputValue)}
-                css={{ "--focus-color": "colors.gray.200" }}
+                css={{ "--focus-color": "transparent" }}
                 openOnClick
                 onValueChange={({ value }: { value: string[] }) => {
                   if (value?.[0]) setSelected(value[0]);
                 }}
               >
-                <Combobox.Control>
-                  <Combobox.Input placeholder="Type to search" />
+                <Combobox.Control
+                  border="1px solid"
+                  borderColor="#E4E4E7"
+                  borderRadius="6px"
+                  h={{ base: "40px", md: "44px" }}
+                  px="12px"
+                  bg="white"
+                  boxShadow="none"
+                  _focusWithin={{
+                    borderColor: "#E4E4E7",
+                    boxShadow: "none",
+                    outline: "none",
+                  }}
+                >
+                  <Combobox.Input
+                    placeholder="Type to search"
+                    border="none"
+                    p="0"
+                    fontSize="14px"
+                    focusRingColor="transparent"
+                    _focusVisible={{
+                      outline: "none",
+                      boxShadow: "none",
+                    }}
+                  />
                   <Combobox.Trigger />
                 </Combobox.Control>
                 <Combobox.Positioner>
@@ -286,7 +320,9 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               bg="#3182CE"
               color="white"
               h={{ base: "40px", md: "48px" }}
-              w="100%"
+              w="30vw"
+              minW="320px"
+              maxW="460px"
               borderRadius="8px"
               fontSize={{ base: "13px", md: "16px" }}
               fontWeight={600}
