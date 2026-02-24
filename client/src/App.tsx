@@ -132,7 +132,7 @@ const App = () => {
                 />
                 <Route
                   path="/login/staff"
-                  element={<VolunteerLogin />}
+                  element={<AdminLogin />}
                 />
                 <Route
                   path="/signup"
