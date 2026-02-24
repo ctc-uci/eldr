@@ -40,6 +40,14 @@ type Props = {
   onBack: () => void;
 };
 
+type VolunteerLookupRow = {
+  firstName?: string;
+  lastName?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+};
+
 const LoginStep = ({ onNext, onBack }: Props) => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
@@ -64,41 +72,54 @@ const LoginStep = ({ onNext, onBack }: Props) => {
       }
 
       const response = await backend.get("/volunteers");
-      const volunteers = response.data;
+      const volunteers = (response.data ?? []) as VolunteerLookupRow[];
 
-      const volunteer = volunteers.find(
-        (v: {
-          firstName?: string;
-          lastName?: string;
-          first_name?: string;
-          last_name?: string;
-          email?: string;
-        }) => {
-          const volunteerFirstName = (v.firstName ?? v.first_name ?? "").toLowerCase();
-          const volunteerLastName = (v.lastName ?? v.last_name ?? "").toLowerCase();
-          return (
-            volunteerFirstName === firstName.trim().toLowerCase() &&
-            volunteerLastName === lastName.trim().toLowerCase()
-          );
-        }
-      );
+      const normalizedInputFirst = firstName.trim().toLowerCase();
+      const normalizedInputLast = lastName.trim().toLowerCase();
 
-      if (!volunteer?.email) {
+      const matchingVolunteers = volunteers.filter((v) => {
+        const volunteerFirstName = (v.firstName ?? v.first_name ?? "").trim().toLowerCase();
+        const volunteerLastName = (v.lastName ?? v.last_name ?? "").trim().toLowerCase();
+        return (
+          volunteerFirstName === normalizedInputFirst &&
+          volunteerLastName === normalizedInputLast &&
+          Boolean(v.email?.trim())
+        );
+      });
+
+      if (!matchingVolunteers.length) {
         toastLoginError(
           "No account found with this first and last name. Please check your information or create an account."
         );
         return;
       }
 
-      await login({
-        email: volunteer.email,
-        password,
-      });
+      let didAuthenticate = false;
+      let lastAuthError: unknown = null;
+
+      // Support duplicate names by validating password against each matched email.
+      for (const volunteer of matchingVolunteers) {
+        try {
+          await login({
+            email: volunteer.email!.trim().toLowerCase(),
+            password,
+          });
+          didAuthenticate = true;
+          break;
+        } catch (authError) {
+          lastAuthError = authError;
+        }
+      }
+
+      if (!didAuthenticate) {
+        throw lastAuthError ?? new Error("Unable to sign in with provided credentials.");
+      }
 
       navigate("/dashboard");
-    } catch (err: any) {
-      const errorCode = err?.code;
-      const firebaseErrorMsg = err?.message;
+    } catch (err: unknown) {
+      const authError = err as { code?: string; message?: string };
+      const errorCode = authError?.code;
+      const firebaseErrorMsg = authError?.message;
 
       switch (errorCode) {
         case "auth/wrong-password":

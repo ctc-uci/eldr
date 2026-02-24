@@ -12,6 +12,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
@@ -33,6 +34,7 @@ type Props = {
 
 const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const { backend } = useBackendContext();
+  const { signup } = useAuthContext();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -62,11 +64,22 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       return;
     }
 
+    if (!password || password.length < 6) {
+      setErrorMsg("Please enter a password with at least 6 characters.");
+      return;
+    }
+
     setIsSubmitting(true);
+    let createdFirebaseUid: string | null = null;
     try {
+      const userCredential = await signup({
+        email: normalizedEmail,
+        password,
+      });
+      createdFirebaseUid = userCredential.user.uid;
+
       const resp = await backend.post("/volunteers", {
-        // Replace with the real firebase uid once login flow is wired.
-        firebaseUid: 12,
+        firebaseUid: createdFirebaseUid,
 
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -89,10 +102,33 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       localStorage.setItem("volunteerId", String(volunteerId));
       onNext(volunteerId);
     } catch (e: unknown) {
+      if (createdFirebaseUid) {
+        try {
+          // Roll back just-created Firebase/DB user if volunteer creation fails.
+          await backend.delete(`/users/${createdFirebaseUid}`);
+        } catch {
+          // No-op: keep original error for user feedback.
+        }
+      }
+
       const err = e as {
         response?: { data?: { message?: string } | string };
+        code?: string;
         message?: string;
       };
+      if (err.code === "auth/email-already-in-use") {
+        setErrorMsg("An account with this email already exists. Please log in.");
+        return;
+      }
+      if (err.code === "auth/invalid-email") {
+        setErrorMsg("Please enter a valid email address.");
+        return;
+      }
+      if (err.code === "auth/weak-password") {
+        setErrorMsg("Password is too weak. Please use at least 6 characters.");
+        return;
+      }
+
       const msg =
         (typeof err.response?.data === "object" ? err.response?.data?.message : undefined) ||
         err.response?.data ||
