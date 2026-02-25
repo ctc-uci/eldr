@@ -215,56 +215,57 @@ volunteersRouter.delete("/:id", async (req, res) => {
 });
 
 // -----------------------------
-// Volunteer Specializations Routes
+// Volunteer Areas of Practice Routes
 // -----------------------------
 
-// Create a specialization for a volunteer
-// POST /volunteers/:volunteerId/specializations
-// body: { areaOfPracticeId, experienceLevel }
-volunteersRouter.post("/:volunteerId/specializations", async (req, res) => {
+// Assign an area of practice to a volunteer
+// POST /volunteers/:volunteerId/areas-of-practice
+// body: { areaOfPracticeId }
+volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
-    const { areaOfPracticeId, experienceLevel } = req.body;
+    const { areaOfPracticeId } = req.body;
 
-    if (!areaOfPracticeId || !experienceLevel) {
-      return res.status(400).json({
-        message: "areaOfPracticeId and experienceLevel are required",
-      });
+    if (!areaOfPracticeId) {
+      return res.status(400).json({ message: "areaOfPracticeId is required" });
     }
 
-    const specialization = await db.query(
+    const areaAssignment = await db.query(
       `
-        INSERT INTO volunteer_specializations (
+        INSERT INTO volunteer_areas_of_practice (
           volunteer_id,
-          area_of_practice_id,
-          experience_level
+          area_of_practice_id
         )
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2)
+        ON CONFLICT (volunteer_id, area_of_practice_id)
+        DO NOTHING
         RETURNING *;
       `,
-      [volunteerId, areaOfPracticeId, experienceLevel]
+      [volunteerId, areaOfPracticeId]
     );
 
-    res.status(201).json(keysToCamel(specialization[0]));
+    if (!areaAssignment.length) {
+      return res.status(200).json({ message: "Area of practice already assigned" });
+    }
+
+    res.status(201).json(keysToCamel(areaAssignment[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// Read all specializations for a volunteer
-// GET /volunteers/:volunteerId/specializations
-volunteersRouter.get("/:volunteerId/specializations", async (req, res) => {
+// List all areas of practice for a volunteer
+// GET /volunteers/:volunteerId/areas-of-practice
+volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
-    const specializations = await db.query(
+    const areasOfPractice = await db.query(
       `
         SELECT
-          vs.volunteer_id,
           aop.id AS area_of_practice_id,
-          aop.areas_of_practice,
-          vs.experience_level
-        FROM volunteer_specializations vs
+          aop.areas_of_practice
+        FROM volunteer_areas_of_practice vs
         JOIN areas_of_practice aop ON aop.id = vs.area_of_practice_id
         WHERE vs.volunteer_id = $1
         ORDER BY aop.areas_of_practice ASC;
@@ -272,60 +273,23 @@ volunteersRouter.get("/:volunteerId/specializations", async (req, res) => {
       [volunteerId]
     );
 
-    res.status(200).json(keysToCamel(specializations));
+    res.status(200).json(keysToCamel(areasOfPractice));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// Update a specialization's experience level for a volunteer
-// PUT /volunteers/:volunteerId/specializations/:areaOfPracticeId
-// body: { experienceLevel }
-volunteersRouter.put(
-  "/:volunteerId/specializations/:areaOfPracticeId",
-  async (req, res) => {
-    try {
-      const { volunteerId, areaOfPracticeId } = req.params;
-      const { experienceLevel } = req.body;
-
-      if (!experienceLevel) {
-        return res.status(400).json({ message: "experienceLevel is required" });
-      }
-
-      const updated = await db.query(
-        `
-          UPDATE volunteer_specializations
-          SET experience_level = $3
-          WHERE volunteer_id = $1 AND area_of_practice_id = $2
-          RETURNING *;
-        `,
-        [volunteerId, areaOfPracticeId, experienceLevel]
-      );
-
-      if (!updated.length) {
-        return res.status(404).json({
-          message: "Specialization not found for this volunteer",
-        });
-      }
-
-      res.status(200).json(keysToCamel(updated[0]));
-    } catch (e) {
-      res.status(500).send(e.message);
-    }
-  }
-);
-
-// Delete a specialization from a volunteer
-// DELETE /volunteers/:volunteerId/specializations/:areaOfPracticeId
+// Remove an area of practice from a volunteer
+// DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
 volunteersRouter.delete(
-  "/:volunteerId/specializations/:areaOfPracticeId",
+  "/:volunteerId/areas-of-practice/:areaOfPracticeId",
   async (req, res) => {
     try {
       const { volunteerId, areaOfPracticeId } = req.params;
 
       const deleted = await db.query(
         `
-          DELETE FROM volunteer_specializations
+          DELETE FROM volunteer_areas_of_practice
           WHERE volunteer_id = $1 AND area_of_practice_id = $2
           RETURNING *;
         `,
@@ -334,7 +298,7 @@ volunteersRouter.delete(
 
       if (!deleted.length) {
         return res.status(404).json({
-          message: "Specialization not found for this volunteer",
+          message: "Area of practice not found for this volunteer",
         });
       }
 
