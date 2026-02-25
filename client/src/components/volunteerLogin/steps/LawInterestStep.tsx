@@ -36,8 +36,8 @@ type Props = {
 
 type Area = {
   id: number;
-  areasOfInterest?: string; // keysToCamel output
-  areas_of_interest?: string; // just in case
+  areasOfPractice?: string; // keysToCamel output
+  areas_of_practice?: string; // just in case
 };
 
 const LawMultiSelect = ({
@@ -305,13 +305,13 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
   const effectiveVolunteerId =
     volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
-  // Fetch dropdown options from GET /areas-of-interest
+  // Fetch dropdown options from GET /areas-of-practice
   useEffect(() => {
     const run = async () => {
       setErrorMsg(null);
       setIsLoadingAreas(true);
       try {
-        const resp = await backend.get("/areas-of-interest");
+        const resp = await backend.get("/areas-of-practice");
         const data: Area[] = resp?.data || [];
         setAreas(Array.isArray(data) ? data : []);
       } catch (e: any) {
@@ -319,9 +319,9 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
           e?.response?.data?.message ||
           e?.response?.data ||
           e?.message ||
-          "Failed to load areas of interest.";
+          "Failed to load areas of practice.";
         setErrorMsg(
-          typeof msg === "string" ? msg : "Failed to load areas of interest."
+          typeof msg === "string" ? msg : "Failed to load areas of practice."
         );
       } finally {
         setIsLoadingAreas(false);
@@ -336,7 +336,7 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
     return areas
       .map((a) => ({
         id: a.id,
-        label: a.areasOfInterest ?? a.areas_of_interest ?? String(a.id),
+        label: a.areasOfPractice ?? a.areas_of_practice ?? String(a.id),
       }))
       .filter((x) => x.label);
   }, [areas]);
@@ -375,13 +375,13 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
 
     setIsSubmitting(true);
     try {
-      // POST each selected area to join table endpoint
+      // POST each selected area to volunteer areas-of-practice endpoint
       await Promise.all(
         uniqueIds.map((areaId) =>
           backend.post(
             `/volunteers/${effectiveVolunteerId}/areas-of-practice`,
             {
-              areaOfInterestId: areaId,
+              areaOfPracticeId: areaId,
             }
           )
         )
@@ -393,9 +393,9 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
         e?.response?.data?.message ||
         e?.response?.data ||
         e?.message ||
-        "Failed to save areas of interest.";
+        "Failed to save areas of practice.";
       setErrorMsg(
-        typeof msg === "string" ? msg : "Failed to save areas of interest."
+        typeof msg === "string" ? msg : "Failed to save areas of practice."
       );
     } finally {
       setIsSubmitting(false);

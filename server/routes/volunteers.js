@@ -215,87 +215,94 @@ volunteersRouter.delete("/:id", async (req, res) => {
 });
 
 // -----------------------------
-// Volunteer Areas of Practice (join table)
+// Volunteer Areas of Practice Routes
 // -----------------------------
 
-// Assign an area to a volunteer
-// POST /volunteers/:volunteerId/areas-of-practice   body: { areaOfInterestId }
+// Assign an area of practice to a volunteer
+// POST /volunteers/:volunteerId/areas-of-practice
+// body: { areaOfPracticeId }
 volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
-    const { areaOfInterestId } = req.body;
+    const { areaOfPracticeId } = req.body;
 
-    if (!areaOfInterestId) {
-      return res.status(400).json({ message: "areaOfInterestId is required" });
+    if (!areaOfPracticeId) {
+      return res.status(400).json({ message: "areaOfPracticeId is required" });
     }
 
-    const result = await db.query(
+    const areaAssignment = await db.query(
       `
-        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_practice_id)
+        INSERT INTO volunteer_areas_of_practice (
+          volunteer_id,
+          area_of_practice_id
+        )
         VALUES ($1, $2)
-        ON CONFLICT (volunteer_id, area_of_practice_id) DO NOTHING
+        ON CONFLICT (volunteer_id, area_of_practice_id)
+        DO NOTHING
         RETURNING *;
       `,
-      [volunteerId, areaOfInterestId]
+      [volunteerId, areaOfPracticeId]
     );
 
-    if (!result.length) {
-      return res.status(200).json({ message: "Already assigned" });
+    if (!areaAssignment.length) {
+      return res.status(200).json({ message: "Area of practice already assigned" });
     }
 
-    res.status(201).json(keysToCamel(result[0]));
+    res.status(201).json(keysToCamel(areaAssignment[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// List all areas for a volunteer
+// List all areas of practice for a volunteer
 // GET /volunteers/:volunteerId/areas-of-practice
 volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
-    const result = await db.query(
+    const areasOfPractice = await db.query(
       `
-        SELECT aoi.id, aoi.areas_of_interest
-        FROM volunteer_areas_of_practice vaop
-        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_practice_id
-        WHERE vaop.volunteer_id = $1
-        ORDER BY aoi.areas_of_interest ASC;
+        SELECT
+          aop.id AS area_of_practice_id,
+          aop.areas_of_practice
+        FROM volunteer_areas_of_practice vs
+        JOIN areas_of_practice aop ON aop.id = vs.area_of_practice_id
+        WHERE vs.volunteer_id = $1
+        ORDER BY aop.areas_of_practice ASC;
       `,
       [volunteerId]
     );
 
-    res.status(200).json(keysToCamel(result));
+    res.status(200).json(keysToCamel(areasOfPractice));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// Remove an area from a volunteer
-// DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfInterestId
+// Remove an area of practice from a volunteer
+// DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
 volunteersRouter.delete(
-  "/:volunteerId/areas-of-practice/:areaOfInterestId",
+  "/:volunteerId/areas-of-practice/:areaOfPracticeId",
   async (req, res) => {
     try {
-      const { volunteerId, areaOfInterestId } = req.params;
+      const { volunteerId, areaOfPracticeId } = req.params;
 
-      const result = await db.query(
+      const deleted = await db.query(
         `
           DELETE FROM volunteer_areas_of_practice
-          WHERE volunteer_id = $1 AND area_of_interest_id = $2
+          WHERE volunteer_id = $1 AND area_of_practice_id = $2
           RETURNING *;
         `,
-        [volunteerId, areaOfInterestId]
+        [volunteerId, areaOfPracticeId]
       );
 
-      if (!result.length) {
-        return res
-          .status(404)
-          .json({ message: "Area not assigned to this volunteer" });
+      if (!deleted.length) {
+        return res.status(404).json({
+          message: "Area of practice not found for this volunteer",
+        });
       }
 
-      res.status(200).json(keysToCamel(result[0]));
+      res.status(200).json(keysToCamel(deleted[0]));
     } catch (e) {
       res.status(500).send(e.message);
     }
