@@ -215,87 +215,130 @@ volunteersRouter.delete("/:id", async (req, res) => {
 });
 
 // -----------------------------
-// Volunteer Areas of Practice (join table)
+// Volunteer Specializations Routes
 // -----------------------------
 
-// Assign an area to a volunteer
-// POST /volunteers/:volunteerId/areas-of-practice   body: { areaOfInterestId }
-volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
+// Create a specialization for a volunteer
+// POST /volunteers/:volunteerId/specializations
+// body: { areaOfPracticeId, experienceLevel }
+volunteersRouter.post("/:volunteerId/specializations", async (req, res) => {
   try {
     const { volunteerId } = req.params;
-    const { areaOfInterestId } = req.body;
+    const { areaOfPracticeId, experienceLevel } = req.body;
 
-    if (!areaOfInterestId) {
-      return res.status(400).json({ message: "areaOfInterestId is required" });
+    if (!areaOfPracticeId || !experienceLevel) {
+      return res.status(400).json({
+        message: "areaOfPracticeId and experienceLevel are required",
+      });
     }
 
-    const result = await db.query(
+    const specialization = await db.query(
       `
-        INSERT INTO volunteer_areas_of_practice (volunteer_id, area_of_practice_id)
-        VALUES ($1, $2)
-        ON CONFLICT (volunteer_id, area_of_practice_id) DO NOTHING
+        INSERT INTO volunteer_specializations (
+          volunteer_id,
+          area_of_practice_id,
+          experience_level
+        )
+        VALUES ($1, $2, $3)
         RETURNING *;
       `,
-      [volunteerId, areaOfInterestId]
+      [volunteerId, areaOfPracticeId, experienceLevel]
     );
 
-    if (!result.length) {
-      return res.status(200).json({ message: "Already assigned" });
-    }
-
-    res.status(201).json(keysToCamel(result[0]));
+    res.status(201).json(keysToCamel(specialization[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// List all areas for a volunteer
-// GET /volunteers/:volunteerId/areas-of-practice
-volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
+// Read all specializations for a volunteer
+// GET /volunteers/:volunteerId/specializations
+volunteersRouter.get("/:volunteerId/specializations", async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
-    const result = await db.query(
+    const specializations = await db.query(
       `
-        SELECT aoi.id, aoi.areas_of_interest
-        FROM volunteer_areas_of_practice vaop
-        JOIN areas_of_interest aoi ON aoi.id = vaop.area_of_practice_id
-        WHERE vaop.volunteer_id = $1
-        ORDER BY aoi.areas_of_interest ASC;
+        SELECT
+          vs.volunteer_id,
+          aop.id AS area_of_practice_id,
+          aop.areas_of_practice,
+          vs.experience_level
+        FROM volunteer_specializations vs
+        JOIN areas_of_practice aop ON aop.id = vs.area_of_practice_id
+        WHERE vs.volunteer_id = $1
+        ORDER BY aop.areas_of_practice ASC;
       `,
       [volunteerId]
     );
 
-    res.status(200).json(keysToCamel(result));
+    res.status(200).json(keysToCamel(specializations));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// Remove an area from a volunteer
-// DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfInterestId
-volunteersRouter.delete(
-  "/:volunteerId/areas-of-practice/:areaOfInterestId",
+// Update a specialization's experience level for a volunteer
+// PUT /volunteers/:volunteerId/specializations/:areaOfPracticeId
+// body: { experienceLevel }
+volunteersRouter.put(
+  "/:volunteerId/specializations/:areaOfPracticeId",
   async (req, res) => {
     try {
-      const { volunteerId, areaOfInterestId } = req.params;
+      const { volunteerId, areaOfPracticeId } = req.params;
+      const { experienceLevel } = req.body;
 
-      const result = await db.query(
-        `
-          DELETE FROM volunteer_areas_of_practice
-          WHERE volunteer_id = $1 AND area_of_interest_id = $2
-          RETURNING *;
-        `,
-        [volunteerId, areaOfInterestId]
-      );
-
-      if (!result.length) {
-        return res
-          .status(404)
-          .json({ message: "Area not assigned to this volunteer" });
+      if (!experienceLevel) {
+        return res.status(400).json({ message: "experienceLevel is required" });
       }
 
-      res.status(200).json(keysToCamel(result[0]));
+      const updated = await db.query(
+        `
+          UPDATE volunteer_specializations
+          SET experience_level = $3
+          WHERE volunteer_id = $1 AND area_of_practice_id = $2
+          RETURNING *;
+        `,
+        [volunteerId, areaOfPracticeId, experienceLevel]
+      );
+
+      if (!updated.length) {
+        return res.status(404).json({
+          message: "Specialization not found for this volunteer",
+        });
+      }
+
+      res.status(200).json(keysToCamel(updated[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
+  }
+);
+
+// Delete a specialization from a volunteer
+// DELETE /volunteers/:volunteerId/specializations/:areaOfPracticeId
+volunteersRouter.delete(
+  "/:volunteerId/specializations/:areaOfPracticeId",
+  async (req, res) => {
+    try {
+      const { volunteerId, areaOfPracticeId } = req.params;
+
+      const deleted = await db.query(
+        `
+          DELETE FROM volunteer_specializations
+          WHERE volunteer_id = $1 AND area_of_practice_id = $2
+          RETURNING *;
+        `,
+        [volunteerId, areaOfPracticeId]
+      );
+
+      if (!deleted.length) {
+        return res.status(404).json({
+          message: "Specialization not found for this volunteer",
+        });
+      }
+
+      res.status(200).json(keysToCamel(deleted[0]));
     } catch (e) {
       res.status(500).send(e.message);
     }
