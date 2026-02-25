@@ -102,7 +102,7 @@ const App = () => {
                 /> */}
                 <Route
                   path="/volunteerLogin"
-                  element={<VolunteerLogin /> 
+                  element={<VolunteerLogin />}
                 />
                 <Route 
                   path="/event-catalog"
