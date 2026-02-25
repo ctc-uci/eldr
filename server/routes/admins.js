@@ -14,6 +14,29 @@ adminsRouter.get("/", async (req, res) => {
   }
 });
 
+// GET /admins/id/:id - get admin by database ID
+adminsRouter.get("/id/:id", async (req, res) => {
+  try {
+    const adminId = Number(req.params.id);
+    if (!Number.isInteger(adminId)) {
+      return res.status(400).send("Invalid admin id");
+    }
+
+    const admin = await db.query(
+      "SELECT * FROM admins WHERE id = $1",
+      [adminId]
+    );
+
+    if (!admin.length) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    res.status(200).json(keysToCamel(admin[0]));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
 // POST /admins - create admin
 adminsRouter.post("/create", async (req, res) => {
   try {

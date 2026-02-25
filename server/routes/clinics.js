@@ -284,21 +284,21 @@ clinicsRouter.patch(
   }
 );
 
-// Workshop Areas of Interest Routes
+// Workshop Areas of Practice Routes
 // POST: assign an area to a workshop
-// /workshops/{workshopId}/areas-of-interest
-clinicsRouter.post("/:clinicId/areas-of-interest", async (req, res) => {
+// /workshops/{workshopId}/areas-of-practice
+clinicsRouter.post("/:clinicId/areas-of-practice", async (req, res) => {
   try {
-    const { areaOfInterestID } = req.body; // get JSON body
+    const { areaOfPracticeId } = req.body; // get JSON body
     const { clinicId } = req.params; // get URL parameters
 
-    if (!areaOfInterestID) {
-      return res.status(400).json({ message: "Area of interest is required" });
+    if (!areaOfPracticeId) {
+      return res.status(400).json({ message: "Area of practice is required" });
     }
 
     const newRelationship = await db.query(
-      "INSERT INTO clinic_areas_of_interest (clinic_id, area_of_interest_id) VALUES ($1, $2) RETURNING *",
-      [clinicId, areaOfInterestID]
+      "INSERT INTO clinic_areas_of_practice (clinic_id, area_of_practice_id) VALUES ($1, $2) RETURNING *",
+      [clinicId, areaOfPracticeId]
     );
 
     res.status(200).json(keysToCamel(newRelationship));
@@ -308,15 +308,15 @@ clinicsRouter.post("/:clinicId/areas-of-interest", async (req, res) => {
 });
 
 // DELETE: remove an area from a workshop
-// /workshops/{workshopId}/areas-of-interest/{areaId}
+// /workshops/{workshopId}/areas-of-practice/{areaId}
 clinicsRouter.delete(
-  "/:clinicId/areas-of-interest/:areaId",
+  "/:clinicId/areas-of-practice/:areaId",
   async (req, res) => {
     try {
       const { clinicId, areaId } = req.params;
 
       const deletedRelationship = await db.query(
-        "DELETE FROM clinic_areas_of_interest WHERE clinic_id = $1 AND area_of_interest_id = $2 RETURNING *",
+        "DELETE FROM clinic_areas_of_practice WHERE clinic_id = $1 AND area_of_practice_id = $2 RETURNING *",
         [clinicId, areaId]
       );
 
@@ -332,16 +332,16 @@ clinicsRouter.delete(
 );
 
 // GET: list all areas for a clinic, including area IDs and text
-// /clinics/{clinicId}/areas-of-interest
-clinicsRouter.get("/:clinicId/areas-of-interest", async (req, res) => {
+// /clinics/{clinicId}/areas-of-practice
+clinicsRouter.get("/:clinicId/areas-of-practice", async (req, res) => {
   try {
     const { clinicId } = req.params;
 
     const listAll = await db.query(
-      `SELECT ai.id, ai.areas_of_interest
-       FROM clinic_areas_of_interest cai
-       JOIN areas_of_interest ai ON cai.area_of_interest_id = ai.id
-       WHERE cai.clinic_id = $1`,
+      `SELECT aop.id, aop.areas_of_practice
+       FROM clinic_areas_of_practice caop
+       JOIN areas_of_practice aop ON caop.area_of_practice_id = aop.id
+       WHERE caop.clinic_id = $1`,
       [clinicId]
     );
 

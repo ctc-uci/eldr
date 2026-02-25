@@ -1,4 +1,27 @@
-import { Box, Button, Center, Flex, Heading, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  HStack,
+  Image,
+  Link,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+
+import { BsInstagram } from "react-icons/bs";
+import { FiLinkedin } from "react-icons/fi";
+import {
+  LuArrowRight,
+  LuBriefcase,
+  LuFacebook,
+  LuMail,
+  LuUser,
+} from "react-icons/lu";
+
+import logo from "../../../assets/EldrLogo.png";
+import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onNext: () => void;
@@ -6,56 +29,212 @@ type Props = {
 
 const WelcomeStep = ({ onNext }: Props) => {
   return (
-    <Flex
-      w="100%"
-      h="100%"
-    >
-      <Center
-        bg="#E8E8E8"
-        w="43%"
-      >
-        <Box
-          w="323px"
-          h="294px"
-          bg="#D9D9D9"
-        ></Box>
-      </Center>
+    <LoginLayout>
       <Flex
-        flex="1"
+        w="80vw"
+        maxW="1200px"
+        minH="80vh"
+        bg="#FFFFFF"
+        borderRadius="sm"
+        border="1px solid"
+        borderColor="#E4E4E7"
         direction="column"
-        alignItems="center"
-        justifyContent="center"
+        overflow="hidden"
       >
-        <Heading
-          fontWeight={500}
-          fontSize="50px"
-          mb="150px"
+        {/* Top gray bar */}
+        <Flex
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+          align="center"
+          px="2%"
+          py="1%"
         >
-          Welcome ELDR!
-        </Heading>
-        <VStack spacing="20px">
-          <Button
-            bg="#FAFAFA"
-            w="300px"
-            h="80px"
-            borderWidth="3px"
-            borderColor="black"
+          <Image
+            src={logo}
+            alt="ELDR Logo"
+            h={{ base: "32px", md: "45px" }}
+            objectFit="contain"
+          />
+        </Flex>
+
+        <Flex
+          flex="1"
+          direction={{ base: "column", md: "row" }}
+        >
+          <Flex
+            direction="column"
+            justify="space-between"
+            w={{ base: "100%", md: "50%" }}
+            px="5%"
+            py="8%"
+            borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
+            borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
+            borderColor="#E4E4E7"
+            gap={{ base: "32px", md: "0" }}
           >
-            Staff
-          </Button>
-          <Button
-            bg="#FAFAFA"
-            w="300px"
-            h="80px"
-            borderWidth="3px"
-            borderColor="black"
-            onClick={onNext}
+            <Box>
+              <Heading
+                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontWeight={700}
+                color="black"
+                mb="12px"
+              >
+                Welcome to CC Login Portal by Community Counsel
+              </Heading>
+              <Text
+                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                color="gray.600"
+              >
+                Indicate whether you are a staff member or volunteer
+              </Text>
+            </Box>
+
+            <Box>
+              <Text
+                fontWeight={700}
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
+                color="black"
+              >
+                Need help?
+              </Text>
+              <Text
+                fontWeight={700}
+                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
+                color="black"
+                mb="8px"
+              >
+                Visit our website
+              </Text>
+              <Link
+                href="https://eldrcenter.org/"
+                color="#3182CE"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
+                textDecoration="underline"
+              >
+                Community Counsel Website
+              </Link>
+              <HStack
+                gap={{ base: "12px", md: "16px" }}
+                mt={{ base: "20px", md: "32px" }}
+              >
+                <Box
+                  as="a"
+                  href="https://www.facebook.com/ELDRCenter/photos/"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <LuFacebook size={20} />
+                </Box>
+                <Box
+                  as="a"
+                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <FiLinkedin size={20} />
+                </Box>
+                <Box
+                  as="a"
+                  href="https://www.instagram.com/eldr_center/?hl=en"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <BsInstagram size={20} />
+                </Box>
+                <Box
+                  as="a"
+                  href="#"
+                  color="gray.600"
+                  cursor="pointer"
+                >
+                  <LuMail size={20} />
+                </Box>
+              </HStack>
+            </Box>
+          </Flex>
+
+          <Flex
+            direction="column"
+            justify="center"
+            w={{ base: "100%", md: "50%" }}
+            px="5%"
+            py="10%"
+            align="center"
           >
-            Volunteer
-          </Button>
-        </VStack>
+            <VStack
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              align="stretch"
+              gap={3}
+            >
+              <Heading
+                fontSize={{ base: "18px", md: "22px", lg: "24px" }}
+                fontWeight={600}
+                color="black"
+                mb="6px"
+              >
+                Welcome!
+              </Heading>
+              <Text
+                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                color="gray.500"
+                mb={{ base: "24px", md: "32px" }}
+                fontStyle="italic"
+              >
+                Choose from the options below to continue.
+              </Text>
+
+              <Button
+                bg="#3182CE"
+                color="white"
+                h={{ base: "44px", md: "52px" }}
+                borderRadius="6px"
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight={500}
+                _hover={{ bg: "#5797BD" }}
+                justifyContent="space-between"
+                px="20px"
+              >
+                <HStack gap="10px">
+                  <LuBriefcase size={16} />
+                  <span>Staff Member</span>
+                </HStack>
+                <LuArrowRight size={16} />
+              </Button>
+
+              <Button
+                bg="#3182CE"
+                color="white"
+                h={{ base: "44px", md: "52px" }}
+                borderRadius="6px"
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight={500}
+                _hover={{ bg: "#5797BD" }}
+                justifyContent="space-between"
+                px="20px"
+                onClick={onNext}
+              >
+                <HStack gap="10px">
+                  <LuUser size={16} />
+                  <span>Volunteer</span>
+                </HStack>
+                <LuArrowRight size={16} />
+              </Button>
+            </VStack>
+          </Flex>
+        </Flex>
+
+        <Box
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+        />
       </Flex>
-    </Flex>
+    </LoginLayout>
   );
 };
 

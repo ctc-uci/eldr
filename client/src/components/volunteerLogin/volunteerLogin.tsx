@@ -1,27 +1,31 @@
+import { Flex } from "@chakra-ui/react";
 import { useState } from "react";
 
-import { Box, Flex } from "@chakra-ui/react";
-
-import AboutYouStep from "./steps/AboutYouStep";
+import BackgroundStep from "./steps/BackgroundStep";
 import CreateAccountStep from "./steps/CreateAccountStep";
-import GetStartedStep from "./steps/GetStartedStep";
-import InterestsStep from "./steps/InterestsStep";
+import LanguageStep from "./steps/LanguageStep";
+import LawInterestStep from "./steps/LawInterestStep";
 import LoginStep from "./steps/LoginStep";
+import NotaryStep from "./steps/NotaryStep";
 import SuccessStep from "./steps/SuccessStep";
-import WelcomeStep from "./steps/WelcomeStep";
 
 export const VolunteerLogin = () => {
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(1);
+  const [volunteerId, setVolunteerId] = useState<number | undefined>(undefined);
 
-  const next = () => setStepIndex((i) => i + 1);
-  const back = () => setStepIndex((i) => i - 1);
+  const next = () => setStepIndex((prev) => Math.min(prev + 1, 7));
+  const back = () => setStepIndex((prev) => Math.max(prev - 1, 1));
+
+  const handleCreateAccountNext = (id: number) => {
+    setVolunteerId(id);
+    next();
+  };
 
   return (
     <Flex
-      w="100vw"
-      h="100vh"
+      w="100%"
+      minH="100vh"
     >
-      {stepIndex === 0 && <WelcomeStep onNext={next} />}
       {stepIndex === 1 && (
         <LoginStep
           onNext={next}
@@ -30,14 +34,31 @@ export const VolunteerLogin = () => {
       )}
       {stepIndex === 2 && (
         <CreateAccountStep
-          onNext={next}
+          onNext={handleCreateAccountNext}
           onBack={back}
         />
       )}
-      {stepIndex === 3 && <GetStartedStep onNext={next} />}
-      {stepIndex === 4 && <AboutYouStep onNext={next} />}
-      {stepIndex === 5 && <InterestsStep onNext={next} />}
-      {stepIndex === 6 && <SuccessStep />}
+      {stepIndex === 3 && (
+        <LanguageStep
+          onNext={next}
+          volunteerId={volunteerId}
+        />
+      )}
+      {stepIndex === 4 && (
+        <LawInterestStep
+          onNext={next}
+          onBack={back}
+          volunteerId={volunteerId}
+        />
+      )}
+      {stepIndex === 5 && (
+        <NotaryStep
+          onNext={next}
+          volunteerId={volunteerId}
+        />
+      )}
+      {stepIndex === 6 && <BackgroundStep onNext={next} />}
+      {stepIndex === 7 && <SuccessStep onNext={() => setStepIndex(1)} />}
     </Flex>
   );
 };
