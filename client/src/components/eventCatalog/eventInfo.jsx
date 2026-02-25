@@ -1,89 +1,290 @@
-import React from "react";
+import { useState } from "react";
 
 import {
   Badge,
   Box,
   Button,
+  CloseButton,
+  Dialog,
   Flex,
   HStack,
+  Portal,
+  Separator,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
-import { FaCalendarAlt, FaClock } from "react-icons/fa";
-import { IoMdPeople } from "react-icons/io";
-import { IoLocationSharp } from "react-icons/io5";
+import {
+  CalendarCheck,
+  CalendarClock,
+  CalendarDays,
+  CalendarPlus,
+  CalendarX,
+  Check,
+  MapPin,
+  Users,
+} from "lucide-react";
 
-export const EventInfo = ({ event }) => {
+export const EventInfo = ({ event, onRegister, onUnregister }) => {
+  const [open, setOpen] = useState(false);
+  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+
+  const handleRegistration = () => {
+    if (event.isRegistered) {
+      setOpen(true);
+    } else {
+      onRegister?.(event.id);
+    }
+  };
+
+  const confirmUnregister = () => {
+    onUnregister?.(event.id);
+    setOpen(false);
+  };
+
   if (!event) return <Box p={10}>Please select an event to view details!</Box>;
+
+  // Determine if this is a past event using the same logic as MyEventsList
+  const getEventEndDateTime = () => {
+    const dateObj = event.date ? new Date(event.date) : null;
+    if (dateObj && event.endTime) {
+      const endObj = new Date(event.endTime);
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(),
+        endObj.getUTCHours(), endObj.getUTCMinutes(), endObj.getUTCSeconds()
+      ));
+    }
+    if (dateObj) {
+      return new Date(Date.UTC(
+        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 23, 59, 59
+      ));
+    }
+    return null;
+  };
+  const endDateTime = getEventEndDateTime();
+  const isPastEvent = endDateTime ? endDateTime < new Date() : false;
 
   return (
     <Flex
       direction="column"
-      h="100%"
-      w="100%"
-      position="relative"
+      py={{ base: 2, md: "50px" }}
+      px={{ base: 4, md: 8 }}
+      w="full"
+      h="full"
+      justify="space-between"
+      flex="1"
+      overflow="hidden"
     >
-      {/* Scrollable */}
-      <Box
-        flex="1"
-        overflowY="auto"
-        pb="120px"
+      {/* Event name */}
+      <Text
+        flexShrink={0}
+        fontSize="26px"
+        fontWeight="400"
+        lineHeight="44px"
+        letterSpacing="-2.5%"
+        color="#000000"
+        mb={{ base: "24px", md: 0 }}
       >
-        <Flex justify="center" w="100%">
-          <VStack
-            direction="column"
-            w="100%"
-            maxW="720px"
-            py={{ base: 2, md: "50px" }}
-            px={{ base: 4, md: 8 }}
-            spacing={2}
-            align="flex-start"
+        {event.name}
+      </Text>
+
+      {/* Event metadata */}
+      <VStack
+        flexShrink={0}
+        align="flex-start"
+        gap="12px"
+        w="full"
+        fontSize="14px"
+        px="4px"
+      >
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="18px"
+        >
+          <CalendarDays />
+          {event.displayDate}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="18px"
+        >
+          <CalendarClock /> {event.displayTime}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="18px"
+        >
+          <MapPin /> {event.location}
+        </Text>
+        <Separator
+          w="full"
+          size="xs"
+        />
+        <Text
+          display="flex"
+          alignItems="center"
+          gap="18px"
+        >
+          <Users /> {event.attendees}/{event.capacity} spots filled
+        </Text>
+      </VStack>
+
+      {/* Event tags */}
+      <HStack
+        flexShrink={0}
+        flexWrap="wrap"
+        my={6}
+        fontSize="12px"
+        fontWeight={500}
+        gap="10px"
+      >
+        {event.languages.map((l, i) => (
+          <Badge
+            key={i}
+            variant="solid"
+            bg="#F4F4F5"
+            color="#27272A"
+            px="10px"
+            py="4px"
           >
-            {/* Event title */}
-            <Box w="100%">
-              <Text
-                fontSize="36px"
-                fontWeight="500"
-                lineHeight="44px"
-                letterSpacing="-2.5%"
-                color="#000000"
-              >
-                {event.title}
-              </Text>
-            </Box>
+            {l.language}
+          </Badge>
+        ))}
+        {event.areas.map((a, i) => (
+          <Badge
+            key={i}
+            variant="solid"
+            bg="#F4F4F5"
+            color="#27272A"
+            px="10px"
+            py="4px"
+          >
+            {getAreaLabel(a)}
+          </Badge>
+        ))}
+      </HStack>
 
-            {/* Event metadata */}
-            <VStack align="flex-start" spacing="8px">
-              <Text display="flex" alignItems="center" gap="8px">
-                <FaCalendarAlt />
-                {event.date}
-              </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <FaClock /> {event.time}
-              </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <IoLocationSharp /> {event.address}
-              </Text>
-              <Text display="flex" alignItems="center" gap="8px">
-                <IoMdPeople /> {event.spots} spots filled
-              </Text>
-            </VStack>
-
-            {/* Event tags */}
-            <HStack flexWrap="wrap" mt={4}>
-              {event.tags.map((tag, i) => (
-                <Badge key={i} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </HStack>
-
-            {/* Event description */}
-            <Text>{event.description}</Text>
-          </VStack>
-        </Flex>
+      {/* Event description */}
+      <Box
+        w="full"
+        overflowY="auto"
+        scrollbar="hidden"
+        flex="1"
+        minH={0}
+      >
+        <Text whiteSpace="pre-line">{event.description}</Text>
       </Box>
+
+      {/* Register Button */}
+      <Flex
+        flexShrink={0}
+        direction="column"
+        align="center"
+        justify="center"
+        alignSelf="center"
+        zIndex={2}
+        mt={3}
+        mb={{ base: 5, md: 1 }}
+      >
+        {!isPastEvent && (
+          <HStack
+            opacity={event.isRegistered ? 1 : 0}
+            transition="opacity 0.2s"
+            gap={1}
+            fontSize="12px"
+            mb={2}
+          >
+            <Check size={16} /> You are attending
+          </HStack>
+        )}
+        {isPastEvent ? (
+          <Button
+            variant="surface"
+            colorPalette={event.hasAttended ? "blue" : "red"}
+            px="18px"
+            py="6px"
+            disabled
+            cursor="default"
+          >
+            {event.hasAttended ? (
+              <>
+                <CalendarCheck /> Attended
+              </>
+            ) : (
+              <>
+                <CalendarX /> Missed
+              </>
+            )}
+          </Button>
+        ) : (
+        <Dialog.Root
+          open={open}
+          onOpenChange={(e) => setOpen(e.open)}
+          placement="center"
+          motionPreset="slide-in-bottom"
+          size="xs"
+        >
+          <Button
+            variant={event.isRegistered ? "surface" : "solid"}
+            colorPalette={event.isRegistered ? "red" : "blue"}
+            px="18px"
+            py="6px"
+            onClick={handleRegistration}
+          >
+            {event.isRegistered ? (
+              <>
+                <CalendarX /> Unregister
+              </>
+            ) : (
+              <>
+                <CalendarPlus /> Register
+              </>
+            )}
+          </Button>
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Unregister from this event</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                  <p>
+                    something something guilt trip something something don’t do
+                    it pls
+                  </p>
+                </Dialog.Body>
+                <Dialog.Footer>
+                  <Dialog.ActionTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </Dialog.ActionTrigger>
+                  <Button
+                    colorPalette="red"
+                    onClick={confirmUnregister}
+                  >
+                    Unregister
+                  </Button>
+                </Dialog.Footer>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" />
+                </Dialog.CloseTrigger>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
+        )}
+      </Flex>
 
       {/* Gradient overlay - fixed at bottom */}
       <Box
@@ -91,35 +292,12 @@ export const EventInfo = ({ event }) => {
         bottom={0}
         left={0}
         right={0}
-        height="150px"
-        bgGradient="linear(to-b, transparent, white)"
+        height="40%"
+        bgGradient="to-b"
+        gradientFrom="transparent"
+        gradientTo="white"
         pointerEvents="none"
       />
-
-      {/* RSVP Button*/}
-      <Flex
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        justify="center"
-        py={4}
-        zIndex={2}
-      >
-        <Button
-          w="148px"
-          h="40px"
-          backgroundColor="#ADADAD"
-          border="3px solid"
-          borderColor="#212121"
-          borderRadius="4px 2px 2px 2px"
-          px="16px"
-          py="8px"
-          _hover={{ backgroundColor: "#9A9A9A" }}
-        >
-          RSVP for Event
-        </Button>
-      </Flex>
     </Flex>
   );
 };

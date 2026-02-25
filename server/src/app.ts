@@ -1,6 +1,6 @@
 import { verifyToken } from "@/middleware";
 import { languagesRouter } from "@/routes/languages";
-import { areasOfInterestRouter } from "@/routes/areasOfInterest";
+import { areasOfPracticeRouter } from "@/routes/areasOfInterest";
 import { casesRouter } from "@/routes/cases";
 import { tagsRouter } from "@/routes/tags";
 import { rolesRouter } from "@/routes/roles";
@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === "production") {
 
 app.use("/users", usersRouter);
 app.use("/languages", languagesRouter);
-app.use("/areas-of-interest", areasOfInterestRouter);
+app.use("/areas-of-practice", areasOfPracticeRouter);
 app.use("/clinics", clinicsRouter);
 app.use("/cases", casesRouter);
 app.use("/volunteers", volunteersRouter);
