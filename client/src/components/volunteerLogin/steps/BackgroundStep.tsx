@@ -1,18 +1,21 @@
 import {
   Box,
   Button,
+  Combobox,
   Flex,
   Heading,
   HStack,
   Image,
+  Input,
   Link,
   Progress,
   Text,
+  useListCollection,
 } from "@chakra-ui/react";
 
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import { LuArrowRight, LuFacebook, LuMail, LuUser } from "react-icons/lu";
+import { LuArrowRight, LuFacebook, LuMail } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
@@ -21,7 +24,66 @@ type Props = {
   onNext: () => void;
 };
 
-const SuccessStep = ({ onNext }: Props) => {
+const US_STATES = [
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+];
+
+const BackgroundStep = ({ onNext }: Props) => {
+  const { collection, filter } = useListCollection({
+    initialItems: US_STATES,
+    filter: (item, inputValue) =>
+      item.toLowerCase().includes(inputValue.toLowerCase()),
+  });
+
   return (
     <LoginLayout>
       <Flex
@@ -80,8 +142,8 @@ const SuccessStep = ({ onNext }: Props) => {
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
                 color="gray.600"
               >
-                Your account has been created! Navigate to the login page and
-                sign-in with your new credentials.
+                Please fill out your background and prior experience section.
+                Please note that each of the prompts are optional.
               </Text>
             </Box>
 
@@ -151,10 +213,10 @@ const SuccessStep = ({ onNext }: Props) => {
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
-            gap={{ base: "24px", md: "36px" }}
+            gap={{ base: "20px", md: "30px" }}
           >
             <Progress.Root
-              value={100}
+              value={90}
               size="xs"
             >
               <Progress.Track>
@@ -162,26 +224,93 @@ const SuccessStep = ({ onNext }: Props) => {
               </Progress.Track>
             </Progress.Root>
 
-            <Flex
-              direction="column"
-              gap="8px"
-              align="center"
-            >
-              <Heading
-                fontSize={{ base: "18px", md: "22px" }}
-                fontWeight={700}
-                color="black"
-              >
-                CC Volunteer Account Created
-              </Heading>
+            <Box>
               <Text
-                fontSize={{ base: "13px", md: "14px" }}
-                color="grey"
-                fontStyle="italic"
+                fontSize={{ base: "13px", md: "16px" }}
+                color="black"
+                mb="8px"
               >
-                Navigate to the login page by clicking below.
+                Law School Graduation Year
               </Text>
-            </Flex>
+              <Input
+                placeholder="Law School Graduation Year"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                fontSize="14px"
+                h={{ base: "40px", md: "44px" }}
+                focusRingColor="gray.200"
+              />
+            </Box>
+
+            <Box>
+              <Text
+                fontSize={{ base: "13px", md: "16px" }}
+                color="black"
+                mb="8px"
+              >
+                State Bar Certificate State
+              </Text>
+              <Combobox.Root
+                collection={collection}
+                onInputValueChange={({ inputValue }) => filter(inputValue)}
+                css={{ "--focus-color": "colors.gray.200" }}
+                openOnClick
+              >
+                <Combobox.Control>
+                  <Combobox.Input placeholder="Select a State" />
+                  <Combobox.Trigger />
+                </Combobox.Control>
+                <Combobox.Positioner>
+                  <Combobox.Content>
+                    <Combobox.Empty>No results found</Combobox.Empty>
+                    {collection.items.map((item) => (
+                      <Combobox.Item
+                        key={item}
+                        item={item}
+                      >
+                        <Combobox.ItemText>{item}</Combobox.ItemText>
+                      </Combobox.Item>
+                    ))}
+                  </Combobox.Content>
+                </Combobox.Positioner>
+              </Combobox.Root>
+            </Box>
+
+            <Box mt="-10px">
+              <Text
+                fontSize={{ base: "13px", md: "16px" }}
+                color="black"
+                mb="8px"
+              >
+                State Bar Number
+              </Text>
+              <Input
+                placeholder="Enter State Bar Number"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                fontSize="14px"
+                h={{ base: "40px", md: "44px" }}
+                focusRingColor="gray.200"
+              />
+            </Box>
+
+            <Box>
+              <Text
+                fontSize={{ base: "13px", md: "16px" }}
+                color="black"
+                mb="8px"
+              >
+                Employer
+              </Text>
+              <Input
+                placeholder="Enter Employer"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                fontSize="14px"
+                h={{ base: "40px", md: "44px" }}
+                focusRingColor="gray.200"
+              />
+            </Box>
 
             <Button
               bg="#3182CE"
@@ -196,10 +325,7 @@ const SuccessStep = ({ onNext }: Props) => {
               px="20px"
               onClick={onNext}
             >
-              <HStack gap="10px">
-                <LuUser size={18} />
-                <span>Return to Login</span>
-              </HStack>
+              Continue
               <LuArrowRight size={16} />
             </Button>
           </Flex>
@@ -216,4 +342,4 @@ const SuccessStep = ({ onNext }: Props) => {
   );
 };
 
-export default SuccessStep;
+export default BackgroundStep;

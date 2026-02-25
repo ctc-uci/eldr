@@ -2,100 +2,103 @@ import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 
-export const areasOfInterestRouter = Router();
+export const areasOfPracticeRouter = Router();
 
-// GET: get all areas of interest
-// {port}/areas-of-interest
-areasOfInterestRouter.get("/", async (req, res) => {
+// GET: get all areas of practice
+// {port}/areas-of-practice
+areasOfPracticeRouter.get("/", async (req, res) => {
     try {
-        const areasOfInterest = await db.query("SELECT * FROM areas_of_interest");
-        res.status(200).json(keysToCamel(areasOfInterest));
+        const areasOfPractice = await db.query("SELECT * FROM areas_of_practice");
+        res.status(200).json(keysToCamel(areasOfPractice));
     } catch (err) {
         res.status(500).send(err.message);
     }
 });
 
-// GET: get an area of interest by id
-// {port}/areas-of-interest/:id
-areasOfInterestRouter.get("/:id", async (req, res) => {
+// GET: get an area of practice by id
+// {port}/areas-of-practice/:id
+areasOfPracticeRouter.get("/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const areaOfInterest = await db.query("SELECT * FROM areas_of_interest WHERE id = $1", [id]);
+        const areaOfPractice = await db.query("SELECT * FROM areas_of_practice WHERE id = $1", [id]);
 
-        // check to see if area of interest was found and returned
-        if (areaOfInterest.length === 0) {
-            return res.status(404).json({ message: "Area of interest not found" });
+        // Check if area of practice was found.
+        if (areaOfPractice.length === 0) {
+            return res.status(404).json({ message: "Area of practice not found" });
         }
 
-        res.status(200).json(keysToCamel(areaOfInterest));
+        res.status(200).json(keysToCamel(areaOfPractice));
     } catch (err) {
         res.status(500).send(err.message);
     }
 });
 
-// POST: create a new area of interest
-// {port}}/areas-of-interest
-areasOfInterestRouter.post("/", async (req, res) => {
+// POST: create a new area of practice
+// {port}/areas-of-practice
+areasOfPracticeRouter.post("/", async (req, res) => {
     try {
-        const { areaOfInterest } = req.body;
+        const { areaOfPractice } = req.body;
 
-        // make sure area of interest is not null or empty
-        if (!areaOfInterest) {
-            return res.status(400).json({ message: "Area of interest is required" });
+        // Make sure area of practice is not null or empty.
+        if (!areaOfPractice) {
+            return res.status(400).json({ message: "Area of practice is required" });
         }
 
-        const newAreaOfInterest = await db.query(
-            "INSERT INTO areas_of_interest (areas_of_interest) VALUES ($1) RETURNING *",
-            [areaOfInterest]
+        const newAreaOfPractice = await db.query(
+            "INSERT INTO areas_of_practice (areas_of_practice) VALUES ($1) RETURNING *",
+            [areaOfPractice]
         );
 
-        // check to see if area of interest was created and returned
-        if (newAreaOfInterest.length === 0) {
-            return res.status(404).json({ message: "Area of interest not created" });
+        // Check if area of practice was created.
+        if (newAreaOfPractice.length === 0) {
+            return res.status(404).json({ message: "Area of practice not created" });
         }
 
-        res.status(200).json(keysToCamel(newAreaOfInterest));
+        res.status(200).json(keysToCamel(newAreaOfPractice));
     } catch (err) {
         res.status(500).send(err.message);
     }
-})
+});
 
-// PUT: update an area of interest by id
-// {port}}/areas-of-interest/:id
-areasOfInterestRouter.put("/:id", async (req, res) => {
+// PUT: update an area of practice by id
+// {port}/areas-of-practice/:id
+areasOfPracticeRouter.put("/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const { areaOfInterest } = req.body;
-        const updatedAreaOfInterest = await db.query(
-            "UPDATE areas_of_interest SET areas_of_interest = $1 WHERE id = $2 RETURNING *",
-            [areaOfInterest, id]
+        const { areaOfPractice } = req.body;
+        const updatedAreaOfPractice = await db.query(
+            "UPDATE areas_of_practice SET areas_of_practice = $1 WHERE id = $2 RETURNING *",
+            [areaOfPractice, id]
         );
 
-        // check to see if area of interest was updated and returned
-        if (updatedAreaOfInterest.length === 0) {
-            return res.status(404).json({ message: "Area of interest not found" });
+        // Check if area of practice was updated.
+        if (updatedAreaOfPractice.length === 0) {
+            return res.status(404).json({ message: "Area of practice not found" });
         }
 
-        res.status(200).json(keysToCamel(updatedAreaOfInterest));
+        res.status(200).json(keysToCamel(updatedAreaOfPractice));
     } catch (err) {
         res.status(500).send(err.message);
     }
-})
+});
 
-// DELETE: delete an area of interest by id
-// {port}}/areas-of-interest/:id
-areasOfInterestRouter.delete("/:id", async (req, res) => {
+// DELETE: delete an area of practice by id
+// {port}/areas-of-practice/:id
+areasOfPracticeRouter.delete("/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedAreaOfInterest = await db.query("DELETE FROM areas_of_interest WHERE id = $1 RETURNING *", [id]);
+        const deletedAreaOfPractice = await db.query(
+            "DELETE FROM areas_of_practice WHERE id = $1 RETURNING *",
+            [id]
+        );
 
-        // check to see if area of interest was deleted and returned
-        if (deletedAreaOfInterest.length === 0) {
-            return res.status(404).json({ message: "Area of interest not found" });
+        // Check if area of practice was deleted.
+        if (deletedAreaOfPractice.length === 0) {
+            return res.status(404).json({ message: "Area of practice not found" });
         }
 
-        res.status(200).json(keysToCamel(deletedAreaOfInterest));
+        res.status(200).json(keysToCamel(deletedAreaOfPractice));
     } catch (err) {
         res.status(500).send(err.message);
     }
-})
+});
