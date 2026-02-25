@@ -19,8 +19,8 @@ import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
-// import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 // import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
@@ -69,10 +69,18 @@ const App = () => {
                   element={<VolunteerProfile />}
                 /> */}
                 
-                {/* <Route
+                <Route
                   path="/email"
-                  element={<ProtectedRoute element={<EmailTemplateManagement />} />}
-                /> */}
+                  element={<EmailTemplateManagement />}
+                />
+                <Route
+                  path="/email/folder/:folderId"
+                  element={<EmailTemplateManagement />}
+                />
+                <Route
+                  path="/email/template/:templateId"
+                  element={<EmailTemplateManagement />}
+                />
                 {/* <Route
                   path="/catalog"
                   element={<CaseCatalog />}
