@@ -10,6 +10,7 @@ import {
 
 export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
   const now = new Date();
+  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   // Helper: combine the calendar day from e.date with the time-of-day from e.endTime.
   // This is necessary because startTime/endTime in the DB can have incorrect date portions.
@@ -258,7 +259,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     px="10px"
                     py="4px"
                   >
-                    {a.areasOfInterest}
+                    {getAreaLabel(a)}
                   </Badge>
                 ))}
               </HStack>

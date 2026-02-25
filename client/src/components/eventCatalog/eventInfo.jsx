@@ -27,6 +27,7 @@ import {
 
 export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
+  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -169,7 +170,7 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             px="10px"
             py="4px"
           >
-            {a.areasOfInterest}
+            {getAreaLabel(a)}
           </Badge>
         ))}
       </HStack>

@@ -47,6 +47,7 @@ export const EventCatalog = () => {
   const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
+  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   useEffect(() => {
     const fetchFullEventData = async () => {
@@ -77,7 +78,7 @@ export const EventCatalog = () => {
           baseEvents.map(async (event) => {
             const [langRes, areaRes, regRes] = await Promise.all([
               backend.get(`/clinics/${event.id}/languages`),
-              backend.get(`/clinics/${event.id}/areas-of-interest`),
+              backend.get(`/clinics/${event.id}/areas-of-practice`),
               backend.get(`/clinics/${event.id}/registrations`),
             ]);
 
@@ -133,7 +134,7 @@ export const EventCatalog = () => {
           e.location.toLowerCase().includes(q) ||
           e.description.toLowerCase().includes(q) ||
           e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
-          e.areas.some((a) => a.areasOfInterest.toLowerCase().includes(q))
+          e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
       );
     }
 

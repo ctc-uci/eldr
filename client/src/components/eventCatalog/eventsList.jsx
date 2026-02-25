@@ -1,6 +1,8 @@
 import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
+  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+
   return (
     <VStack
       bg="#FAFAFA"
@@ -119,7 +121,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                   px="10px"
                   py="4px"
                 >
-                  {a.areasOfInterest}
+                  {getAreaLabel(a)}
                 </Badge>
               ))}
             </HStack>
