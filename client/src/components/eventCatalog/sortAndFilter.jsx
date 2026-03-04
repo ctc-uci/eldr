@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Box,
@@ -18,33 +18,36 @@ import {
 
 import { LuChevronUp } from "react-icons/lu";
 
-const filterCategories = [
-  {
-    label: "Type",
-    options: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  },
-  {
-    label: "Language",
-    options: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
-  },
-  {
-    label: "Location",
-    options: ["Virtual", "In-person"],
-  },
-  {
-    label: "Occupation",
-    options: [
-      "Attorney",
-      "Law Student 1L",
-      "Law Student 2L",
-      "Law Student 3L",
-      "Law Student LLM",
-      "Undergraduate Student",
-      "Paralegal/Legal Worker",
-      "Paralegal Student",
-    ],
-  },
-];
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
+// const filterCategories = [
+//   {
+//     label: "Type",
+//     options: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
+//   },
+//   {
+//     label: "Language",
+//     options: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
+//   },
+//   {
+//     label: "Location",
+//     options: ["Virtual", "In-person"],
+//   },
+//   {
+//     label: "Occupation",
+//     options: [
+//       "Attorney",
+//       "Law Student 1L",
+//       "Law Student 2L",
+//       "Law Student 3L",
+//       "Law Student LLM",
+//       "Undergraduate Student",
+//       "Paralegal/Legal Worker",
+//       "Paralegal Student",
+//     ],
+//   },
+// ];
+
 
 const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   return (
@@ -94,7 +97,57 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   );
 };
 
+/** @TODO update filter categories based on backend data
+ * - Type: clinics_areas_of_practice table
+ * - Language: languages table (only show languages with 1+ volunteers tied to them)
+ * - Occupation: roles table
+ */
 export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedFilters, setSelectedFilters, filteredCount }) => {
+  const { backend } = useBackendContext();
+
+  const [filterCategories, setFilterCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [typesRes, languagesRes, occupationsRes] = await Promise.all([
+        backend.get('/areas-of-practice'),
+        backend.get('/languages/with-volunteers'),
+        backend.get('/roles'),
+      ]);
+
+      const categories = [
+        {
+          label: "Type",
+          options: typesRes.data.map((t) => t.areasOfPractice),
+        },
+        {
+          label: "Language",
+          options: languagesRes.data.map((l) => l.language),
+        },
+        {
+          label: "Location",
+          options: ["Virtual", "In-person", "Hybrid"],
+        },
+        {
+          label: "Occupation",
+          options: occupationsRes.data.map((o) => o.roleName),
+        },
+      ];
+
+      setFilterCategories(categories);
+    } catch (e) {
+      console.error("Error fetching filter options:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
+
   const toggleFilter = (option) => {
     setSelectedFilters((prev) =>
       prev.includes(option)
@@ -221,17 +274,23 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                 <Text fontSize="16px" fontWeight={600} color="#111827" mb="8px">
                   Filter Categories
                 </Text>
-                <Stack gap="0" pl="8px">
-                  {filterCategories.map((category) => (
-                    <FilterCategory
-                      key={category.label}
-                      label={category.label}
+                {isLoading ? (
+                  <Text fontSize="14px" color="#6B7280">
+                    Loading filter options...
+                  </Text>
+                ) : (
+                  <Stack gap="0" pl="8px">
+                    {filterCategories.map((category) => (
+                      <FilterCategory
+                        key={category.label}
+                        label={category.label}
                       options={category.options}
                       selectedFilters={selectedFilters}
                       onToggle={toggleFilter}
                     />
                   ))}
                 </Stack>
+                )}
               </Box>
             </Drawer.Body>
 
