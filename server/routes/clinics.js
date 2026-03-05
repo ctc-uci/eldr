@@ -416,3 +416,68 @@ clinicsRouter.get("/:clinicId/roles", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+// Clinic Tags Routes
+// POST: assign a tag to a clinic
+// /clinics/{clinicId}/tags
+clinicsRouter.post("/:clinicId/tags", async (req, res) => {
+  try {
+    const { tagId } = req.body; // get JSON body
+    const { clinicId } = req.params; // get URL parameters
+
+    if (!tagId) {
+      return res.status(400).json({ message: "Tag ID is required" });
+    }
+
+    const newRelationship = await db.query(
+      "INSERT INTO clinic_tags (clinic_id, tag_id) VALUES ($1, $2) RETURNING *",
+      [clinicId, tagId]
+    );
+
+    res.status(201).json(keysToCamel(newRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// DELETE: remove a tag from a clinic
+// /clinics/{clinicId}/tags/{tagId}
+clinicsRouter.delete("/:clinicId/tags/:tagId", async (req, res) => {
+  try {
+    const { clinicId, tagId } = req.params;
+
+    const deletedRelationship = await db.query(
+      "DELETE FROM clinic_tags WHERE clinic_id = $1 AND tag_id = $2 RETURNING *",
+      [clinicId, tagId]
+    );
+
+    if (deletedRelationship.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Tag not assigned to this clinic" });
+    }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// GET: list all tags for a clinic, including tag IDs and text
+// /clinics/{clinicId}/tags
+clinicsRouter.get("/:clinicId/tags", async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+
+    const listAll = await db.query(
+      `SELECT t.id, t.tag FROM clinic_tags ct
+       JOIN tags t ON ct.tag_id = t.id
+       WHERE ct.clinic_id = $1`,
+      [clinicId]
+    );
+
+    res.status(200).json(keysToCamel(listAll));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
