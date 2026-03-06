@@ -12,6 +12,7 @@ const sidebarNav = [
 
 const SidebarNavItem = ({ icon, label, active }) => (
   <HStack
+    w="100%"
     spacing={3}
     px={4}
     py={3}
@@ -47,6 +48,7 @@ export const Sidebar = () => (
       <Link to="/">
         <Image
           src="/logo.png"
+          h="60px"
           alt="Elder Law & Disability Rights Center"
           objectFit="contain"
           mb={10}
