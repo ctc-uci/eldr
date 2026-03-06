@@ -27,14 +27,14 @@ clinicsRouter.post("/", async (req, res) => {
       meeting_link,
     } = req.body;
 
-    const allowedLocationTypes = ["in-person", "hybrid", "online"];
+    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
 
     if (
       (location && !allowedLocationTypes.includes(location)) ||
       (type && !allowedLocationTypes.includes(type))
     ) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'in-person', 'hybrid', or 'online'.",
+        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
       });
     }
 
@@ -115,14 +115,14 @@ clinicsRouter.put("/:id", async (req, res) => {
       meeting_link,
     } = req.body;
 
-    const allowedLocationTypes = ["in-person", "hybrid", "online"];
+    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
 
     if (
       (location && !allowedLocationTypes.includes(location)) ||
       (type && !allowedLocationTypes.includes(type))
     ) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'in-person', 'hybrid', or 'online'.",
+        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
       });
     }
 

@@ -1,4 +1,4 @@
-CREATE TYPE location_type AS ENUM ('in-person', 'hybrid', 'online');
+CREATE TYPE location_type AS ENUM ('In-Person', 'Hybrid', 'Virtual');
 
 CREATE TABLE clinics (
     id serial PRIMARY KEY,
