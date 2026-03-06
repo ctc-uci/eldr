@@ -65,6 +65,12 @@ clinicsRouter.get("/search", async (req, res) => {
   try {
     const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
 
+    // parse comma-separated strings into arrays for proper SQL querying
+    const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
+    const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
+    const locationsArr = locations ? locations.split(",") : null;
+    const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
+
     const clinics = await db.query(
       `SELECT * FROM clinics C
         WHERE ($1::int[] IS NULL OR EXISTS (
@@ -75,16 +81,16 @@ clinicsRouter.get("/search", async (req, res) => {
           SELECT 1 FROM clinic_languages CL
           WHERE CL.clinic_id = C.id AND CL.language_id = ANY($2::int[])
         ))
-        AND ($3::text[] IS NULL OR C.location = ANY($3::text[]))
+        AND ($3::text[] IS NULL OR C.location::text = ANY($3::text[]))
         AND ($4::int[] IS NULL OR EXISTS (
           SELECT 1 FROM clinic_roles CR
           WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])
       ))`,
       [
-        areaOfPracticeIds || null,
-        languageIds || null,
-        locations || null,
-        roleIds || null,
+        areaIdsArr,
+        languageIdsArr,
+        locationsArr,
+        roleIdsArr,
       ]
     );
     res.status(200).json(keysToCamel(clinics));

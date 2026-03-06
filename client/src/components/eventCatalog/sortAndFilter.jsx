@@ -20,35 +20,6 @@ import { LuChevronUp } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-// const filterCategories = [
-//   {
-//     label: "Type",
-//     options: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-//   },
-//   {
-//     label: "Language",
-//     options: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
-//   },
-//   {
-//     label: "Location",
-//     options: ["Virtual", "In-person"],
-//   },
-//   {
-//     label: "Occupation",
-//     options: [
-//       "Attorney",
-//       "Law Student 1L",
-//       "Law Student 2L",
-//       "Law Student 3L",
-//       "Law Student LLM",
-//       "Undergraduate Student",
-//       "Paralegal/Legal Worker",
-//       "Paralegal Student",
-//     ],
-//   },
-// ];
-
-
 const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   return (
     <Collapsible.Root defaultOpen>
@@ -77,8 +48,8 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         <VStack align="stretch" gap="10px" pl="8px" pb="12px">
           {options.map((option) => (
             <Checkbox.Root
-              key={option}
-              checked={selectedFilters.includes(option)}
+              key={option.id}
+              checked={selectedFilters.some((f) => f.id === option.id)}
               onCheckedChange={() => onToggle(option)}
               size="sm"
             >
@@ -86,7 +57,7 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
               <Checkbox.Control />
               <Checkbox.Label>
                 <Text fontSize="14px" fontWeight={400} color="#374151">
-                  {option}
+                  {option.text}
                 </Text>
               </Checkbox.Label>
             </Checkbox.Root>
@@ -119,19 +90,23 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
       const categories = [
         {
           label: "Type",
-          options: typesRes.data.map((t) => t.areasOfPractice),
+          key: "areasOfPracticeIds",
+          options: typesRes.data.map((t) => ({ id: "areasOfPracticeId" + t.id, text: t.areasOfPractice })),
         },
         {
           label: "Language",
-          options: languagesRes.data.map((l) => l.language),
+          key: "languageIds",
+          options: languagesRes.data.map((l) => ({ id: "languageId" + l.id, text: l.language })),
         },
         {
           label: "Location",
-          options: ["Virtual", "In-person", "Hybrid"],
+          key: "locations",
+          options: ["Virtual", "In-person", "Hybrid"].map((location) => ({ id: location, text: location })),
         },
         {
           label: "Occupation",
-          options: occupationsRes.data.map((o) => o.roleName),
+          key: "roleIds",
+          options: occupationsRes.data.map((o) => ({ id: "roleId" + o.id, text: o.roleName })),
         },
       ];
 
@@ -150,8 +125,8 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
 
   const toggleFilter = (option) => {
     setSelectedFilters((prev) =>
-      prev.includes(option)
-        ? prev.filter((f) => f !== option)
+      prev.some((f) => f.id === option.id)
+        ? prev.filter((f) => f.id !== option.id)
         : [...prev, option]
     );
   };
@@ -250,7 +225,7 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   <HStack gap="6px" flexWrap="wrap">
                     {selectedFilters.map((filter) => (
                       <Button
-                        key={filter}
+                        key={filter.id}
                         size="xs"
                         variant="outline"
                         borderColor="#D1D5DB"
@@ -262,7 +237,7 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                         px="8px"
                         onClick={() => toggleFilter(filter)}
                       >
-                        {filter} ×
+                        {filter.text} ×
                       </Button>
                     ))}
                   </HStack>
