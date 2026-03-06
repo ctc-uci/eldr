@@ -175,15 +175,6 @@ const App = () => {
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
                 />
-                {/*
-                  TEMP
-                */}
-                <Route
-                  path = "/nav"
-                  element = {<CreateEventNavbar/>}
-                >
-
-                </Route>
 
               </Routes>
             </Router>
