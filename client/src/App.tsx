@@ -11,7 +11,7 @@ import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
 // import { AdminProfile } from "@/components/adminProfile/adminProfile";
-import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 // import { AdminLogin } from "@/components/adminProfile/adminLogin";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
@@ -25,7 +25,7 @@ import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
-
+import { CreateEventNavbar } from "@/components/navbar/createEventNavbar";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
@@ -112,10 +112,10 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                <Route 
+                {/* <Route 
                   path="/event-catalog"
                   element={<EventCatalog />}
-                />
+                /> */}
                 {/* <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
@@ -175,6 +175,15 @@ const App = () => {
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
                 />
+                {/*
+                  TEMP
+                */}
+                <Route
+                  path = "/nav"
+                  element = {<CreateEventNavbar/>}
+                >
+
+                </Route>
 
               </Routes>
             </Router>

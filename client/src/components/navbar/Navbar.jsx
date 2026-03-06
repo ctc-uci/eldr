@@ -1,13 +1,15 @@
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
 import { BriefcaseBusiness, ClipboardList } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
+  const navigate = useNavigate();
   return (
     <Flex
       as="nav"
       w="100%"
-      h="64px"
+      h="128px"
       px="32px"
       align="center"
       justify="space-between"
@@ -54,10 +56,12 @@ export const Navbar = () => {
           <Text>Cases</Text>
         </Link>
 
-        <Avatar.Root size="sm">
-          <Avatar.Fallback name="User" />
-          <Avatar.Image src="" />
-        </Avatar.Root>
+        <Link href = "/adm">
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name="User" />
+            <Avatar.Image src="" />
+          </Avatar.Root>
+        </Link>
       </HStack>
     </Flex>
   );

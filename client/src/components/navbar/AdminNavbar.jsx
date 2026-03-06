@@ -10,7 +10,7 @@ import {
   Tag,
 } from "lucide-react";
 
-export const Playground = () => {
+export const AdminNavbar = () => {
   const [activeItem, setActiveItem] = useState("Event Catalog");
 
   // Array mapping icons
@@ -64,6 +64,7 @@ export const Playground = () => {
               <HStack
                 key={item.name}
                 w="full"
+                as="a"
                 px="clamp(8px, 1vw, 16px)"
                 py={3}
                 borderRadius="md"
