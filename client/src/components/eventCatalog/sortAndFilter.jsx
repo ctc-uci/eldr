@@ -68,11 +68,6 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   );
 };
 
-/** @TODO update filter categories based on backend data
- * - Type: clinics_areas_of_practice table
- * - Language: languages table (only show languages with 1+ volunteers tied to them)
- * - Occupation: roles table
- */
 export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedFilters, setSelectedFilters, filteredCount }) => {
   const { backend } = useBackendContext();
 
@@ -296,8 +291,9 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   px="24px"
                   _hover={{ bg: "#1F2937" }}
                   onClick={() => onOpenChange(false)}
+                  disabled={filteredCount === 0}
                 >
-                  See {filteredCount} Results
+                  {filteredCount > 0 ? `See ${filteredCount} Results` : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>
