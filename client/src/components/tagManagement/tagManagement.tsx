@@ -24,15 +24,36 @@ import { TagRow } from "./TagRow";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CreateTagView } from "./CreateTagView";
 
+type TagFormValues = {
+  name: string;
+  applyTo: string;
+  description: string;
+};
+
+type BackendTag = {
+  id: number;
+  tag: string;
+  description: string | null;
+  caseCount: number;
+  clinicCount: number;
+  volunteerCount: number;
+};
+
 export const TagManagement = () => {
   const { backend } = useBackendContext();
   const [tags, setTags] = useState<TagItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [view, setView] = useState<"list" | "create">("list");
+  const [view, setView] = useState<"list" | "create" | "edit">("list");
+  const [editingTag, setEditingTag] = useState<TagItem | null>(null);
 
-  const sortParam = activeTab === "most-used" ? "most-used" : activeTab === "recent" ? "recent" : undefined;
+  const sortParam =
+    activeTab === "most-used"
+      ? "most-used"
+      : activeTab === "recent"
+        ? "recent"
+        : undefined;
 
   const fetchTags = useCallback(async () => {
     try {
@@ -41,14 +62,14 @@ export const TagManagement = () => {
       if (sortParam) params.sort = sortParam;
 
       const { data } = await backend.get("/tags", { params });
-      const mapped: TagItem[] = data.map(
-        (t: { id: number; tag: string; description: string | null; caseCount: number; clinicCount: number; volunteerCount: number }) => ({
-          id: t.id,
-          name: t.tag,
-          description: t.description ?? "",
-          appliedTo: buildAppliedTo(t),
-        })
-      );
+
+      const mapped: TagItem[] = (data as BackendTag[]).map((t) => ({
+        id: t.id,
+        name: t.tag,
+        description: t.description ?? "",
+        appliedTo: buildAppliedTo(t),
+      }));
+
       setTags(mapped);
     } catch (e) {
       console.error("Failed to fetch tags", e);
@@ -62,6 +83,7 @@ export const TagManagement = () => {
   const suggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
+
     return tags
       .filter((t) => t.name.toLowerCase().includes(q))
       .map((t) => t.name)
@@ -73,30 +95,66 @@ export const TagManagement = () => {
       await backend.delete(`/tags/${id}`);
       setTags((prev) => prev.filter((t) => t.id !== id));
       setExpandedId(null);
+
+      if (editingTag?.id === id) {
+        setEditingTag(null);
+        setView("list");
+      }
     } catch (e) {
       console.error("Failed to delete tag", e);
     }
   };
 
-  const handleEdit = (_id: number) => {
-    // Placeholder for edit functionality
+  const handleEdit = (id: number) => {
+    const selectedTag = tags.find((t) => t.id === id);
+    if (!selectedTag) return;
+
+    setEditingTag(selectedTag);
+    setView("edit");
   };
 
   const handleToggleExpand = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  const handleCreateTag = async (newTag: { name: string; applyTo: string; description: string }) => {
+  const handleCreateTag = async (newTag: TagFormValues) => {
     try {
       await backend.post("/tags", {
         text: newTag.name,
         description: newTag.description,
       });
+
+      await fetchTags();
       setView("list");
-      fetchTags();
     } catch (e) {
       console.error("Failed to create tag", e);
     }
+  };
+
+  const handleUpdateTag = async (updatedTag: TagFormValues) => {
+    if (!editingTag) return;
+
+    try {
+      await backend.put(`/tags/${editingTag.id}`, {
+        text: updatedTag.name,
+        description: updatedTag.description,
+      });
+
+      setEditingTag(null);
+      await fetchTags();
+      setView("list");
+    } catch (e) {
+      console.error("Failed to update tag", e);
+    }
+  };
+
+  const handleCancelCreate = () => {
+    setView("list");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTag(null);
+    setView("list");
   };
 
   return (
@@ -104,7 +162,24 @@ export const TagManagement = () => {
       <StaffSidebar />
 
       {view === "create" ? (
-        <CreateTagView onCancel={() => setView("list")} onSave={handleCreateTag} />
+        <CreateTagView
+          onCancel={handleCancelCreate}
+          onSave={handleCreateTag}
+          pageTitle="Create New Tag"
+          submitLabel="Create & Save"
+        />
+      ) : view === "edit" && editingTag ? (
+        <CreateTagView
+          onCancel={handleCancelEdit}
+          onSave={handleUpdateTag}
+          initialValues={{
+            name: editingTag.name,
+            applyTo: "",
+            description: editingTag.description,
+          }}
+          pageTitle="Edit Tag"
+          submitLabel="Save Changes"
+        />
       ) : (
         <Box flex={1} overflow="auto" px="70px" py="60px">
           <Flex align="center" gap="20px" mb="10px">
@@ -153,6 +228,7 @@ export const TagManagement = () => {
                   <Tag size={16} />
                   All
                 </Tabs.Trigger>
+
                 <Tabs.Trigger
                   value="most-used"
                   px="12px"
@@ -167,6 +243,7 @@ export const TagManagement = () => {
                   <Tags size={16} />
                   Most Used
                 </Tabs.Trigger>
+
                 <Tabs.Trigger
                   value="recent"
                   px="12px"
@@ -216,12 +293,14 @@ export const TagManagement = () => {
                 Name
               </Text>
             </HStack>
+
             <HStack px="16px" w="300px" flexShrink={0} gap="8px">
               <Info size={20} color="black" />
               <Text fontSize="14px" fontWeight={500} color="black">
                 Description
               </Text>
             </HStack>
+
             <HStack px="16px" flex={1} gap="8px">
               <ListPlus size={20} color="black" />
               <Text fontSize="14px" fontWeight={500} color="black">

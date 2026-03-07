@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -12,18 +12,37 @@ import {
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { APPLY_TO_OPTIONS } from "./types";
 
+type CreateTagPayload = {
+  name: string;
+  applyTo: string;
+  description: string;
+};
+
 export function CreateTagView({
   onCancel,
   onSave,
+  initialValues,
+  pageTitle = "Create New Tag",
+  submitLabel = "Create & Save",
 }: {
   onCancel: () => void;
-  onSave: (tag: { name: string; applyTo: string; description: string }) => void;
+  onSave: (tag: CreateTagPayload) => Promise<void> | void;
+  initialValues?: CreateTagPayload;
+  pageTitle?: string;
+  submitLabel?: string;
 }) {
-  const [tagName, setTagName] = useState("");
-  const [applyTo, setApplyTo] = useState("");
-  const [description, setDescription] = useState("");
+  const [tagName, setTagName] = useState(initialValues?.name ?? "");
+  const [applyTo, setApplyTo] = useState(initialValues?.applyTo ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
   const [applyDropdownOpen, setApplyDropdownOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTagName(initialValues?.name ?? "");
+    setApplyTo(initialValues?.applyTo ?? "");
+    setDescription(initialValues?.description ?? "");
+  }, [initialValues]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -31,14 +50,27 @@ export function CreateTagView({
         setApplyDropdownOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!tagName.trim() || !applyTo || !description.trim()) return;
-    onSave({ name: tagName.trim(), applyTo, description: description.trim() });
+
+    try {
+      setIsSaving(true);
+      await onSave({
+        name: tagName.trim(),
+        applyTo,
+        description: description.trim(),
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const isEditMode = submitLabel.toLowerCase().includes("save");
 
   return (
     <Box flex={1} overflow="auto" px="70px" py="60px">
@@ -66,7 +98,7 @@ export function CreateTagView({
           borderRadius="4px"
           textDecoration="underline"
         >
-          Create Tag
+          {isEditMode ? "Edit Tag" : "Create Tag"}
         </Button>
       </HStack>
 
@@ -79,7 +111,7 @@ export function CreateTagView({
         mb="50px"
       >
         <Text fontSize="30px" fontWeight="bold" lineHeight="38px" color="#294a5f">
-          Create New Tag
+          {pageTitle}
         </Text>
       </Box>
 
@@ -135,6 +167,7 @@ export function CreateTagView({
             </Text>
             <Text fontSize="10px" color="#991919" lineHeight="14px">*</Text>
           </HStack>
+
           <Box ref={dropdownRef} position="relative" w="full">
             <Flex
               align="center"
@@ -144,7 +177,7 @@ export function CreateTagView({
               border="1px solid #e4e4e7"
               borderRadius="4px"
               cursor="pointer"
-              onClick={() => setApplyDropdownOpen(!applyDropdownOpen)}
+              onClick={() => setApplyDropdownOpen((prev) => !prev)}
             >
               <Text
                 fontSize="16px"
@@ -203,9 +236,12 @@ export function CreateTagView({
           fontWeight={500}
           _hover={{ bg: "#4a86a8" }}
           onClick={handleSubmit}
+          loading={isSaving}
+          loadingText="Saving..."
         >
-          Create & Save
+          {submitLabel}
         </Button>
+
         <Button
           bg="#e4e4e7"
           color="#27272a"
@@ -216,6 +252,7 @@ export function CreateTagView({
           fontWeight={500}
           _hover={{ bg: "#d4d4d8" }}
           onClick={onCancel}
+          disabled={isSaving}
         >
           Cancel
         </Button>
