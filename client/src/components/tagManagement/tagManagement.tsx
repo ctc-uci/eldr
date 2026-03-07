@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   Avatar,
   Box,
@@ -34,6 +34,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 type AppliedType = "Cases" | "Events" | "Profiles";
 
@@ -57,18 +58,13 @@ const APPLIED_BORDER_COLORS: Record<AppliedType, string> = {
 
 const APPLY_TO_OPTIONS = ["Cases", "Events", "Profiles"] as const;
 
-const SAMPLE_TAGS: TagItem[] = [
-  { id: 1, name: "Korean", description: "Korean Language Support", appliedTo: [{ type: "Cases", count: 5 }, { type: "Events", count: 32 }, { type: "Profiles", count: 20 }] },
-  { id: 2, name: "Senior-Client", description: "Case / Event Requirement", appliedTo: [{ type: "Cases", count: 10 }, { type: "Events", count: 10 }] },
-  { id: 3, name: "Urgent Volunteer", description: "Custom label for [Event]", appliedTo: [{ type: "Events", count: 20 }] },
-  { id: 4, name: "Veteran", description: "Case / Event Detail", appliedTo: [{ type: "Cases", count: 2 }] },
-  { id: 5, name: "Low-Income", description: "Case / Event Detail", appliedTo: [{ type: "Cases", count: 7 }, { type: "Events", count: 5 }] },
-  { id: 6, name: "Immigration", description: "Case / Event Category", appliedTo: [{ type: "Cases", count: 3 }, { type: "Events", count: 10 }, { type: "Profiles", count: 20 }] },
-  { id: 7, name: "Family Elderly Law", description: "Case / Event Category", appliedTo: [{ type: "Events", count: 21 }] },
-  { id: 8, name: "Interpreter", description: "Case / Event Requirement", appliedTo: [{ type: "Events", count: 2 }, { type: "Profiles", count: 6 }] },
-  { id: 9, name: "Medical Advocate", description: "Case / Event Requirement", appliedTo: [{ type: "Events", count: 5 }, { type: "Profiles", count: 1 }] },
-  { id: 10, name: "Translator", description: "Case / Event Requirement", appliedTo: [{ type: "Profiles", count: 5 }] },
-];
+function buildAppliedTo(raw: { caseCount: number; clinicCount: number; volunteerCount: number }): TagAppliedTo[] {
+  const result: TagAppliedTo[] = [];
+  if (raw.caseCount > 0) result.push({ type: "Cases", count: raw.caseCount });
+  if (raw.clinicCount > 0) result.push({ type: "Events", count: raw.clinicCount });
+  if (raw.volunteerCount > 0) result.push({ type: "Profiles", count: raw.volunteerCount });
+  return result;
+}
 
 const NAV_ITEMS = [
   { label: "Event Catalog", icon: ClipboardList, path: "/event-catalog" },
@@ -432,7 +428,7 @@ function CreateTagView({ onCancel, onSave }: { onCancel: () => void; onSave: (ta
         borderColor="#d4d4d8"
         pb="30px"
         pt="16px"
-        pl="76px"
+        pl="0"
         mb="50px"
       >
         <Text fontSize="30px" fontWeight="bold" lineHeight="38px" color="#294a5f">
@@ -588,31 +584,39 @@ function CreateTagView({ onCancel, onSave }: { onCancel: () => void; onSave: (ta
 }
 
 export const TagManagement = () => {
-  const [tags, setTags] = useState<TagItem[]>(SAMPLE_TAGS);
+  const { backend } = useBackendContext();
+  const [tags, setTags] = useState<TagItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [view, setView] = useState<"list" | "create">("list");
 
-  const filteredTags = useMemo(() => {
-    let result = [...tags];
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.description.toLowerCase().includes(q)
+  const sortParam = activeTab === "most-used" ? "most-used" : activeTab === "recent" ? "recent" : undefined;
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const params: Record<string, string> = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (sortParam) params.sort = sortParam;
+
+      const { data } = await backend.get("/tags", { params });
+      const mapped: TagItem[] = data.map(
+        (t: { id: number; tag: string; description: string | null; caseCount: number; clinicCount: number; volunteerCount: number }) => ({
+          id: t.id,
+          name: t.tag,
+          description: t.description ?? "",
+          appliedTo: buildAppliedTo(t),
+        })
       );
+      setTags(mapped);
+    } catch (e) {
+      console.error("Failed to fetch tags", e);
     }
-    if (activeTab === "most-used") {
-      result.sort(
-        (a, b) =>
-          b.appliedTo.reduce((sum, x) => sum + x.count, 0) -
-          a.appliedTo.reduce((sum, x) => sum + x.count, 0)
-      );
-    }
-    return result;
-  }, [tags, searchQuery, activeTab]);
+  }, [backend, searchQuery, sortParam]);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
 
   const suggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -623,9 +627,14 @@ export const TagManagement = () => {
       .slice(0, 5);
   }, [tags, searchQuery]);
 
-  const handleDelete = (id: number) => {
-    setTags((prev) => prev.filter((t) => t.id !== id));
-    setExpandedId(null);
+  const handleDelete = async (id: number) => {
+    try {
+      await backend.delete(`/tags/${id}`);
+      setTags((prev) => prev.filter((t) => t.id !== id));
+      setExpandedId(null);
+    } catch (e) {
+      console.error("Failed to delete tag", e);
+    }
   };
 
   const handleEdit = (_id: number) => {
@@ -636,16 +645,17 @@ export const TagManagement = () => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  const handleCreateTag = (newTag: { name: string; applyTo: string; description: string }) => {
-    const nextId = Math.max(...tags.map((t) => t.id), 0) + 1;
-    const created: TagItem = {
-      id: nextId,
-      name: newTag.name,
-      description: newTag.description,
-      appliedTo: [{ type: newTag.applyTo as AppliedType, count: 0 }],
-    };
-    setTags((prev) => [created, ...prev]);
-    setView("list");
+  const handleCreateTag = async (newTag: { name: string; applyTo: string; description: string }) => {
+    try {
+      await backend.post("/tags", {
+        text: newTag.name,
+        description: newTag.description,
+      });
+      setView("list");
+      fetchTags();
+    } catch (e) {
+      console.error("Failed to create tag", e);
+    }
   };
 
   return (
@@ -784,7 +794,7 @@ export const TagManagement = () => {
 
           {/* Tag rows */}
           <Box>
-            {filteredTags.map((tag) => (
+            {tags.map((tag) => (
               <TagRow
                 key={tag.id}
                 tag={tag}
