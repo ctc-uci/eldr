@@ -32,7 +32,7 @@ cron.schedule("* * * * *", async () => {
         // Mark as sent
         await db.query(
           `UPDATE scheduled_emails
-           SET status = 'sent', send_at = NOW()
+           SET status = 'sent'
            WHERE id = $1`,
           [email.id]
         );
