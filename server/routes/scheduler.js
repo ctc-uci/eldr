@@ -7,20 +7,20 @@ cron.schedule("* * * * *", async () => {
   console.log("⏰ Checking for scheduled emails...");
 
   try {
-    // 1. Find all PENDING emails where the send_at time has passed
-    const findQuery = `
-      SELECT * FROM scheduled_emails 
-      WHERE status = 'PENDING' AND send_at <= NOW();
-    `;
-    const pendingEmails = await db.query(findQuery);
+    // Find emails ready to send
+    const pendingEmails = await db.query(`
+      SELECT * 
+      FROM scheduled_emails
+      WHERE status = 'pending'
+      AND send_at <= NOW();
+    `);
 
     if (pendingEmails.length === 0) {
-      return; // Nothing to send right now
+      return;
     }
 
-    console.log(`Found ${pendingEmails.length} emails to send. Processing...`);
+    console.log(`Found ${pendingEmails.length} emails to send.`);
 
-    // 2. Loop through each email and send it
     for (const email of pendingEmails) {
       try {
         await sendEmail({
@@ -29,23 +29,23 @@ cron.schedule("* * * * *", async () => {
           html: email.body,
         });
 
-        // 3. If successful, update the status to 'SENT'
+        // Mark as sent
         await db.query(
-          `UPDATE scheduled_emails SET status = 'SENT' WHERE id = $1`,
+          `UPDATE scheduled_emails
+           SET status = 'sent', send_at = NOW()
+           WHERE id = $1`,
           [email.id]
         );
-        console.log(`✅ Successfully sent scheduled email ID: ${email.id}`);
+
+        console.log(`✅ Sent scheduled email ID: ${email.id}`);
 
       } catch (sendError) {
         console.error(`❌ Failed to send email ID: ${email.id}`, sendError);
-        
-        // Optional: Mark as 'FAILED' so it doesn't keep retrying forever and crashing
-        await db.query(
-          `UPDATE scheduled_emails SET status = 'FAILED' WHERE id = $1`,
-          [email.id]
-        );
+
+        // Leave status as 'pending' so it retries next cron cycle
       }
     }
+
   } catch (dbError) {
     console.error("Database error while checking scheduled emails:", dbError);
   }
