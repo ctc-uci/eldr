@@ -20,6 +20,14 @@ clinicsRouter.post("/", async (req, res) => {
       max_target_roles,
       parking,
     } = req.body;
+
+    // validate location matches a valid enum value
+    const validLocations = await db.query('SELECT unnest(enum_range(NULL::location_type))::text AS location');
+    if (!validLocations.some((loc) => loc.location === location)) {
+      const validLocationNames = validLocations.map((loc) => loc.location).join(", ");
+      return res.status(400).json({ message: `Invalid location. Must be one of ${validLocationNames}` });
+    }
+
     const clinic = await db.query(
       `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
@@ -58,7 +66,7 @@ clinicsRouter.get("/", async (req, res) => {
 // GET: list all clinics based on filters (type, language, location, occupation)
 // type - clinics areas of practice / areas of practice table
 // language - clinic languages / languages table
-// location
+// location - clinic location enum (virtual, in-person, hybrid) / clinics table
 // occupation - clinic roles / roles table
 // /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=Toronto,Vancouver&roleIds=1,2
 clinicsRouter.get("/search", async (req, res) => {
@@ -71,6 +79,8 @@ clinicsRouter.get("/search", async (req, res) => {
     const locationsArr = locations ? locations.split(",") : null;
     const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
 
+    // IS NULL - if no filters provided for a category, ignore that category in filtering
+    // EXISTS with subquery - check if clinic has at least one of the selected options for that category
     const clinics = await db.query(
       `SELECT * FROM clinics C
         WHERE ($1::int[] IS NULL OR EXISTS (
@@ -130,6 +140,14 @@ clinicsRouter.put("/:id", async (req, res) => {
       max_target_roles,
       parking,
     } = req.body;
+
+    // validate location matches a valid enum value
+    const validLocations = await db.query('SELECT unnest(enum_range(NULL::location_type))::text AS location');
+    if (!validLocations.some((loc) => loc.location === location)) {
+      const validLocationNames = validLocations.map((loc) => loc.location).join(", ");
+      return res.status(400).json({ message: `Invalid location. Must be one of ${validLocationNames}` });
+    }
+
     const clinic = await db.query(
       `UPDATE clinics SET name = $1, description = $2, location = $3, start_time = $4, end_time = $5, date = $6, attendees = $7, min_attendees = $8, capacity = $9, max_target_roles = $10, parking = $11
        WHERE id = $12 RETURNING *`,
