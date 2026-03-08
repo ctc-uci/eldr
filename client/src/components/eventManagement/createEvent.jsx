@@ -1,408 +1,585 @@
+import { useState } from "react";
+
 import {
-    Button,
-    Text,
-    VStack,
-    HStack,
-    Flex,
-    IconButton,
-    Grid,
-    GridItem,
-    InputGroup,
-    Icon,
-    Input,
-    NativeSelect,
-    Dialog,
-    Portal,
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Input,
+  NativeSelect,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
-import { FaArrowCircleLeft } from "react-icons/fa";
-import { IoCalendarSharp } from "react-icons/io5";
-
-import { useState } from "react";
-import DatePicker from "react-datepicker"; 
-import "react-datepicker/dist/react-datepicker.css";
-
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { MdOutlineMailOutline } from "react-icons/md";
 
-export const CreateEvent = ({isOpen, onClose}) => {
-    const { backend } = useBackendContext();
-    
-    const [name, setName] = useState("");
-    const [eventType, setEventType] = useState("");
-    const [eventDate, setEventDate] = useState(null);
-    const [startTime, setStartTime] = useState("");
-    const [endTime, setEndTime] = useState("");
-    const [minVolunteers, setMinVolunteers] = useState("");
-    const [maxVolunteers, setMaxVolunteers] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+import { Sidebar } from "./SideBar";
 
-    const generateTimeOptions = () => {
-        const times = [];
-        for (let hour = 0; hour < 24; hour++) {
-            for (let min = 0; min < 60; min += 30) {
-                const period = hour >= 12 ? 'PM' : 'AM';
-                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                const displayMin = min === 0 ? '00' : min;
-                times.push({
-                    value: `${hour.toString().padStart(2, '0')}:${displayMin}`,
-                    label: `${displayHour}:${displayMin} ${period}`
-                });
-            }
-        }
-        return times;
-    };
+export const CreateEvent = ({ onClose }) => {
+  const { backend } = useBackendContext();
 
-    const timeOptions = generateTimeOptions();
+  const [activeTab, setActiveTab] = useState("header");
+  const [clinicType, setClinicType] = useState("");
+  const [eventName, setEventName] = useState("");
+  const [eventFormat, setEventFormat] = useState("Hybrid");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
+  const [zoomLink, setZoomLink] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [startPeriod, setStartPeriod] = useState("AM");
+  const [endTime, setEndTime] = useState("");
+  const [endPeriod, setEndPeriod] = useState("PM");
+  const [targetNumber, setTargetNumber] = useState("");
+  const [maximum, setMaximum] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async () => {
-        try {
-            setIsSubmitting(true);
+  const tabs = [
+    { key: "header", label: "Header Info" },
+    { key: "details", label: "Event Details" },
+    { key: "volunteers", label: "Volunteer List" },
+    { key: "email", label: "Email Notification Timeline" },
+  ];
 
-            const eventDateTime = new Date(eventDate);
-            const [startHour, startMin] = startTime.split(':');
-            eventDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+  const fieldStyle = {
+    border: "1px solid #CBD5E0",
+    borderRadius: "6px",
+    bg: "white",
+    fontSize: "sm",
+    px: 3,
+    h: "44px",
+    color: "gray.500",
+    _placeholder: { color: "gray.400" },
+    _focus: { borderColor: "blue.400", boxShadow: "none" },
+  };
 
-            const clinicData = {
-                name: name,
-                description: "test", // TODO: Description creation will be in mid-fi
-                location: "Aldis",  // TODO: Location creation will be in mid-fi
-                time: eventDateTime.toISOString(), // TODO: Change to start time and end time
-                date: eventDate.toISOString().split('T')[0],
-                attendees: 0, // TODO: Add new capacity field
-                language: "English", 
-                experience_level: 'beginner', // TODO: Remove after yousef PR
-                parking: "Aldrich parking" // TODO: Parking creation will be in mid-fi
-            };
+  const selectStyle = {
+    border: "1px solid #CBD5E0",
+    borderRadius: "6px",
+    background: "white",
+    fontSize: "14px",
+    height: "44px",
+    paddingLeft: "12px",
+    color: "#718096",
+  };
 
-            await backend.post('/clinics', clinicData);
+  const formatTime = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return digits.slice(0, -2) + ":" + digits.slice(-2);
+  };
 
-            setName("");
-            setEventType("");
-            setEventDate(null);
-            setStartTime("");
-            setEndTime("");
-            setMinVolunteers("");
-            setMaxVolunteers("");
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      const clinicData = {
+        name: eventName,
+        description: "test",
+        location: [address, city, state, zip].filter(Boolean).join(", "),
+        zoom_link: zoomLink,
+        time: `${startTime} ${startPeriod} - ${endTime} ${endPeriod}`,
+        date: date,
+        attendees: 0,
+        capacity: parseInt(maximum) || 0,
+        minAttendees: parseInt(targetNumber) || 0,
+        language: languages,
+        experience_level: "beginner", // TODO: Remove after yousef PR
+        parking: "",
+      };
+      await backend.post("/clinics", clinicData);
+      onClose();
+    } catch (error) {
+      console.error("Error creating event:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-            onClose();
-        } catch (error) {
-            console.error('Error creating event:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const Label = ({ children }) => (
+    <HStack
+      gap={0}
+      mb={1}
+    >
+      <Text
+        fontSize="sm"
+        fontWeight="semibold"
+        color="gray.700"
+      >
+        {children}
+      </Text>
+      <Text
+        color="red.500"
+        ml="2px"
+      >
+        *
+      </Text>
+    </HStack>
+  );
 
-    return (
-        <Dialog.Root
-            open={isOpen}
-            onOpenChange={(e) => !e.open && onClose()}
-            size="cover"
+  return (
+    <Flex
+      w="100%"
+      minH="100vh"
+      bg="#F7F8FA"
+    >
+      <Sidebar />
+
+      <VStack
+        flex={1}
+        align="start"
+        px={10}
+        pt={10}
+        pb={10}
+        gap={8}
+      >
+        {/* Breadcrumb */}
+        <HStack
+          fontSize="lg"
+          gap={1}
         >
-            <Portal>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                <Dialog.Content>
-                <HStack>
-                    <Flex
-                        w="100%"
-                        align="center"
-                        p={2}
+          <Text
+            fontWeight="semibold"
+            color="gray.700"
+          >
+            Event Catalog
+          </Text>
+          <Text color="gray.400">›</Text>
+          <Text
+            color="blue.500"
+            cursor="pointer"
+            onClick={onClose}
+          >
+            View Event
+          </Text>
+        </HStack>
+
+        {/* Title */}
+        <Text
+          fontSize="4xl"
+          fontWeight="semibold"
+          color="gray.800"
+        >
+          Create New Event
+        </Text>
+
+        {/* Tabs */}
+        <HStack
+          gap={0}
+          borderBottom="2px solid #E2E8F0"
+          w="100%"
+        >
+          {tabs.map((tab) => (
+            <Button
+              key={tab.key}
+              variant="ghost"
+              borderRadius={0}
+              borderBottom={
+                activeTab === tab.key
+                  ? "2px solid #2B6CB0"
+                  : "2px solid transparent"
+              }
+              mb="-2px"
+              color={activeTab === tab.key ? "blue.600" : "gray.400"}
+              fontWeight={activeTab === tab.key ? "semibold" : "normal"}
+              px={4}
+              py={3}
+              fontSize="sm"
+              onClick={() => setActiveTab(tab.key)}
+              _hover={{ bg: "transparent", color: "gray.600" }}
+            >
+              <MdOutlineMailOutline />
+              {tab.label}
+            </Button>
+          ))}
+        </HStack>
+
+        {/* Form card */}
+        {activeTab === "header" && (
+          <Box
+            w="100%"
+            bg="white"
+            border="1px solid #E2E8F0"
+            borderRadius="lg"
+            p={8}
+          >
+            <VStack
+              align="start"
+              gap={8}
+              w="100%"
+            >
+              {/* Row 1: Clinic Type + Event Name */}
+              <HStack
+                w="100%"
+                gap={8}
+                align="end"
+              >
+                <VStack
+                  align="start"
+                  gap={1}
+                  w="260px"
+                  flexShrink={0}
+                >
+                  <Label>Clinic Type</Label>
+                  <NativeSelect.Root w="100%">
+                    <NativeSelect.Field
+                      placeholder="Type to search"
+                      value={clinicType}
+                      onChange={(e) => setClinicType(e.target.value)}
+                      style={selectStyle}
                     >
-                        <IconButton
-                            aria-label="Back"
-                            onClick={onClose}
-                            bg="white"
-                            mr={2}
-                        >
-                            <FaArrowCircleLeft size={24} />
-                        </IconButton>
-                        <Text color="black"> Back to ELDR event catalog </Text>
-                    </Flex>
-                </HStack>
-                <Dialog.Body>
-                <VStack align = "start">
-                    <Text 
-                        fontWeight = "bold" 
-                        fontSize = "lg"
-                    > 
-                        Create New Event
-                    </Text>
-                    <Flex 
-                        w = "80%"
-                        bg = "#EDEDED"
-                        p = {8}
-                    >
-                        <Grid
-                            templateColumns="repeat(2,1fr)"
-                            rowGap = {4}
-                            columnGap = {10}
-                        >
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontSize = "lg"
-                                        fontWeight="bold"
-                                    >
-                                        Event Name
-                                    </Text>
-                                    <Input
-                                        placeholder="Type here..."
-                                        bg="#D9D9D9"
-                                        borderRadius="lg"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                    />
-                                </VStack>
-                            </GridItem>
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontSize = "lg"
-                                        fontWeight="bold"
-                                    >
-                                        Select Event Type
-                                    </Text>
-                                    <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                        <NativeSelect.Field
-                                            placeholder="Select one"
-                                            value={eventType}
-                                            onChange={(e) => setEventType(e.target.value)}
-                                        >
-                                            <option value="clinic">clinic</option>
-                                            <option value="workshop">workshop</option>
-                                        </NativeSelect.Field>
-                                    </NativeSelect.Root>
-                                </VStack>
-                            </GridItem>
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontSize = "lg"
-                                        fontWeight="bold"
-                                    >
-                                        Date of Event
-                                    </Text>
-                                    <DatePicker
-                                        selected={eventDate}
-                                        onChange={(date) => setEventDate(date)}
-                                        customInput={
-                                            <InputGroup
-                                                endElement={<Icon as={IoCalendarSharp} />}
-                                            >
-                                                <Input
-                                                    bg="#D9D9D9"
-                                                    borderRadius="lg"
-                                                    placeholder="Select date"
-                                                    w="100%"
-                                                />
-                                            </InputGroup>
-                                        }
-                                    />
-                                </VStack>
-                            </GridItem>
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontSize = "lg"
-                                        fontWeight="bold"
-                                    >
-                                        Timeframe
-                                    </Text>
-                                    <HStack>
-                                        <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                            <NativeSelect.Field
-                                                placeholder="Select start time"
-                                                value={startTime}
-                                                onChange={(e) => setStartTime(e.target.value)}
-                                            >
-                                                {timeOptions.map((time) => (
-                                                    <option key={time.value} value={time.value}>
-                                                        {time.label}
-                                                    </option>
-                                                ))}
-                                            </NativeSelect.Field>
-                                        </NativeSelect.Root>
-                                        <Text
-                                            fontSize="md"
-                                            fontWeight="bold"
-                                        >
-                                            to
-                                        </Text>
-                                        <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                            <NativeSelect.Field
-                                                placeholder="Select end time"
-                                                value={endTime}
-                                                onChange={(e) => setEndTime(e.target.value)}
-                                            >
-                                                {timeOptions.map((time) => (
-                                                    <option key={time.value} value={time.value}>
-                                                        {time.label}
-                                                    </option>
-                                                ))}
-                                            </NativeSelect.Field>
-                                        </NativeSelect.Root>
-                                    </HStack>
-                                </VStack>
-                            </GridItem>
-                        </Grid>
-                    </Flex>
-                    <Flex
-                        w = "80%"
-                        bg = "#EDEDED"
-                        p = {8}
-                    >
-                        <Grid
-                            templateColumns="repeat(2,1fr)"
-                            rowGap = {4}
-                            columnGap = {10}
-                        >
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontSize = "lg"
-                                        fontWeight="bold"
-                                    >
-                                        Capacity
-                                    </Text>
-                                    <HStack>
-                                        <Text 
-                                            fontSize= "sm"
-                                            fontWeight = "bold"
-                                            color = "grey"
-                                        >
-                                            opt.
-                                        </Text>
-                                        <Text
-                                            fontSize = "sm"
-                                            fontWeight = "bold"
-                                        >
-                                            Minimum Volunteers Needed
-                                        </Text>
-                                    </HStack>
-                                    <Input 
-                                        placeholder = "Input number"
-                                        bg = "#D9D9D9"
-                                        borderRadius="lg"
-                                        type="number"
-                                        value={minVolunteers}
-                                        onChange={(e) => setMinVolunteers(e.target.value)}
-                                    />
-                                </VStack>
-                            </GridItem>
-                            <GridItem>
-                                <VStack align = "start">
-                                    <HStack>
-                                        <Text
-                                            fontWeight = "bold"
-                                            color = "grey"
-                                            fontSize = "small"
-                                        >
-                                            opt.
-                                        </Text>
-                                        <Text
-                                            fontWeight = "bold"
-                                            fontSize = "small"
-                                        >
-                                            Tags
-                                        </Text>
-                                    </HStack>
-                                    <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                        <NativeSelect.Field placeholder="Select applicable tags">
-                                            <option value="workshop">workshop</option>
-                                            <option value="clinic">clinic</option>
-                                        </NativeSelect.Field>
-                                    </NativeSelect.Root>
-                                </VStack>
-                            </GridItem>
-                            <GridItem>
-                                <VStack align = "start">
-                                    <Text
-                                        fontWeight = "bold"
-                                        fontSize = "sm"
-                                    >
-                                        Maximum Cap of Volunteers
-                                    </Text>
-                                    <Input 
-                                        placeholder = "Input number"
-                                        bg = "#D9D9D9"
-                                        borderRadius="lg"
-                                        type="number"
-                                        value={maxVolunteers}
-                                        onChange={(e) => setMaxVolunteers(e.target.value)}
-                                    />
-                                </VStack>
-                            </GridItem>
-                        </Grid>
-                    </Flex>
-                    <Flex
-                        w = "80%"
-                        bg = "#EDEDED"
-                        p = {8}
-                    >
-                        <VStack align = "start">
-                            <Text
-                                fontSize = "lg"
-                                fontWeight = "bold"
-                            >
-                                Email Reminder Timeline
-                            </Text>
-                            <Text
-                                fontSize = "md"
-                            >
-                                Your settings for this can be changed later down the line!
-                            </Text>
-                            <HStack>
-                                <Text
-                                    fontSize = "md"
-                                    fontWeight = "bold"
-                                >
-                                    One week before event date
-                                </Text>
-                                <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                    <NativeSelect.Field placeholder="Select email template" />
-                                </NativeSelect.Root>
-                            </HStack>
-                            <HStack>
-                                <Text
-                                    fontSize="md"
-                                    fontWeight="bold"
-                                >
-                                    Three days before event date
-                                </Text>
-                                <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                    <NativeSelect.Field placeholder="Select email template" />
-                                </NativeSelect.Root>
-                            </HStack>
-                            <HStack>
-                                <VStack align="start">
-                                    <Text
-                                        fontSize="md"
-                                        fontWeight="bold"
-                                    >
-                                        One day before event date*
-                                    </Text>
-                                    <Text fontSize="small"> Mandatory! </Text>
-                                </VStack>
-                                <NativeSelect.Root bg="#D9D9D9" borderRadius="lg">
-                                    <NativeSelect.Field placeholder="Select email template" />
-                                </NativeSelect.Root>
-                            </HStack>
-                        </VStack>
-                    </Flex>
-                    <Button 
-                        onClick={handleSubmit}
-                        colorScheme="blue"
-                        isLoading={isSubmitting}
-                        loadingText="Creating Event..."
-                    >
-                        Submit
-                    </Button>
+                      <option value="clinic">Clinic</option>
+                      <option value="workshop">Workshop</option>
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
                 </VStack>
-                </Dialog.Body>
-                <Dialog.Footer />
-                </Dialog.Content>
-                </Dialog.Positioner>
-            </Portal>
-        </Dialog.Root>
-    );
-}
+
+                <VStack
+                  align="start"
+                  gap={1}
+                  flex={1}
+                >
+                  <Label>Event Name</Label>
+                  <Input
+                    placeholder="Type here"
+                    value={eventName}
+                    onChange={(e) => setEventName(e.target.value)}
+                    {...fieldStyle}
+                    w="100%"
+                  />
+                </VStack>
+              </HStack>
+
+              {/* Row 2: Event Format + Location */}
+              <HStack
+                w="100%"
+                gap={8}
+                align="end"
+              >
+                <VStack
+                  align="start"
+                  gap={1}
+                  flexShrink={0}
+                >
+                  <Label>Event Format</Label>
+                  <NativeSelect.Root w="140px">
+                    <NativeSelect.Field
+                      value={eventFormat}
+                      onChange={(e) => setEventFormat(e.target.value)}
+                      style={{ ...selectStyle, color: "black" }}
+                    >
+                      <option value="In-Person">In-Person</option>
+                      <option value="Hybrid">Hybrid</option>
+                      <option value="Online">Online</option>
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                </VStack>
+
+                <VStack
+                  align="start"
+                  gap={1}
+                  flex={1}
+                >
+                  <Label>Location</Label>
+                  <HStack
+                    w="100%"
+                    gap={2}
+                  >
+                    {(eventFormat === "In-Person" ||
+                      eventFormat === "Hybrid") && (
+                      <>
+                        <Input
+                          placeholder="Address"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          {...fieldStyle}
+                          flex={2}
+                        />
+                        <Input
+                          placeholder="City"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          {...fieldStyle}
+                          w="110px"
+                        />
+                        <NativeSelect.Root w="95px">
+                          <NativeSelect.Field
+                            value={state}
+                            onChange={(e) => setState(e.target.value)}
+                            style={{ ...selectStyle, paddingLeft: "8px" }}
+                            placeholder="State"
+                          >
+                            {[
+                              "AL",
+                              "AK",
+                              "AZ",
+                              "AR",
+                              "CA",
+                              "CO",
+                              "CT",
+                              "DE",
+                              "FL",
+                              "GA",
+                              "HI",
+                              "ID",
+                              "IL",
+                              "IN",
+                              "IA",
+                              "KS",
+                              "KY",
+                              "LA",
+                              "ME",
+                              "MD",
+                              "MA",
+                              "MI",
+                              "MN",
+                              "MS",
+                              "MO",
+                              "MT",
+                              "NE",
+                              "NV",
+                              "NH",
+                              "NJ",
+                              "NM",
+                              "NY",
+                              "NC",
+                              "ND",
+                              "OH",
+                              "OK",
+                              "OR",
+                              "PA",
+                              "RI",
+                              "SC",
+                              "SD",
+                              "TN",
+                              "TX",
+                              "UT",
+                              "VT",
+                              "VA",
+                              "WA",
+                              "WV",
+                              "WI",
+                              "WY",
+                            ].map((s) => (
+                              <option
+                                key={s}
+                                value={s}
+                              >
+                                {s}
+                              </option>
+                            ))}
+                          </NativeSelect.Field>
+                        </NativeSelect.Root>
+                        <Input
+                          placeholder="Zip Code"
+                          value={zip}
+                          onChange={(e) => setZip(e.target.value)}
+                          {...fieldStyle}
+                          w="95px"
+                        />
+                      </>
+                    )}
+                    {(eventFormat === "Online" || eventFormat === "Hybrid") && (
+                      <Input
+                        placeholder="Zoom Link"
+                        value={zoomLink}
+                        onChange={(e) => setZoomLink(e.target.value)}
+                        {...fieldStyle}
+                        flex={1}
+                        minW="120px"
+                      />
+                    )}
+                  </HStack>
+                </VStack>
+              </HStack>
+
+              {/* Row 3: Date + Event Time + Target Number + Maximum */}
+              <HStack
+                w="100%"
+                gap={8}
+                align="end"
+              >
+                <VStack
+                  align="start"
+                  gap={1}
+                >
+                  <Label>Date</Label>
+                  <NativeSelect.Root w="180px">
+                    <NativeSelect.Field
+                      placeholder="Type to search"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      style={selectStyle}
+                    />
+                  </NativeSelect.Root>
+                </VStack>
+
+                <VStack
+                  align="start"
+                  gap={1}
+                >
+                  <Label>Event Time</Label>
+                  <HStack gap={2}>
+                    <Input
+                      placeholder="9:00"
+                      value={startTime}
+                      onChange={(e) => setStartTime(formatTime(e.target.value))}
+                      {...fieldStyle}
+                      w="70px"
+                      textAlign="center"
+                    />
+                    <NativeSelect.Root w="70px">
+                      <NativeSelect.Field
+                        value={startPeriod}
+                        onChange={(e) => setStartPeriod(e.target.value)}
+                        style={{
+                          ...selectStyle,
+                          paddingLeft: "8px",
+                          color: "black",
+                        }}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </NativeSelect.Field>
+                    </NativeSelect.Root>
+                    <Text color="gray.400">-</Text>
+                    <Input
+                      placeholder="12:00"
+                      value={endTime}
+                      onChange={(e) => setEndTime(formatTime(e.target.value))}
+                      {...fieldStyle}
+                      w="70px"
+                      textAlign="center"
+                    />
+                    <NativeSelect.Root w="70px">
+                      <NativeSelect.Field
+                        value={endPeriod}
+                        onChange={(e) => setEndPeriod(e.target.value)}
+                        style={{
+                          ...selectStyle,
+                          paddingLeft: "8px",
+                          color: "black",
+                        }}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </NativeSelect.Field>
+                    </NativeSelect.Root>
+                  </HStack>
+                </VStack>
+
+                <VStack
+                  align="start"
+                  gap={1}
+                >
+                  <Label>Target Number</Label>
+                  <Input
+                    placeholder="Type number"
+                    type="number"
+                    value={targetNumber}
+                    onChange={(e) => setTargetNumber(e.target.value)}
+                    {...fieldStyle}
+                    w="150px"
+                  />
+                </VStack>
+
+                <VStack
+                  align="start"
+                  gap={1}
+                >
+                  <Label>Maximum</Label>
+                  <Input
+                    placeholder="Type number"
+                    type="number"
+                    value={maximum}
+                    onChange={(e) => setMaximum(e.target.value)}
+                    {...fieldStyle}
+                    w="150px"
+                  />
+                </VStack>
+              </HStack>
+
+              {/* Row 4: Languages */}
+              <VStack
+                align="start"
+                gap={1}
+              >
+                <Label>Languages</Label>
+                <NativeSelect.Root w="220px">
+                  <NativeSelect.Field
+                    placeholder="Type number"
+                    value={languages}
+                    onChange={(e) => setLanguages(e.target.value)}
+                    style={selectStyle}
+                  >
+                    <option value="English">English</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="Mandarin">Mandarin</option>
+                    <option value="Vietnamese">Vietnamese</option>
+                    <option value="Tagalog">Tagalog</option>
+                  </NativeSelect.Field>
+                </NativeSelect.Root>
+              </VStack>
+            </VStack>
+          </Box>
+        )}
+
+        {activeTab !== "header" && (
+          <Flex
+            w="100%"
+            p={8}
+            bg="white"
+            border="1px solid #E2E8F0"
+            borderRadius="lg"
+            align="center"
+            justify="center"
+            minH="200px"
+          >
+            <Text
+              color="gray.400"
+              fontSize="sm"
+            >
+              {tabs.find((t) => t.key === activeTab)?.label}
+            </Text>
+          </Flex>
+        )}
+
+        {/* Action buttons */}
+        <HStack
+          w="100%"
+          justify="flex-end"
+          gap={3}
+          pt={2}
+        >
+          <Button
+            bg="#4A7FA5"
+            color="white"
+            borderRadius="md"
+            px={6}
+            fontSize="sm"
+            _hover={{ bg: "#2C5282" }}
+            onClick={handleSubmit}
+            loading={isSubmitting}
+            loadingText="Saving..."
+          >
+            Create &amp; Save Event
+          </Button>
+          <Button
+            variant="outline"
+            borderRadius="md"
+            px={6}
+            fontSize="sm"
+            border="1px solid #CBD5E0"
+            color="gray.600"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+        </HStack>
+      </VStack>
+    </Flex>
+  );
+};

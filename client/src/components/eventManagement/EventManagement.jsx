@@ -9,7 +9,6 @@ import {
   InputGroup,
   Tag,
   Text,
-  useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 
@@ -70,9 +69,9 @@ const renderLocation = (clinic) => {
 
 export const EventManagement = () => {
   const { backend } = useBackendContext();
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
+  const [view, setView] = useState("list");
 
   const fetchEvents = async () => {
     try {
@@ -99,6 +98,10 @@ export const EventManagement = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  if (view === "create") {
+    return <CreateEvent onClose={() => setView("list")} />;
+  }
 
   return (
     <Flex
@@ -156,16 +159,12 @@ export const EventManagement = () => {
             borderRadius="md"
             px={5}
             _hover={{ bg: "#2C5282" }}
-            onClick={onOpen}
+            onClick={() => setView("create")}
           >
             <LuCalendar />
             Create New Event
             <LuArrowRight />
           </Button>
-          <CreateEvent
-            isOpen={isOpen}
-            onClose={onClose}
-          />
         </Flex>
 
         {/* Event cards */}
