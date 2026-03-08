@@ -11,14 +11,13 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 
+import { NewCreatedEvent } from "./NewCreatedEvent";
 import { Sidebar } from "./SideBar";
 
 export const CreateEvent = ({ onClose }) => {
-  const { backend } = useBackendContext();
-
+  const [createdEvent, setCreatedEvent] = useState(null);
   const [activeTab, setActiveTab] = useState("header");
   const [clinicType, setClinicType] = useState("");
   const [eventName, setEventName] = useState("");
@@ -36,7 +35,6 @@ export const CreateEvent = ({ onClose }) => {
   const [targetNumber, setTargetNumber] = useState("");
   const [maximum, setMaximum] = useState("");
   const [languages, setLanguages] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const tabs = [
     { key: "header", label: "Header Info" },
@@ -73,30 +71,19 @@ export const CreateEvent = ({ onClose }) => {
     return digits.slice(0, -2) + ":" + digits.slice(-2);
   };
 
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-      const clinicData = {
-        name: eventName,
-        description: "test",
-        location: [address, city, state, zip].filter(Boolean).join(", "),
-        zoom_link: zoomLink,
-        time: `${startTime} ${startPeriod} - ${endTime} ${endPeriod}`,
-        date: date,
-        attendees: 0,
-        capacity: parseInt(maximum) || 0,
-        minAttendees: parseInt(targetNumber) || 0,
-        language: languages,
-        experience_level: "beginner", // TODO: Remove after yousef PR
-        parking: "",
-      };
-      await backend.post("/clinics", clinicData);
-      onClose();
-    } catch (error) {
-      console.error("Error creating event:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSubmit = () => {
+    setCreatedEvent({
+      name: eventName,
+      date: date,
+      time: `${startTime} ${startPeriod} - ${endTime} ${endPeriod}`,
+      location: [address, city, state, zip].filter(Boolean).join(", "),
+      zoom_link: zoomLink,
+      capacity: parseInt(maximum) || 0,
+      attendees: 0,
+      clinicType: clinicType,
+      eventFormat: eventFormat,
+      language: languages,
+    });
   };
 
   const Label = ({ children }) => (
@@ -119,6 +106,15 @@ export const CreateEvent = ({ onClose }) => {
       </Text>
     </HStack>
   );
+
+  if (createdEvent) {
+    return (
+      <NewCreatedEvent
+        eventData={createdEvent}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <Flex
@@ -407,14 +403,13 @@ export const CreateEvent = ({ onClose }) => {
                   gap={1}
                 >
                   <Label>Date</Label>
-                  <NativeSelect.Root w="180px">
-                    <NativeSelect.Field
-                      placeholder="Type to search"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      style={selectStyle}
-                    />
-                  </NativeSelect.Root>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    {...fieldStyle}
+                    w="180px"
+                  />
                 </VStack>
 
                 <VStack
@@ -562,8 +557,6 @@ export const CreateEvent = ({ onClose }) => {
             fontSize="sm"
             _hover={{ bg: "#2C5282" }}
             onClick={handleSubmit}
-            loading={isSubmitting}
-            loadingText="Saving..."
           >
             Create &amp; Save Event
           </Button>
