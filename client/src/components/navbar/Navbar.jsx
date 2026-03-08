@@ -1,10 +1,13 @@
+/*
+Volunteer Navbar
+Implement on all associated volunteer pages
+*/
+
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
 import { BriefcaseBusiness, ClipboardList } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
-  const navigate = useNavigate();
   return (
     <Flex
       as="nav"
@@ -55,8 +58,8 @@ export const Navbar = () => {
           <BriefcaseBusiness size={18} />
           <Text>Cases</Text>
         </Link>
-
-        <Link href = "/adm">
+        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP*/}
+        <Link href = "/volunteer-profile">
           <Avatar.Root size="sm">
             <Avatar.Fallback name="User" />
             <Avatar.Image src="" />
