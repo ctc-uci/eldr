@@ -19,18 +19,28 @@ clinicsRouter.post("/", async (req, res) => {
       capacity,
       max_target_roles,
       parking,
+      address,
+      city,
+      state,
+      zip,
+      type,
+      meeting_link,
     } = req.body;
 
-    // validate location matches a valid enum value
-    const validLocations = await db.query('SELECT unnest(enum_range(NULL::location_type))::text AS location');
-    if (!validLocations.some((loc) => loc.location === location)) {
-      const validLocationNames = validLocations.map((loc) => loc.location).join(", ");
-      return res.status(400).json({ message: `Invalid location. Must be one of ${validLocationNames}` });
+    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
+
+    if (
+      (location && !allowedLocationTypes.includes(location)) ||
+      (type && !allowedLocationTypes.includes(type))
+    ) {
+      return res.status(400).json({
+        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+      });
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, type, meeting_link)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
       [
         name,
         description,
@@ -43,6 +53,12 @@ clinicsRouter.post("/", async (req, res) => {
         capacity,
         max_target_roles,
         parking,
+        address,
+        city,
+        state,
+        zip,
+        type,
+        meeting_link,
       ]
     );
     res.status(201).json(keysToCamel(clinic[0]));
@@ -139,18 +155,45 @@ clinicsRouter.put("/:id", async (req, res) => {
       capacity,
       max_target_roles,
       parking,
+      address,
+      city,
+      state,
+      zip,
+      type,
+      meeting_link,
     } = req.body;
 
-    // validate location matches a valid enum value
-    const validLocations = await db.query('SELECT unnest(enum_range(NULL::location_type))::text AS location');
-    if (!validLocations.some((loc) => loc.location === location)) {
-      const validLocationNames = validLocations.map((loc) => loc.location).join(", ");
-      return res.status(400).json({ message: `Invalid location. Must be one of ${validLocationNames}` });
+    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
+
+    if (
+      (location && !allowedLocationTypes.includes(location)) ||
+      (type && !allowedLocationTypes.includes(type))
+    ) {
+      return res.status(400).json({
+        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+      });
     }
 
     const clinic = await db.query(
-      `UPDATE clinics SET name = $1, description = $2, location = $3, start_time = $4, end_time = $5, date = $6, attendees = $7, min_attendees = $8, capacity = $9, max_target_roles = $10, parking = $11
-       WHERE id = $12 RETURNING *`,
+      `UPDATE clinics SET 
+        name = $1, 
+        description = $2, 
+        location = $3, 
+        start_time = $4, 
+        end_time = $5, 
+        date = $6, 
+        attendees = $7, 
+        min_attendees = $8, 
+        capacity = $9, 
+        max_target_roles = $10, 
+        parking = $11,
+        address = $12,
+        city = $13,
+        state = $14,
+        zip = $15,
+        type = $16,
+        meeting_link = $17
+       WHERE id = $18 RETURNING *`,
       [
         name,
         description,
@@ -163,6 +206,12 @@ clinicsRouter.put("/:id", async (req, res) => {
         capacity,
         max_target_roles,
         parking,
+        address,
+        city,
+        state,
+        zip,
+        type,
+        meeting_link,
         id,
       ]
     );
