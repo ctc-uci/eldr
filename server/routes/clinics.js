@@ -1,3 +1,4 @@
+import { sendCalendarInvite } from "@/common/calendar";
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
@@ -34,7 +35,8 @@ clinicsRouter.post("/", async (req, res) => {
       (type && !allowedLocationTypes.includes(type))
     ) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message:
+          "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
       });
     }
 
@@ -122,7 +124,8 @@ clinicsRouter.put("/:id", async (req, res) => {
       (type && !allowedLocationTypes.includes(type))
     ) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message:
+          "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
       });
     }
 
@@ -281,7 +284,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
-      const data = await db.query(
+    const data = await db.query(
       `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
@@ -289,6 +292,25 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
         `,
       [volunteerId, clinicId]
     );
+
+    // Fetch volunteer email and clinic details for the calendar invite
+    try {
+      const volunteer = await db.query(
+        "SELECT email FROM volunteers WHERE id = $1",
+        [volunteerId]
+      );
+      const clinic = await db.query("SELECT * FROM clinics WHERE id = $1", [
+        clinicId,
+      ]);
+
+      if (volunteer.length > 0 && clinic.length > 0) {
+        sendCalendarInvite(volunteer[0].email, clinic[0]).catch((err) => {
+          console.error("Failed to send calendar invite:", err);
+        });
+      }
+    } catch (inviteError) {
+      console.error("Error fetching data for calendar invite:", inviteError);
+    }
 
     res.status(200).json(keysToCamel(data));
   } catch (err) {
