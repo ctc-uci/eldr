@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
+  Badge,
   Box,
   Button,
+  Combobox,
   Flex,
   HStack,
   Input,
   NativeSelect,
+  Portal,
   Text,
   VStack,
+  Wrap,
+  createListCollection,
 } from "@chakra-ui/react";
 
 import { MdOutlineMailOutline } from "react-icons/md";
@@ -17,7 +22,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
   const [activeTab, setActiveTab] = useState("header");
   const [clinicType, setClinicType] = useState("");
   const [eventName, setEventName] = useState("");
-  const [eventFormat, setEventFormat] = useState("Hybrid");
+  const [eventFormat, setEventFormat] = useState("In-Person");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -30,7 +35,20 @@ export const CreateEvent = ({ onClose, onCreated }) => {
   const [endPeriod, setEndPeriod] = useState("PM");
   const [targetNumber, setTargetNumber] = useState("");
   const [maximum, setMaximum] = useState("");
-  const [languages, setLanguages] = useState("");
+  const [languages, setLanguages] = useState([]);
+  const [languageSearch, setLanguageSearch] = useState("");
+
+  const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Tagalog"];
+
+  const filteredLanguages = useMemo(
+    () => LANGUAGE_OPTIONS.filter((l) => l.toLowerCase().includes(languageSearch.toLowerCase())),
+    [languageSearch],
+  );
+
+  const languageCollection = useMemo(
+    () => createListCollection({ items: filteredLanguages }),
+    [filteredLanguages],
+  );
 
   const tabs = [
     { key: "header", label: "Header Info" },
@@ -202,15 +220,17 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                   flexShrink={0}
                 >
                   <Label>Clinic Type</Label>
+                  {/* TODO: Pull clinic type options from DB once DB is restructured */}
                   <NativeSelect.Root w="100%">
                     <NativeSelect.Field
-                      placeholder="Type to search"
+                      placeholder="Select"
                       value={clinicType}
                       onChange={(e) => setClinicType(e.target.value)}
                       style={selectStyle}
                     >
-                      <option value="clinic">Clinic</option>
-                      <option value="workshop">Workshop</option>
+                      <option value="Estate Planning">Estate Planning</option>
+                      <option value="Limited Conservatorship">Limited Conservatorship</option>
+                      <option value="Probate Note Clearing">Probate Note Clearing</option>
                     </NativeSelect.Field>
                   </NativeSelect.Root>
                 </VStack>
@@ -485,20 +505,82 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                 gap={1}
               >
                 <Label>Languages</Label>
-                <NativeSelect.Root w="220px">
-                  <NativeSelect.Field
-                    placeholder="Type number"
-                    value={languages}
-                    onChange={(e) => setLanguages(e.target.value)}
-                    style={selectStyle}
+                <Combobox.Root
+                  multiple
+                  closeOnSelect
+                  width="320px"
+                  value={languages}
+                  collection={languageCollection}
+                  onValueChange={(details) => setLanguages(details.value)}
+                  onInputValueChange={(details) => setLanguageSearch(details.inputValue)}
+                >
+                  <Combobox.Control
+                    style={{
+                      ...selectStyle,
+                      height: "auto",
+                      minHeight: "44px",
+                      display: "flex",
+                      alignItems: "center",
+                      paddingRight: "8px",
+                    }}
                   >
-                    <option value="English">English</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="Mandarin">Mandarin</option>
-                    <option value="Vietnamese">Vietnamese</option>
-                    <option value="Tagalog">Tagalog</option>
-                  </NativeSelect.Field>
-                </NativeSelect.Root>
+                    <Wrap gap="1" flex={1} py={1}>
+                      {languages.map((lang) => (
+                        <Badge key={lang} colorScheme="blue" fontSize="xs" display="flex" alignItems="center" gap="1">
+                          {lang}
+                          <Box
+                            as="span"
+                            cursor="pointer"
+                            ml="4px"
+                            fontWeight="bold"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLanguages(languages.filter((l) => l !== lang));
+                            }}
+                          >
+                            ×
+                          </Box>
+                        </Badge>
+                      ))}
+                      <Combobox.Input
+                        placeholder={languages.length === 0 ? "Select languages" : ""}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && languages.length > 0) {
+                            setLanguages(languages.slice(0, -1));
+                          }
+                        }}
+                        style={{
+                          border: "none",
+                          outline: "none",
+                          background: "transparent",
+                          fontSize: "14px",
+                          color: "#718096",
+                          minWidth: "80px",
+                          flex: 1,
+                        }}
+                      />
+                    </Wrap>
+                    <Combobox.IndicatorGroup>
+                      <Combobox.Trigger />
+                    </Combobox.IndicatorGroup>
+                  </Combobox.Control>
+                  <Portal>
+                    <Combobox.Positioner>
+                      <Combobox.Content>
+                        <Combobox.ItemGroup>
+                          <Combobox.ItemGroupLabel>Languages</Combobox.ItemGroupLabel>
+                          {filteredLanguages.map((lang) => (
+                            <Combobox.Item key={lang} item={lang}>
+                              {lang}
+                              <Combobox.ItemIndicator />
+                            </Combobox.Item>
+                          ))}
+                          <Combobox.Empty>No languages found</Combobox.Empty>
+                        </Combobox.ItemGroup>
+                      </Combobox.Content>
+                    </Combobox.Positioner>
+                  </Portal>
+                </Combobox.Root>
               </VStack>
             </VStack>
           </Box>

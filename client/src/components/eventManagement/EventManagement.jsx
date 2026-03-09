@@ -60,13 +60,15 @@ const getEventMode = (tags = []) => {
 // Build location string based on event mode
 const renderLocation = (clinic) => {
   const mode = getEventMode(clinic.tags);
-  const address = clinic.location;
-  const zoom = clinic.zoomLink || clinic.zoom_link;
+  const link = clinic.meetingLink;
+  const inPersonAddress = [clinic.address, clinic.city, clinic.state, clinic.zip]
+    .filter(Boolean)
+    .join(", ");
 
-  if (mode === "In-Person") return address || "";
-  if (mode === "Online") return zoom || "";
-  if (mode === "Hybrid") return [address, zoom].filter(Boolean).join(" | ");
-  return address || "";
+  if (mode === "In-Person") return inPersonAddress;
+  if (mode === "Online") return link || "";
+  if (mode === "Hybrid") return [inPersonAddress, link].filter(Boolean).join(" | ");
+  return inPersonAddress;
 };
 
 export const EventManagement = () => {
