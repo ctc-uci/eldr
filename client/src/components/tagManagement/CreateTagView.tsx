@@ -56,7 +56,7 @@ export function CreateTagView({
   }, []);
 
   const handleSubmit = async () => {
-    if (!tagName.trim() || !applyTo || !description.trim()) return;
+    if (!tagName.trim() || !description.trim()) return;
 
     try {
       setIsSaving(true);

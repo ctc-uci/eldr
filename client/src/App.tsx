@@ -64,12 +64,12 @@ const App = () => {
                   element = {<AdminPassReset/>}
                 >
                 </Route>
-                
+
                 {/* <Route
                   path="/volunteerProfile"
                   element={<VolunteerProfile />}
                 /> */}
-                
+
                 <Route
                   path="/email"
                   element={<EmailTemplateManagement />}
@@ -86,7 +86,7 @@ const App = () => {
                   path="/catalog"
                   element={<CaseCatalog />}
                 /> */}
-                
+
                 {/* <Route
                   path="/volunteer-management"
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
@@ -113,12 +113,12 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                <Route 
+                <Route
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
                 <Route
-                  path="/manage-tags"
+                  path="/manage-tags/*"
                   element={<TagManagement />}
                 />
                 {/* <Route
@@ -129,7 +129,7 @@ const App = () => {
                   path="/caseManagement"
                   element={<CaseManagement />}
                 /> */}
-                
+
                 {/* Playground Routes (Don't Touch!) */}
                 <Route
                   path="/playground"

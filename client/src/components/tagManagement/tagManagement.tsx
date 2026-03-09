@@ -17,6 +17,7 @@ import {
   Tag,
   Tags,
 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { buildAppliedTo, type TagItem } from "./types";
 import { StaffSidebar } from "./StaffSidebar";
@@ -41,12 +42,14 @@ type BackendTag = {
 
 export const TagManagement = () => {
   const { backend } = useBackendContext();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tags, setTags] = useState<TagItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [view, setView] = useState<"list" | "create" | "edit">("list");
-  const [editingTag, setEditingTag] = useState<TagItem | null>(null);
+  const tagFromState = (location.state as { tag?: TagItem } | null)?.tag ?? null;
+  const editingTag = tagFromState;
 
   const sortParam =
     activeTab === "most-used"
@@ -97,8 +100,7 @@ export const TagManagement = () => {
       setExpandedId(null);
 
       if (editingTag?.id === id) {
-        setEditingTag(null);
-        setView("list");
+        navigate("/manage-tags");
       }
     } catch (e) {
       console.error("Failed to delete tag", e);
@@ -109,8 +111,7 @@ export const TagManagement = () => {
     const selectedTag = tags.find((t) => t.id === id);
     if (!selectedTag) return;
 
-    setEditingTag(selectedTag);
-    setView("edit");
+    navigate("/manage-tags/edit", { state: { tag: selectedTag } });
   };
 
   const handleToggleExpand = (id: number) => {
@@ -125,7 +126,7 @@ export const TagManagement = () => {
       });
 
       await fetchTags();
-      setView("list");
+      navigate("/manage-tags");
     } catch (e) {
       console.error("Failed to create tag", e);
     }
@@ -140,35 +141,42 @@ export const TagManagement = () => {
         description: updatedTag.description,
       });
 
-      setEditingTag(null);
       await fetchTags();
-      setView("list");
+      navigate("/manage-tags");
     } catch (e) {
       console.error("Failed to update tag", e);
     }
   };
 
   const handleCancelCreate = () => {
-    setView("list");
+    navigate("/manage-tags");
   };
 
   const handleCancelEdit = () => {
-    setEditingTag(null);
-    setView("list");
+    navigate("/manage-tags");
   };
+
+  const isCreateRoute = location.pathname.endsWith("/create");
+  const isEditRoute = location.pathname.endsWith("/edit") && !!editingTag;
+
+  useEffect(() => {
+    if (location.pathname.endsWith("/edit") && !tagFromState) {
+      navigate("/manage-tags", { replace: true });
+    }
+  }, [location.pathname, tagFromState, navigate]);
 
   return (
     <Flex h="100vh" bg="white">
       <StaffSidebar />
 
-      {view === "create" ? (
+      {isCreateRoute ? (
         <CreateTagView
           onCancel={handleCancelCreate}
           onSave={handleCreateTag}
           pageTitle="Create New Tag"
           submitLabel="Create & Save"
         />
-      ) : view === "edit" && editingTag ? (
+      ) : isEditRoute && editingTag ? (
         <CreateTagView
           onCancel={handleCancelEdit}
           onSave={handleUpdateTag}
@@ -200,7 +208,7 @@ export const TagManagement = () => {
               fontWeight={500}
               _hover={{ bg: "#4a86a8" }}
               flexShrink={0}
-              onClick={() => setView("create")}
+              onClick={() => navigate("/manage-tags/create")}
             >
               <Plus size={20} />
               Create Tag
