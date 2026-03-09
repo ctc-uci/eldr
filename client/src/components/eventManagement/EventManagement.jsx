@@ -18,7 +18,7 @@ import { CiSearch } from "react-icons/ci";
 import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
-import { Sidebar } from "../Sidebar";
+import { Sidebar } from "@/components/Sidebar";
 import { CreateEvent } from "./createEvent";
 import { NewCreatedEvent } from "./NewCreatedEvent";
 
