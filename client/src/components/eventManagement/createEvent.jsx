@@ -13,11 +13,7 @@ import {
 
 import { MdOutlineMailOutline } from "react-icons/md";
 
-import { NewCreatedEvent } from "./NewCreatedEvent";
-import { Sidebar } from "./SideBar";
-
-export const CreateEvent = ({ onClose }) => {
-  const [createdEvent, setCreatedEvent] = useState(null);
+export const CreateEvent = ({ onClose, onCreated }) => {
   const [activeTab, setActiveTab] = useState("header");
   const [clinicType, setClinicType] = useState("");
   const [eventName, setEventName] = useState("");
@@ -72,7 +68,7 @@ export const CreateEvent = ({ onClose }) => {
   };
 
   const handleSubmit = () => {
-    setCreatedEvent({
+    onCreated({
       name: eventName,
       date: date,
       time: `${startTime} ${startPeriod} - ${endTime} ${endPeriod}`,
@@ -107,31 +103,17 @@ export const CreateEvent = ({ onClose }) => {
     </HStack>
   );
 
-  if (createdEvent) {
-    return (
-      <NewCreatedEvent
-        eventData={createdEvent}
-        onClose={onClose}
-      />
-    );
-  }
-
   return (
-    <Flex
+    <VStack
       w="100%"
       minH="100vh"
       bg="#F7F8FA"
+      align="start"
+      px={10}
+      pt={10}
+      pb={10}
+      gap={8}
     >
-      <Sidebar />
-
-      <VStack
-        flex={1}
-        align="start"
-        px={10}
-        pt={10}
-        pb={10}
-        gap={8}
-      >
         {/* Breadcrumb */}
         <HStack
           fontSize="lg"
@@ -572,7 +554,6 @@ export const CreateEvent = ({ onClose }) => {
             Cancel
           </Button>
         </HStack>
-      </VStack>
-    </Flex>
+    </VStack>
   );
 };

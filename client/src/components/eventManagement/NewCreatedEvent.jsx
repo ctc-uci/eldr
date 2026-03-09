@@ -10,7 +10,6 @@ import {
 } from "react-icons/lu";
 import { MdOutlineMailOutline } from "react-icons/md";
 
-import { Sidebar } from "./SideBar";
 
 export const NewCreatedEvent = ({ eventData, onClose }) => {
   const {
@@ -34,21 +33,16 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
   const activeTab = "details";
 
   return (
-    <Flex
+    <VStack
       w="100%"
       minH="100vh"
       bg="#F7F8FA"
+      align="start"
+      px={10}
+      pt={10}
+      pb={10}
+      gap={6}
     >
-      <Sidebar />
-
-      <VStack
-        flex={1}
-        align="start"
-        px={10}
-        pt={10}
-        pb={10}
-        gap={6}
-      >
         {/* Breadcrumb */}
         <HStack
           fontSize="lg"
@@ -297,7 +291,6 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
             </VStack>
           </Box>
         </Box>
-      </VStack>
-    </Flex>
+    </VStack>
   );
 };

@@ -20,7 +20,6 @@ import {
   NewTemplatePopover,
   NewFolderPopover,
   EmptyFolderState,
-  Sidebar,
   NewTemplateSection,
   SaveTemplatePopover,
   FolderNotFoundModal,

@@ -70,7 +70,7 @@ export const Sidebar = () => {
               icon={item.icon}
               label={item.label}
               active={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => item.path && navigate(item.path)}
             />
           ))}
         </VStack>
@@ -79,12 +79,14 @@ export const Sidebar = () => {
         px={2}
         pb={2}
       >
+        {/* User avatar placeholder, bottom left */}
         <Box
           boxSize="36px"
           borderRadius="full"
           overflow="hidden"
           cursor="pointer"
         >
+          {/** @TODO: replace with actual user avatar */}
           <Image
             src="https://randomuser.me/api/portraits/men/67.jpg"
             alt="User"

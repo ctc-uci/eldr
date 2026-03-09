@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  Box,
   Button,
   Card,
   Flex,
@@ -17,8 +18,9 @@ import { CiSearch } from "react-icons/ci";
 import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
+import { Sidebar } from "../Sidebar";
 import { CreateEvent } from "./createEvent";
-import { Sidebar } from "./SideBar";
+import { NewCreatedEvent } from "./NewCreatedEvent";
 
 const parseTimestamp = (str) => {
   if (!str) return null;
@@ -71,7 +73,8 @@ export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
-  const [view, setView] = useState("list");
+  const [view, setView] = useState("list"); // "list" | "create" | "created"
+  const [createdEventData, setCreatedEventData] = useState(null);
 
   const fetchEvents = async () => {
     try {
@@ -99,217 +102,229 @@ export const EventManagement = () => {
     fetchEvents();
   }, []);
 
-  if (view === "create") {
-    return <CreateEvent onClose={() => setView("list")} />;
-  }
-
   return (
-    <Flex
-      w="100%"
-      minH="100vh"
-    >
-      {/* Sidebar */}
+    <Flex minH="100vh">
       <Sidebar />
-
-      <VStack
-        w="100%"
-        minH="100vh"
-        bg="#F5F5F5"
-        p={6}
-        gap={5}
-      >
-        {/* Top bar */}
-        <Flex
-          w="100%"
-          align="center"
-          gap={4}
-        >
-          <Button
-            bg="#2D3748"
-            color="white"
-            borderRadius="md"
-            px={5}
-            _hover={{ bg: "#1A202C" }}
+      <Box flex="1">
+        {view === "list" && (
+          <VStack
+            w="100%"
+            minH="100vh"
+            bg="#F5F5F5"
+            p={6}
+            gap={5}
           >
-            <LuSlidersHorizontal />
-            Filter & Sort
-          </Button>
-
-          <InputGroup
-            flex={1}
-            bg="white"
-            borderRadius="md"
-            startElement={
-              <CiSearch
-                color="gray"
-                size="20"
-              />
-            }
-          >
-            <Input
-              placeholder="Search for a case..."
-              borderRadius="md"
-              border="1px solid #E2E8F0"
-            />
-          </InputGroup>
-
-          <Button
-            bg="#2B6CB0"
-            color="white"
-            borderRadius="md"
-            px={5}
-            _hover={{ bg: "#2C5282" }}
-            onClick={() => setView("create")}
-          >
-            <LuCalendar />
-            Create New Event
-            <LuArrowRight />
-          </Button>
-        </Flex>
-
-        {/* Event cards */}
-        <VStack
-          w="100%"
-          gap={4}
-        >
-          {clinics.map((clinic) => {
-            const mode = getEventMode(clinic.tags);
-            const locationStr = renderLocation(clinic);
-            const otherTags = clinic.tags?.filter((t) => {
-              const name = (t.tag || t.name || "").toLowerCase();
-              return !["hybrid", "online", "in-person"].includes(name);
-            });
-
-            return (
-              <Card.Root
-                key={clinic.id}
-                w="100%"
-                borderRadius="lg"
-                border="1px solid #E2E8F0"
-                bg="white"
-                shadow="none"
-                cursor="pointer"
-                _hover={{ shadow: "sm" }}
-                onClick={() => navigate(`/events/${clinic.id}`)}
+            {/* Top bar */}
+            <Flex
+              w="100%"
+              align="center"
+              gap={4}
+            >
+              <Button
+                bg="#2D3748"
+                color="white"
+                borderRadius="md"
+                px={5}
+                _hover={{ bg: "#1A202C" }}
               >
-                <Card.Body
-                  px={6}
-                  py={4}
-                >
-                  <VStack
-                    align="start"
-                    gap={2}
+                <LuSlidersHorizontal />
+                Filter &amp; Sort
+              </Button>
+
+              <InputGroup
+                flex={1}
+                bg="white"
+                borderRadius="md"
+                startElement={
+                  <CiSearch
+                    color="gray"
+                    size="20"
+                  />
+                }
+              >
+                <Input
+                  placeholder="Search for a case..."
+                  borderRadius="md"
+                  border="1px solid #E2E8F0"
+                />
+              </InputGroup>
+
+              <Button
+                bg="#2B6CB0"
+                color="white"
+                borderRadius="md"
+                px={5}
+                _hover={{ bg: "#2C5282" }}
+                onClick={() => setView("create")}
+              >
+                <LuCalendar />
+                Create New Event
+                <LuArrowRight />
+              </Button>
+            </Flex>
+
+            {/* Event cards */}
+            <VStack
+              w="100%"
+              gap={4}
+            >
+              {clinics.map((clinic) => {
+                const mode = getEventMode(clinic.tags);
+                const locationStr = renderLocation(clinic);
+                const otherTags = clinic.tags?.filter((t) => {
+                  const name = (t.tag || t.name || "").toLowerCase();
+                  return !["hybrid", "online", "in-person"].includes(name);
+                });
+
+                return (
+                  <Card.Root
+                    key={clinic.id}
+                    w="100%"
+                    borderRadius="lg"
+                    border="1px solid #E2E8F0"
+                    bg="white"
+                    shadow="none"
+                    cursor="pointer"
+                    _hover={{ shadow: "sm" }}
+                    onClick={() => navigate(`/events/${clinic.id}`)}
                   >
-                    {/* Date/time row */}
-                    <Flex
-                      w="100%"
-                      justify="space-between"
-                      align="center"
+                    <Card.Body
+                      px={6}
+                      py={4}
                     >
-                      <Text
-                        fontSize="sm"
-                        color="gray.500"
+                      <VStack
+                        align="start"
+                        gap={2}
                       >
-                        {formatDate(clinic.date)} • {formatTime(clinic.startTime)} -{" "}
-                        {formatTime(clinic.endTime)}
-                      </Text>
-                      <Text
-                        fontSize="sm"
-                        color="gray.500"
-                      >
-                        {clinic.attendees < clinic.minAttendees
-                          ? `${clinic.minAttendees - clinic.attendees} spots needed`
-                          : `${clinic.capacity - clinic.attendees} spots left`}
-                      </Text>
-                    </Flex>
-
-                    {/* Title */}
-                    <Text
-                      fontSize="lg"
-                      fontWeight="bold"
-                    >
-                      {clinic.name}
-                    </Text>
-
-                    {/* Location */}
-                    {locationStr && (
-                      <Text
-                        fontSize="sm"
-                        color="gray.600"
-                      >
-                        {locationStr}
-                      </Text>
-                    )}
-
-                    {/* Tags */}
-                    <HStack
-                      gap={2}
-                      mt={1}
-                    >
-                      {/* Always show Clinic Type tag */}
-                      <Tag.Root
-                        size="md"
-                        borderRadius="md"
-                        border="0.5px solid"
-                        borderColor="gray.200"
-                        bg="gray.100"
-                        px={2}
-                        py={1}
-                      >
-                        <Tag.Label
-                          fontSize="xs"
-                          fontWeight="medium"
+                        {/* Date/time row */}
+                        <Flex
+                          w="100%"
+                          justify="space-between"
+                          align="center"
                         >
-                          Clinic Type
-                        </Tag.Label>
-                      </Tag.Root>
-
-                      {/* Show event mode tag (In-Person / Hybrid / Online) */}
-                      <Tag.Root
-                        size="md"
-                        borderRadius="md"
-                        border="0.5px solid"
-                        borderColor="gray.200"
-                        bg="gray.100"
-                        px={2}
-                        py={1}
-                      >
-                        <Tag.Label
-                          fontSize="xs"
-                          fontWeight="medium"
-                        >
-                          {mode}
-                        </Tag.Label>
-                      </Tag.Root>
-
-                      {/* Remaining tags (e.g. Language) */}
-                      {otherTags?.map((t) => (
-                        <Tag.Root
-                          key={t.id}
-                          size="md"
-                          borderRadius="md"
-                          border="0.5px solid"
-                          borderColor="gray.200"
-                          bg="gray.100"
-                          px={2}
-                          py={1}
-                        >
-                          <Tag.Label
-                            fontSize="xs"
-                            fontWeight="medium"
+                          <Text
+                            fontSize="sm"
+                            color="gray.500"
                           >
-                            {t.tag}
-                          </Tag.Label>
-                        </Tag.Root>
-                      ))}
-                    </HStack>
-                  </VStack>
-                </Card.Body>
-              </Card.Root>
-            );
-          })}
-        </VStack>
-      </VStack>
+                            {formatDate(clinic.date)} • {formatTime(clinic.startTime)} -{" "}
+                            {formatTime(clinic.endTime)}
+                          </Text>
+                          <Text
+                            fontSize="sm"
+                            color="gray.500"
+                          >
+                            {clinic.attendees < clinic.minAttendees
+                              ? `${clinic.minAttendees - clinic.attendees} spots needed`
+                              : `${clinic.capacity - clinic.attendees} spots left`}
+                          </Text>
+                        </Flex>
+
+                        {/* Title */}
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                        >
+                          {clinic.name}
+                        </Text>
+
+                        {/* Location */}
+                        {locationStr && (
+                          <Text
+                            fontSize="sm"
+                            color="gray.600"
+                          >
+                            {locationStr}
+                          </Text>
+                        )}
+
+                        {/* Tags */}
+                        <HStack
+                          gap={2}
+                          mt={1}
+                        >
+                          {/* Always show Clinic Type tag */}
+                          <Tag.Root
+                            size="md"
+                            borderRadius="md"
+                            border="0.5px solid"
+                            borderColor="gray.200"
+                            bg="gray.100"
+                            px={2}
+                            py={1}
+                          >
+                            <Tag.Label
+                              fontSize="xs"
+                              fontWeight="medium"
+                            >
+                              Clinic Type
+                            </Tag.Label>
+                          </Tag.Root>
+
+                          {/* Show event mode tag (In-Person / Hybrid / Online) */}
+                          <Tag.Root
+                            size="md"
+                            borderRadius="md"
+                            border="0.5px solid"
+                            borderColor="gray.200"
+                            bg="gray.100"
+                            px={2}
+                            py={1}
+                          >
+                            <Tag.Label
+                              fontSize="xs"
+                              fontWeight="medium"
+                            >
+                              {mode}
+                            </Tag.Label>
+                          </Tag.Root>
+
+                          {/* Remaining tags (e.g. Language) */}
+                          {otherTags?.map((t) => (
+                            <Tag.Root
+                              key={t.id}
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
+                            >
+                              <Tag.Label
+                                fontSize="xs"
+                                fontWeight="medium"
+                              >
+                                {t.tag}
+                              </Tag.Label>
+                            </Tag.Root>
+                          ))}
+                        </HStack>
+                      </VStack>
+                    </Card.Body>
+                  </Card.Root>
+                );
+              })}
+            </VStack>
+          </VStack>
+        )}
+
+        {view === "create" && (
+          <CreateEvent
+            onClose={() => setView("list")}
+            onCreated={(data) => {
+              setCreatedEventData(data);
+              setView("created");
+            }}
+          />
+        )}
+
+        {view === "created" && (
+          <NewCreatedEvent
+            eventData={createdEventData}
+            onClose={() => setView("list")}
+          />
+        )}
+      </Box>
     </Flex>
   );
 };

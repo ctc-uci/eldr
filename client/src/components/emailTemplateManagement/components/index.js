@@ -7,7 +7,6 @@ export { InputPopover } from "./InputPopover";
 export { NewTemplatePopover } from "./NewTemplatePopover";
 export { NewFolderPopover } from "./NewFolderPopover";
 export { EmptyFolderState } from "./EmptyFolderState";
-export { Sidebar } from "./Sidebar";
 export { NewTemplateSection } from "./NewTemplateSection";
 export { SaveTemplatePopover } from "./SaveTemplatePopover";
 export { FolderNotFoundModal } from "./FolderNotFoundModal";
