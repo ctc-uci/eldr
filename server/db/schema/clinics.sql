@@ -3,13 +3,12 @@ CREATE TYPE clinic_type AS ENUM (
     'Estate Planning',
     'Limited Conservatorship',
     'Probate Note Clearing'
-);
+); -- Can add more types as needed
 
 CREATE TABLE clinics (
     id serial PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    location_type location_type,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     date DATE NOT NULL,
@@ -22,8 +21,9 @@ CREATE TABLE clinics (
     city TEXT,
     state TEXT,
     zip TEXT,
-    type clinic_type,
-    meeting_link TEXT
+    meeting_link TEXT,
+    location_type location_type,
+    type clinic_type
 );
 
 CREATE TABLE clinic_registration (
