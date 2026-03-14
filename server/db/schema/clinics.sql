@@ -21,8 +21,9 @@ CREATE TABLE clinics (
     meeting_link TEXT
 );
 
-CREATE TABLE clinic_attendance (
+CREATE TABLE clinic_registration (
     volunteer_id INTEGER REFERENCES volunteers(id) ON DELETE CASCADE,
     clinic_id INTEGER REFERENCES clinics(id) ON DELETE CASCADE,
+    has_attended BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (volunteer_id, clinic_id)
 );
