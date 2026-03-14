@@ -1,10 +1,15 @@
-CREATE TYPE location_type AS ENUM ('In-Person', 'Hybrid', 'Virtual');
+CREATE TYPE location_type AS ENUM ('in-person', 'hybrid', 'online');
+CREATE TYPE clinic_type AS ENUM (
+    'Estate Planning',
+    'Limited Conservatorship',
+    'Probate Note Clearing'
+);
 
 CREATE TABLE clinics (
     id serial PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    location location_type,
+    location_type location_type,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     date DATE NOT NULL,
@@ -17,7 +22,7 @@ CREATE TABLE clinics (
     city TEXT,
     state TEXT,
     zip TEXT,
-    type location_type,
+    type clinic_type,
     meeting_link TEXT
 );
 
