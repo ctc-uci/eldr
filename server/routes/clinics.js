@@ -4,13 +4,19 @@ import { Router } from "express";
 
 export const clinicsRouter = Router();
 
+const allowedLocationTypes = ["in-person", "hybrid", "online"];
+const allowedClinicTypes = [
+  "Estate Planning",
+  "Limited Conservatorship",
+  "Probate Note Clearing",
+];
+
 // Create a workshop
 clinicsRouter.post("/", async (req, res) => {
   try {
     const {
       name,
       description,
-      location,
       start_time,
       end_time,
       date,
@@ -23,28 +29,30 @@ clinicsRouter.post("/", async (req, res) => {
       city,
       state,
       zip,
-      type,
       meeting_link,
+      location_type,
+      type,
     } = req.body;
 
-    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
-
-    if (
-      (location && !allowedLocationTypes.includes(location)) ||
-      (type && !allowedLocationTypes.includes(type))
-    ) {
+    if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+      });
+    }
+
+    if (type && !allowedClinicTypes.includes(type)) {
+      return res.status(400).json({
+        message:
+          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
       });
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, type, meeting_link)
+      `INSERT INTO clinics (name, description, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
       [
         name,
         description,
-        location,
         start_time,
         end_time,
         date,
@@ -57,8 +65,9 @@ clinicsRouter.post("/", async (req, res) => {
         city,
         state,
         zip,
-        type,
         meeting_link,
+        location_type,
+        type,
       ]
     );
     res.status(201).json(keysToCamel(clinic[0]));
@@ -98,7 +107,6 @@ clinicsRouter.put("/:id", async (req, res) => {
     const {
       name,
       description,
-      location,
       start_time,
       end_time,
       date,
@@ -111,18 +119,21 @@ clinicsRouter.put("/:id", async (req, res) => {
       city,
       state,
       zip,
-      type,
       meeting_link,
+      location_type,
+      type,
     } = req.body;
 
-    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
-
-    if (
-      (location && !allowedLocationTypes.includes(location)) ||
-      (type && !allowedLocationTypes.includes(type))
-    ) {
+    if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+      });
+    }
+
+    if (type && !allowedClinicTypes.includes(type)) {
+      return res.status(400).json({
+        message:
+          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
       });
     }
 
@@ -130,26 +141,25 @@ clinicsRouter.put("/:id", async (req, res) => {
       `UPDATE clinics SET 
         name = $1, 
         description = $2, 
-        location = $3, 
-        start_time = $4, 
-        end_time = $5, 
-        date = $6, 
-        attendees = $7, 
-        min_attendees = $8, 
-        capacity = $9, 
-        max_target_roles = $10, 
-        parking = $11,
-        address = $12,
-        city = $13,
-        state = $14,
-        zip = $15,
-        type = $16,
-        meeting_link = $17
+        start_time = $3, 
+        end_time = $4, 
+        date = $5, 
+        attendees = $6, 
+        min_attendees = $7, 
+        capacity = $8, 
+        max_target_roles = $9, 
+        parking = $10,
+        address = $11,
+        city = $12,
+        state = $13,
+        zip = $14,
+        meeting_link = $15,
+        location_type = $16, 
+        type = $17
        WHERE id = $18 RETURNING *`,
       [
         name,
         description,
-        location,
         start_time,
         end_time,
         date,
@@ -162,8 +172,9 @@ clinicsRouter.put("/:id", async (req, res) => {
         city,
         state,
         zip,
-        type,
         meeting_link,
+        location_type,
+        type,
         id,
       ]
     );
