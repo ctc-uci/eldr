@@ -49,25 +49,21 @@ const formatTime = (dateStr) => {
   });
 };
 
-// Determine event mode (In-Person / Hybrid / Online) from tags
-const getEventMode = (tags = []) => {
-  const tagNames = tags.map((t) => (t.tag || t.name || "").toLowerCase());
-  if (tagNames.includes("hybrid")) return "Hybrid";
-  if (tagNames.includes("online")) return "Online";
-  return "In-Person";
+const capitalizeLocationType = (str) => {
+  if (!str) return "";
+  return str.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("-");
 };
 
-// Build location string based on event mode
+// Build location string based on locationType field
 const renderLocation = (clinic) => {
-  const mode = getEventMode(clinic.tags);
+  const mode = (clinic.locationType || "").toLowerCase();
   const link = clinic.meetingLink;
   const inPersonAddress = [clinic.address, clinic.city, clinic.state, clinic.zip]
     .filter(Boolean)
     .join(", ");
 
-  if (mode === "In-Person") return inPersonAddress;
-  if (mode === "Online") return link || "";
-  if (mode === "Hybrid") return [inPersonAddress, link].filter(Boolean).join(" | ");
+  if (mode === "online") return link || "";
+  if (mode === "hybrid") return [inPersonAddress, link].filter(Boolean).join(" | ");
   return inPersonAddress;
 };
 
@@ -83,18 +79,18 @@ export const EventManagement = () => {
       const response = await backend.get(`/clinics`);
       const clinicsData = response.data;
 
-      const clinicsWithTags = await Promise.all(
+      const clinicsWithLanguages = await Promise.all(
         clinicsData.map(async (clinic) => {
           try {
-            const tagsRes = await backend.get(`/clinics/${clinic.id}/tags`);
-            return { ...clinic, tags: tagsRes.data };
+            const langRes = await backend.get(`/clinics/${clinic.id}/languages`);
+            return { ...clinic, languages: langRes.data };
           } catch {
-            return { ...clinic, tags: [] };
+            return { ...clinic, languages: [] };
           }
         })
       );
 
-      setClinics(clinicsWithTags);
+      setClinics(clinicsWithLanguages);
     } catch (error) {
       console.log(error);
     }
@@ -171,12 +167,7 @@ export const EventManagement = () => {
               gap={4}
             >
               {clinics.map((clinic) => {
-                const mode = getEventMode(clinic.tags);
                 const locationStr = renderLocation(clinic);
-                const otherTags = clinic.tags?.filter((t) => {
-                  const name = (t.tag || t.name || "").toLowerCase();
-                  return !["hybrid", "online", "in-person"].includes(name);
-                });
 
                 return (
                   <Card.Root
@@ -227,15 +218,15 @@ export const EventManagement = () => {
                                   flexShrink={0}
                                 />
                                 <Text fontSize="sm" color="gray.600" fontWeight="medium">
-                                  <Text as="span" color={inRange ? "green.600" : "red.600"} fontWeight="bold">
+                                  <Text as="span" fontWeight="bold">
                                     {registered}
                                   </Text>
                                   {" Registered / "}
-                                  <Text as="span" color={registered < min ? "red.600" : "gray.600"} fontWeight="bold">
+                                  <Text as="span" fontWeight="bold">
                                     {min}
                                   </Text>
                                   {" Minimum / "}
-                                  <Text as="span" color={registered >= max ? "red.600" : "gray.600"} fontWeight="bold">
+                                  <Text as="span" fontWeight="bold">
                                     {max}
                                   </Text>
                                   {" Maximum"}
@@ -268,46 +259,9 @@ export const EventManagement = () => {
                           gap={2}
                           mt={1}
                         >
-                          {/* Always show Clinic Type tag */}
-                          <Tag.Root
-                            size="md"
-                            borderRadius="md"
-                            border="0.5px solid"
-                            borderColor="gray.200"
-                            bg="gray.100"
-                            px={2}
-                            py={1}
-                          >
-                            <Tag.Label
-                              fontSize="xs"
-                              fontWeight="medium"
-                            >
-                              Clinic Type
-                            </Tag.Label>
-                          </Tag.Root>
-
-                          {/* Show event mode tag (In-Person / Hybrid / Online) */}
-                          <Tag.Root
-                            size="md"
-                            borderRadius="md"
-                            border="0.5px solid"
-                            borderColor="gray.200"
-                            bg="gray.100"
-                            px={2}
-                            py={1}
-                          >
-                            <Tag.Label
-                              fontSize="xs"
-                              fontWeight="medium"
-                            >
-                              {mode}
-                            </Tag.Label>
-                          </Tag.Root>
-
-                          {/* Remaining tags (e.g. Language) */}
-                          {otherTags?.map((t) => (
+                          {/* Clinic type */}
+                          {clinic.type && (
                             <Tag.Root
-                              key={t.id}
                               size="md"
                               borderRadius="md"
                               border="0.5px solid"
@@ -316,11 +270,43 @@ export const EventManagement = () => {
                               px={2}
                               py={1}
                             >
-                              <Tag.Label
-                                fontSize="xs"
-                                fontWeight="medium"
-                              >
-                                {t.tag}
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {clinic.type}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
+
+                          {/* Location type */}
+                          {clinic.locationType && (
+                            <Tag.Root
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
+                            >
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {capitalizeLocationType(clinic.locationType)}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
+
+                          {/* Language tags */}
+                          {(clinic.languages ?? []).map((l) => (
+                            <Tag.Root
+                              key={l.id}
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
+                            >
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {l.language}
                               </Tag.Label>
                             </Tag.Root>
                           ))}

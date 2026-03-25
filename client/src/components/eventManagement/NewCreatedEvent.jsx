@@ -14,15 +14,38 @@ import { MdOutlineMailOutline } from "react-icons/md";
 export const NewCreatedEvent = ({ eventData, onClose }) => {
   const {
     name = "This is an upcoming Clinic Event",
-    date = "12/12/26",
-    time = "9:00 AM - 12:00 PM",
-    location = "1535 17th St STE 110, Santa Ana, CA 92705",
+    date,
+    startTime,
+    endTime,
     capacity = 50,
-    attendees = 30,
-    clinicType = "Clinic Type",
-    eventFormat = "Event Format",
-    language = "Language",
+    attendees = 0,
+    type,
+    locationType,
+    address,
+    city,
+    state,
+    zip,
+    meetingLink,
   } = eventData || {};
+
+  const formatTime = (ts) => {
+    if (!ts) return "";
+    return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  };
+
+  const formattedDate = date ? new Date(date).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }) : "";
+  const formattedTime = startTime && endTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : "";
+
+  const capitalizeLocationType = (str) =>
+    str ? str.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("-") : "";
+
+  const locationStr = (() => {
+    const mode = (locationType || "").toLowerCase();
+    const inPerson = [address, city, state, zip].filter(Boolean).join(", ");
+    if (mode === "online") return meetingLink || "";
+    if (mode === "hybrid") return [inPerson, meetingLink].filter(Boolean).join(" | ");
+    return inPerson;
+  })();
 
   const tabs = [
     { key: "details", label: "Event Details" },
@@ -91,7 +114,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
                 fontSize="sm"
               >
                 <LuCalendar />
-                <Text>{date}</Text>
+                <Text>{formattedDate}</Text>
               </HStack>
               <HStack
                 gap={2}
@@ -99,7 +122,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
                 fontSize="sm"
               >
                 <LuClock />
-                <Text>{time}</Text>
+                <Text>{formattedTime}</Text>
               </HStack>
             </HStack>
 
@@ -111,7 +134,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
                 fontSize="sm"
               >
                 <LuMapPin />
-                <Text>{location}</Text>
+                <Text>{locationStr}</Text>
               </HStack>
               <HStack
                 gap={2}
@@ -130,7 +153,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
               gap={2}
               mt={1}
             >
-              {[clinicType, eventFormat, language].map((tag) => (
+              {[type, capitalizeLocationType(locationType)].filter(Boolean).map((tag) => (
                 <Tag.Root
                   key={tag}
                   size="md"

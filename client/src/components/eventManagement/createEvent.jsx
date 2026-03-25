@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Badge,
@@ -16,13 +16,15 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 
 export const CreateEvent = ({ onClose, onCreated }) => {
+  const { backend } = useBackendContext();
   const [activeTab, setActiveTab] = useState("header");
-  const [clinicType, setClinicType] = useState("");
+  const [type, setType] = useState("");
   const [eventName, setEventName] = useState("");
-  const [eventFormat, setEventFormat] = useState("In-Person");
+  const [locationType, setLocationType] = useState("in-person");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -37,6 +39,11 @@ export const CreateEvent = ({ onClose, onCreated }) => {
   const [maximum, setMaximum] = useState("");
   const [languages, setLanguages] = useState([]);
   const [languageSearch, setLanguageSearch] = useState("");
+  const [allLanguages, setAllLanguages] = useState([]);
+
+  useEffect(() => {
+    backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
+  }, [backend]);
 
   const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Tagalog"];
 
@@ -85,19 +92,53 @@ export const CreateEvent = ({ onClose, onCreated }) => {
     return digits.slice(0, -2) + ":" + digits.slice(-2);
   };
 
-  const handleSubmit = () => {
-    onCreated({
-      name: eventName,
-      date: date,
-      time: `${startTime} ${startPeriod} - ${endTime} ${endPeriod}`,
-      location: [address, city, state, zip].filter(Boolean).join(", "),
-      zoom_link: zoomLink,
-      capacity: parseInt(maximum) || 0,
-      attendees: 0,
-      clinicType: clinicType,
-      eventFormat: eventFormat,
-      language: languages,
-    });
+  const toTimestamp = (timeStr, period, dateStr) => {
+    if (!timeStr || !dateStr) return null;
+    const [h, m] = timeStr.split(":").map(Number);
+    let hours = h;
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    return `${dateStr}T${String(hours).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}:00`;
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const clinicRes = await backend.post("/clinics", {
+        name: eventName,
+        date,
+        start_time: toTimestamp(startTime, startPeriod, date),
+        end_time: toTimestamp(endTime, endPeriod, date),
+        attendees: 0,
+        min_attendees: parseInt(targetNumber) || 1,
+        capacity: parseInt(maximum) || 1,
+        max_target_roles: null,
+        address,
+        city,
+        state,
+        zip,
+        meeting_link: zoomLink,
+        location_type: locationType,
+        type,
+      });
+
+      const clinicId = clinicRes.data.id;
+
+      // TODO: add proficiency field to form
+      await Promise.all(
+        languages.map(async (langName) => {
+          const lang = allLanguages.find((l) => l.language === langName);
+          if (!lang) return;
+          await backend.post(`/clinics/${clinicId}/languages`, {
+            languageId: lang.id,
+            proficiency: "fluent",
+          });
+        })
+      );
+
+      onCreated(clinicRes.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const Label = ({ children }) => (
@@ -220,12 +261,11 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                   flexShrink={0}
                 >
                   <Label>Clinic Type</Label>
-                  {/* TODO: Pull clinic type options from DB once DB is restructured */}
                   <NativeSelect.Root w="100%">
                     <NativeSelect.Field
                       placeholder="Select"
-                      value={clinicType}
-                      onChange={(e) => setClinicType(e.target.value)}
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
                       style={selectStyle}
                     >
                       <option value="Estate Planning">Estate Planning</option>
@@ -265,13 +305,13 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                   <Label>Event Format</Label>
                   <NativeSelect.Root w="140px">
                     <NativeSelect.Field
-                      value={eventFormat}
-                      onChange={(e) => setEventFormat(e.target.value)}
+                      value={locationType}
+                      onChange={(e) => setLocationType(e.target.value)}
                       style={{ ...selectStyle, color: "black" }}
                     >
-                      <option value="In-Person">In-Person</option>
-                      <option value="Hybrid">Hybrid</option>
-                      <option value="Online">Online</option>
+                      <option value="in-person">In-Person</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="online">Online</option>
                     </NativeSelect.Field>
                   </NativeSelect.Root>
                 </VStack>
@@ -286,8 +326,8 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                     w="100%"
                     gap={2}
                   >
-                    {(eventFormat === "In-Person" ||
-                      eventFormat === "Hybrid") && (
+                    {(locationType === "in-person" ||
+                      locationType === "hybrid") && (
                       <>
                         <Input
                           placeholder="Address"
@@ -303,74 +343,14 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                           {...fieldStyle}
                           w="110px"
                         />
-                        <NativeSelect.Root w="95px">
-                          <NativeSelect.Field
-                            value={state}
-                            onChange={(e) => setState(e.target.value)}
-                            style={{ ...selectStyle, paddingLeft: "8px" }}
-                            placeholder="State"
-                          >
-                            {[
-                              "AL",
-                              "AK",
-                              "AZ",
-                              "AR",
-                              "CA",
-                              "CO",
-                              "CT",
-                              "DE",
-                              "FL",
-                              "GA",
-                              "HI",
-                              "ID",
-                              "IL",
-                              "IN",
-                              "IA",
-                              "KS",
-                              "KY",
-                              "LA",
-                              "ME",
-                              "MD",
-                              "MA",
-                              "MI",
-                              "MN",
-                              "MS",
-                              "MO",
-                              "MT",
-                              "NE",
-                              "NV",
-                              "NH",
-                              "NJ",
-                              "NM",
-                              "NY",
-                              "NC",
-                              "ND",
-                              "OH",
-                              "OK",
-                              "OR",
-                              "PA",
-                              "RI",
-                              "SC",
-                              "SD",
-                              "TN",
-                              "TX",
-                              "UT",
-                              "VT",
-                              "VA",
-                              "WA",
-                              "WV",
-                              "WI",
-                              "WY",
-                            ].map((s) => (
-                              <option
-                                key={s}
-                                value={s}
-                              >
-                                {s}
-                              </option>
-                            ))}
-                          </NativeSelect.Field>
-                        </NativeSelect.Root>
+                        <Input
+                          placeholder="State"
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          {...fieldStyle}
+                          w="95px"
+                          maxLength={2}
+                        />
                         <Input
                           placeholder="Zip Code"
                           value={zip}
@@ -380,7 +360,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
                         />
                       </>
                     )}
-                    {(eventFormat === "Online" || eventFormat === "Hybrid") && (
+                    {(locationType === "online" || locationType === "hybrid") && (
                       <Input
                         placeholder="Zoom Link"
                         value={zoomLink}
