@@ -42,7 +42,7 @@ const initialProfile: ProfileData = {
   email: "",
   phone: "",
   calendarEmail: "",
-  role: "Admin",
+  role: "staff",
   specializations: [],
   languages: [],
   lawSchoolCompany: "",
@@ -101,7 +101,7 @@ export const AdminProfile: React.FC = () => {
               email: adminData.email || userData.email || "",
               phone: "", // Not in admin schema, keeping for UI
               calendarEmail: adminData.calendarEmail || "",
-              role: userData.role || "Admin",
+              role: userData.role || "staff",
               specializations: [], // Would need additional queries
               languages: [], // Would need additional queries
               lawSchoolCompany: "",
@@ -112,7 +112,7 @@ export const AdminProfile: React.FC = () => {
             setProfile({
               ...initialProfile,
               email: userData.email || "",
-              role: userData.role || "Admin",
+              role: userData.role || "staff",
             });
           }
         } catch (adminErr: unknown) {
@@ -124,7 +124,7 @@ export const AdminProfile: React.FC = () => {
             setProfile({
               ...initialProfile,
               email: userData.email || "",
-              role: userData.role || "Admin",
+              role: userData.role || "staff",
             });
           } else {
             throw adminErr;

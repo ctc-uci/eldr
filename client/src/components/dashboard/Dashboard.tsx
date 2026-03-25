@@ -48,12 +48,18 @@ export const Dashboard = () => {
       <VStack gap={4}>
         <Text>
           Signed in as {currentUser?.email} (
-          {role === "supervisor" ? "Supervisor" : role === "staff" ? "Staff" : "Volunteer"})
+          {role === "supervisor"
+            ? "Supervisor"
+            : role === "staff"
+              ? "Staff"
+              : role === "volunteer"
+                ? "Volunteer"
+                : "Guest"}
         </Text>
 
         {role === "staff" || role === "supervisor" ? (
           <ChakraLink asChild>
-            <Link to="/admin">Go to Admin Page</Link>
+            <Link to="/admin">Go to Staff Portal</Link>
           </ChakraLink>
         ) : null}
         <Button onClick={logout}>Sign out</Button>

@@ -70,7 +70,7 @@ export const AdminLogin: React.FC = () => {
       if (!isAdmin(normalizedEmail, latestUsers)) {
         toaster.error({
           title: "Unable to sign in",
-          description: "No admin account exists with those credentials.",
+          description: "No staff/supervisor account exists with those credentials.",
         });
         return;
       }
@@ -87,7 +87,7 @@ export const AdminLogin: React.FC = () => {
       ) {
         toaster.error({
           title: "Unable to sign in",
-          description: "No admin account exists with those credentials.",
+          description: "No staff/supervisor account exists with those credentials.",
         });
         return;
       }
@@ -118,7 +118,7 @@ export const AdminLogin: React.FC = () => {
           await signOut(auth);
           toaster.error({
             title: "Unable to sign in",
-            description: "No admin account exists with those credentials.",
+            description: "No staff/supervisor account exists with those credentials.",
           });
           return;
         }
@@ -130,7 +130,7 @@ export const AdminLogin: React.FC = () => {
           await signOut(auth);
           toaster.error({
             title: "Unable to sign in",
-            description: "No admin account exists with those credentials.",
+            description: "No staff/supervisor account exists with those credentials.",
           });
           return;
         }

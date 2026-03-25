@@ -20,7 +20,7 @@ adminsRouter.get("/id/:id", verifyRole(["staff", "supervisor"]), async (req, res
   try {
     const adminId = Number(req.params.id);
     if (!Number.isInteger(adminId)) {
-      return res.status(400).send("Invalid admin id");
+      return res.status(400).send("Invalid staff profile id");
     }
 
     const admin = await db.query(
@@ -29,7 +29,7 @@ adminsRouter.get("/id/:id", verifyRole(["staff", "supervisor"]), async (req, res
     );
 
     if (!admin.length) {
-      return res.status(404).json({ error: "Admin not found" });
+      return res.status(404).json({ error: "Staff profile not found" });
     }
 
     res.status(200).json(keysToCamel(admin[0]));
@@ -54,7 +54,7 @@ adminsRouter.post("/create", verifyRole("supervisor"), async (req, res) => {
       return res.status(400).send("firebaseUid and email are required");
     }
 
-    // Create or reuse a base user with admin role
+    // Create or reuse a base user with staff role
     let userId;
     try {
       const userResult = await db.query(
@@ -105,7 +105,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
   try {
     const adminId = Number(req.params.id);
     if (!Number.isInteger(adminId)) {
-      return res.status(400).send("Invalid admin id");
+      return res.status(400).send("Invalid staff profile id");
     }
 
     const { firstName, lastName, email, calendarEmail, isSupervisor } = req.body;
@@ -123,7 +123,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).send("Admin not found");
+      return res.status(404).send("Staff profile not found");
     }
 
     res.status(200).json(keysToCamel(result));
@@ -137,7 +137,7 @@ adminsRouter.delete("/:id", verifyRole("supervisor"), async (req, res) => {
   try {
     const adminId = Number(req.params.id);
     if (!Number.isInteger(adminId)) {
-      return res.status(400).send("Invalid admin id");
+      return res.status(400).send("Invalid staff profile id");
     }
 
     const result = await db.query(
@@ -148,11 +148,11 @@ adminsRouter.delete("/:id", verifyRole("supervisor"), async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).send("Admin not found");
+      return res.status(404).send("Staff profile not found");
     }
 
     res.status(200).json({
-      message: "Admin deleted successfully",
+      message: "Staff profile deleted successfully",
       admin: keysToCamel(result),
     });
   } catch (err) {
