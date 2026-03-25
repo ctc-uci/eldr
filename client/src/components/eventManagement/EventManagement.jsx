@@ -211,14 +211,38 @@ export const EventManagement = () => {
                             {formatDate(clinic.date)} • {formatTime(clinic.startTime)} -{" "}
                             {formatTime(clinic.endTime)}
                           </Text>
-                          <Text
-                            fontSize="sm"
-                            color="gray.500"
-                          >
-                            {clinic.attendees < clinic.minAttendees
-                              ? `${clinic.minAttendees - clinic.attendees} spots needed`
-                              : `${clinic.capacity - clinic.attendees} spots left`}
-                          </Text>
+                          {(() => {
+                            const registered = clinic.attendees ?? 0;
+                            const min = clinic.minAttendees ?? 0;
+                            const max = clinic.capacity ?? 0;
+                            const inRange = registered >= min && registered <= max;
+                            const dotColor = inRange ? "green.400" : "red.400";
+                            return (
+                              <HStack gap={1}>
+                                <Box
+                                  w="10px"
+                                  h="10px"
+                                  borderRadius="full"
+                                  bg={dotColor}
+                                  flexShrink={0}
+                                />
+                                <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                                  <Text as="span" color={inRange ? "green.600" : "red.600"} fontWeight="bold">
+                                    {registered}
+                                  </Text>
+                                  {" Registered / "}
+                                  <Text as="span" color={registered < min ? "red.600" : "gray.600"} fontWeight="bold">
+                                    {min}
+                                  </Text>
+                                  {" Minimum / "}
+                                  <Text as="span" color={registered >= max ? "red.600" : "gray.600"} fontWeight="bold">
+                                    {max}
+                                  </Text>
+                                  {" Maximum"}
+                                </Text>
+                              </HStack>
+                            );
+                          })()}
                         </Flex>
 
                         {/* Title */}
