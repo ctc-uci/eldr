@@ -46,6 +46,7 @@ const formatTime = (dateStr) => {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "UTC",
   });
 };
 
@@ -74,31 +75,31 @@ export const EventManagement = () => {
   const [view, setView] = useState("list"); // "list" | "create" | "created"
   const [createdEventData, setCreatedEventData] = useState(null);
 
-  const fetchEvents = async () => {
-    try {
-      const response = await backend.get(`/clinics`);
-      const clinicsData = response.data;
-
-      const clinicsWithLanguages = await Promise.all(
-        clinicsData.map(async (clinic) => {
-          try {
-            const langRes = await backend.get(`/clinics/${clinic.id}/languages`);
-            return { ...clinic, languages: langRes.data };
-          } catch {
-            return { ...clinic, languages: [] };
-          }
-        })
-      );
-
-      setClinics(clinicsWithLanguages);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await backend.get(`/clinics`);
+        const clinicsData = response.data;
+
+        const clinicsWithLanguages = await Promise.all(
+          clinicsData.map(async (clinic) => {
+            try {
+              const langRes = await backend.get(`/clinics/${clinic.id}/languages`);
+              return { ...clinic, languages: langRes.data };
+            } catch {
+              return { ...clinic, languages: [] };
+            }
+          })
+        );
+
+        setClinics(clinicsWithLanguages);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     fetchEvents();
-  }, []);
+  }, [backend]);
 
   return (
     <Flex minH="100vh">

@@ -135,7 +135,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
         })
       );
 
-      onCreated(clinicRes.data);
+      onCreated({ ...clinicRes.data, languages });
     } catch (err) {
       console.error(err);
     }

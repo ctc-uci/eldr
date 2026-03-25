@@ -21,6 +21,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
     attendees = 0,
     type,
     locationType,
+    languages = [],
     address,
     city,
     state,
@@ -30,7 +31,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
 
   const formatTime = (ts) => {
     if (!ts) return "";
-    return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC" });
   };
 
   const formattedDate = date ? new Date(date).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }) : "";
@@ -153,7 +154,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
               gap={2}
               mt={1}
             >
-              {[type, capitalizeLocationType(locationType)].filter(Boolean).map((tag) => (
+              {[type, capitalizeLocationType(locationType), ...languages].filter(Boolean).map((tag) => (
                 <Tag.Root
                   key={tag}
                   size="md"
