@@ -15,7 +15,8 @@ export const Sidebar = ({ activeId, onSelect }) => {
       w={{ base: "100%", md: "220px" }}
       flexShrink={0}
       position="sticky"
-      top="24px"
+      top="18px"
+      mt={{ base: 0, md: 8 }}
     >
       {items.map(({ id, label, icon: Icon }) => {
         const active = activeId === id;
@@ -26,18 +27,18 @@ export const Sidebar = ({ activeId, onSelect }) => {
             type="button"
             w="100%"
             textAlign="left"
-            borderRadius="md"
+            borderRadius="4px"
             px={3}
-            py={2.5}
+            py={2}
             bg={active ? "gray.100" : "transparent"}
             cursor="pointer"
             transition="background 0.15s ease"
             _hover={{ bg: active ? "gray.100" : "gray.50" }}
             onClick={() => onSelect(id)}
           >
-            <Flex align="center" gap={3}>
-              <Icon size={18} color="var(--chakra-colors-gray-700)" />
-              <Text fontSize="sm" fontWeight={active ? "semibold" : "medium"} color="gray.800">
+            <Flex align="center" gap={2.5}>
+              <Icon size={15} color="var(--chakra-colors-gray-700)" />
+              <Text fontSize="14px" fontWeight={active ? "500" : "400"} color="gray.800">
                 {label}
               </Text>
             </Flex>

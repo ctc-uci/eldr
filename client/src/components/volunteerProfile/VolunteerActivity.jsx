@@ -18,6 +18,8 @@ const PLACEHOLDER_EVENTS = [
   { id: "1", name: "Event #1", date: "11/12/25", hours: 10, type: "Clinic" },
   { id: "2", name: "Event #2", date: "11/10/25", hours: 8, type: "Event" },
   { id: "3", name: "Event #3", date: "11/01/25", hours: 6, type: "Clinic" },
+  { id: "4", name: "Event #4", date: "10/28/25", hours: 5, type: "Clinic" },
+  { id: "5", name: "Event #5", date: "10/15/25", hours: 4, type: "Event" },
 ];
 
 const PLACEHOLDER_LOCATIONS = ["Irvine, CA", "Orange, CA", "Anaheim, CA"];
@@ -39,8 +41,15 @@ export const VolunteerActivity = () => {
   };
 
   return (
+    <Box
+      bg="white"
+      borderWidth="1px"
+      borderColor="#ECECEC"
+      borderRadius="md"
+      p={{ base: 5, md: 8 }}
+    >
     <VStack gap={8} align="stretch">
-      <Heading size="md" fontWeight="bold" color="gray.900">
+      <Heading size="2xl" fontWeight="bold" color="gray.900">
         Activity History
       </Heading>
 
@@ -50,10 +59,9 @@ export const VolunteerActivity = () => {
           minW="200px"
           p={6}
           bg="white"
-          borderRadius="lg"
+          borderRadius="md"
           borderWidth="1px"
           borderColor="gray.200"
-          boxShadow="sm"
         >
           <Text fontSize="3xl" fontWeight="bold" color="gray.900">
             115
@@ -67,10 +75,9 @@ export const VolunteerActivity = () => {
           minW="200px"
           p={6}
           bg="white"
-          borderRadius="lg"
+          borderRadius="md"
           borderWidth="1px"
           borderColor="gray.200"
-          boxShadow="sm"
         >
           <Text fontSize="3xl" fontWeight="bold" color="gray.900">
             30
@@ -81,18 +88,11 @@ export const VolunteerActivity = () => {
         </Box>
       </Flex>
 
-      <Box
-        bg="white"
-        borderRadius="lg"
-        borderWidth="1px"
-        borderColor="gray.100"
-        p={{ base: 4, md: 6 }}
-        boxShadow="sm"
-      >
-        <Text fontWeight="bold" fontSize="md" mb={4}>
+      <Box>
+        <Text fontWeight="bold" fontSize="lg" mb={4}>
           Event Log
         </Text>
-        <Flex gap={3} mb={4} flexWrap="wrap">
+        <Flex gap={3} mt={6} mb={8} flexWrap="wrap" justifyContent="space-between">
           <NativeSelect.Root size="sm" maxW="180px">
             <NativeSelect.Field defaultValue="all">
               <option value="all">All Events</option>
@@ -111,13 +111,13 @@ export const VolunteerActivity = () => {
         </Flex>
 
         <Table.ScrollArea>
-          <Table.Root size="sm" variant="line">
+          <Table.Root size="sm" variant="line" borderWidth={1}>
             <Table.Header bg="blue.50">
-              <Table.Row>
-                <Table.ColumnHeader>Event</Table.ColumnHeader>
-                <Table.ColumnHeader>Date</Table.ColumnHeader>
-                <Table.ColumnHeader>Hours</Table.ColumnHeader>
-                <Table.ColumnHeader>Type</Table.ColumnHeader>
+              <Table.Row bg="blue.50" fontWeight="bold">
+                <Table.ColumnHeader fontWeight="bold">Event</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="bold">Date</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="bold">Hours</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="bold">Type</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -179,38 +179,32 @@ export const VolunteerActivity = () => {
         </HStack>
       </Box>
 
-      <Box
-        bg="white"
-        borderRadius="lg"
-        borderWidth="1px"
-        borderColor="gray.100"
-        p={{ base: 4, md: 6 }}
-        boxShadow="sm"
-      >
-        <Text fontWeight="bold" fontSize="md" mb={3}>
+      <Box>
+        <Text fontWeight="bold" fontSize="lg" mb={3}>
           Locations
         </Text>
         <Flex
           flexWrap="wrap"
           gap={2}
           align="center"
-          minH="44px"
           p={2}
           borderWidth="1px"
           borderColor="gray.200"
           borderRadius="md"
-          bg="gray.50"
+          bg="white"
+          w="50%"
         >
           {locations.map((loc) => (
             <Tag.Root
               key={loc}
               size="md"
-              borderRadius="full"
-              bg="gray.200"
+              bg="gray.150"
               color="gray.900"
             >
               <Tag.Label>{loc}</Tag.Label>
-              <Tag.CloseTrigger onClick={() => removeLocation(loc)} />
+              <Tag.EndElement>
+                <Tag.CloseTrigger onClick={() => removeLocation(loc)} />
+              </Tag.EndElement>
             </Tag.Root>
           ))}
           <Input
@@ -232,5 +226,6 @@ export const VolunteerActivity = () => {
         </Flex>
       </Box>
     </VStack>
+    </Box>
   );
 };

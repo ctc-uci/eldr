@@ -49,27 +49,34 @@ export const ProfileManagement = () => {
   const display = isEditing && draft ? draft : profile;
 
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg="white">
       <NavBar />
-      <Box px={{ base: 4, md: 10 }} py={{ base: 6, md: 8 }} maxW="1280px" mx="auto">
+      <Box px={{ base: 4, md: 10 }} py={{ base: 8, md: 12 }} maxW="1320px" mx="auto">
         <Heading
           as="h1"
-          fontSize={{ base: "xl", md: "2xl" }}
-          fontWeight="bold"
-          color="gray.900"
+          fontSize={{ base: "22px", md: "26px" }}
+          fontWeight="700"
+          color="#111111"
           mb={{ base: 6, md: 8 }}
         >
           Account Management
         </Heading>
 
         <Flex
-          gap={{ base: 6, md: 10 }}
+          gap={{ base: 6, md: 12 }}
           align="flex-start"
           direction={{ base: "column", md: "row" }}
         >
           <Sidebar activeId={section} onSelect={handleSectionChange} />
 
-          <Box flex="1" minW={0} w="100%">
+          <Box
+            flex="1"
+            minW={0}
+            w="100%"
+            bg="#F7F7F7"
+            p={{ base: 4, md: 8 }}
+            borderRadius="2px"
+          >
             {section === "profile" ? (
               <ProfileInformation
                 data={display}

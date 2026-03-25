@@ -30,13 +30,13 @@ import {
 const primaryBlue = "#3182CE";
 
 const FieldLabel = ({ children }) => (
-  <Text fontSize="sm" fontWeight="bold" color="gray.600" mb={1}>
+  <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={1}>
     {children}
   </Text>
 );
 
 const ReadValue = ({ children, muted }) => (
-  <Text fontSize="sm" color={muted ? "gray.400" : "gray.900"}>
+  <Text fontSize="sm" lineHeight="short" color={muted ? "gray.400" : "gray.900"}>
     {children}
   </Text>
 );
@@ -104,10 +104,9 @@ export const ProfileInformation = ({
   return (
     <Box
       bg="white"
-      borderRadius="lg"
-      boxShadow="sm"
+      borderRadius="2px"
       borderWidth="1px"
-      borderColor="gray.100"
+      borderColor="#ECECEC"
       p={{ base: 5, md: 8 }}
     >
       {/* Header */}
@@ -120,7 +119,7 @@ export const ProfileInformation = ({
       >
         <Box>
           <HStack flexWrap="wrap" gap={2} mb={2}>
-            <Heading size="lg" fontWeight="bold" color="gray.900">
+            <Heading size="2xl" lineHeight="snug" fontWeight="bold" color="gray.900">
               Profile Information
             </Heading>
             {isEditing ? (
@@ -157,11 +156,11 @@ export const ProfileInformation = ({
             gap={2}
             px={2}
             py={1}
-            borderRadius="md"
+            borderRadius="2px"
             borderWidth="1px"
             borderColor="gray.300"
             w="fit-content"
-            bg="gray.50"
+            bg="white"
           >
             <LuFileText size={14} color="var(--chakra-colors-gray-600)" />
             <Text fontSize="xs" color="gray.700">
@@ -170,13 +169,15 @@ export const ProfileInformation = ({
           </HStack>
         </Box>
 
-        <HStack gap={2} flexShrink={0}>
+        <HStack gap={2} flexShrink={0} pt={{ base: 0, md: 1 }}>
           {isEditing ? (
             <>
               <Button
                 bg={primaryBlue}
                 color="white"
                 size="sm"
+                minW="120px"
+                borderRadius="md"
                 _hover={{ bg: "#2B6CB0" }}
                 onClick={onSave}
               >
@@ -185,6 +186,7 @@ export const ProfileInformation = ({
               <Button
                 variant="outline"
                 size="sm"
+                borderRadius="md"
                 bg="gray.100"
                 borderColor="gray.200"
                 color="gray.800"
@@ -199,12 +201,13 @@ export const ProfileInformation = ({
               bg={primaryBlue}
               color="white"
               size="sm"
+              borderRadius="md"
               _hover={{ bg: "#2B6CB0" }}
               onClick={onEdit}
             >
               <HStack gap={1}>
-                <LuPencil size={16} />
-                <Text>Edit</Text>
+                <LuPencil size={14} />
+                <Text fontSize="sm">Edit</Text>
               </HStack>
             </Button>
           )}
@@ -212,25 +215,44 @@ export const ProfileInformation = ({
       </Flex>
 
       <VStack gap={8} align="stretch">
-        {/* Personal Info */}
+        {/* Personal Info — 3 columns: Photo | First+Phone | Last+Email */}
         <Box>
-          <Text fontWeight="bold" fontSize="md" mb={4} color="gray.900">
+          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
             Personal Info
           </Text>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
-            <Box>
-              <FieldLabel>Photo</FieldLabel>
-              <HStack align="start" gap={6} flexWrap="wrap">
-                <Avatar.Root size="2xl">
-                  <Avatar.Fallback name={`${data.firstName} ${data.lastName}`} />
-                  <Avatar.Image src={data.photoUrl || undefined} />
-                </Avatar.Root>
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} mt={8} mb={10} alignItems="start">
+            <Box display="flex" flexDirection="column" alignItems="center">
+              <VStack align="center" gap={2}>
+                <FieldLabel
+                  mb={2}
+                  textAlign="center"
+                  alignSelf="center"
+                >
+                  Photo
+                </FieldLabel>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Avatar.Root
+                    size="2xl"
+                    style={{
+                      width: "6rem",
+                      height: "6rem",
+                    }}
+                  >
+                    <Avatar.Fallback name={`${data.firstName} ${data.lastName}`} />
+                    <Avatar.Image
+                      src={data.photoUrl || undefined}
+                    />
+                  </Avatar.Root>
+                </Box>
                 {isEditing ? (
                   <Button
                     size="xs"
                     variant="outline"
                     colorPalette="blue"
-                    mt={2}
                     onClick={() => {
                       /* placeholder — file upload later */
                     }}
@@ -238,72 +260,80 @@ export const ProfileInformation = ({
                     Change Photo
                   </Button>
                 ) : null}
-              </HStack>
+              </VStack>
             </Box>
-            <Box />
 
-            <Box>
-              <FieldLabel>First Name</FieldLabel>
-              {isEditing ? (
-                <Field.Root>
-                  <Input
-                    value={data.firstName}
-                    onChange={(e) => update({ firstName: e.target.value })}
-                  />
-                </Field.Root>
-              ) : (
-                <ReadValue>{data.firstName}</ReadValue>
-              )}
-            </Box>
-            <Box>
-              <FieldLabel>Last Name</FieldLabel>
-              {isEditing ? (
-                <Field.Root>
-                  <Input
-                    value={data.lastName}
-                    onChange={(e) => update({ lastName: e.target.value })}
-                  />
-                </Field.Root>
-              ) : (
-                <ReadValue>{data.lastName}</ReadValue>
-              )}
-            </Box>
-            <Box>
-              <FieldLabel>Phone Number</FieldLabel>
-              {isEditing ? (
-                <Field.Root>
-                  <Input
-                    value={data.phone}
-                    onChange={(e) => update({ phone: e.target.value })}
-                  />
-                </Field.Root>
-              ) : (
-                <ReadValue>{data.phone}</ReadValue>
-              )}
-            </Box>
-            <Box>
-              <FieldLabel>Email</FieldLabel>
-              {isEditing ? (
-                <Field.Root>
-                  <Input
-                    type="email"
-                    value={data.email}
-                    onChange={(e) => update({ email: e.target.value })}
-                  />
-                </Field.Root>
-              ) : (
-                <ReadValue>{data.email}</ReadValue>
-              )}
-            </Box>
+            <VStack gap={8} align="stretch">
+              <Box>
+                <FieldLabel>First Name</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <Input
+                      size="sm"
+                      value={data.firstName}
+                      onChange={(e) => update({ firstName: e.target.value })}
+                    />
+                  </Field.Root>
+                ) : (
+                  <ReadValue>{data.firstName}</ReadValue>
+                )}
+              </Box>
+              <Box>
+                <FieldLabel>Phone Number</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <Input
+                      size="sm"
+                      value={data.phone}
+                      onChange={(e) => update({ phone: e.target.value })}
+                    />
+                  </Field.Root>
+                ) : (
+                  <ReadValue>{data.phone}</ReadValue>
+                )}
+              </Box>
+            </VStack>
+
+            <VStack gap={8} align="stretch">
+              <Box>
+                <FieldLabel>Last Name</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <Input
+                      size="sm"
+                      value={data.lastName}
+                      onChange={(e) => update({ lastName: e.target.value })}
+                    />
+                  </Field.Root>
+                ) : (
+                  <ReadValue>{data.lastName}</ReadValue>
+                )}
+              </Box>
+              <Box>
+                <FieldLabel>Email</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <Input
+                      size="sm"
+                      type="email"
+                      value={data.email}
+                      onChange={(e) => update({ email: e.target.value })}
+                    />
+                  </Field.Root>
+                ) : (
+                  <ReadValue>{data.email}</ReadValue>
+                )}
+              </Box>
+            </VStack>
           </SimpleGrid>
         </Box>
 
         {/* Occupation & Credentials */}
-        <Box>
-          <Text fontWeight="bold" fontSize="md" mb={4} color="gray.900">
+        <Box mb={6}>
+          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
             Occupation & Credentials
           </Text>
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={6}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={12}>
             <Box>
               <FieldLabel>Notary Status</FieldLabel>
               {isEditing ? (
@@ -365,7 +395,7 @@ export const ProfileInformation = ({
               )}
             </Box>
           </SimpleGrid>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
             <Box>
               <FieldLabel>State Bar Certificate State</FieldLabel>
               {isEditing ? (
@@ -393,6 +423,7 @@ export const ProfileInformation = ({
               {isEditing ? (
                 <Field.Root>
                   <Input
+                    size="sm"
                     value={data.stateBarNumber}
                     onChange={(e) =>
                       update({ stateBarNumber: e.target.value })
@@ -410,94 +441,99 @@ export const ProfileInformation = ({
 
         {/* Experience: Languages + Interests / Areas */}
         <Box>
-          <Text fontWeight="bold" fontSize="md" mb={4} color="gray.900">
+          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
             Experience
           </Text>
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="start">
-          <Box
-            borderWidth="1px"
-            borderColor="gray.200"
-            borderRadius="md"
-            p={4}
-            bg="gray.50"
-          >
-            <Text fontWeight="semibold" fontSize="sm" mb={1}>
+          <Box>
+            <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
+            <Box
+              borderWidth="1px"
+              borderColor="gray.200"
+              borderRadius="md"
+              p={4}
+            >
             <Text fontSize="xs" color="gray.600" mb={3}>
               Select the languages and your proficiency level.
             </Text>
             <VStack gap={2} align="stretch">
               {data.languages.map((row) => (
-                <HStack key={row.id} gap={2} flexWrap="wrap">
+                <SimpleGrid
+                  key={row.id}
+                  columns={2}
+                  gap={2}
+                  minChildWidth="0"
+                >
                   {isEditing ? (
                     <>
-                      <Box flex="1" minW="120px">
-                        <NativeSelect.Root size="sm">
-                          <NativeSelect.Field
-                            value={row.language}
-                            onChange={(e) =>
-                              updateLanguage(row.id, {
-                                language: e.target.value,
-                              })
-                            }
-                          >
-                            {LANGUAGE_OPTIONS.map((o) => (
-                              <option key={o} value={o}>
-                                {o}
-                              </option>
-                            ))}
-                          </NativeSelect.Field>
-                          <NativeSelect.Indicator />
-                        </NativeSelect.Root>
-                      </Box>
-                      <Box flex="1" minW="120px">
-                        <NativeSelect.Root size="sm">
-                          <NativeSelect.Field
-                            value={row.proficiency}
-                            onChange={(e) =>
-                              updateLanguage(row.id, {
-                                proficiency: e.target.value,
-                              })
-                            }
-                          >
-                            {PROFICIENCY_OPTIONS.map((o) => (
-                              <option key={o} value={o}>
-                                {o}
-                              </option>
-                            ))}
-                          </NativeSelect.Field>
-                          <NativeSelect.Indicator />
-                        </NativeSelect.Root>
-                      </Box>
+                      <NativeSelect.Root size="sm">
+                        <NativeSelect.Field
+                          value={row.language}
+                          onChange={(e) =>
+                            updateLanguage(row.id, {
+                              language: e.target.value,
+                            })
+                          }
+                        >
+                          {LANGUAGE_OPTIONS.map((o) => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <NativeSelect.Root size="sm">
+                        <NativeSelect.Field
+                          value={row.proficiency}
+                          onChange={(e) =>
+                            updateLanguage(row.id, {
+                              proficiency: e.target.value,
+                            })
+                          }
+                        >
+                          {PROFICIENCY_OPTIONS.map((o) => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
                     </>
                   ) : (
                     <>
-                      <Box
-                        px={3}
-                        py={1.5}
-                        bg="white"
-                        borderWidth="1px"
-                        borderColor="gray.200"
-                        borderRadius="md"
-                        fontSize="sm"
-                      >
-                        {row.language}
-                      </Box>
-                      <Box
-                        px={3}
-                        py={1.5}
-                        bg="white"
-                        borderWidth="1px"
-                        borderColor="gray.200"
-                        borderRadius="md"
-                        fontSize="sm"
-                      >
-                        {row.proficiency}
-                      </Box>
+                      <Field.Root>
+                        <Input
+                          size="sm"
+                          readOnly
+                          value={row.language}
+                          bg="white"
+                          borderColor="gray.200"
+                          color="gray.900"
+                          cursor="default"
+                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                          _readOnly={{ opacity: 1, cursor: "default" }}
+                        />
+                      </Field.Root>
+                      <Field.Root>
+                        <Input
+                          size="sm"
+                          readOnly
+                          value={row.proficiency}
+                          bg="white"
+                          borderColor="gray.200"
+                          color="gray.900"
+                          cursor="default"
+                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                          _readOnly={{ opacity: 1, cursor: "default" }}
+                        />
+                      </Field.Root>
                     </>
                   )}
-                </HStack>
+                </SimpleGrid>
               ))}
             </VStack>
             {isEditing ? (
@@ -514,16 +550,13 @@ export const ProfileInformation = ({
                 + Add Language
               </Button>
             ) : null}
+            </Box>
           </Box>
 
           <Box
-            borderWidth="1px"
-            borderColor="gray.200"
-            borderRadius="md"
             p={4}
-            bg="gray.50"
           >
-            <Text fontWeight="semibold" fontSize="sm" mb={3}>
+            <Text fontWeight="semibold" fontSize="md" mb={3} color="gray.900">
               Interests(s)
             </Text>
             <Flex
@@ -540,15 +573,22 @@ export const ProfileInformation = ({
               {data.interests.map((tag) => (
                 <Tag.Root
                   key={tag}
-                  size="md"
-                  borderRadius="full"
-                  bg="gray.200"
+                  size="sm"
+                  bg="gray.100"
                   color="gray.900"
                 >
                   <Tag.Label>{tag}</Tag.Label>
-                  {isEditing ? (
-                    <Tag.CloseTrigger onClick={() => removeInterest(tag)} />
-                  ) : null}
+                  <Tag.EndElement>
+                    <Tag.CloseTrigger
+                      disabled={!isEditing}
+                      aria-label={isEditing ? `Remove ${tag}` : undefined}
+                      onClick={
+                        isEditing
+                          ? () => removeInterest(tag)
+                          : undefined
+                      }
+                    />
+                  </Tag.EndElement>
                 </Tag.Root>
               ))}
               {isEditing ? (
