@@ -1,73 +1,93 @@
-import { React } from "react";
+import { useCallback, useState } from "react";
 
-import { NavBar } from "./NavBar";          
-import { Sidebar } from "./Sidebar";        
-import { InfoManagement } from "./InfoManagement";              
-import { DashboardManagement } from "./DashboardManagement";    
-import { AccountManagement } from "./AccountManagement";        
+import { Box, Flex, Heading } from "@chakra-ui/react";
 
-import {
-  Box,
-  Heading,
-  Flex,
-  Button,
-  Divider,
-} from "@chakra-ui/react";
-
-import { IoPencil } from "react-icons/io5";
+import { AccountManagement } from "./AccountManagement";
+import { NavBar } from "./NavBar";
+import { ProfileInformation } from "./ProfileInformation";
+import { createInitialProfile } from "./profileState.js";
+import { Sidebar } from "./Sidebar";
+import { VolunteerActivity } from "./VolunteerActivity";
 
 export const ProfileManagement = () => {
+  const [section, setSection] = useState("profile");
+  const [profile, setProfile] = useState(createInitialProfile);
+  const [draft, setDraft] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showUpdatedBadge, setShowUpdatedBadge] = useState(false);
+
+  const cancelEdit = useCallback(() => {
+    setDraft(null);
+    setIsEditing(false);
+  }, []);
+
+  const startEdit = useCallback(() => {
+    setDraft({ ...profile });
+    setIsEditing(true);
+    setShowUpdatedBadge(false);
+  }, [profile]);
+
+  const saveEdit = useCallback(() => {
+    if (draft) {
+      setProfile(draft);
+    }
+    setDraft(null);
+    setIsEditing(false);
+    setShowUpdatedBadge(true);
+  }, [draft]);
+
+  const handleSectionChange = useCallback(
+    (id) => {
+      if (id !== "profile" && isEditing) {
+        cancelEdit();
+      }
+      setSection(id);
+    },
+    [isEditing, cancelEdit],
+  );
+
+  const display = isEditing && draft ? draft : profile;
+
   return (
-    <Box>
+    <Box minH="100vh" bg="gray.50">
       <NavBar />
-      <Flex p={{ base: 4, md: 10 }} align="start" direction={{base:"column", md:"row"}}>
-        <Box display={{ base: "none", md: "block" }}>
-          <Sidebar />
-        </Box>
+      <Box px={{ base: 4, md: 10 }} py={{ base: 6, md: 8 }} maxW="1280px" mx="auto">
+        <Heading
+          as="h1"
+          fontSize={{ base: "xl", md: "2xl" }}
+          fontWeight="bold"
+          color="gray.900"
+          mb={{ base: 6, md: 8 }}
+        >
+          Account Management
+        </Heading>
 
-        <Box flex="1" width="100%">
-          <Flex justify="space-between" align="center">
-            <Heading fontSize={{base: "24px", md: "32px"}}>
-              Profile Management
-            </Heading>
-            <Flex gap={3}>
-              <Box display={{base:"none", md:"flex"}}>
-                <Button width="66px"
-                  height="28px"
-                  color="212121"
-                  backgroundColor="#D9D9D9"
-                  variant="outline"
-                  borderColor="#212121"
-                  borderWidth="1px"
-                  rightIcon={<IoPencil />}>
-                  <Flex gap={1} align="center">
-                    Edit
-                  </Flex>
-                </Button>
-              </Box>
-              <Button width="55px"
-                height="28px"
-                color="212121"
-                backgroundColor="#D9D9D9"
-                variant="outline"
-                borderColor="#212121"
-                borderWidth="1px">
-                Save
-              </Button>
-            </Flex>
-          </Flex>
+        <Flex
+          gap={{ base: 6, md: 10 }}
+          align="flex-start"
+          direction={{ base: "column", md: "row" }}
+        >
+          <Sidebar activeId={section} onSelect={handleSectionChange} />
 
-          <Divider borderWidth="0.5px" borderColor="#000000" mt={8} mb={10}/>
+          <Box flex="1" minW={0} w="100%">
+            {section === "profile" ? (
+              <ProfileInformation
+                data={display}
+                setData={isEditing ? setDraft : undefined}
+                isEditing={isEditing}
+                showUpdatedBadge={showUpdatedBadge}
+                onEdit={startEdit}
+                onSave={saveEdit}
+                onCancel={cancelEdit}
+              />
+            ) : null}
 
-          <InfoManagement />
+            {section === "activity" ? <VolunteerActivity /> : null}
 
-          <Box></Box> {/* empty Box to reset column span*/}
-
-          <DashboardManagement />
-
-          <AccountManagement />
-        </Box>
-      </Flex>
+            {section === "settings" ? <AccountManagement /> : null}
+          </Box>
+        </Flex>
+      </Box>
     </Box>
-  )
-}
+  );
+};
