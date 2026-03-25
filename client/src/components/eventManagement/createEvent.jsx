@@ -45,11 +45,11 @@ export const CreateEvent = ({ onClose, onCreated }) => {
     backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
   }, [backend]);
 
-  const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Vietnamese", "Tagalog"];
-
   const filteredLanguages = useMemo(
-    () => LANGUAGE_OPTIONS.filter((l) => l.toLowerCase().includes(languageSearch.toLowerCase())),
-    [languageSearch],
+    () => allLanguages
+      .map((l) => l.language)
+      .filter((l) => l.toLowerCase().includes(languageSearch.toLowerCase())),
+    [allLanguages, languageSearch],
   );
 
   const languageCollection = useMemo(
@@ -130,7 +130,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
           if (!lang) return;
           await backend.post(`/clinics/${clinicId}/languages`, {
             languageId: lang.id,
-            proficiency: "fluent",
+            proficiency: "proficient",
           });
         })
       );
