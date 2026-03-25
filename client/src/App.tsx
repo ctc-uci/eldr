@@ -71,15 +71,30 @@ const App = () => {
                 
                 <Route
                   path="/email"
-                  element={<EmailTemplateManagement />}
+                  element={
+                    <ProtectedRoute
+                      element={<EmailTemplateManagement />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
                 />
                 <Route
                   path="/email/folder/:folderId"
-                  element={<EmailTemplateManagement />}
+                  element={
+                    <ProtectedRoute
+                      element={<EmailTemplateManagement />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
                 />
                 <Route
                   path="/email/template/:templateId"
-                  element={<EmailTemplateManagement />}
+                  element={
+                    <ProtectedRoute
+                      element={<EmailTemplateManagement />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
                 />
                 {/* <Route
                   path="/catalog"
@@ -95,7 +110,7 @@ const App = () => {
                   element={
                     <ProtectedRoute
                       element={<EventManagement />}
-                      allowedRoles={["admin"]}
+                      allowedRoles={["staff", "supervisor"]}
                     />
                   }
                 /> */}
@@ -104,7 +119,7 @@ const App = () => {
                   element={
                     <ProtectedRoute
                       element={<EventDetail />}
-                      allowedRoles={["admin"]}
+                      allowedRoles={["staff", "supervisor"]}
                     />
                   }
                 /> */}
@@ -157,7 +172,7 @@ const App = () => {
                   element={
                     <ProtectedRoute
                     element={<Admin />}
-                    allowedRoles={["admin"]}
+                    allowedRoles={["staff", "supervisor"]}
                     />
                   }
                 />

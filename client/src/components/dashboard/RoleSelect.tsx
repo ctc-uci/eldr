@@ -27,11 +27,16 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
           firebaseUid: user.firebaseUid,
         });
 
-        if (updatedRole !== "user" && updatedRole !== "admin") {
+        if (
+          updatedRole !== "guest" &&
+          updatedRole !== "volunteer" &&
+          updatedRole !== "staff" &&
+          updatedRole !== "supervisor"
+        ) {
           throw Error("Role is not valid");
         }
 
-        setRole(updatedRole);
+        setRole(updatedRole as User["role"]);
 
       } catch (error) {
         console.error("Error updating user role:", error);
@@ -52,8 +57,10 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
         onChange={handleChangeRole}
         disabled={loading || disabled}
       >
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
+        <option value="guest">Guest</option>
+        <option value="volunteer">Volunteer</option>
+        <option value="staff">Staff</option>
+        <option value="supervisor">Supervisor</option>
       </NativeSelect.Field>
       <NativeSelect.Indicator />
     </NativeSelect.Root>
