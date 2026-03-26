@@ -18,7 +18,7 @@ import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-// import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
@@ -81,12 +81,12 @@ const App = () => {
                   element = {<AdminPassReset/>}
                 >
                 </Route>
-                
-                {/* <Route
+
+                <Route
                   path="/volunteerProfile"
                   element={<VolunteerProfile />}
-                /> */}
-                
+                />
+
                 <Route
                   path="/email"
                   element={<EmailTemplateManagement />}
@@ -103,7 +103,7 @@ const App = () => {
                   path="/catalog"
                   element={<CaseCatalog />}
                 /> */}
-                
+
                 {/* <Route
                   path="/volunteer-management"
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
@@ -130,10 +130,10 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                {/* <Route 
+                <Route 
                   path="/event-catalog"
                   element={<EventCatalog />}
-                /> */}
+                />
                 {/* <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
@@ -142,7 +142,7 @@ const App = () => {
                   path="/caseManagement"
                   element={<CaseManagement />}
                 /> */}
-                
+
                 {/* Playground Routes (Don't Touch!) */}
                 <Route
                   path="/playground"
