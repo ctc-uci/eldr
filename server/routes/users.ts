@@ -91,6 +91,29 @@ usersRouter.get("/admin/all", verifyRole("admin"), async (req, res) => {
   }
 });
 
+// Update a user's password via Firebase Admin (no auth token required — caller must know the email)
+usersRouter.put("/update-password", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const users = await db.query(
+      "SELECT firebase_uid FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { firebaseUid } = keysToCamel(users[0]) as { firebaseUid: string };
+    await admin.auth().updateUser(firebaseUid, { password: newPassword });
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
 // Update a user's role
 usersRouter.put("/update/set-role", verifyRole("admin"), async (req, res) => {
   try {

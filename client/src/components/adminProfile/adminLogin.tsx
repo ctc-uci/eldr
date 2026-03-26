@@ -358,7 +358,7 @@ export const AdminLogin: React.FC = () => {
                 textDecoration="underline"
                 color="#3182CE"
                 background="white"
-                href="/adminForgotPass"
+                href="/adminForgotPass?from=admin"
                 alignSelf="flex-end"
                 pb="2%"
               >
