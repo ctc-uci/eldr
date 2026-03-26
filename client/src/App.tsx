@@ -10,9 +10,8 @@ import { Signup } from "@/components/signup/Signup";
 import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
-import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
@@ -117,10 +116,10 @@ const App = () => {
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
-                {/* <Route
+                <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
-                /> */}
+                />
                 {/* <Route
                   path="/caseManagement"
                   element={<CaseManagement />}

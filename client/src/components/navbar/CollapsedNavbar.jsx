@@ -28,7 +28,7 @@ export const CollapsedNavbar = () => {
       <VStack gap={10} w="full" justifyContent="left">
         <Box>
           <Image
-            src="/eldr-logo.png"
+            src="/eldr-logo-small.png"
             h="44px"
             objectFit="contain"
           />
@@ -75,7 +75,7 @@ export const CollapsedNavbar = () => {
       </VStack>
 
       {/* PLACEHOLDER REPLACE WITH ACTUAL PFP */}
-      <Link 
+      <Link
         href="/admin-profile"
         title="Profile"
       >

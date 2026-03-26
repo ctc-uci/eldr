@@ -1,11 +1,11 @@
-import { 
-  Flex, 
-  Box, 
+import {
+  Flex,
+  Box,
   Text,
   InputGroup,
-  Input, 
+  Input,
   Icon,
-  VStack, 
+  VStack,
   Button,
   Link,
   Image,
@@ -22,7 +22,7 @@ import { MdOutlineEmail } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import logo from "./ELDR_Logo.png";
+import logo from "./ELDR_Logo.png"; // todo remove this and move all these admin login files into their own directory
 
 export const AdminForgotPass: React.FC = () => {
   const navigate = useNavigate();
@@ -71,12 +71,12 @@ export const AdminForgotPass: React.FC = () => {
             <HStack w="100%" align="center">
               <HStack gap={2}>
                 <Icon as={FaLock}/>
-                
+
                 <Text fontWeight="bold">
                   Account Verification Error
                 </Text>
               </HStack>
-  
+
               <CloseButton
                 ml="auto"
                 boxSize="20px"
@@ -95,7 +95,7 @@ export const AdminForgotPass: React.FC = () => {
     );
 
   return (
-    <Flex 
+    <Flex
       minH="100vh"
       w="100%"
       bg="white"
@@ -116,24 +116,24 @@ export const AdminForgotPass: React.FC = () => {
       <VStack minH="80vh" borderWidth="1px" borderRadius = "sm" borderColor = "#E4E4E7" zIndex={1} gap = {0}>
         <Flex  w = "80vw" bg = "#F6F6F6" h = "70px" align = "left" px = "2%" py = "1%">
           <Image src={logo} />
-        </Flex>  
+        </Flex>
         <Flex flex="1" w="100%" bg="white">
           <VStack align = "left" width = "50%" px = "5%" gap = {1}>
             <Text fontWeight="bold" fontSize="30px" pt = "15%" pb = "10%">
               Account Confirmation Verification
             </Text>
-            
+
             <Text mb={6} pb = "15%">
               Enter your ELDR account email and we'll send you a link to reset your password.
             </Text>
-            
+
             <Text fontWeight="bold">
               Need help?
             </Text>
             <Text fontWeight="bold">
               Visit our website
             </Text>
-            <Link 
+            <Link
               textDecoration="underline"
               color="#3182CE"
               bg="white"
@@ -142,32 +142,32 @@ export const AdminForgotPass: React.FC = () => {
             >
               Community Counsel Website
             </Link>
-            
+
             <HStack pt = "15%" align = "left" gap = {0}>
-              <IconButton 
-                boxSize="20px" 
-                as={FiFacebook} 
+              <IconButton
+                boxSize="20px"
+                as={FiFacebook}
                 variant="ghost"
                 onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
                 _hover = {{bg: "white"}}
               />
-              <IconButton 
-                boxSize="20px" 
-                as={FiLinkedin} 
+              <IconButton
+                boxSize="20px"
+                as={FiLinkedin}
                 variant="ghost"
                 onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
                 _hover = {{bg: "white"}}
               />
-              <IconButton 
-                boxSize="20px" 
-                as={FaInstagram} 
+              <IconButton
+                boxSize="20px"
+                as={FaInstagram}
                 variant="ghost"
                 onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
                 _hover = {{bg: "white"}}
               />
-              <IconButton 
-                boxSize="20px" 
-                as={MdOutlineEmail} 
+              <IconButton
+                boxSize="20px"
+                as={MdOutlineEmail}
                 variant="ghost"
                 _hover = {{bg: "white"}}
               />
@@ -181,7 +181,7 @@ export const AdminForgotPass: React.FC = () => {
               </Text>
             </Box>
             <InputGroup pb = "3%" w = "30vw" startElement={<MdOutlineEmail />}>
-              <Input 
+              <Input
                 placeholder="Enter an email"
                 height = "40px"
                 variant="outline"
@@ -207,7 +207,7 @@ export const AdminForgotPass: React.FC = () => {
               onClick={() => {
                   const valid = verifyEmail(email, currUsers);
                   valid ? navigate("/adminPassReset", { state: { email } }) : setShowPopup(true);
-                  
+
                 }}
             >
               Continue
@@ -223,8 +223,8 @@ export const AdminForgotPass: React.FC = () => {
             <Flex align= "center" justify = "center">
               <Text fontSize="sm">
                 Go back to{" "}
-                <Link 
-                  color="#3182CE" 
+                <Link
+                  color="#3182CE"
                   textDecoration="underline"
                   href="/adminLogin"
                 >
@@ -234,7 +234,7 @@ export const AdminForgotPass: React.FC = () => {
             </Flex>
           </VStack>
         </Flex>
-        
+
         <Flex w="80vw" bg="#F6F6F6" h="70px" />
       </VStack>
     </Flex>
