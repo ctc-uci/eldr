@@ -11,7 +11,7 @@ import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
 // import { AdminProfile } from "@/components/adminProfile/adminProfile";
-import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 // import { AdminLogin } from "@/components/adminProfile/adminLogin";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
@@ -25,7 +25,9 @@ import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
-
+import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar";
+import { AdminNavbar } from "@/components/navbar/AdminNavbar";
+import { Navbar } from "@/components/navbar/Navbar";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
@@ -47,6 +49,22 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
+                {/* TEMP NAVBAR ROUTES */}
+                <Route
+                  path = "/volunteer-navbar"
+                  element = {<Navbar/>}
+                >
+                </Route>
+                <Route
+                  path = "/admin-navbar"
+                  element = {<AdminNavbar/>}
+                >
+                </Route>
+                <Route
+                  path = "/collapsed-navbar"
+                  element = {<CollapsedNavbar/>}
+                >
+                </Route>
                 {/* Dev-made Routes! */}
                 <Route
                   path="/adminLogin"
@@ -112,7 +130,7 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                <Route
+                <Route 
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
