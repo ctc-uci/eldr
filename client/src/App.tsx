@@ -10,9 +10,8 @@ import { Signup } from "@/components/signup/Signup";
 import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
-// import { AdminProfile } from "@/components/adminProfile/adminProfile";
-// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
+import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 // import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
@@ -51,7 +50,7 @@ const App = () => {
               <Routes>
                 {/* TEMP NAVBAR ROUTES */}
                 <Route
-                  path = "/volunteer-navbar"
+                  path="/volunteer-navbar"
                   element = {<Navbar/>}
                 >
                 </Route>
@@ -130,14 +129,14 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                <Route 
+                <Route
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
-                {/* <Route
+                <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
-                /> */}
+                />
                 {/* <Route
                   path="/caseManagement"
                   element={<CaseManagement />}
