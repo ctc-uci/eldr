@@ -17,7 +17,8 @@ import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
-// import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { StaffLayout } from "./components/staff/StaffLayout";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
@@ -86,10 +87,19 @@ const App = () => {
                   element={<CaseCatalog />}
                 /> */}
                 
-                {/* <Route
-                  path="/volunteer-management"
-                  element={<ProtectedRoute element={<VolunteerManagement />} />}
-                /> */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/volunteer-management"
+                    element={<VolunteerManagement />}
+                  />
+                </Route>
                 {/* <Route
                   path = "/events"
                   element={
