@@ -48,22 +48,6 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
-                {/* TEMP NAVBAR ROUTES */}
-                <Route
-                  path="/volunteer-navbar"
-                  element = {<Navbar/>}
-                >
-                </Route>
-                <Route
-                  path = "/admin-navbar"
-                  element = {<AdminNavbar/>}
-                >
-                </Route>
-                <Route
-                  path = "/collapsed-navbar"
-                  element = {<CollapsedNavbar/>}
-                >
-                </Route>
                 {/* Dev-made Routes! */}
                 <Route
                   path="/adminLogin"
@@ -133,10 +117,10 @@ const App = () => {
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
-                <Route
+                {/* <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
-                />
+                /> */}
                 {/* <Route
                   path="/caseManagement"
                   element={<CaseManagement />}
