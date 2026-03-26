@@ -1,28 +1,26 @@
 import {
-  Flex,
   Box,
-  Text,
-  InputGroup,
-  Input,
-  Icon,
-  VStack,
   Button,
-  Link,
-  Image,
-  IconButton,
+  Field,
+  Flex,
   HStack,
+  Icon,
+  IconButton,
+  Image,
+  Input,
+  InputGroup,
+  Link,
   Separator,
-  Card,
-  CloseButton
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
 import {
   FaArrowRight,
-  FaInstagram,
-  FaRegEyeSlash,
-  FaRegEye,
-  FaLock,
   FaInfoCircle,
+  FaInstagram,
+  FaRegEye,
+  FaRegEyeSlash,
 } from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { HiOutlineKey } from "react-icons/hi";
@@ -47,46 +45,11 @@ export const AdminPassReset: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [mismatchError, setMismatchError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
   const matching = newPassword === confirmPassword;
-
-  const ErrorPopup = () => (
-    <Flex
-      position="fixed"
-      top="0"
-      left="0"
-      w="100vw"
-      h="100vh"
-      bg="rgba(0,0,0,0.4)"
-      align="center"
-      justify="center"
-      zIndex={9999}
-    >
-      <Card.Root w="500px" p={6} borderRadius="md" boxShadow="xl">
-        <Card.Header p={0}>
-          <HStack w="100%" align="center">
-            <HStack gap={2}>
-              <Icon as={FaLock} />
-              <Text fontWeight="bold">Password Reset Failed</Text>
-            </HStack>
-            <CloseButton
-              ml="auto"
-              boxSize="20px"
-              onClick={() => setShowErrorPopup(false)}
-              _hover={{ bg: "white" }}
-            />
-          </HStack>
-        </Card.Header>
-        <Card.Body px={1} py={5}>
-          <Text>
-            Please make sure your new password entries match and try again.
-          </Text>
-        </Card.Body>
-      </Card.Root>
-    </Flex>
-  );
 
   return (
     <Flex
@@ -204,11 +167,8 @@ export const AdminPassReset: React.FC = () => {
               </>
             ) : (
               <>
-                <Box>
-                  <Text fontWeight="bold" mb={2}>New Password</Text>
-                </Box>
-
-                <Box w="80%" h="40px" mb={6}>
+                <Field.Root w="80%" mb={4}>
+                  <Field.Label fontWeight="bold">New Password</Field.Label>
                   <InputGroup
                     startElement={<HiOutlineKey />}
                     endElement={
@@ -228,25 +188,20 @@ export const AdminPassReset: React.FC = () => {
                     <Input
                       type={showNewPassword ? "text" : "password"}
                       placeholder="Enter Password"
-                      variant="outline"
-                      borderColor="#E4E4E7"
-                      borderWidth="1px"
                       borderRadius="md"
                       _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                      css={{
-                        "&::-ms-reveal, &::-ms-clear": { display: "none" },
-                      }}
+                      css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setMismatchError(false);
+                      }}
                     />
                   </InputGroup>
-                </Box>
+                </Field.Root>
 
-                <Box>
-                  <Text fontWeight="bold" mb={2}>Confirm Password</Text>
-                </Box>
-
-                <Box w="80%" h="40px" mb={6}>
+                <Field.Root invalid={mismatchError} w="80%" mb={4}>
+                  <Field.Label fontWeight="bold">Confirm Password</Field.Label>
                   <InputGroup
                     startElement={<HiOutlineKey />}
                     endElement={
@@ -266,58 +221,57 @@ export const AdminPassReset: React.FC = () => {
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Enter Password"
-                      variant="outline"
-                      borderColor="#E4E4E7"
-                      borderWidth="1px"
                       borderRadius="md"
                       _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                      css={{
-                        "&::-ms-reveal, &::-ms-clear": { display: "none" },
-                      }}
+                      css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setMismatchError(false);
+                      }}
                     />
                   </InputGroup>
-                </Box>
+                  <Field.ErrorText>Passwords do not match.</Field.ErrorText>
+                </Field.Root>
 
-                <Button
-                  position="relative"
-                  variant="outline"
-                  borderRadius="md"
-                  background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
-                  w="80%"
-                  h="50px"
-                  color="white"
-                  disabled={!newPassword || !confirmPassword}
-                  _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
-                  mb={4}
-                  onClick={async () => {
-                    if (!matching) {
-                      setShowErrorPopup(true);
-                      return;
-                    }
-                    try {
-                      await backend.put("/users/update-password", {
-                        email,
-                        newPassword,
-                      });
-                      setResetSuccess(true);
-                    } catch {
-                      setShowErrorPopup(true);
-                    }
-                  }}
-                >
-                  Continue
-                  <Icon
-                    as={FaArrowRight}
-                    position="absolute"
-                    right="16px"
-                    top="50%"
-                    transform="translateY(-50%)"
-                  />
-                </Button>
-
-                {showErrorPopup && <ErrorPopup />}
+                <Field.Root invalid={submitError} w="80%" mb={4}>
+                  <Button
+                    position="relative"
+                    variant="outline"
+                    borderRadius="md"
+                    background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
+                    w="100%"
+                    h="50px"
+                    color="white"
+                    disabled={!newPassword || !confirmPassword}
+                    _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
+                    onClick={async () => {
+                      if (!matching) {
+                        setMismatchError(true);
+                        return;
+                      }
+                      try {
+                        await backend.put("/users/update-password", {
+                          email,
+                          newPassword,
+                        });
+                        setResetSuccess(true);
+                      } catch {
+                        setSubmitError(true);
+                      }
+                    }}
+                  >
+                    Continue
+                    <Icon
+                      as={FaArrowRight}
+                      position="absolute"
+                      right="16px"
+                      top="50%"
+                      transform="translateY(-50%)"
+                    />
+                  </Button>
+                  <Field.ErrorText>Failed to update password. Please try again.</Field.ErrorText>
+                </Field.Root>
 
                 <Text fontSize="sm" color="gray.600">
                   Go back to{" "}
