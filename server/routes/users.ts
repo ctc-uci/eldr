@@ -6,6 +6,43 @@ import { Router } from "express";
 
 export const usersRouter = Router();
 
+// Create a Firebase custom token for an existing user
+usersRouter.post("/custom-token", async (req, res) => {
+  try {
+    const { firebaseUid, email } = req.body as {
+      firebaseUid?: string;
+      email?: string;
+    };
+
+    let resolvedFirebaseUid = firebaseUid?.trim();
+
+    if (!resolvedFirebaseUid && email?.trim()) {
+      const userByEmail = await db.query(
+        "SELECT firebase_uid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+        [email.trim()]
+      );
+
+      if (userByEmail.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const row = keysToCamel(userByEmail[0]) as { firebaseUid?: string };
+      resolvedFirebaseUid = row.firebaseUid?.trim();
+    }
+
+    if (!resolvedFirebaseUid) {
+      return res
+        .status(400)
+        .json({ message: "firebaseUid or email is required" });
+    }
+
+    const customToken = await admin.auth().createCustomToken(resolvedFirebaseUid);
+    return res.status(200).json({ customToken });
+  } catch (err) {
+    return res.status(400).send(err.message);
+  }
+});
+
 // Get all users
 usersRouter.get("/", async (req, res) => {
   try {
