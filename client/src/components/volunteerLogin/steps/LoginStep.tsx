@@ -381,11 +381,10 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                   Password
                 </Text>
                 <Link
-                  href="#"
+                  href="/adminForgotPass?from=volunteer"
                   fontSize="13px"
                   color="blue.500"
                   textDecoration="underline"
-                  onClick={onBack}
                 >
                   Forgot Password?
                 </Link>
