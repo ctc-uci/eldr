@@ -53,20 +53,46 @@ const App = () => {
                   element={<AdminLogin/>}
                 />
                 <Route
-                  path = "/adminForgotPass"
-                  element = {<AdminForgotPass/>}
+                  path="/adminForgotPass"
+                  element={<AdminForgotPass/>}
+                >
+                </Route>
+                <Route
+                  path="/adminPassReset"
+                  element={<AdminPassReset/>}
                 >
                 </Route>
 
                 <Route
-                  path = "/adminPassReset"
-                  element = {<AdminPassReset/>}
-                >
-                </Route>
-
+                  path="/volunteer-profile"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
+                />
                 <Route
-                  path="/volunteerProfile"
+                  path="/volunteer-profile/:tab"
                   element={<VolunteerProfile />}
+                />
+                <Route // edge route to catch legacy routes
+                  path="/volunteerProfile"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
+                />
+                <Route // edge route to catch legacy routes
+                  path="/volunteerProfile/:tab"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
                 />
 
                 <Route

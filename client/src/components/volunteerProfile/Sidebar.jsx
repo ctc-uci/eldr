@@ -2,7 +2,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { LuActivity, LuSettings, LuUser } from "react-icons/lu";
 
 const items = [
-  { id: "profile", label: "Profile Information", icon: LuUser },
+  { id: "information", label: "Profile Information", icon: LuUser },
   { id: "activity", label: "Activity", icon: LuActivity },
   { id: "settings", label: "Settings", icon: LuSettings },
 ];

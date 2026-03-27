@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { Box, Flex, Heading } from "@chakra-ui/react";
 
@@ -9,12 +10,22 @@ import { createInitialProfile } from "./profileState.js";
 import { Sidebar } from "./Sidebar";
 import { VolunteerActivity } from "./VolunteerActivity";
 
+const VALID_SECTIONS = new Set(["information", "activity", "settings"]);
+
 export const ProfileManagement = () => {
-  const [section, setSection] = useState("profile");
+  const { tab } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(createInitialProfile);
   const [draft, setDraft] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showUpdatedBadge, setShowUpdatedBadge] = useState(false);
+  const section = VALID_SECTIONS.has(tab) ? tab : "information";
+
+  useEffect(() => {
+    if (!tab || !VALID_SECTIONS.has(tab)) {
+      navigate("/volunteer-profile/information", { replace: true });
+    }
+  }, [tab, navigate]);
 
   const cancelEdit = useCallback(() => {
     setDraft(null);
@@ -38,12 +49,12 @@ export const ProfileManagement = () => {
 
   const handleSectionChange = useCallback(
     (id) => {
-      if (id !== "profile" && isEditing) {
+      if (id !== "information" && isEditing) {
         cancelEdit();
       }
-      setSection(id);
+      navigate(`/volunteer-profile/${id}`);
     },
-    [isEditing, cancelEdit],
+    [isEditing, cancelEdit, navigate],
   );
 
   const display = isEditing && draft ? draft : profile;
@@ -77,7 +88,7 @@ export const ProfileManagement = () => {
             p={{ base: 4, md: 8 }}
             borderRadius="2px"
           >
-            {section === "profile" ? (
+            {section === "information" ? (
               <ProfileInformation
                 data={display}
                 setData={isEditing ? setDraft : undefined}
