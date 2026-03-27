@@ -6,7 +6,6 @@ import {
   Flex,
   Heading,
   HStack,
-  Input,
   NativeSelect,
   Table,
   Tag,
@@ -17,6 +16,8 @@ import {
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 const PAGE_SIZE = 5;
+const activityCache = new Map();
+const activityRequests = new Map();
 
 const toHours = (startTime, endTime) => {
   const start = new Date(startTime);
@@ -35,6 +36,91 @@ const formatDate = (dateLike) => {
     day: "2-digit",
     year: "2-digit",
   });
+};
+
+const loadVolunteerActivityData = async (backend, volunteerId) => {
+  const clinicsResp = await backend.get("/clinics");
+  const clinics = clinicsResp?.data ?? [];
+
+  const registrationResults = await Promise.all(
+    clinics.map(async (clinic) => {
+      try {
+        const registrationsResp = await backend.get(`/clinics/${clinic.id}/registrations`);
+        const registrations = registrationsResp?.data ?? [];
+        const registration = registrations.find((r) => r.id === volunteerId);
+        if (!registration) return null;
+
+        const hours = toHours(clinic.startTime, clinic.endTime);
+        const endTime = new Date(clinic.endTime);
+        const hasEnded = !Number.isNaN(endTime.getTime()) && endTime.getTime() < Date.now();
+
+        return {
+          id: clinic.id,
+          name: clinic.name ?? `Clinic #${clinic.id}`,
+          date: clinic.date ?? clinic.endTime ?? clinic.startTime,
+          hours,
+          type: "Clinic",
+          hasAttended: Boolean(registration.hasAttended),
+          hasEnded,
+        };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const joinedEvents = registrationResults.filter(Boolean);
+  let joinedLocations = [];
+
+  try {
+    const locationsResp = await backend.get(`/volunteers/${volunteerId}/locations`);
+    const locationRows = locationsResp?.data ?? [];
+    joinedLocations = locationRows.map((row) => {
+      if (row.locationName) return row.locationName;
+      const city = row.city ?? "";
+      const state = row.state ?? "";
+      const zip = row.zipCode ?? "";
+      return [city, state, zip].filter(Boolean).join(", ");
+    });
+  } catch {
+    joinedLocations = [];
+  }
+
+  return { events: joinedEvents, locations: joinedLocations };
+};
+
+const getVolunteerActivityData = async (backend, volunteerId) => {
+  if (!volunteerId) return { events: [], locations: [] };
+
+  if (activityCache.has(volunteerId)) {
+    return activityCache.get(volunteerId);
+  }
+
+  if (activityRequests.has(volunteerId)) {
+    return activityRequests.get(volunteerId);
+  }
+
+  const request = loadVolunteerActivityData(backend, volunteerId)
+    .then((data) => {
+      activityCache.set(volunteerId, data);
+      activityRequests.delete(volunteerId);
+      return data;
+    })
+    .catch((error) => {
+      activityRequests.delete(volunteerId);
+      throw error;
+    });
+
+  activityRequests.set(volunteerId, request);
+  return request;
+};
+
+export const prefetchVolunteerActivity = async (backend, volunteerId) => {
+  try {
+    await getVolunteerActivityData(backend, volunteerId);
+  } catch {
+    // Prefetch should not block UI if it fails.
+  }
 };
 
 export const VolunteerActivity = ({ volunteerId }) => {
@@ -60,54 +146,9 @@ export const VolunteerActivity = ({ volunteerId }) => {
       setError("");
 
       try {
-        const clinicsResp = await backend.get("/clinics");
-        const clinics = clinicsResp?.data ?? [];
-
-        const registrationResults = await Promise.all(
-          clinics.map(async (clinic) => {
-            try {
-              const registrationsResp = await backend.get(`/clinics/${clinic.id}/registrations`);
-              const registrations = registrationsResp?.data ?? [];
-              const registration = registrations.find((r) => r.id === volunteerId);
-              if (!registration) return null;
-
-              const hours = toHours(clinic.startTime, clinic.endTime);
-              const endTime = new Date(clinic.endTime);
-              const hasEnded = !Number.isNaN(endTime.getTime()) && endTime.getTime() < Date.now();
-
-              return {
-                id: clinic.id,
-                name: clinic.name ?? `Clinic #${clinic.id}`,
-                date: clinic.date ?? clinic.endTime ?? clinic.startTime,
-                hours,
-                type: "Clinic",
-                hasAttended: Boolean(registration.hasAttended),
-                hasEnded,
-              };
-            } catch {
-              return null;
-            }
-          }),
-        );
-
-        const joinedEvents = registrationResults.filter(Boolean);
-        setEvents(joinedEvents);
-
-        try {
-          const locationsResp = await backend.get(`/volunteers/${volunteerId}/locations`);
-          const locationRows = locationsResp?.data ?? [];
-          setLocations(
-            locationRows.map((row) => {
-              if (row.locationName) return row.locationName;
-              const city = row.city ?? "";
-              const state = row.state ?? "";
-              const zip = row.zipCode ?? "";
-              return [city, state, zip].filter(Boolean).join(", ");
-            }),
-          );
-        } catch {
-          setLocations([]);
-        }
+        const activityData = await getVolunteerActivityData(backend, volunteerId);
+        setEvents(activityData.events ?? []);
+        setLocations(activityData.locations ?? []);
       } catch (e) {
         console.error("Failed to load volunteer activity", e);
         setError("Failed to load activity history.");

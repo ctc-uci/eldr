@@ -11,7 +11,7 @@ import { NavBar } from "./NavBar";
 import { ProfileInformation } from "./ProfileInformation";
 import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
 import { Sidebar } from "./Sidebar";
-import { VolunteerActivity } from "./VolunteerActivity";
+import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
 const VALID_SECTIONS = new Set(["information", "activity", "settings"]);
 const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Proficient";
@@ -142,6 +142,11 @@ export const ProfileManagement = () => {
 
     loadProfile();
   }, [backend, currentUser?.uid]);
+
+  useEffect(() => {
+    if (!volunteerId) return;
+    prefetchVolunteerActivity(backend, volunteerId);
+  }, [backend, volunteerId]);
 
   const cancelEdit = useCallback(() => {
     setDraft(null);
