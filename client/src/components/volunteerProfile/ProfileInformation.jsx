@@ -19,12 +19,8 @@ import {
 import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
 
 import {
-  LANGUAGE_OPTIONS,
-  LAW_YEAR_OPTIONS,
   NOTARY_OPTIONS,
-  OCCUPATION_OPTIONS,
   PROFICIENCY_OPTIONS,
-  STATE_OPTIONS,
 } from "./profileState.js";
 
 const primaryBlue = "#3182CE";
@@ -49,7 +45,12 @@ export const ProfileInformation = ({
   onEdit,
   onSave,
   onCancel,
+  isSaving = false,
+  errorMessage = "",
+  languageOptions = [],
 }) => {
+  const defaultLanguage = languageOptions[0] ?? "";
+
   const update = (patch) => {
     if (!setData) return;
     setData((prev) => ({ ...prev, ...patch }));
@@ -73,8 +74,8 @@ export const ProfileInformation = ({
         ...prev.languages,
         {
           id: `lang-${Date.now()}`,
-          language: "English",
-          proficiency: "Elementary",
+          language: defaultLanguage,
+          proficiency: PROFICIENCY_OPTIONS[0],
         },
       ],
     }));
@@ -180,6 +181,8 @@ export const ProfileInformation = ({
                 borderRadius="md"
                 _hover={{ bg: "#2B6CB0" }}
                 onClick={onSave}
+                loading={isSaving}
+                disabled={isSaving}
               >
                 Save Changes
               </Button>
@@ -192,6 +195,7 @@ export const ProfileInformation = ({
                 color="gray.800"
                 _hover={{ bg: "gray.200" }}
                 onClick={onCancel}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
@@ -253,9 +257,7 @@ export const ProfileInformation = ({
                     size="xs"
                     variant="outline"
                     colorPalette="blue"
-                    onClick={() => {
-                      /* placeholder — file upload later */
-                    }}
+                    disabled
                   >
                     Change Photo
                   </Button>
@@ -356,85 +358,21 @@ export const ProfileInformation = ({
             </Box>
             <Box>
               <FieldLabel>Occupation</FieldLabel>
-              {isEditing ? (
-                <NativeSelect.Root size="sm">
-                  <NativeSelect.Field
-                    value={data.occupation}
-                    onChange={(e) => update({ occupation: e.target.value })}
-                  >
-                    {OCCUPATION_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              ) : (
-                <ReadValue>{data.occupation}</ReadValue>
-              )}
+              <ReadValue>{data.occupation}</ReadValue>
             </Box>
             <Box>
               <FieldLabel>Law School Year</FieldLabel>
-              {isEditing ? (
-                <NativeSelect.Root size="sm">
-                  <NativeSelect.Field
-                    value={data.lawSchoolYear}
-                    onChange={(e) => update({ lawSchoolYear: e.target.value })}
-                  >
-                    {LAW_YEAR_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              ) : (
-                <ReadValue>{data.lawSchoolYear}</ReadValue>
-              )}
+              <ReadValue muted>{data.lawSchoolYear}</ReadValue>
             </Box>
           </SimpleGrid>
           <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
             <Box>
               <FieldLabel>State Bar Certificate State</FieldLabel>
-              {isEditing ? (
-                <NativeSelect.Root size="sm">
-                  <NativeSelect.Field
-                    value={data.stateBarState}
-                    onChange={(e) => update({ stateBarState: e.target.value })}
-                  >
-                    {STATE_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              ) : (
-                <ReadValue muted={data.stateBarState === "N/A"}>
-                  {data.stateBarState}
-                </ReadValue>
-              )}
+              <ReadValue muted>{data.stateBarState}</ReadValue>
             </Box>
             <Box>
               <FieldLabel>State Bar Number</FieldLabel>
-              {isEditing ? (
-                <Field.Root>
-                  <Input
-                    size="sm"
-                    value={data.stateBarNumber}
-                    onChange={(e) =>
-                      update({ stateBarNumber: e.target.value })
-                    }
-                  />
-                </Field.Root>
-              ) : (
-                <ReadValue muted={data.stateBarNumber === "N/A"}>
-                  {data.stateBarNumber}
-                </ReadValue>
-              )}
+              <ReadValue muted>{data.stateBarNumber}</ReadValue>
             </Box>
           </SimpleGrid>
         </Box>
@@ -477,7 +415,7 @@ export const ProfileInformation = ({
                             })
                           }
                         >
-                          {LANGUAGE_OPTIONS.map((o) => (
+                          {languageOptions.map((o) => (
                             <option key={o} value={o}>
                               {o}
                             </option>
@@ -612,6 +550,11 @@ export const ProfileInformation = ({
           </Box>
         </SimpleGrid>
         </Box>
+        {errorMessage ? (
+          <Text color="red.600" fontSize="sm">
+            {errorMessage}
+          </Text>
+        ) : null}
       </VStack>
     </Box>
   );

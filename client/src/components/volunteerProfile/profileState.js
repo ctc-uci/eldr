@@ -1,30 +1,19 @@
-/** Placeholder profile shape for volunteer account UI (backend later). */
 export const createInitialProfile = () => ({
-  firstName: "Peter",
-  lastName: "Anteater",
-  phone: "621-438-3991",
-  email: "peteranteater@uci.edu",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
   photoUrl: "",
-  notary: "Active",
+  notary: "Inactive",
   occupation: "Volunteer",
-  lawSchoolYear: "2L",
+  lawSchoolYear: "N/A",
   stateBarState: "N/A",
   stateBarNumber: "N/A",
-  languages: [
-    { id: "1", language: "English", proficiency: "Professional" },
-    { id: "2", language: "Spanish", proficiency: "Elementary" },
-  ],
-  interests: [
-    "Elder Law",
-    "Guardianship & Conservatorship",
-    "Eviction Defense",
-  ],
+  languages: [],
+  interests: [],
 });
 
 export const NOTARY_OPTIONS = ["Active", "Inactive"];
-export const OCCUPATION_OPTIONS = ["Volunteer", "Law Student", "Attorney"];
-export const LAW_YEAR_OPTIONS = ["1L", "2L", "3L", "N/A"];
-export const STATE_OPTIONS = ["N/A", "CA", "NY", "TX"];
 export const LANGUAGE_OPTIONS = [
   "English",
   "Spanish",
@@ -33,8 +22,7 @@ export const LANGUAGE_OPTIONS = [
   "Korean",
 ];
 export const PROFICIENCY_OPTIONS = [
-  "Elementary",
-  "Limited Working",
+  "Proficient",
   "Professional",
-  "Native",
+  "Native/Fluent",
 ];
