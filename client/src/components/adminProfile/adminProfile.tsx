@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Badge,
@@ -16,7 +16,10 @@ import {
 } from "@chakra-ui/react";
 
 import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar";
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuCheck, LuLock, LuPencil, LuSave, LuUser } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
 type AdminProfileData = {
   firstName: string;
@@ -27,21 +30,29 @@ type AdminProfileData = {
 };
 
 const initialProfile: AdminProfileData = {
-  firstName: "Samuel",
-  lastName: "George",
-  phone: "621-438-2991",
-  email: "sgeorge19@gmail.com",
-  role: "Supervisor",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
+  role: "",
 };
 
 const editBlue = "#3B6F8F";
+const capitalize = (value: string) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
 
 export const AdminProfile = () => {
+  const navigate = useNavigate();
+  const { backend } = useBackendContext();
+  const { currentUser } = useAuthContext();
   const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
   const [profile, setProfile] = useState<AdminProfileData>(initialProfile);
   const [draft, setDraft] = useState<AdminProfileData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showUpdated, setShowUpdated] = useState(false);
+  const [adminId, setAdminId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const display = useMemo(
     () => (isEditing && draft ? draft : profile),
@@ -60,11 +71,100 @@ export const AdminProfile = () => {
   }, []);
 
   const saveEdit = useCallback(() => {
-    if (draft) setProfile(draft);
-    setDraft(null);
-    setIsEditing(false);
-    setShowUpdated(true);
-  }, [draft]);
+    const save = async () => {
+      if (!draft || !adminId || !currentUser?.uid) return;
+
+      try {
+        await backend.put(`/admins/${adminId}`, {
+          firstName: draft.firstName,
+          lastName: draft.lastName,
+          email: draft.email,
+          calendarEmail: draft.email,
+        });
+
+        await backend.put("/users/update", {
+          email: draft.email,
+          firebaseUid: currentUser.uid,
+        });
+
+        setProfile(draft);
+        setDraft(null);
+        setIsEditing(false);
+        setShowUpdated(true);
+        setErrorMessage("");
+      } catch (error) {
+        console.error("Failed to save admin profile", error);
+        setErrorMessage("Failed to save profile changes.");
+      }
+    };
+
+    void save();
+  }, [adminId, backend, currentUser?.uid, draft]);
+
+  useEffect(() => {
+    const loadAdminProfile = async () => {
+      if (!currentUser?.uid) {
+        setIsLoading(false);
+        setErrorMessage("No authenticated admin user found.");
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        const userResp = await backend.get(`/users/${currentUser.uid}`);
+        const userRow = userResp?.data?.[0];
+
+        if (!userRow?.id) {
+          setErrorMessage("Admin user record not found.");
+          return;
+        }
+
+        setAdminId(userRow.id);
+
+        const adminResp = await backend.get(`/admins/id/${userRow.id}`);
+        const adminRow = adminResp?.data;
+
+        if (!adminRow) {
+          setErrorMessage("Admin profile not found.");
+          return;
+        }
+
+        const rawFirstName = String(adminRow.firstName ?? "").trim();
+        const rawLastName = String(adminRow.lastName ?? "").trim();
+        const rawRole = String(userRow.role ?? "admin").trim();
+
+        let firstName = rawFirstName;
+        let lastName = rawLastName;
+
+        // Some older records may have full name in first_name and role in last_name.
+        if (
+          rawFirstName.includes(" ") &&
+          (!rawLastName || rawLastName.toLowerCase() === rawRole.toLowerCase())
+        ) {
+          const [first, ...rest] = rawFirstName.split(/\s+/);
+          firstName = first ?? "";
+          lastName = rest.join(" ");
+        }
+
+        setProfile({
+          firstName,
+          lastName,
+          phone: adminRow.phone ?? "",
+          email: adminRow.email ?? userRow.email ?? "",
+          role: capitalize(rawRole),
+        });
+      } catch (error) {
+        console.error("Failed to load admin profile", error);
+        setErrorMessage("Failed to load admin profile.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadAdminProfile();
+  }, [backend, currentUser?.uid]);
 
   const readOnly = !isEditing;
 
@@ -76,6 +176,16 @@ export const AdminProfile = () => {
         <Heading fontSize="18px" fontWeight={700} color="gray.900" mb={4}>
           Account Management
         </Heading>
+        {isLoading ? (
+          <Text fontSize="13px" color="gray.500" mb={4}>
+            Loading admin profile...
+          </Text>
+        ) : null}
+        {!isLoading && errorMessage ? (
+          <Text fontSize="13px" color="red.600" mb={4}>
+            {errorMessage}
+          </Text>
+        ) : null}
 
         <Tabs.Root
           value={activeTab}
@@ -354,6 +464,7 @@ export const AdminProfile = () => {
                       borderColor="gray.200"
                       borderRadius="4px"
                       _focus={{ boxShadow: "none", borderColor: "gray.300" }}
+                      disabled
                     />
                   )}
                 </Field.Root>
@@ -371,6 +482,7 @@ export const AdminProfile = () => {
                 borderRadius="4px"
                 h="38px"
                 w="160px"
+                onClick={() => navigate("/adminForgotPass?from=admin")}
               >
                 <HStack gap={2}>
                   <LuLock size={16} />
@@ -393,6 +505,7 @@ export const AdminProfile = () => {
               borderRadius="4px"
               h="38px"
               w="160px"
+              onClick={() => navigate("/adminForgotPass?from=admin")}
             >
               <HStack gap={2}>
                 <LuLock size={16} />
