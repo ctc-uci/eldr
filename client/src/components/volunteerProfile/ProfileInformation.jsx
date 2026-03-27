@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import {
   Avatar,
   Badge,
@@ -48,6 +46,7 @@ export const ProfileInformation = ({
   isSaving = false,
   errorMessage = "",
   languageOptions = [],
+  areaOptions = [],
 }) => {
   const defaultLanguage = languageOptions[0] ?? "";
 
@@ -89,18 +88,16 @@ export const ProfileInformation = ({
     }));
   };
 
-  const [interestInput, setInterestInput] = useState("");
-
-  const addInterest = () => {
-    const v = interestInput.trim();
+  const addInterest = (value) => {
+    const v = value.trim();
     if (!v || !setData) return;
     setData((prev) =>
       prev.interests.includes(v)
         ? prev
         : { ...prev, interests: [...prev.interests, v] },
     );
-    setInterestInput("");
   };
+  const availableAreaOptions = areaOptions.filter((option) => !data.interests.includes(option));
 
   return (
     <Box
@@ -382,8 +379,8 @@ export const ProfileInformation = ({
           <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
             Experience
           </Text>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} alignItems="start">
-          <Box>
+          <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start">
+          <Box flex="1" w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
@@ -491,10 +488,8 @@ export const ProfileInformation = ({
             </Box>
           </Box>
 
-          <Box
-            p={4}
-          >
-            <Text fontWeight="semibold" fontSize="md" mb={3} color="gray.900">
+          <Box flex="1" w="100%">
+            <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Interests(s)
             </Text>
             <Flex
@@ -530,25 +525,38 @@ export const ProfileInformation = ({
                 </Tag.Root>
               ))}
               {isEditing ? (
-                <Input
-                  flex="1"
-                  minW="120px"
-                  border="none"
-                  _focus={{ boxShadow: "none" }}
-                  placeholder="Add tag..."
-                  value={interestInput}
-                  onChange={(e) => setInterestInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addInterest();
-                    }
-                  }}
-                />
+                <NativeSelect.Root size="sm" minW="160px" maxW="160px">
+                  <NativeSelect.Field
+                    defaultValue=""
+                    border="none"
+                    bg="transparent"
+                    px={2}
+                    _focus={{ boxShadow: "none", borderColor: "transparent", outline: "none" }}
+                    _focusVisible={{
+                      boxShadow: "none",
+                      borderColor: "transparent",
+                      outline: "none",
+                    }}
+                    onChange={(e) => {
+                      addInterest(e.target.value);
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="" disabled>
+                      Add tag...
+                    </option>
+                    {availableAreaOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
               ) : null}
             </Flex>
           </Box>
-        </SimpleGrid>
+        </Flex>
         </Box>
         {errorMessage ? (
           <Text color="red.600" fontSize="sm">

@@ -368,6 +368,12 @@ export const ProfileManagement = () => {
                         ...display.languages.map((row) => row.language),
                       ]),
                     )}
+                    areaOptions={Array.from(
+                      new Set([
+                        ...areaCatalog.map((row) => row.areasOfPractice),
+                        ...display.interests,
+                      ]),
+                    )}
                   />
                 )}
               </>
