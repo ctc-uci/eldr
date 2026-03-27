@@ -167,6 +167,14 @@ export const AdminProfile = () => {
   }, [backend, currentUser?.uid]);
 
   const readOnly = !isEditing;
+  const goToResetPassword = useCallback(() => {
+    const email = (display.email ?? "").trim();
+    if (email) {
+      navigate("/adminPassReset", { state: { email, from: "admin" } });
+      return;
+    }
+    navigate("/adminForgotPass?from=admin");
+  }, [display.email, navigate]);
 
   return (
     <Flex minH="100vh" bg="white">
@@ -482,7 +490,7 @@ export const AdminProfile = () => {
                 borderRadius="4px"
                 h="38px"
                 w="160px"
-                onClick={() => navigate("/adminForgotPass?from=admin")}
+                onClick={goToResetPassword}
               >
                 <HStack gap={2}>
                   <LuLock size={16} />
@@ -505,7 +513,7 @@ export const AdminProfile = () => {
               borderRadius="4px"
               h="38px"
               w="160px"
-              onClick={() => navigate("/adminForgotPass?from=admin")}
+              onClick={goToResetPassword}
             >
               <HStack gap={2}>
                 <LuLock size={16} />
