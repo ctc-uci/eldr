@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
@@ -14,30 +14,163 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-const PLACEHOLDER_EVENTS = [
-  { id: "1", name: "Event #1", date: "11/12/25", hours: 10, type: "Clinic" },
-  { id: "2", name: "Event #2", date: "11/10/25", hours: 8, type: "Event" },
-  { id: "3", name: "Event #3", date: "11/01/25", hours: 6, type: "Clinic" },
-  { id: "4", name: "Event #4", date: "10/28/25", hours: 5, type: "Clinic" },
-  { id: "5", name: "Event #5", date: "10/15/25", hours: 4, type: "Event" },
-];
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-const PLACEHOLDER_LOCATIONS = ["Irvine, CA", "Orange, CA", "Anaheim, CA"];
+const PAGE_SIZE = 5;
 
-export const VolunteerActivity = () => {
-  const [locations, setLocations] = useState(PLACEHOLDER_LOCATIONS);
-  const [locInput, setLocInput] = useState("");
+const toHours = (startTime, endTime) => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const diffMs = end.getTime() - start.getTime();
+  if (Number.isNaN(diffMs) || diffMs <= 0) return 0;
+  return Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+};
+
+const formatDate = (dateLike) => {
+  if (!dateLike) return "-";
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+};
+
+export const VolunteerActivity = ({ volunteerId }) => {
+  const { backend } = useBackendContext();
+  const [events, setEvents] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
   const [page, setPage] = useState(1);
 
-  const addLocation = () => {
-    const v = locInput.trim();
-    if (!v || locations.includes(v)) return;
-    setLocations((prev) => [...prev, v]);
-    setLocInput("");
-  };
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!volunteerId) {
+        setLoading(false);
+        setEvents([]);
+        setLocations([]);
+        return;
+      }
 
-  const removeLocation = (loc) => {
-    setLocations((prev) => prev.filter((l) => l !== loc));
+      setLoading(true);
+      setError("");
+
+      try {
+        const clinicsResp = await backend.get("/clinics");
+        const clinics = clinicsResp?.data ?? [];
+
+        const registrationResults = await Promise.all(
+          clinics.map(async (clinic) => {
+            try {
+              const registrationsResp = await backend.get(`/clinics/${clinic.id}/registrations`);
+              const registrations = registrationsResp?.data ?? [];
+              const registration = registrations.find((r) => r.id === volunteerId);
+              if (!registration) return null;
+
+              const hours = toHours(clinic.startTime, clinic.endTime);
+              const endTime = new Date(clinic.endTime);
+              const hasEnded = !Number.isNaN(endTime.getTime()) && endTime.getTime() < Date.now();
+
+              return {
+                id: clinic.id,
+                name: clinic.name ?? `Clinic #${clinic.id}`,
+                date: clinic.date ?? clinic.endTime ?? clinic.startTime,
+                hours,
+                type: "Clinic",
+                hasAttended: Boolean(registration.hasAttended),
+                hasEnded,
+              };
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        const joinedEvents = registrationResults.filter(Boolean);
+        setEvents(joinedEvents);
+
+        try {
+          const locationsResp = await backend.get(`/volunteers/${volunteerId}/locations`);
+          const locationRows = locationsResp?.data ?? [];
+          setLocations(
+            locationRows.map((row) => {
+              if (row.locationName) return row.locationName;
+              const city = row.city ?? "";
+              const state = row.state ?? "";
+              const zip = row.zipCode ?? "";
+              return [city, state, zip].filter(Boolean).join(", ");
+            }),
+          );
+        } catch {
+          setLocations([]);
+        }
+      } catch (e) {
+        console.error("Failed to load volunteer activity", e);
+        setError("Failed to load activity history.");
+        setEvents([]);
+        setLocations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadActivity();
+  }, [backend, volunteerId]);
+
+  const pastRegisteredEvents = useMemo(() => {
+    // TODO: Switch this to `event.hasAttended && event.hasEnded` once attendance
+    // tracking is surfaced in the current profile/activity designs.
+    return events.filter((event) => event.hasEnded);
+  }, [events]);
+
+  const totalHours = useMemo(() => {
+    const sum = pastRegisteredEvents.reduce((acc, event) => acc + event.hours, 0);
+    return Number(sum.toFixed(2));
+  }, [pastRegisteredEvents]);
+
+  const filteredSortedEvents = useMemo(() => {
+    const filtered =
+      typeFilter === "all"
+        ? events
+        : events.filter((event) => event.type.toLowerCase() === typeFilter);
+
+    const sorted = [...filtered].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (sortBy === "oldest") return timeA - timeB;
+      return timeB - timeA;
+    });
+
+    return sorted;
+  }, [events, sortBy, typeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSortedEvents.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, typeFilter]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const visibleEvents = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredSortedEvents.slice(start, start + PAGE_SIZE);
+  }, [filteredSortedEvents, page]);
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+  }, [totalPages]);
+
+  const renderHours = (value) => {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2);
   };
 
   return (
@@ -64,7 +197,7 @@ export const VolunteerActivity = () => {
           borderColor="gray.200"
         >
           <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-            115
+            {loading ? "-" : renderHours(totalHours)}
           </Text>
           <Text fontSize="sm" color="gray.600" mt={1}>
             Total Volunteer Hours
@@ -80,7 +213,7 @@ export const VolunteerActivity = () => {
           borderColor="gray.200"
         >
           <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-            30
+            {loading ? "-" : pastRegisteredEvents.length}
           </Text>
           <Text fontSize="sm" color="gray.600" mt={1}>
             Total Event Count
@@ -94,15 +227,14 @@ export const VolunteerActivity = () => {
         </Text>
         <Flex gap={3} mt={6} mb={8} flexWrap="wrap" justifyContent="space-between">
           <NativeSelect.Root size="sm" maxW="180px">
-            <NativeSelect.Field defaultValue="all">
+            <NativeSelect.Field value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
               <option value="all">All Events</option>
               <option value="clinic">Clinic</option>
-              <option value="event">Event</option>
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
           <NativeSelect.Root size="sm" maxW="180px">
-            <NativeSelect.Field defaultValue="recent">
+            <NativeSelect.Field value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="recent">Most Recent</option>
               <option value="oldest">Oldest</option>
             </NativeSelect.Field>
@@ -121,28 +253,43 @@ export const VolunteerActivity = () => {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {PLACEHOLDER_EVENTS.map((ev) => (
+              {visibleEvents.map((ev) => (
                 <Table.Row key={ev.id}>
                   <Table.Cell>{ev.name}</Table.Cell>
-                  <Table.Cell>{ev.date}</Table.Cell>
-                  <Table.Cell>{ev.hours}</Table.Cell>
+                  <Table.Cell>{formatDate(ev.date)}</Table.Cell>
+                  <Table.Cell>{renderHours(ev.hours)}</Table.Cell>
                   <Table.Cell>{ev.type}</Table.Cell>
                 </Table.Row>
               ))}
+              {!loading && !error && visibleEvents.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={4}>
+                    <Text color="gray.500" fontSize="sm" py={2}>
+                      No registered clinics found.
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              ) : null}
             </Table.Body>
           </Table.Root>
         </Table.ScrollArea>
+        {error ? (
+          <Text mt={3} color="red.600" fontSize="sm">
+            {error}
+          </Text>
+        ) : null}
 
         <HStack justify="flex-end" mt={4} gap={1} flexWrap="wrap">
           <Button
             size="xs"
             variant="ghost"
+            disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             aria-label="Previous page"
           >
             ‹
           </Button>
-          {[1, 2, 3].map((n) => (
+          {pageNumbers.map((n) => (
             <Button
               key={n}
               size="xs"
@@ -155,23 +302,11 @@ export const VolunteerActivity = () => {
               {n}
             </Button>
           ))}
-          <Text fontSize="sm" px={1} color="gray.500">
-            ...
-          </Text>
-          <Button
-            size="xs"
-            minW="32px"
-            variant={page === 5 ? "solid" : "ghost"}
-            bg={page === 5 ? "gray.900" : undefined}
-            color={page === 5 ? "white" : undefined}
-            onClick={() => setPage(5)}
-          >
-            5
-          </Button>
           <Button
             size="xs"
             variant="ghost"
-            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             aria-label="Next page"
           >
             ›
@@ -202,27 +337,13 @@ export const VolunteerActivity = () => {
               color="gray.900"
             >
               <Tag.Label>{loc}</Tag.Label>
-              <Tag.EndElement>
-                <Tag.CloseTrigger onClick={() => removeLocation(loc)} />
-              </Tag.EndElement>
             </Tag.Root>
           ))}
-          <Input
-            flex="1"
-            minW="140px"
-            border="none"
-            bg="transparent"
-            _focus={{ boxShadow: "none" }}
-            placeholder="Add tag..."
-            value={locInput}
-            onChange={(e) => setLocInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addLocation();
-              }
-            }}
-          />
+          {!loading && locations.length === 0 ? (
+            <Text color="gray.500" fontSize="sm">
+              No saved locations.
+            </Text>
+          ) : null}
         </Flex>
       </Box>
     </VStack>

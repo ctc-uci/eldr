@@ -379,7 +379,7 @@ export const ProfileManagement = () => {
               </>
             ) : null}
 
-            {section === "activity" ? <VolunteerActivity /> : null}
+            {section === "activity" ? <VolunteerActivity volunteerId={volunteerId} /> : null}
 
             {section === "settings" ? <AccountManagement /> : null}
           </Box>
