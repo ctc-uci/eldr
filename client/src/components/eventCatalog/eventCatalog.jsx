@@ -25,11 +25,10 @@ export const EventCatalog = () => {
   const { currentUser } = useAuthContext();
   const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
-  /** Text used for search matching (clinics use locationType, not legacy `location`) */
+  /** Search blob for location-ish fields (street address omitted from public catalog) */
   const getEventLocationSearchText = (event) => {
     const parts = [
       event.locationType,
-      event.address,
       event.city,
       event.state,
       event.zip,
