@@ -91,9 +91,9 @@ clinicsRouter.get("/", async (req, res) => {
 // GET: list all clinics based on filters (type, language, location, occupation)
 // type - clinics areas of practice / areas of practice table
 // language - clinic languages / languages table
-// location - clinic location enum (virtual, in-person, hybrid) / clinics table
+// location - clinics.location_type enum (in-person, hybrid, online)
 // occupation - clinic roles / roles table
-// /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=Toronto,Vancouver&roleIds=1,2
+// /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=in-person,online&roleIds=1,2
 clinicsRouter.get("/search", async (req, res) => {
   try {
     const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
@@ -101,7 +101,14 @@ clinicsRouter.get("/search", async (req, res) => {
     // parse comma-separated strings into arrays for proper SQL querying
     const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
     const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
-    const locationsArr = locations ? locations.split(",") : null;
+    const locationsRaw = locations ? locations.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    const invalidLocations = locationsRaw.filter((t) => !allowedLocationTypes.includes(t));
+    if (invalidLocations.length > 0) {
+      return res.status(400).json({
+        message: "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
+      });
+    }
+    const locationsArr = locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
     const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
 
     // IS NULL - if no filters provided for a category, ignore that category in filtering
@@ -116,7 +123,7 @@ clinicsRouter.get("/search", async (req, res) => {
           SELECT 1 FROM clinic_languages CL
           WHERE CL.clinic_id = C.id AND CL.language_id = ANY($2::int[])
         ))
-        AND ($3::text[] IS NULL OR C.location::text = ANY($3::text[]))
+        AND ($3::text[] IS NULL OR C.location_type::text = ANY($3::text[]))
         AND ($4::int[] IS NULL OR EXISTS (
           SELECT 1 FROM clinic_roles CR
           WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])

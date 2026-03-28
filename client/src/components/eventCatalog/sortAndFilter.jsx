@@ -96,7 +96,12 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
         {
           label: "Location",
           key: "locations",
-          options: ["Virtual", "In-person", "Hybrid"].map((location) => ({ id: location, text: location })),
+          // ids must match clinics.location_type enum (API normalizes legacy labels)
+          options: [
+            { id: "online", text: "Online (virtual)" },
+            { id: "in-person", text: "In-person" },
+            { id: "hybrid", text: "Hybrid" },
+          ],
         },
         {
           label: "Occupation",

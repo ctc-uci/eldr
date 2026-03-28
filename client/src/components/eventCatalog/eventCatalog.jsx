@@ -12,30 +12,6 @@ import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
 import { TopBar } from "./topBar";
 
-// Filter categories for grouping (OR within category, AND across categories)
-const filterCategories = {
-  Type: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  Language: [
-    "Arabic",
-    "Japanese",
-    "Korean",
-    "Mandarin",
-    "Spanish",
-    "Vietnamese",
-  ],
-  Location: ["Virtual", "In-person"],
-  Occupation: [
-    "Attorney",
-    "Law Student 1L",
-    "Law Student 2L",
-    "Law Student 3L",
-    "Law Student LLM",
-    "Undergraduate Student",
-    "Paralegal/Legal Worker",
-    "Paralegal Student",
-  ],
-};
-
 export const EventCatalog = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -48,6 +24,19 @@ export const EventCatalog = () => {
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
   const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+
+  /** Text used for search matching (clinics use locationType, not legacy `location`) */
+  const getEventLocationSearchText = (event) => {
+    const parts = [
+      event.locationType,
+      event.address,
+      event.city,
+      event.state,
+      event.zip,
+      event.meetingLink,
+    ].filter(Boolean);
+    return parts.join(" ").toLowerCase();
+  };
 
   // Shared function to enrich events with languages, areas, registrations, and formatted dates
   const enrichEvents = async (baseEvents, volId) => {
@@ -128,51 +117,15 @@ export const EventCatalog = () => {
       result = result.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
-          e.location.toLowerCase().includes(q) ||
-          e.description.toLowerCase().includes(q) ||
+          getEventLocationSearchText(e).includes(q) ||
+          (e.description && e.description.toLowerCase().includes(q)) ||
           e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
           e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
       );
     }
 
-    // Apply filters - group by category, OR within same category, AND across categories
-    if (selectedFilters.length > 0) {
-      // Group selected filters by their category
-      const filtersByCategory = {};
-      selectedFilters.forEach((filter) => {
-        for (const [category, options] of Object.entries(filterCategories)) {
-          if (options.includes(filter)) {
-            if (!filtersByCategory[category]) {
-              filtersByCategory[category] = [];
-            }
-            filtersByCategory[category].push(filter);
-            break;
-          }
-        }
-      });
-
-      result = result.filter((event) => {
-        // Every category that has active filters must return true
-        return Object.entries(filtersByCategory).every(
-          ([category, activeFilters]) => {
-            switch (category) {
-              case "Language":
-                return activeFilters.some((f) => event.languages.includes(f));
-              case "Type":
-                return activeFilters.some((f) => event.areas.includes(f));
-              // Events currently don't have the right "location" field or "occupation" field to use these filters from the design
-              // case "Location":
-              //   // Assuming location is a string like "Virtual" or "In-person"
-              //   return activeFilters.some((f) => event.location === f);
-              // case "Occupation":
-              //   return activeFilters.some((f) => event.occupation === f);
-              default:
-                return true;
-            }
-          }
-        );
-      });
-    }
+    // Category filters are applied server-side via /clinics/search when filters are selected;
+    // search + sort run here on the current `events` list.
 
     // Apply sort
     if (sortBy === "upcoming") {
@@ -186,7 +139,7 @@ export const EventCatalog = () => {
     }
 
     return result;
-  }, [searchQuery, selectedFilters, sortBy, events]);
+  }, [searchQuery, sortBy, events]);
 
   useEffect(() => {
     // Only auto-select if we have events and haven't selected one yet
@@ -211,7 +164,7 @@ export const EventCatalog = () => {
         const langIds = [];
         const roleIds = [];
         const locs = [];
-        
+
         selectedFilters.forEach((filter) => {
           if (filter.id.startsWith('areasOfPracticeId')) {
             areaIds.push(filter.id.replace('areasOfPracticeId', ''));
@@ -400,8 +353,8 @@ export const EventCatalog = () => {
             </Button>
           )}
 
-          <EventInfo 
-            event={selectedEvent} 
+          <EventInfo
+            event={selectedEvent}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
           />
