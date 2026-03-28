@@ -21,7 +21,7 @@ import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
-// import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
+import { EventManagement } from "./components/eventManagement/EventManagement";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
@@ -90,7 +90,7 @@ const App = () => {
                   path="/volunteer-management"
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
                 /> */}
-                {/* <Route
+                <Route
                   path = "/events"
                   element={
                     <ProtectedRoute
@@ -98,7 +98,7 @@ const App = () => {
                       allowedRoles={["admin"]}
                     />
                   }
-                /> */}
+                />
                 {/* <Route
                   path = "/events/:id"
                   element={

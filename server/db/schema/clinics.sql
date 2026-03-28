@@ -15,7 +15,7 @@ CREATE TABLE clinics (
     attendees INT NOT NULL DEFAULT 0 CHECK (attendees >= 0),
     min_attendees INT NOT NULL CHECK (min_attendees > 0),
     capacity INT NOT NULL CHECK (capacity > 0),
-    max_target_roles INT NOT NULL,
+    max_target_roles INT,
     parking TEXT,
     address TEXT,
     city TEXT,

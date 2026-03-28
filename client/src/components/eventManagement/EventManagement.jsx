@@ -1,254 +1,343 @@
+import { useEffect, useState } from "react";
+
 import {
-    Card,
-    VStack,
-    HStack,
-    Tabs,
-    TabPanels,
-    TabList,
-    Tab,
-    Button,
-    Flex,
-    Input,
-    TabPanel,
-    Text,
-    Select,
-    Box,
-    InputGroup, 
-    InputLeftElement,
-    Icon,
-    useDisclosure,
-    Tag
+  Box,
+  Button,
+  Card,
+  Flex,
+  HStack,
+  Input,
+  InputGroup,
+  Tag,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
-import {
-    useEffect,
-    useState
-} from "react"
-
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { HiMiniPlusCircle } from "react-icons/hi2";
-import { CgProfile } from "react-icons/cg";
-import { IoCalendarSharp, IoPersonSharp } from "react-icons/io5";
-import { FaLocationDot } from "react-icons/fa6";
+import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
-import { CreateEvent } from "./CreateEvent.jsx";
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { Sidebar } from "@/components/Sidebar";
+import { CreateEvent } from "./createEvent";
+import { NewCreatedEvent } from "./NewCreatedEvent";
+
+const parseTimestamp = (str) => {
+  if (!str) return null;
+  // "2026-02-20 15:00:00+00" → "2026-02-20T15:00:00+00:00"
+  const iso = str.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00");
+  return new Date(iso);
+};
+
+const formatDate = (dateStr) => {
+  const d = parseTimestamp(dateStr);
+  if (!d || isNaN(d)) return "";
+  return d.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
+};
+
+const formatTime = (dateStr) => {
+  const d = parseTimestamp(dateStr);
+  if (!d || isNaN(d)) return "";
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  });
+};
+
+const capitalizeLocationType = (str) => {
+  if (!str) return "";
+  return str.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("-");
+};
+
+// Build location string based on locationType field
+const renderLocation = (clinic) => {
+  const mode = (clinic.locationType || "").toLowerCase();
+  const link = clinic.meetingLink;
+  const inPersonAddress = [clinic.address, clinic.city, clinic.state, clinic.zip]
+    .filter(Boolean)
+    .join(", ");
+
+  if (mode === "online") return link || "";
+  if (mode === "hybrid") return [inPersonAddress, link].filter(Boolean).join(" | ");
+  return inPersonAddress;
+};
 
 export const EventManagement = () => {
-    const { backend } = useBackendContext();
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const navigate = useNavigate();
-    const [clinics, setClinics] = useState([]);
+  const { backend } = useBackendContext();
+  const navigate = useNavigate();
+  const [clinics, setClinics] = useState([]);
+  const [view, setView] = useState("list"); // "list" | "create" | "created"
+  const [createdEventData, setCreatedEventData] = useState(null);
 
+  useEffect(() => {
     const fetchEvents = async () => {
-        try{
-            const response = await backend.get(`/clinics`)
-            setClinics(response.data);
+      try {
+        const response = await backend.get(`/clinics`);
+        const clinicsData = response.data;
 
-        }
-        catch (error){
-            console.log(error);
-        }
-    }
+        const clinicsWithLanguages = await Promise.all(
+          clinicsData.map(async (clinic) => {
+            try {
+              const langRes = await backend.get(`/clinics/${clinic.id}/languages`);
+              return { ...clinic, languages: langRes.data };
+            } catch {
+              return { ...clinic, languages: [] };
+            }
+          })
+        );
 
+        setClinics(clinicsWithLanguages);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-    useEffect(() => {
-        fetchEvents();
-    });
+    fetchEvents();
+  }, [backend]);
 
-    return (
-        <VStack 
-            w="100%" h="100%" 
-            minH={"100vh"} 
-            bg="#E8E8E8"
-        >
-            <Flex 
-                w="100%" 
-                align="center" 
-                px="2%" 
-                py="2%"
+  return (
+    <Flex minH="100vh">
+      <Sidebar />
+      <Box flex="1">
+        {view === "list" && (
+          <VStack
+            w="100%"
+            minH="100vh"
+            bg="#F5F5F5"
+            p={6}
+            gap={5}
+          >
+            {/* Top bar */}
+            <Flex
+              w="100%"
+              align="center"
+              gap={4}
             >
-                <Text 
-                    fontWeight="bold" 
-                    fontSize="xl"
-                > 
-                    ELDR 
-                </Text>
-                <InputGroup 
-                    maxW="70%" 
-                    mx="auto"
-                    bg="white"
-                >
-                    <InputLeftElement pointerEvents="none">
-                        <CiSearch 
-                            color="black" 
-                            size="80%" 
-                        />
-                    </InputLeftElement>
-                    <Input 
-                        borderRadius= "md" 
-                        border = "2px solid black"
-                    />
-                </InputGroup>
-                <Box>
-                    <Icon 
-                        as={CgProfile} 
-                        boxSize="50"
-                    />
-                </Box>
+              <Button
+                bg="#2D3748"
+                color="white"
+                borderRadius="md"
+                px={5}
+                _hover={{ bg: "#1A202C" }}
+              >
+                <LuSlidersHorizontal />
+                Filter &amp; Sort
+              </Button>
+
+              <InputGroup
+                flex={1}
+                bg="white"
+                borderRadius="md"
+                startElement={
+                  <CiSearch
+                    color="gray"
+                    size="20"
+                  />
+                }
+              >
+                <Input
+                  placeholder="Search for a case..."
+                  borderRadius="md"
+                  border="1px solid #E2E8F0"
+                />
+              </InputGroup>
+
+              <Button
+                bg="#2B6CB0"
+                color="white"
+                borderRadius="md"
+                px={5}
+                _hover={{ bg: "#2C5282" }}
+                onClick={() => setView("create")}
+              >
+                <LuCalendar />
+                Create New Event
+                <LuArrowRight />
+              </Button>
             </Flex>
-            <Tabs w = "100%">
-                <Flex justifyContent = "center">
-                    <TabList gap = {40}>
-                        <Tab 
-                            fontSize = "lg" 
-                            fontWeight="bold"
-                        > 
-                            Clinics & Workshops 
-                        </Tab>
-                        <Tab 
-                            fontSize = "lg" 
-                            fontWeight = "bold"
-                        > 
-                            Cases 
-                        </Tab>
-                    </TabList>
-                </Flex>
-                <TabPanels>
-                    <TabPanel p={0}>
-                        <Flex 
-                            bg = "grey" 
-                            h = "100" 
-                            align = "center" 
-                            p = "2%" 
-                            gap = "2%"
-                            mt = "2%"
+
+            {/* Event cards */}
+            <VStack
+              w="100%"
+              gap={4}
+            >
+              {clinics.map((clinic) => {
+                const locationStr = renderLocation(clinic);
+
+                return (
+                  <Card.Root
+                    key={clinic.id}
+                    w="100%"
+                    borderRadius="lg"
+                    border="1px solid #E2E8F0"
+                    bg="white"
+                    shadow="none"
+                    cursor="pointer"
+                    _hover={{ shadow: "sm" }}
+                    onClick={() => navigate(`/events/${clinic.id}`)}
+                  >
+                    <Card.Body
+                      px={6}
+                      py={4}
+                    >
+                      <VStack
+                        align="start"
+                        gap={2}
+                      >
+                        {/* Date/time row */}
+                        <Flex
+                          w="100%"
+                          justify="space-between"
+                          align="center"
                         >
-                            <Select
-                                placeholder="Sort By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="priority"> Priority (highest to lowest) </option>
-                                <option value="date"> Date (newest to oldest) </option>
-                                <option value="etc"> etc. </option>
-                            </Select>
-
-                            <Select
-                                placeholder="Filter By"
-                                borderRadius="sm"
-                                border="2px solid black"
-                                maxW="10%"
-                                bg = "white"
-                            >
-                                <option value="workshop">Workshop</option>
-                                <option value="clinic">Clinic</option>
-                                <option value="etc">etc.</option>
-                            </Select>
-                            
-                            <Button 
-                                ml="auto"
-                                borderRadius="sm"
-                                border = "2px solid black"
-                                onClick={onOpen}
-                            >
-                                <Icon 
-                                    as={HiMiniPlusCircle} 
-                                    mr="5%" 
-                                /> 
-                                    Add event
-                            </Button>
-                            <CreateEvent 
-                                isOpen={isOpen} 
-                                onClose={onClose} 
-                            />
+                          <Text
+                            fontSize="sm"
+                            color="gray.500"
+                          >
+                            {formatDate(clinic.date)} • {formatTime(clinic.startTime)} -{" "}
+                            {formatTime(clinic.endTime)}
+                          </Text>
+                          {(() => {
+                            const registered = clinic.attendees ?? 0;
+                            const min = clinic.minAttendees ?? 0;
+                            const max = clinic.capacity ?? 0;
+                            const inRange = registered >= min && registered <= max;
+                            const dotColor = inRange ? "green.400" : "red.400";
+                            return (
+                              <HStack gap={1}>
+                                <Box
+                                  w="10px"
+                                  h="10px"
+                                  borderRadius="full"
+                                  bg={dotColor}
+                                  flexShrink={0}
+                                />
+                                <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                                  <Text as="span" fontWeight="bold">
+                                    {registered}
+                                  </Text>
+                                  {" Registered / "}
+                                  <Text as="span" fontWeight="bold">
+                                    {min}
+                                  </Text>
+                                  {" Minimum / "}
+                                  <Text as="span" fontWeight="bold">
+                                    {max}
+                                  </Text>
+                                  {" Maximum"}
+                                </Text>
+                              </HStack>
+                            );
+                          })()}
                         </Flex>
-                        <Tabs>
-                            <Flex 
-                                justifyContent="center" 
-                                mt = "1%"
+
+                        {/* Title */}
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                        >
+                          {clinic.name}
+                        </Text>
+
+                        {/* Location */}
+                        {locationStr && (
+                          <Text
+                            fontSize="sm"
+                            color="gray.600"
+                          >
+                            {locationStr}
+                          </Text>
+                        )}
+
+                        {/* Tags */}
+                        <HStack
+                          gap={2}
+                          mt={1}
+                        >
+                          {/* Clinic type */}
+                          {clinic.type && (
+                            <Tag.Root
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
                             >
-                                <TabList gap = {10}>
-                                    <Tab> Upcoming Events </Tab>
-                                    <Tab> Event Archive </Tab>
-                                </TabList>
-                            </Flex>
-                            <TabPanels>
-                                <TabPanel>
-                                    <VStack p = {4}>
-                                        {clinics.map((clinic) => (
-                                            <Box key={clinic.id} w="80%" h="40" display="flex">
-                                                <Card w="100%" h="100%" borderRadius="sm">
-                                                    <Flex h="100%" align="center" px={4} position="relative">
-                                                        
-                                                        <VStack align="start" spacing={1}>
-                                                            <Text fontSize="lg" fontWeight="bold">
-                                                                {clinic.name}
-                                                            </Text>
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {clinic.type}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
 
-                                                            <HStack spacing={2}>
-                                                                {/* TODO: Change to start time and end time */}
-                                                                <Icon as={IoCalendarSharp} />
-                                                                <Text fontSize="md">
-                                                                    {new Date(clinic.time).toLocaleString()} 
-                                                                </Text>
-                                                            </HStack>
+                          {/* Location type */}
+                          {clinic.locationType && (
+                            <Tag.Root
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
+                            >
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {capitalizeLocationType(clinic.locationType)}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
 
-                                                            <HStack spacing={2}>
-                                                                <Icon as={FaLocationDot} />
-                                                                <Text fontSize="md">
-                                                                    {clinic.location ?? "Location TBD"}
-                                                                </Text>
-                                                            </HStack>
+                          {/* Language tags */}
+                          {(clinic.languages ?? []).map((l) => (
+                            <Tag.Root
+                              key={l.id}
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
+                            >
+                              <Tag.Label fontSize="xs" fontWeight="medium">
+                                {l.language}
+                              </Tag.Label>
+                            </Tag.Root>
+                          ))}
+                        </HStack>
+                      </VStack>
+                    </Card.Body>
+                  </Card.Root>
+                );
+              })}
+            </VStack>
+          </VStack>
+        )}
 
-                                                            <HStack spacing={2}>
-                                                                <Icon as={IoPersonSharp} />
-                                                                <Text fontSize="md">
-                                                                    {clinic.attendees} 
-                                                                </Text>
-                                                            </HStack>
-                                                        </VStack>
+        {view === "create" && (
+          <CreateEvent
+            onClose={() => setView("list")}
+            onCreated={(data) => {
+              setCreatedEventData(data);
+              setView("created");
+            }}
+          />
+        )}
 
-                                                        <Box
-                                                            position="absolute"
-                                                            left="50%"
-                                                            transform="translateX(-50%)"
-                                                        >
-                                                            <HStack spacing={2}>
-                                                                <Text fontWeight="bold">Tags:</Text>
-
-                                                                {/* TEMPORARY — hardcoded */}
-                                                                <Tag bg="#D9D9D9">Clinic</Tag>
-                                                            </HStack>
-                                                        </Box>
-
-                                                        <Button
-                                                            ml="auto"
-                                                            bg="#D9D9D9"
-                                                            borderRadius="lg"
-                                                            onClick={() => navigate(`/events/${clinic.id}`)}
-                                                        >
-                                                            View Event
-                                                        </Button>
-                                                    </Flex>
-                                                </Card>
-                                            </Box>
-                                        ))}
-                                    </VStack>
-                                </TabPanel>
-                            </TabPanels>
-                        </Tabs>
-                    </TabPanel>
-                    <TabPanel>
-                        {/* 
-                        Figure out what to do with Cases here
-                        */}
-                    </TabPanel>
-                </TabPanels>
-            </Tabs>
-        </VStack>
-    );
+        {view === "created" && (
+          <NewCreatedEvent
+            eventData={createdEventData}
+            onClose={() => setView("list")}
+          />
+        )}
+      </Box>
+    </Flex>
+  );
 };

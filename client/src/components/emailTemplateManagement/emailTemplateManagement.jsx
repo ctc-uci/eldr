@@ -20,12 +20,13 @@ import {
   NewTemplatePopover,
   NewFolderPopover,
   EmptyFolderState,
-  Sidebar,
   NewTemplateSection,
   SaveTemplatePopover,
   FolderNotFoundModal,
   DeleteTemplateModal,
 } from "./components";
+
+import { Sidebar } from "@/components/Sidebar";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 

@@ -1,3 +1,5 @@
+// This component is lofi and not in use.
+
 import { useState, useEffect } from "react";
 
 import {
