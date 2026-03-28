@@ -86,6 +86,54 @@ clinicsRouter.get("/", async (req, res) => {
   }
 });
 
+
+
+// GET: list all clinics based on filters (type, language, location, occupation)
+// type - clinics areas of practice / areas of practice table
+// language - clinic languages / languages table
+// location - clinic location enum (virtual, in-person, hybrid) / clinics table
+// occupation - clinic roles / roles table
+// /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=Toronto,Vancouver&roleIds=1,2
+clinicsRouter.get("/search", async (req, res) => {
+  try {
+    const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
+
+    // parse comma-separated strings into arrays for proper SQL querying
+    const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
+    const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
+    const locationsArr = locations ? locations.split(",") : null;
+    const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
+
+    // IS NULL - if no filters provided for a category, ignore that category in filtering
+    // EXISTS with subquery - check if clinic has at least one of the selected options for that category
+    const clinics = await db.query(
+      `SELECT * FROM clinics C
+        WHERE ($1::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_areas_of_practice CAP
+          WHERE CAP.clinic_id = C.id AND CAP.area_of_practice_id = ANY($1::int[])
+        ))
+        AND ($2::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_languages CL
+          WHERE CL.clinic_id = C.id AND CL.language_id = ANY($2::int[])
+        ))
+        AND ($3::text[] IS NULL OR C.location::text = ANY($3::text[]))
+        AND ($4::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_roles CR
+          WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])
+      ))`,
+      [
+        areaIdsArr,
+        languageIdsArr,
+        locationsArr,
+        roleIdsArr,
+      ]
+    );
+    res.status(200).json(keysToCamel(clinics));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // Get a single workshop
 clinicsRouter.get("/:id", async (req, res) => {
   try {
