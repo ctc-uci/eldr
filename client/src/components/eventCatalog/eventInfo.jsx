@@ -70,7 +70,6 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
-  const parkingNote = event.parking?.trim?.() ? String(event.parking).trim() : "";
 
   return (
     <Flex
@@ -160,20 +159,6 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             ) : null}
           </VStack>
         </Flex>
-        {parkingNote ? (
-          <>
-            <Separator
-              w="full"
-              size="xs"
-            />
-            <Text
-              fontSize="13px"
-              color="#4B5563"
-            >
-              Parking: {parkingNote}
-            </Text>
-          </>
-        ) : null}
         <Separator
           w="full"
           size="xs"
