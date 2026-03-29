@@ -122,8 +122,11 @@ export const VolunteerManagementView = () => {
             variant={viewMode === "list" ? "table" : "list"}
             refreshId={refreshTrigger}
             onSelect={(volunteer) => {
-              setSelectedVolunteer(volunteer);
-              if (viewMode === "list") {
+              if (selectedVolunteer?.id === volunteer.id) {
+                setSelectedVolunteer(null);
+                setViewMode("list");
+              } else {
+                setSelectedVolunteer(volunteer);
                 setViewMode("split");
               }
             }}
