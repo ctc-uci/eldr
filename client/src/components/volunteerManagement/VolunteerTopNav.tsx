@@ -13,17 +13,11 @@ const TABS: { value: string; icon: ReactNode; label: string }[] = [
 export const VolunteerTopNav = () => {
   return (
     <Box p={6}>
-      <Heading
-        size="2xl"
-        m={4}
-      >
+      <Heading size="2xl" m={4}>
         User Management
       </Heading>
 
-      <Tabs.Root
-        defaultValue="volunteers"
-        variant="outline"
-      >
+      <Tabs.Root defaultValue="volunteers" variant="outline">
         <Tabs.List>
           {TABS.map(({ value, icon, label }) => (
             <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A", bg: "white" }}>

@@ -4,6 +4,7 @@ import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
 import { FiSearch, FiArrowRight } from "react-icons/fi";
 import { LuCircleUser } from "react-icons/lu";
 import { LuListFilter } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
@@ -15,8 +16,8 @@ type ViewMode = "list" | "split";
 
 export const VolunteerManagementView = () => {
   const { backend } = useBackendContext();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [isAdding, setIsAdding] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
@@ -30,13 +31,6 @@ export const VolunteerManagementView = () => {
       setVolunteers(res.data);
     })();
   }, [backend]);
-
-  const handleAddClick = () => {
-    setIsAdding(true);
-    if (viewMode === "list") {
-      setViewMode("split");
-    }
-  };
 
   return (
     <Box
@@ -89,7 +83,7 @@ export const VolunteerManagementView = () => {
             py={4}
             gap={2}
             _hover={{ bg: "#487C9E" }}
-            onClick={handleAddClick}
+            onClick={() => navigate("/volunteer-management/new")}
           >
             <LuCircleUser />
             Add Profile
@@ -145,51 +139,12 @@ export const VolunteerManagementView = () => {
             overflowY="auto"
             pl={6}
           >
-            {isAdding ? (
-              <VolunteerProfilePanel
-                variant="new"
-                showBack
-                onBack={() => setIsAdding(false)}
-                onConfirm={async (data) => {
-                  try {
-                    const payload = {
-                      firebaseUid: "placeholder-uid7", // TODO: generate dynamically
-                      first_name: data.firstName,
-                      last_name: data.lastName,
-                      email: data.email,
-                      phone_number: data.phoneNumber,
-                      role: data.role,
-                      experience_level: data.experienceLevel,
-                    };
-
-                    const res = await backend.post("/volunteers", payload);
-
-                    setIsAdding(false);
-                    setRefreshTrigger((prev) => prev + 1);
-
-                    // Map snake_case response to camelCase for frontend
-                    const newVolunteer = {
-                      ...res.data,
-                      firstName: res.data.first_name || data.firstName,
-                      lastName: res.data.last_name || data.lastName,
-                      phoneNumber: res.data.phone_number || data.phoneNumber,
-                      experienceLevel: res.data.experience_level || data.experienceLevel,
-                    };
-
-                    setSelectedVolunteer(newVolunteer);
-                  } catch (error) {
-                    console.error("Error creating volunteer:", error);
-                  }
-                }}
-              />
-            ) : (
-              <VolunteerProfilePanel
+            <VolunteerProfilePanel
                 showBack
                 onBack={() => setViewMode("list")}
                 volunteer={selectedVolunteer}
                 onConfirm={async (data) => {
                   if (!selectedVolunteer) return;
-
                   await backend.put(
                     `/volunteers/${selectedVolunteer.id}`,
                     {
@@ -201,16 +156,12 @@ export const VolunteerManagementView = () => {
                       experience_level: data.experienceLevel,
                     }
                   );
-
-                  // Update local state to reflect changes
-
                   setSelectedVolunteer((prev) =>
                     prev ? { ...prev, ...data } : prev
                   );
                   setRefreshTrigger((prev) => prev + 1);
                 }}
               />
-            )}
           </Box>
         )}
       </Flex>
