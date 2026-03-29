@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
 import { FiSearch, FiArrowRight } from "react-icons/fi";
@@ -26,6 +26,33 @@ export const VolunteerManagementView = () => {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(val), 250);
+  };
+
+  const fuzzyMatch = (query: string, target: string): boolean => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    const t = target.toLowerCase();
+    let qi = 0;
+    for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+      if (t[ti] === q[qi]) qi++;
+    }
+    return qi === q.length;
+  };
+
+  const filteredVolunteers = debouncedQuery
+    ? volunteers.filter((v) =>
+        fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`)
+      )
+    : volunteers;
 
   useEffect(() => {
     (async () => {
@@ -64,6 +91,8 @@ export const VolunteerManagementView = () => {
                 boxShadow: "none",
                 outline: "none",
               }}
+              value={searchQuery}
+              onChange={handleSearchChange}
             />
             <Box color="gray.400" flexShrink={0} mr={2}>
               <FiSearch />
@@ -97,7 +126,7 @@ export const VolunteerManagementView = () => {
           size="lg"
           mb={2}
         >
-          Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{volunteers.length}</Box>
+          Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{filteredVolunteers.length}</Box>
         </Heading>
         {checkedIds.size > 0 && (
           <Flex gap={4} mb={2} ml={2}>
@@ -131,7 +160,7 @@ export const VolunteerManagementView = () => {
               }
             }}
             selectedId={selectedVolunteer?.id}
-            volunteers={volunteers}
+            volunteers={filteredVolunteers}
             setVolunteers={setVolunteers}
             checkedIds={checkedIds}
             setCheckedIds={setCheckedIds}
