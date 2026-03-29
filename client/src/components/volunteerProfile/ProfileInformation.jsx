@@ -390,9 +390,16 @@ export const ProfileInformation = ({
               borderRadius="md"
               p={4}
             >
-            <Text fontSize="xs" color="gray.600" mb={3}>
-              Select the languages and your proficiency level.
-            </Text>
+            {isEditing ? (
+              <Text fontSize="xs" color="gray.600" mb={3}>
+                Select the languages and your proficiency level.
+              </Text>
+            ) : null}
+            {!isEditing && data.languages.length === 0 ? (
+              <Text fontSize="sm" color="gray.600">
+                No languages found, please click &quot;Edit&quot; to add more
+              </Text>
+            ) : (
             <VStack gap={2} align="stretch">
               {data.languages.map((row) => (
                 <SimpleGrid
@@ -471,6 +478,7 @@ export const ProfileInformation = ({
                 </SimpleGrid>
               ))}
             </VStack>
+            )}
             {isEditing ? (
               <Button
                 variant="plain"
@@ -503,57 +511,65 @@ export const ProfileInformation = ({
               borderColor="gray.200"
               borderRadius="md"
             >
-              {data.interests.map((tag) => (
-                <Tag.Root
-                  key={tag}
-                  size="sm"
-                  bg="gray.100"
-                  color="gray.900"
-                >
-                  <Tag.Label>{tag}</Tag.Label>
-                  <Tag.EndElement>
-                    <Tag.CloseTrigger
-                      disabled={!isEditing}
-                      aria-label={isEditing ? `Remove ${tag}` : undefined}
-                      onClick={
-                        isEditing
-                          ? () => removeInterest(tag)
-                          : undefined
-                      }
-                    />
-                  </Tag.EndElement>
-                </Tag.Root>
-              ))}
-              {isEditing ? (
-                <NativeSelect.Root size="sm" minW="160px" maxW="160px">
-                  <NativeSelect.Field
-                    defaultValue=""
-                    border="none"
-                    bg="transparent"
-                    px={2}
-                    _focus={{ boxShadow: "none", borderColor: "transparent", outline: "none" }}
-                    _focusVisible={{
-                      boxShadow: "none",
-                      borderColor: "transparent",
-                      outline: "none",
-                    }}
-                    onChange={(e) => {
-                      addInterest(e.target.value);
-                      e.target.value = "";
-                    }}
-                  >
-                    <option value="" disabled>
-                      Add tag...
-                    </option>
-                    {availableAreaOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              ) : null}
+              {!isEditing && data.interests.length === 0 ? (
+                <Text fontSize="sm" color="gray.600" px={1}>
+                  No interests found, please click &quot;Edit&quot; to add more
+                </Text>
+              ) : (
+                <>
+                  {data.interests.map((tag) => (
+                    <Tag.Root
+                      key={tag}
+                      size="sm"
+                      bg="gray.100"
+                      color="gray.900"
+                    >
+                      <Tag.Label>{tag}</Tag.Label>
+                      <Tag.EndElement>
+                        <Tag.CloseTrigger
+                          disabled={!isEditing}
+                          aria-label={isEditing ? `Remove ${tag}` : undefined}
+                          onClick={
+                            isEditing
+                              ? () => removeInterest(tag)
+                              : undefined
+                          }
+                        />
+                      </Tag.EndElement>
+                    </Tag.Root>
+                  ))}
+                  {isEditing ? (
+                    <NativeSelect.Root size="sm" minW="160px" maxW="160px">
+                      <NativeSelect.Field
+                        defaultValue=""
+                        border="none"
+                        bg="transparent"
+                        px={2}
+                        _focus={{ boxShadow: "none", borderColor: "transparent", outline: "none" }}
+                        _focusVisible={{
+                          boxShadow: "none",
+                          borderColor: "transparent",
+                          outline: "none",
+                        }}
+                        onChange={(e) => {
+                          addInterest(e.target.value);
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="" disabled>
+                          Add tag...
+                        </option>
+                        {availableAreaOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                  ) : null}
+                </>
+              )}
             </Flex>
           </Box>
         </Flex>
