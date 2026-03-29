@@ -52,7 +52,7 @@ export const VolunteerManagementView = () => {
             align="center"
             borderWidth="1px"
             borderColor="gray.300"
-            borderRadius="md"
+            borderRadius="sm"
             px={2}
             w="100%"
             h="40px"
@@ -100,7 +100,7 @@ export const VolunteerManagementView = () => {
         >
           Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{volunteers.length}</Box>
         </Heading>
-        <Flex gap={4} mb={2}>
+        <Flex gap={4} mb={2} ml={2}>
           <Button size="sm" variant="ghost" color="gray.600" px={0}>Delete</Button>
           <Button size="sm" variant="ghost" color="gray.600" px={0}>Archive</Button>
         </Flex>
