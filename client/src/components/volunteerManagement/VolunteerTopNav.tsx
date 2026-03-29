@@ -1,4 +1,6 @@
-import { Box, Heading, Tabs } from "@chakra-ui/react";
+import { Box, Flex, Heading, Tabs } from "@chakra-ui/react";
+import { LuArchive, LuBuilding2 } from "react-icons/lu";
+import { LuCircleUser } from "react-icons/lu";
 
 import { VolunteerManagementView } from "./VolunteerManagementView";
 
@@ -13,27 +15,28 @@ export const VolunteerTopNav = () => {
       </Heading>
 
       <Tabs.Root
-        defaultValue="profiles"
-        fitted
+        defaultValue="volunteers"
       >
         <Tabs.List>
-          <Tabs.Trigger value="profiles">Profiles</Tabs.Trigger>
-          <Tabs.Trigger value="cases">Cases</Tabs.Trigger>
-          <Tabs.Trigger value="clinics">Clinics & Workshops</Tabs.Trigger>
-          <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
+          <Tabs.Trigger value="archived">
+            <Flex align="center" gap={1}><LuArchive /> Archived</Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="volunteers">
+            <Flex align="center" gap={1}><LuCircleUser /> Volunteer</Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="staff">
+            <Flex align="center" gap={1}><LuBuilding2 /> Staff</Flex>
+          </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="profiles">
+        <Tabs.Content value="archived">
+          <p>archived!</p>
+        </Tabs.Content>
+        <Tabs.Content value="volunteers">
           <VolunteerManagementView />
         </Tabs.Content>
-        <Tabs.Content value="cases">
-          <p>two!</p>
-        </Tabs.Content>
-        <Tabs.Content value="clinics">
-          <p>three!</p>
-        </Tabs.Content>
-        <Tabs.Content value="settings">
-          <p>settings!</p>
+        <Tabs.Content value="staff">
+          <p>staff!</p>
         </Tabs.Content>
       </Tabs.Root>
     </Box>

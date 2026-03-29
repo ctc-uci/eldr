@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
+import { FiSearch, FiArrowRight } from "react-icons/fi";
+import { LuCircleUser } from "react-icons/lu";
+import { LuListFilter } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
@@ -11,13 +14,21 @@ import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 type ViewMode = "list" | "split";
 
 export const VolunteerManagementView = () => {
-  const backend = useBackendContext();
+  const { backend } = useBackendContext();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isAdding, setIsAdding] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const res = await backend.get<Volunteer[]>("/volunteers");
+      setVolunteers(res.data);
+    })();
+  }, [backend]);
 
   const handleAddClick = () => {
     setIsAdding(true);
@@ -32,13 +43,7 @@ export const VolunteerManagementView = () => {
       h="100%"
     >
       <>
-        <Heading
-          size="md"
-          mb={2}
-        >
-          Profile List
-        </Heading>
-        <Flex
+      <Flex
           gap={2}
           align="center"
           mb={4}
@@ -52,33 +57,52 @@ export const VolunteerManagementView = () => {
             w="100%"
             h="40px"
           >
-            <Box
-              w="14px"
-              h="14px"
-              borderWidth="1px"
-              borderColor="gray.600"
-              borderRadius="sm"
-              mr={2}
-            />
             <Input
-              variant="unstyled"
-              placeholder=""
-              fontSize="sm"
+              placeholder="Search for whatever floats your boat, matey"
+              fontSize="md"
+              border="none"
+              _focusVisible={{
+                border: "none",
+                boxShadow: "none",
+                outline: "none",
+              }}
             />
+            <Box color="gray.400" flexShrink={0} mr={2}>
+              <FiSearch />
+            </Box>
           </Flex>
           <Button
-            size="sm"
+            size="md"
             variant="outline"
+            backgroundColor="#FAFAFA"
           >
-            Filters
+            <LuListFilter />
+            Sort and Filter
           </Button>
           <Button
-            size="sm"
-            variant="outline"
+            size="md"
+            bg="#5F80A0"
+            color="white"
+            borderRadius="md"
+            py={4}
+            gap={2}
+            _hover={{ bg: "#487C9E" }}
             onClick={handleAddClick}
           >
+            <LuCircleUser />
             Add Profile
+            <FiArrowRight />
           </Button>
+        </Flex>
+        <Heading
+          size="lg"
+          mb={2}
+        >
+          Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{volunteers.length}</Box>
+        </Heading>
+        <Flex gap={4} mb={2}>
+          <Button size="sm" variant="ghost" color="gray.600" px={0}>Delete</Button>
+          <Button size="sm" variant="ghost" color="gray.600" px={0}>Archive</Button>
         </Flex>
       </>
 
@@ -102,6 +126,8 @@ export const VolunteerManagementView = () => {
               }
             }}
             selectedId={selectedVolunteer?.id}
+            volunteers={volunteers}
+            setVolunteers={setVolunteers}
           />
         </Box>
 
@@ -131,7 +157,7 @@ export const VolunteerManagementView = () => {
                       experience_level: data.experienceLevel,
                     };
 
-                    const res = await backend.backend.post("/volunteers", payload);
+                    const res = await backend.post("/volunteers", payload);
 
                     setIsAdding(false);
                     setRefreshTrigger((prev) => prev + 1);
@@ -159,7 +185,7 @@ export const VolunteerManagementView = () => {
                 onConfirm={async (data) => {
                   if (!selectedVolunteer) return;
 
-                  await backend.backend.put(
+                  await backend.put(
                     `/volunteers/${selectedVolunteer.id}`,
                     {
                       first_name: data.firstName,
