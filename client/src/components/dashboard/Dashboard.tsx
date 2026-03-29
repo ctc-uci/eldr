@@ -54,7 +54,7 @@ export const Dashboard = () => {
               ? "Staff"
               : role === "volunteer"
                 ? "Volunteer"
-                : "Guest"}
+                : "Guest"})
         </Text>
 
         {role === "staff" || role === "supervisor" ? (
