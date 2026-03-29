@@ -118,7 +118,7 @@ usersRouter.put("/update", async (req, res) => {
 });
 
 // Get all users (as admin)
-usersRouter.get("/admin/all", verifyRole("admin"), async (req, res) => {
+usersRouter.get("/admin/all", verifyRole(["staff", "supervisor"]), async (req, res) => {
   try {
     const users = await db.query(`SELECT * FROM users`);
 
@@ -152,7 +152,7 @@ usersRouter.put("/update-password", async (req, res) => {
 });
 
 // Update a user's role
-usersRouter.put("/update/set-role", verifyRole("admin"), async (req, res) => {
+usersRouter.put("/update/set-role", verifyRole("supervisor"), async (req, res) => {
   try {
     const { role, firebaseUid } = req.body;
 

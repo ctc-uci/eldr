@@ -312,8 +312,7 @@ export const VolunteerProfilePanel = ({
                 {...register("role")}
               >
                 <option value="volunteer">Volunteer</option>
-                {/* <option value="admin">Admin</option>
-                  <option value="staff">Staff</option> */}
+                {/* TODO: if volunteers can be promoted here, add staff/supervisor options */}
               </Select>
             </Box>
           )}
@@ -366,8 +365,8 @@ export const VolunteerProfilePanel = ({
                 type="select"
                 options={[
                   { value: "volunteer", label: "Volunteer" },
-                  { value: "admin", label: "Admin" },
                   { value: "staff", label: "Staff" },
+                  { value: "supervisor", label: "Supervisor" },
                 ]}
               />
             </>

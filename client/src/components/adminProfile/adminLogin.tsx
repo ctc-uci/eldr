@@ -66,7 +66,7 @@ export const AdminLogin: React.FC = () => {
     return users.some(
       (curr) =>
         (curr.email ?? "").trim().toLowerCase() === normalizedEmail &&
-        curr.role === "admin"
+        (curr.role === "staff" || curr.role === "supervisor")
     );
   };
 
