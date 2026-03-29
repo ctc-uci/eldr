@@ -226,7 +226,23 @@ export const VolunteerList = ({
             <Table.Header>
               <Table.Row bg="#EFF6FF">
                 <Table.ColumnHeader w="40px">
-                  <Checkbox.Root size="sm">
+                  <Checkbox.Root cursor="pointer"
+                    size="sm"
+                    checked={
+                      sortedVolunteers.length > 0 &&
+                      sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).every((v) => checkedIds.has(v.id))
+                    }
+                    onCheckedChange={() => {
+                      const pageIds = sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((v) => v.id);
+                      const allChecked = pageIds.every((id) => checkedIds.has(id));
+                      setCheckedIds((prev) => {
+                        const next = new Set(prev);
+                        if (allChecked) pageIds.forEach((id) => next.delete(id));
+                        else pageIds.forEach((id) => next.add(id));
+                        return next;
+                      });
+                    }}
+                  >
                     <Checkbox.HiddenInput />
                     <Checkbox.Control />
                   </Checkbox.Root>
@@ -261,7 +277,7 @@ export const VolunteerList = ({
                   }}
                 >
                   <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
-                    <Checkbox.Root
+                    <Checkbox.Root cursor="pointer"
                       size="sm"
                       checked={checkedIds.has(volunteer.id)}
                     >
