@@ -23,11 +23,10 @@ export const VolunteerTopNav = () => {
       <Tabs.Root
         defaultValue="volunteers"
         variant="outline"
-        _active={{ bg: "white"  }}
       >
         <Tabs.List>
           {TABS.map(({ value, icon, label }) => (
-            <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A" }}>
+            <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A", bg: "white" }}>
               <Flex align="center" gap={1}>{icon} {label}</Flex>
             </Tabs.Trigger>
           ))}
