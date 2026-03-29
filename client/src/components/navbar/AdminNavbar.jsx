@@ -12,7 +12,7 @@ import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react
   //Tag,
 } from "lucide-react";
 
-export const Playground = () => {
+export const AdminNavbar = () => {
   const location = useLocation();
 
   // Array of mapping icons

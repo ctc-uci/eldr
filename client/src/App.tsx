@@ -10,22 +10,22 @@ import { Signup } from "@/components/signup/Signup";
 import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
-// import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
-// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-// import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
-
+import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar";
+import { AdminNavbar } from "@/components/navbar/AdminNavbar";
+import { Navbar } from "@/components/navbar/Navbar";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
@@ -53,22 +53,48 @@ const App = () => {
                   element={<AdminLogin/>}
                 />
                 <Route
-                  path = "/adminForgotPass"
-                  element = {<AdminForgotPass/>}
+                  path="/adminForgotPass"
+                  element={<AdminForgotPass/>}
+                >
+                </Route>
+                <Route
+                  path="/adminPassReset"
+                  element={<AdminPassReset/>}
                 >
                 </Route>
 
                 <Route
-                  path = "/adminPassReset"
-                  element = {<AdminPassReset/>}
-                >
-                </Route>
-                
-                {/* <Route
-                  path="/volunteerProfile"
+                  path="/volunteer-profile"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
+                />
+                <Route
+                  path="/volunteer-profile/:tab"
                   element={<VolunteerProfile />}
-                /> */}
-                
+                />
+                <Route // edge route to catch legacy routes
+                  path="/volunteerProfile"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
+                />
+                <Route // edge route to catch legacy routes
+                  path="/volunteerProfile/:tab"
+                  element={
+                    <Navigate
+                      to="/volunteer-profile/information"
+                      replace
+                    />
+                  }
+                />
+
                 <Route
                   path="/email"
                   element={
@@ -100,7 +126,7 @@ const App = () => {
                   path="/catalog"
                   element={<CaseCatalog />}
                 /> */}
-                
+
                 {/* <Route
                   path="/volunteer-management"
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
@@ -127,19 +153,19 @@ const App = () => {
                   path="/volunteerLogin"
                   element={<VolunteerLogin />}
                 />
-                <Route 
+                <Route
                   path="/event-catalog"
                   element={<EventCatalog />}
                 />
-                {/* <Route
+                <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
-                /> */}
+                />
                 {/* <Route
                   path="/caseManagement"
                   element={<CaseManagement />}
                 /> */}
-                
+
                 {/* Playground Routes (Don't Touch!) */}
                 <Route
                   path="/playground"
