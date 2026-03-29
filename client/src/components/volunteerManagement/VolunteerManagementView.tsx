@@ -11,6 +11,7 @@ import { Volunteer } from "@/types/volunteer";
 
 import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
+import { SortFilterDrawer } from "./SortFilterDrawer";
 
 type ViewMode = "list" | "split";
 
@@ -24,6 +25,7 @@ export const VolunteerManagementView = () => {
   );
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +73,7 @@ export const VolunteerManagementView = () => {
             size="md"
             variant="outline"
             backgroundColor="#FAFAFA"
+            onClick={() => setFilterDrawerOpen(true)}
           >
             <LuListFilter />
             Sort and Filter
@@ -165,6 +168,12 @@ export const VolunteerManagementView = () => {
           </Box>
         )}
       </Flex>
+
+      <SortFilterDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        totalCount={volunteers.length}
+      />
     </Box>
   );
 };
