@@ -41,6 +41,8 @@ interface VolunteerListProps {
   refreshId?: number;
   volunteers: Volunteer[];
   setVolunteers: Dispatch<SetStateAction<Volunteer[]>>;
+  checkedIds: Set<number>;
+  setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
 }
 
 export const VolunteerList = ({
@@ -50,9 +52,10 @@ export const VolunteerList = ({
   refreshId = 0,
   volunteers,
   setVolunteers,
+  checkedIds,
+  setCheckedIds,
 }: VolunteerListProps) => {
   const { backend } = useBackendContext();
-  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
 
   useEffect(() => {

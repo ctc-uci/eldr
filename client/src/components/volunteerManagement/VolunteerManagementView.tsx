@@ -22,6 +22,7 @@ export const VolunteerManagementView = () => {
     null
   );
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -101,10 +102,12 @@ export const VolunteerManagementView = () => {
         >
           Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{volunteers.length}</Box>
         </Heading>
-        <Flex gap={4} mb={2} ml={2}>
-          <Button size="sm" variant="ghost" color="gray.600" px={0}>Delete</Button>
-          <Button size="sm" variant="ghost" color="gray.600" px={0}>Archive</Button>
-        </Flex>
+        {checkedIds.size > 0 && (
+          <Flex gap={4} mb={2} ml={2}>
+            <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Delete</Button>
+            <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Archive</Button>
+          </Flex>
+        )}
       </>
 
       <Flex
@@ -129,6 +132,8 @@ export const VolunteerManagementView = () => {
             selectedId={selectedVolunteer?.id}
             volunteers={volunteers}
             setVolunteers={setVolunteers}
+            checkedIds={checkedIds}
+            setCheckedIds={setCheckedIds}
           />
         </Box>
 
