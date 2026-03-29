@@ -45,15 +45,18 @@ export const AdminForgotPass: React.FC = () => {
     }
   };
 
-  const expectedRole = from === "volunteer" ? "user" : "admin";
-
   const verifyEmail = (
     emailToCheck: string,
     users: { email: string; role: string }[]
   ) => {
-    return users.some(
-      (curr) => curr.email === emailToCheck && curr.role === expectedRole
-    );
+    const normalized = emailToCheck.trim().toLowerCase();
+    return users.some((curr) => {
+      const sameEmail =
+        (curr.email ?? "").trim().toLowerCase() === normalized;
+      if (!sameEmail) return false;
+      if (from === "volunteer") return curr.role === "volunteer";
+      return curr.role === "staff" || curr.role === "supervisor";
+    });
   };
 
   useEffect(() => {

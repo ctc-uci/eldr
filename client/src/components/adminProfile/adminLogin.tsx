@@ -124,7 +124,7 @@ export const AdminLogin: React.FC = () => {
         const ssoEmail = (result.user.email ?? "").trim().toLowerCase();
         if (!ssoEmail) {
           await signOut(auth);
-          setSsoError("No admin account exists with those credentials.");
+          setSsoError("No staff account exists with those credentials.");
           return;
         }
 
@@ -133,7 +133,7 @@ export const AdminLogin: React.FC = () => {
 
         if (!isAdmin(ssoEmail, latestUsers)) {
           await signOut(auth);
-          setSsoError("No admin account exists with those credentials.");
+          setSsoError("No staff account exists with those credentials.");
           return;
         }
 

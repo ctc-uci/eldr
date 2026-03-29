@@ -24,22 +24,41 @@ import { useNavigate } from "react-router-dom";
 type AdminProfileData = {
   firstName: string;
   lastName: string;
-  phone: string;
   email: string;
-  role: string;
+  roleLabel: string;
 };
 
 const initialProfile: AdminProfileData = {
   firstName: "",
   lastName: "",
-  phone: "",
   email: "",
-  role: "",
+  roleLabel: "",
+};
+
+const staffRoleLabel = (
+  userRole: string,
+  isSupervisor?: boolean,
+): string => {
+  const r = String(userRole ?? "").trim().toLowerCase();
+  if (isSupervisor || r === "supervisor") return "Supervisor";
+  if (r === "staff") return "Staff";
+  if (r === "admin") return isSupervisor ? "Supervisor" : "Staff";
+  return r ? r.charAt(0).toUpperCase() + r.slice(1).toLowerCase() : "Staff";
+};
+
+/** Pre–role-refactor rows often used "Admin" (or the app role string) in last_name instead of a surname. */
+const LEGACY_ROLE_LABEL_LAST_NAMES = new Set(["admin", "administrator"]);
+
+const lastNameLooksLikeRoleLabel = (last: string, userRole: string): boolean => {
+  const trimmed = last.trim();
+  if (!trimmed) return true;
+  const lower = trimmed.toLowerCase();
+  const roleLower = userRole.trim().toLowerCase();
+  if (lower === roleLower) return true;
+  return LEGACY_ROLE_LABEL_LAST_NAMES.has(lower);
 };
 
 const editBlue = "#3B6F8F";
-const capitalize = (value: string) =>
-  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
 
 export const AdminProfile = () => {
   const navigate = useNavigate();
@@ -93,7 +112,7 @@ export const AdminProfile = () => {
         setShowUpdated(true);
         setErrorMessage("");
       } catch (error) {
-        console.error("Failed to save admin profile", error);
+        console.error("Failed to save staff profile", error);
         setErrorMessage("Failed to save profile changes.");
       }
     };
@@ -105,7 +124,7 @@ export const AdminProfile = () => {
     const loadAdminProfile = async () => {
       if (!currentUser?.uid) {
         setIsLoading(false);
-        setErrorMessage("No authenticated admin user found.");
+        setErrorMessage("No authenticated staff user found.");
         return;
       }
 
@@ -117,7 +136,7 @@ export const AdminProfile = () => {
         const userRow = userResp?.data?.[0];
 
         if (!userRow?.id) {
-          setErrorMessage("Admin user record not found.");
+          setErrorMessage("Staff user record not found.");
           return;
         }
 
@@ -127,37 +146,42 @@ export const AdminProfile = () => {
         const adminRow = adminResp?.data;
 
         if (!adminRow) {
-          setErrorMessage("Admin profile not found.");
+          setErrorMessage("Staff profile not found.");
           return;
         }
 
         const rawFirstName = String(adminRow.firstName ?? "").trim();
         const rawLastName = String(adminRow.lastName ?? "").trim();
-        const rawRole = String(userRow.role ?? "admin").trim();
+        const rawRole = String(userRow.role ?? "").trim();
+        const isSupervisor = Boolean(adminRow.isSupervisor);
 
         let firstName = rawFirstName;
         let lastName = rawLastName;
 
-        // Some older records may have full name in first_name and role in last_name.
-        if (
-          rawFirstName.includes(" ") &&
-          (!rawLastName || rawLastName.toLowerCase() === rawRole.toLowerCase())
-        ) {
+        const firstNameHasMultipleParts = /\s/.test(rawFirstName);
+
+        // Legacy: full name in first_name, role label ("Admin", etc.) in last_name — split into real names.
+        if (firstNameHasMultipleParts && lastNameLooksLikeRoleLabel(rawLastName, rawRole)) {
           const [first, ...rest] = rawFirstName.split(/\s+/);
           firstName = first ?? "";
           lastName = rest.join(" ");
+        } else if (
+          !firstNameHasMultipleParts &&
+          rawFirstName &&
+          lastNameLooksLikeRoleLabel(rawLastName, rawRole)
+        ) {
+          lastName = "";
         }
 
         setProfile({
           firstName,
           lastName,
-          phone: adminRow.phone ?? "",
           email: adminRow.email ?? userRow.email ?? "",
-          role: capitalize(rawRole),
+          roleLabel: staffRoleLabel(rawRole, isSupervisor),
         });
       } catch (error) {
-        console.error("Failed to load admin profile", error);
-        setErrorMessage("Failed to load admin profile.");
+        console.error("Failed to load staff profile", error);
+        setErrorMessage("Failed to load staff profile.");
       } finally {
         setIsLoading(false);
       }
@@ -186,7 +210,7 @@ export const AdminProfile = () => {
         </Heading>
         {isLoading ? (
           <Text fontSize="13px" color="gray.500" mb={4}>
-            Loading admin profile...
+            Loading staff profile...
           </Text>
         ) : null}
         {!isLoading && errorMessage ? (
@@ -409,24 +433,8 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Phone Number</Field.Label>
-                  {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.phone}</Text>
-                  ) : (
-                    <Input
-                      size="sm"
-                      type="tel"
-                      value={display.phone}
-                      onChange={(e) => {
-                        if (!draft) return;
-                        setDraft({ ...draft, phone: e.target.value });
-                      }}
-                      bg="white"
-                      borderColor="gray.200"
-                      borderRadius="4px"
-                      _focus={{ boxShadow: "none", borderColor: "gray.300" }}
-                    />
-                  )}
+                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Role</Field.Label>
+                  <Text fontSize="13px" color="gray.900">{profile.roleLabel}</Text>
                 </Field.Root>
               </SimpleGrid>
 
@@ -453,26 +461,6 @@ export const AdminProfile = () => {
                       borderColor="gray.200"
                       borderRadius="4px"
                       _focus={{ boxShadow: "none", borderColor: "gray.300" }}
-                    />
-                  )}
-                </Field.Root>
-                <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Role</Field.Label>
-                  {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.role}</Text>
-                  ) : (
-                    <Input
-                      size="sm"
-                      value={display.role}
-                      onChange={(e) => {
-                        if (!draft) return;
-                        setDraft({ ...draft, role: e.target.value });
-                      }}
-                      bg="white"
-                      borderColor="gray.200"
-                      borderRadius="4px"
-                      _focus={{ boxShadow: "none", borderColor: "gray.300" }}
-                      disabled
                     />
                   )}
                 </Field.Root>
