@@ -23,9 +23,6 @@ import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
-import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar";
-import { AdminNavbar } from "@/components/navbar/AdminNavbar";
-import { Navbar } from "@/components/navbar/Navbar";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
