@@ -1,5 +1,5 @@
 import { Box, Flex, Heading, Tabs } from "@chakra-ui/react";
-import { LuArchive, LuBuilding2 } from "react-icons/lu";
+import { LuArchive, LuBriefcase } from "react-icons/lu";
 import { LuCircleUser } from "react-icons/lu";
 
 import { VolunteerManagementView } from "./VolunteerManagementView";
@@ -25,7 +25,7 @@ export const VolunteerTopNav = () => {
             <Flex align="center" gap={1}><LuCircleUser /> Volunteer</Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="staff">
-            <Flex align="center" gap={1}><LuBuilding2 /> Staff</Flex>
+            <Flex align="center" gap={1}><LuBriefcase /> Staff</Flex>
           </Tabs.Trigger>
         </Tabs.List>
 
