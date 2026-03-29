@@ -59,7 +59,7 @@ export const VolunteerManagementView = () => {
             h="40px"
           >
             <Input
-              placeholder="Search for whatever floats your boat, matey"
+              placeholder="Search..."
               fontSize="md"
               border="none"
               _placeholder={{ color: "#A1A1AA" }}
@@ -115,10 +115,11 @@ export const VolunteerManagementView = () => {
         gap={6}
       >
         <Box
-          w={viewMode === "split" ? "30%" : "100%"}
+          w={viewMode === "split" ? "50%" : "100%"}
           minW={viewMode === "split" ? "300px" : undefined}
           h="100%"
           overflowY="auto"
+          onClick={() => { if (viewMode === "split") { setViewMode("list"); setSelectedVolunteer(null); } }}
         >
           <VolunteerList
             variant={viewMode === "list" ? "table" : "list"}
@@ -139,11 +140,9 @@ export const VolunteerManagementView = () => {
 
         {viewMode === "split" && (
           <Box
-            w="70%"
+            w="50%"
             h="100%"
             overflowY="auto"
-            borderLeftWidth="1px"
-            borderLeftColor="gray.200"
             pl={6}
           >
             {isAdding ? (

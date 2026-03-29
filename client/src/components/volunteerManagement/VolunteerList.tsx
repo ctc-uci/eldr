@@ -1,7 +1,7 @@
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
 import { Box, Button, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
-import { LuChevronsUpDown, LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { LuChevronsUpDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuChevronDown } from "react-icons/lu";
 
 const PAGE_SIZE = 8;
 
@@ -57,6 +57,22 @@ export const VolunteerList = ({
 }: VolunteerListProps) => {
   const { backend } = useBackendContext();
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<keyof Volunteer | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: keyof Volunteer) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+    setPage(1);
+  };
+
+  const sortedVolunteers = sortKey
+    ? [...volunteers].sort((a, b) => {
+        const av = (a[sortKey] ?? "") as string;
+        const bv = (b[sortKey] ?? "") as string;
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      })
+    : volunteers;
 
   useEffect(() => {
     (async () => {
@@ -75,31 +91,41 @@ export const VolunteerList = ({
     });
   };
 
-  const SortHeader = ({ label }: { label: string }) => (
-    <Flex align="center" gap={1}>
-      {label}
-      <LuChevronsUpDown size={12} />
-    </Flex>
-  );
+  const SortHeader = ({ label, sortField }: { label: string; sortField?: keyof Volunteer }) => {
+    const active = sortField && sortKey === sortField;
+    return (
+      <Flex
+        align="center"
+        gap={1}
+        cursor={sortField ? "pointer" : undefined}
+        userSelect="none"
+        onClick={sortField ? () => handleSort(sortField) : undefined}
+      >
+        {label}
+        {active ? (sortDir === "asc" ? <LuChevronUp size={12} /> : <LuChevronDown size={12} />) : <LuChevronsUpDown size={12} />}
+      </Flex>
+    );
+  };
 
   return (
     <Box>
       {variant === "list" && (
-        <Box mt={4} borderWidth="1px" borderColor="gray.200">
+        <Box mt={4}>
           <Table.Root size="md">
             <Table.Header>
               <Table.Row bg="#EFF6FF">
-                <Table.ColumnHeader fontSize="xs"><SortHeader label="Name" /></Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600"><SortHeader label="Name" sortField="firstName" /></Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600"><SortHeader label="Role" sortField="role" /></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {volunteers.map((volunteer) => (
+              {sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((volunteer) => (
                 <Table.Row
                   key={volunteer.id}
-                  onClick={() => onSelect?.(volunteer)}
-                  bg={selectedId === volunteer.id ? "blue.50" : undefined}
+                  onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
+                  boxShadow={selectedId === volunteer.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
                   _hover={{
-                    bg: selectedId === volunteer.id ? "blue.100" : "gray.50",
+                    bg: "gray.50",
                     cursor: "pointer",
                   }}
                 >
@@ -121,10 +147,76 @@ export const VolunteerList = ({
                       </Box>
                     </Flex>
                   </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="gray.600">{volunteer.role ?? "—"}</Text>
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
           </Table.Root>
+          {sortedVolunteers.length > PAGE_SIZE && (
+            <Flex align="center" justify="flex-end" px={4} py={3} borderTopWidth="1px" borderTopColor="gray.100">
+              <Flex>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  borderRadius="none"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  border="1.5px solid #E4E4E7"
+                  _hover={{ bg: "gray.100" }}
+                  _active={{ bg: "gray.200" }}
+                  p={0}
+                >
+                  <LuChevronLeft />
+                </Button>
+                {getPageItems(page, Math.ceil(sortedVolunteers.length / PAGE_SIZE)).map((item, i) =>
+                  typeof item === "object" ? (
+                    <Button
+                      key={`ellipsis-${i}`}
+                      size="sm"
+                      variant="ghost"
+                      borderRadius="none"
+                      border="1px solid #E4E4E7"
+                      _hover={{ bg: "gray.100" }}
+                      _active={{ bg: "gray.200" }}
+                      onClick={() => setPage(item.target)}
+                      p={0}
+                    >
+                      ...
+                    </Button>
+                  ) : (
+                    <Button
+                      key={item}
+                      size="sm"
+                      borderRadius="none"
+                      border="1px solid #E4E4E7"
+                      variant={item === page ? "solid" : "ghost"}
+                      bg={item === page ? "black" : undefined}
+                      color={item === page ? "white" : undefined}
+                      _hover={item === page ? { bg: "black" } : undefined}
+                      onClick={() => setPage(item)}
+                    >
+                      {item}
+                    </Button>
+                  )
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  borderRadius="none"
+                  disabled={page === Math.ceil(sortedVolunteers.length / PAGE_SIZE)}
+                  onClick={() => setPage((p) => p + 1)}
+                  border="1px solid #E4E4E7"
+                  _hover={{ bg: "gray.100" }}
+                  _active={{ bg: "gray.200" }}
+                  p={0}
+                >
+                  <LuChevronRight />
+                </Button>
+              </Flex>
+            </Flex>
+          )}
         </Box>
       )}
 
@@ -140,10 +232,10 @@ export const VolunteerList = ({
                   </Checkbox.Root>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Name" />
+                  <SortHeader label="Name" sortField="firstName" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Role" />
+                  <SortHeader label="Role" sortField="role" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
                   <SortHeader label="Interests" />
@@ -157,13 +249,14 @@ export const VolunteerList = ({
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {volunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((volunteer) => (
+              {sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((volunteer) => (
                 <Table.Row
                   key={volunteer.id}
-                  onClick={() => onSelect?.(volunteer)}
-                  bg={selectedId === volunteer.id ? "blue.50" : checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
+                  onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
+                  bg={checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
+                  boxShadow={selectedId === volunteer.id ? "inset 0 0 0 1px var(--chakra-colors-blue-400)" : undefined}
                   _hover={{
-                    bg: selectedId === volunteer.id ? "blue.100" : "gray.50",
+                    bg: "gray.50",
                     cursor: "pointer",
                   }}
                 >
@@ -211,7 +304,7 @@ export const VolunteerList = ({
               ))}
             </Table.Body>
           </Table.Root>
-          {volunteers.length > PAGE_SIZE && (
+          {sortedVolunteers.length > PAGE_SIZE && (
             <Flex align="center" justify="flex-end" px={4} py={3} borderTopWidth="1px" borderTopColor="gray.100">
               <Flex>
                 <Button
@@ -227,7 +320,7 @@ export const VolunteerList = ({
                 >
                   <LuChevronLeft />
                 </Button>
-                {getPageItems(page, Math.ceil(volunteers.length / PAGE_SIZE)).map((item, i) =>
+                {getPageItems(page, Math.ceil(sortedVolunteers.length / PAGE_SIZE)).map((item, i) =>
                   typeof item === "object" ? (
                     <Button
                       key={`ellipsis-${i}`}
@@ -262,7 +355,7 @@ export const VolunteerList = ({
                   size="sm"
                   variant="ghost"
                   borderRadius="none"
-                  disabled={page === Math.ceil(volunteers.length / PAGE_SIZE)}
+                  disabled={page === Math.ceil(sortedVolunteers.length / PAGE_SIZE)}
                   onClick={() => setPage((p) => p + 1)}
                   border="1px solid #E4E4E7"
                   _hover={{ bg: "gray.100" }}
