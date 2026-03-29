@@ -91,7 +91,7 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
         description,
         location,
         time: timeStamp, // TODO: Modify to start time and end time
-        date: dateStr, 
+        date: dateStr,
         attendees: capacity, // TODO: Add new capacity field
         experience_level: 'beginner', // TODO: Remove after yousef PR
         parking,
@@ -861,7 +861,7 @@ export const EditEvent = ({ setIsEditing, eventInfo, onSave }) => {
             display="flex"
             overflow="auto"
           >
-            {/* 
+            {/*
                         Figure out what to do with Cases here
                         */}
           </TabPanel>

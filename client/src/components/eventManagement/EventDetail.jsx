@@ -734,7 +734,7 @@ export const EventDetail = () => {
             display="flex"
             overflow="auto"
           >
-            {/* 
+            {/*
                       Figure out what to do with Cases here
                       */}
           </TabPanel>
