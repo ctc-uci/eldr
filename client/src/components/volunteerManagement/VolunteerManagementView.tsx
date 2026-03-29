@@ -61,6 +61,7 @@ export const VolunteerManagementView = () => {
               placeholder="Search for whatever floats your boat, matey"
               fontSize="md"
               border="none"
+              _placeholder={{ color: "#A1A1AA" }}
               _focusVisible={{
                 border: "none",
                 boxShadow: "none",
