@@ -1,8 +1,14 @@
 import { Box, Flex, Heading, Tabs } from "@chakra-ui/react";
-import { LuArchive, LuBriefcase } from "react-icons/lu";
-import { LuCircleUser } from "react-icons/lu";
+import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
+import { type ReactNode } from "react";
 
 import { VolunteerManagementView } from "./VolunteerManagementView";
+
+const TABS: { value: string; icon: ReactNode; label: string }[] = [
+  { value: "archived", icon: <LuArchive />, label: "Archived" },
+  { value: "volunteers", icon: <LuCircleUser />, label: "Volunteer" },
+  { value: "staff", icon: <LuBriefcase />, label: "Staff" },
+];
 
 export const VolunteerTopNav = () => {
   return (
@@ -16,17 +22,15 @@ export const VolunteerTopNav = () => {
 
       <Tabs.Root
         defaultValue="volunteers"
+        variant="outline"
+        _active={{ bg: "white"  }}
       >
         <Tabs.List>
-          <Tabs.Trigger value="archived">
-            <Flex align="center" gap={1}><LuArchive /> Archived</Flex>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="volunteers">
-            <Flex align="center" gap={1}><LuCircleUser /> Volunteer</Flex>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="staff">
-            <Flex align="center" gap={1}><LuBriefcase /> Staff</Flex>
-          </Tabs.Trigger>
+          {TABS.map(({ value, icon, label }) => (
+            <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A" }}>
+              <Flex align="center" gap={1}>{icon} {label}</Flex>
+            </Tabs.Trigger>
+          ))}
         </Tabs.List>
 
         <Tabs.Content value="archived">
