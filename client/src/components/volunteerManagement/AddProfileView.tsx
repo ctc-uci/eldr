@@ -72,6 +72,13 @@ export const AddProfileView = () => {
   const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
 
   // Occupation state
+  // TODO: The following fields are not yet persisted and need backend support (posts + gets):
+  //   - affiliated: no column in volunteers table
+  //   - lawSchoolYear: no column in volunteers table
+  //   - stateBarCertState: no column in volunteers table
+  //   - stateBarNumber: no column in volunteers table
+  //   - interests: free text, not mapped to areas_of_practice IDs
+  //   - experience: no backend endpoint
   const [affiliated, setAffiliated] = useState("");
   const [notaryStatus, setNotaryStatus] = useState("");
   const [lawSchoolYear, setLawSchoolYear] = useState("");
