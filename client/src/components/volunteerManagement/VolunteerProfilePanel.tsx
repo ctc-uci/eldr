@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { ChevronLeftIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
   Flex,
   Heading,
+  Icon,
   Input,
   Select,
   SimpleGrid,
   Text,
 } from "@chakra-ui/react";
+import { FiChevronLeft } from "react-icons/fi";
 
 import { useForm, UseFormRegisterReturn } from "react-hook-form";
 
@@ -202,7 +203,7 @@ export const VolunteerProfilePanel = ({
               bg: "gray.200",
             }}
           >
-            <ChevronLeftIcon />
+            <Icon as={FiChevronLeft} />
           </Box>
         )}
 
@@ -312,8 +313,7 @@ export const VolunteerProfilePanel = ({
                 {...register("role")}
               >
                 <option value="volunteer">Volunteer</option>
-                {/* <option value="admin">Admin</option>
-                  <option value="staff">Staff</option> */}
+                {/* TODO: if volunteers can be promoted here, add staff/supervisor options */}
               </Select>
             </Box>
           )}
@@ -366,8 +366,8 @@ export const VolunteerProfilePanel = ({
                 type="select"
                 options={[
                   { value: "volunteer", label: "Volunteer" },
-                  { value: "admin", label: "Admin" },
                   { value: "staff", label: "Staff" },
+                  { value: "supervisor", label: "Supervisor" },
                 ]}
               />
             </>

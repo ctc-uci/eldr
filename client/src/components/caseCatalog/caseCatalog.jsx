@@ -10,14 +10,15 @@ import {
     Tag,
     Flex,
     Button,
-    Divider,
+    Separator,
     Spacer,
     useToast,
-    useBreakpointValue
+    useBreakpointValue,
+    Icon,
   } from "@chakra-ui/react";
 
-import { SearchIcon } from "@chakra-ui/icons";
 import { FaCheck } from "react-icons/fa";
+import { FiSearch } from "react-icons/fi";
 import { FaX } from "react-icons/fa6";
 import { HiOutlineArrowsUpDown } from "react-icons/hi2";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
@@ -90,16 +91,16 @@ export const CaseCatalog = () => {
 
         setSavedCaseIds((prev) => {
             const next = new Set(prev);
-            
+
             if (wasSaved) {
                 next.delete(caseId);
             } else {
                 next.add(caseId);
             }
-          
+
             return next;
         });
-        
+
         toast({
             title: wasSaved
               ? "Removed from Saved Cases"
@@ -122,7 +123,7 @@ export const CaseCatalog = () => {
         <Box bg="#757575" py={4} textAlign="center">
             <Text fontWeight="semibold">Header TBD</Text>
         </Box>
-        
+
         {/* Tabs */}
         <Flex width="100%" bg="white">
             <Box
@@ -154,12 +155,12 @@ export const CaseCatalog = () => {
         <HStack bg="#D0D0D0" px={8} py={4} h="90px" justify="center">
             <InputGroup>
                 <InputLeftElement pointerEvents="none" >
-                <SearchIcon color='gray.300' />
+                <Icon as={FiSearch} color="gray.300" />
                 </InputLeftElement>
                 <Input placeholder="Search for a case..." borderRadius="lg" bg="white"/>
             </InputGroup>
         </HStack>
-        
+
         {activeTab === "all" && (
             <Flex
                 px={{ base: 4, md: 8 }}
@@ -180,7 +181,7 @@ export const CaseCatalog = () => {
                         {isNewest ? "By Newest" : "By Oldest"}
                     </Button>
 
-                    <Divider orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
+                    <Separator orientation="vertical" h="24px" borderWidth="2px" borderColor="black"/>
 
                     <Box w={{ base: "100%", md: "150px" }}>
                         <ReactSelect
@@ -247,9 +248,9 @@ export const CaseCatalog = () => {
                             }}
                         />
                     </Box>
-                    
+
                     <Spacer display={{ base: "none", md: "block" }} />
-                    
+
                     <Button leftIcon={<FaCheck/>}colorScheme='gray' variant='outline' size="sm" bg="#EBEBEB">
                         Apply
                     </Button>
@@ -378,25 +379,25 @@ const CaseDetail = ({ caseData, isSaved, onToggleBookmark }) => {
             <Text fontSize="xl" fontWeight="bold">
             {caseData.title}
             </Text>
-            
+
             <Box cursor="pointer" onClick={() => onToggleBookmark(caseData.id)} >
                 {isSaved ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
             </Box>
-        
+
         </Flex>
-        
+
         <HStack mb={4}>
             {caseData.tags.map((tag) => (
             <Tag key={tag}>{tag}</Tag>
             ))}
         </HStack>
-        
-        <Divider mb={4} />
-  
+
+        <Separator mb={4} />
+
         <Text fontSize="sm" color="gray.700" mb={6}>
             {caseData.description}
         </Text>
-  
+
         <Button onClick={() =>
             toast({
                 title: "Email Copied to Clipboard",
@@ -405,11 +406,10 @@ const CaseDetail = ({ caseData, isSaved, onToggleBookmark }) => {
                 isClosable: true,
                 position: "bottom-right"
             })
-        }> 
+        }>
             Email Supervisor
         </Button>
     </Box>
 
     )
 };
-  

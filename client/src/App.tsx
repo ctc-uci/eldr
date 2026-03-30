@@ -10,22 +10,23 @@ import { Signup } from "@/components/signup/Signup";
 import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
-// import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
-// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
-import { AdminPassReset} from "./components/adminProfile/adminPassReset";
-// import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-// import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { AdminPassReset } from "./components/adminProfile/adminPassReset";
+import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { StaffLayout } from "./components/navbar/StaffLayout";
+import { VolunteerLayout } from "./components/navbar/VolunteerLayout";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
-// import { EventManagement } from "@/components/eventManagement/EventManagement.jsx";
+import { TagManagement } from "@/components/tagManagement/tagManagement";
+import { EventManagement } from "./components/eventManagement/EventManagement";
+import { EventsSubPagePlaceholder } from "@/components/eventManagement/EventsSubPagePlaceholder";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
-
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
@@ -38,7 +39,6 @@ import {
   Routes,
 } from "react-router-dom";
 
-
 const App = () => {
   return (
     <CookiesProvider>
@@ -47,89 +47,89 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
-                {/* Dev-made Routes! */}
+                {/* DEV-MADE ROUTES! */}
+                {/* Staff: full AdminNavbar (email, events landing, tags, admin) */}
                 <Route
-                  path="/adminLogin"
-                  element={<AdminLogin/>}
-                />
-                <Route
-                  path = "/adminForgotPass"
-                  element = {<AdminForgotPass/>}
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout navbar="expanded" />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
                 >
+                  <Route
+                    path="/email"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route
+                    path="/email/folder/:folderId"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route
+                    path="/email/template/:templateId"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route path="/events" element={<EventManagement />} />
+                  <Route path="/manage-tags/*" element={<TagManagement />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute
+                        element={<Admin />}
+                        allowedRoles={["staff", "supervisor"]}
+                      />
+                    }
+                  />
                 </Route>
 
+                {/* Staff: collapsed sidebar (volunteer management, events sub-pages) */}
                 <Route
-                  path = "/adminPassReset"
-                  element = {<AdminPassReset/>}
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout navbar="collapsed" />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
                 >
+                  <Route
+                    path="/admin-profile"
+                    element={<AdminProfile />}
+                  />
+                  <Route
+                    path="/volunteer-management"
+                    element={<VolunteerManagement />}
+                  />
+                  <Route
+                    path="/events/*"
+                    element={<EventsSubPagePlaceholder />}
+                  />
                 </Route>
-                
-                {/* <Route
-                  path="/volunteerProfile"
-                  element={<VolunteerProfile />}
-                /> */}
-                
-                <Route
-                  path="/email"
-                  element={<EmailTemplateManagement />}
-                />
-                <Route
-                  path="/email/folder/:folderId"
-                  element={<EmailTemplateManagement />}
-                />
-                <Route
-                  path="/email/template/:templateId"
-                  element={<EmailTemplateManagement />}
-                />
-                {/* <Route
-                  path="/catalog"
-                  element={<CaseCatalog />}
-                /> */}
-                
-                {/* <Route
-                  path="/volunteer-management"
-                  element={<ProtectedRoute element={<VolunteerManagement />} />}
-                /> */}
-                {/* <Route
-                  path = "/events"
-                  element={
-                    <ProtectedRoute
-                      element={<EventManagement />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
-                /> */}
-                {/* <Route
-                  path = "/events/:id"
-                  element={
-                    <ProtectedRoute
-                      element={<EventDetail />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
-                /> */}
-                <Route
-                  path="/volunteerLogin"
-                  element={<VolunteerLogin />}
-                />
-                <Route 
-                  path="/event-catalog"
-                  element={<EventCatalog />}
-                />
-                {/* <Route
-                  path="/admin-profile"
-                  element={<AdminProfile />}
-                /> */}
-                {/* <Route
-                  path="/caseManagement"
-                  element={<CaseManagement />}
-                /> */}
-                
+
+                {/* Volunteer shell: catalog + profile */}
+                <Route element={<VolunteerLayout />}>
+                  <Route path="/event-catalog" element={<EventCatalog />} />
+                  <Route
+                    path="/volunteer-profile"
+                    element={
+                      <Navigate
+                        to="/volunteer-profile/information"
+                        replace
+                      />
+                    }
+                  />
+                  <Route
+                    path="/volunteer-profile/:tab"
+                    element={
+                      <ProtectedRoute
+                        element={<VolunteerProfile />}
+                        allowedRoles={["volunteer"]}
+                      />
+                    }
+                  />
+                </Route>
+
                 {/* Playground Routes (Don't Touch!) */}
-                <Route
-                  path="/playground"
-                  element={<Playground />}
-                />
+                <Route path="/playground" element={<Playground />} />
 
                 {/* Core Routes (Don't Touch!) */}
                 <Route
@@ -144,6 +144,10 @@ const App = () => {
                   path="/login/staff"
                   element={<AdminLogin />}
                 />
+                <Route path="/adminLogin" element={<AdminLogin />} />
+                <Route path="/adminForgotPass" element={<AdminForgotPass />} />
+                <Route path="/adminPassReset" element={<AdminPassReset />} />
+
                 <Route
                   path="/signup"
                   element={<Signup />}
@@ -153,29 +157,14 @@ const App = () => {
                   element={<ProtectedRoute element={<Dashboard />} />}
                 />
                 <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute
-                    element={<Admin />}
-                    allowedRoles={["admin"]}
-                    />
-                  }
-                />
-                <Route
                   path="/"
-                  element={
-                    <Navigate
-                      to="/login"
-                      replace
-                    />
-                  }
+                  element={<Navigate to="/login" replace />}
                 />
 
                 <Route
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
                 />
-
               </Routes>
             </Router>
           </RoleProvider>
