@@ -26,12 +26,14 @@ export const VolunteerTopNav = () => {
           ))}
         </Tabs.List>
 
+        {/* TODO: Implement archived volunteers view */}
         <Tabs.Content value="archived">
           <p>archived!</p>
         </Tabs.Content>
         <Tabs.Content value="volunteers">
           <VolunteerManagementView />
         </Tabs.Content>
+        {/* TODO: Implement staff view */}
         <Tabs.Content value="staff">
           <p>staff!</p>
         </Tabs.Content>

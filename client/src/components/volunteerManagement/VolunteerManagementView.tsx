@@ -144,6 +144,7 @@ export const VolunteerManagementView = () => {
             >
               Delete
             </Button>
+            {/* TODO: Implement archive functionality */}
             <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Archive</Button>
           </Flex>
         )}
