@@ -15,7 +15,6 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuCheck, LuLock, LuPencil, LuSave, LuUser } from "react-icons/lu";
@@ -201,10 +200,7 @@ export const AdminProfile = () => {
   }, [display.email, navigate]);
 
   return (
-    <Flex minH="100vh" bg="white">
-      <CollapsedNavbar />
-
-      <Box flex="1" px={{ base: 6, md: 20 }} py={{ base: 6, md: 8 }}>
+    <Box flex="1" minH="100vh" bg="white" px={{ base: 6, md: 20 }} py={{ base: 6, md: 8 }}>
         <Heading fontSize="18px" fontWeight={700} color="gray.900" mb={4}>
           Account Management
         </Heading>
@@ -512,8 +508,7 @@ export const AdminProfile = () => {
             </Button>
           </Box>
         )}
-      </Box>
-    </Flex>
+    </Box>
   );
 };
 

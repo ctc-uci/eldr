@@ -18,7 +18,6 @@ import { CiSearch } from "react-icons/ci";
 import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
-import { Sidebar } from "@/components/Sidebar";
 import { CreateEvent } from "./createEvent";
 import { NewCreatedEvent } from "./NewCreatedEvent";
 
@@ -102,8 +101,7 @@ export const EventManagement = () => {
   }, [backend]);
 
   return (
-    <Flex minH="100vh">
-      <Sidebar />
+    <Flex minH="100vh" flex="1" direction="column">
       <Box flex="1">
         {view === "list" && (
           <VStack

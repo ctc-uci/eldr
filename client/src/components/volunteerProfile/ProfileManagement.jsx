@@ -7,7 +7,6 @@ import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { AccountManagement } from "./AccountManagement";
-import { NavBar } from "./NavBar";
 import { ProfileInformation } from "./ProfileInformation";
 import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
 import { Sidebar } from "./Sidebar";
@@ -319,8 +318,7 @@ export const ProfileManagement = () => {
   const display = isEditing && draft ? draft : profile;
 
   return (
-    <Box minH="100vh" bg="white">
-      <NavBar />
+    <Box flex="1" minH="100vh" bg="white">
       <Box px={{ base: 4, md: 10 }} py={{ base: 8, md: 12 }} maxW="1320px" mx="auto">
         <Heading
           as="h1"

@@ -26,12 +26,9 @@ import {
   DeleteTemplateModal,
 } from "./components";
 
-import { Sidebar } from "@/components/Sidebar";
+// import { Sidebar } from "@/components/Sidebar";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-
-import { AdminNavbar } from "../navbar/AdminNavbar";
-// NOTE: Added AdminNavbar
 
 export const EmailTemplateManagement = () => {
   const { backend } = useBackendContext();
@@ -147,7 +144,7 @@ export const EmailTemplateManagement = () => {
         console.error('Error fetching all templates:', error);
       }
     };
-  
+
     fetchAllTemplates();
   }, [backend]);
 
@@ -160,7 +157,7 @@ export const EmailTemplateManagement = () => {
     try {
       const response = await backend.post('/folders', { name });
       const newFolder = response.data;
-      
+
       setFolders((prev) => [...prev, newFolder]);
       setShowNewFolderPopover(false);
       navigate(`/email/folder/${newFolder.id}`);
@@ -336,7 +333,7 @@ export const EmailTemplateManagement = () => {
   // handle searching/creating folder when saving template
   const handleAddFolderOnSave = async (folderName) => {
     if (!folderName?.trim()) return;
-    
+
     try {
       const response = await backend.get(`/folders/search?name=${encodeURIComponent(folderName.trim())}`);
       const existingFolder = response.data;
@@ -357,7 +354,7 @@ export const EmailTemplateManagement = () => {
 
     try {
       await backend.delete(`/email-templates/${currentTemplateId}`);
-      
+
       // reset form
       resetTemplateForm();
       setShowDeleteModal(false);
@@ -402,9 +399,7 @@ export const EmailTemplateManagement = () => {
   const totalTemplatePages = Math.ceil(templates.length / itemsPerPage) || 1;
 
   return (
-    <Flex minH="100vh" bg="#FAFBFC">
-      <AdminNavbar />
-      <Flex direction="column" flex="1" px={10} py={8} minH="100vh">
+    <Flex direction="column" flex="1" minH="100vh" bg="#FAFBFC" px={10} py={8}>
         {/* Search Bar */}
         <Box position="relative" width="100%">
           <SearchBar
@@ -622,7 +617,6 @@ export const EmailTemplateManagement = () => {
             onPageChange={(page) => setCurrentPage(page)}
           />
         )}
-      </Flex>
 
       {/* Folder Not Found Modal */}
       <FolderNotFoundModal

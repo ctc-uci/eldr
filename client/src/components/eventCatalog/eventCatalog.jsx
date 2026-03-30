@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
+import { Box, Button, Flex, useBreakpointValue } from "@chakra-ui/react";
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdChevronLeft } from "react-icons/md";
 
-import { Navbar } from "../navbar/Navbar";
 import { EventInfo } from "./eventInfo";
 import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
@@ -251,32 +250,10 @@ export const EventCatalog = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex
-      direction="column"
-      h="100vh"
-    >
-      {/* Mobile: centered logo header | Desktop: full Navbar */}
-      {isMobile ? (
-        <Flex
-          w="100%"
-          h="80px"
-          align="center"
-          justify="center"
-          bg="white"
-          flexShrink={0}
-        >
-          <Image
-            src="/eldr-logo.png"
-            alt="Elder Law & Disability Rights Center"
-            h="60px"
-            objectFit="contain"
-          />
-        </Flex>
-      ) : (
-        <Navbar />
-      )}
+    <Flex direction="column" flex="1" minH="100vh" overflow="hidden">
       <Flex
         flex="1"
+        minH={0}
         overflow="hidden"
       >
         {/* Left panel: tabs + search + list */}

@@ -3,7 +3,7 @@ Admin Navbar
 TODO: Implement on all associated admin pages
 */
 
-import { useLocation, Link as RouterLink } from "react-router-dom"; 
+import { useLocation, Link as RouterLink } from "react-router-dom";
 import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";import {
   BriefcaseBusiness,
   CircleUser,
@@ -17,10 +17,10 @@ export const AdminNavbar = () => {
 
   // Array of mapping icons
   const navItems = [
-    { name: "Event Catalog", icon: ClipboardList, path: "/event-catalog" },
-    { name: "Case Catalog", icon: BriefcaseBusiness, path: "/catalog" },
+    { name: "Event Catalog", icon: ClipboardList, path: "/events" },
+    { name: "Case Catalog", icon: BriefcaseBusiness, path: "/cases" },
     { name: "Email Template", icon: Mails, path: "/email" },
-    { name: "Manage Profiles", icon: CircleUser, path: "/VolunteerManagement" },
+    { name: "Manage Profiles", icon: CircleUser, path: "/volunteer-management" },
     //{ name: "Tags", icon: Tag, path: "/tags" }
     // TODO: Tags not implemented yet ? Just need to uncomment and put path when done
   ];
@@ -56,10 +56,10 @@ export const AdminNavbar = () => {
 
             return (
               // Use RouterLink as a pure wrapper to satisfy TypeScript
-              <RouterLink 
-                to={item.path} 
+              <RouterLink
+                to={item.path}
                 key={item.name}
-                style={{ textDecoration: 'none', display: 'block' }} 
+                style={{ textDecoration: 'none', display: 'block' }}
               >
                 <HStack
                   w="full"
@@ -70,7 +70,7 @@ export const AdminNavbar = () => {
                   gap={3}
                   bg={isActive ? "#D8F1FF" : "transparent"}
                   color={isActive ? "#5797BD" : "#294A5F"}
-                  _hover={{ 
+                  _hover={{
                     bg: isActive ? "#D8F1FF" : "gray.100",
                   }}
                 >
@@ -93,15 +93,15 @@ export const AdminNavbar = () => {
 
       {/* Profile Picture */}
       <RouterLink to="/admin-profile" style={{ textDecoration: 'none', display: 'block' }}>
-        <Box 
-          px="clamp(16px, 2vw, 20px)" 
+        <Box
+          px="clamp(16px, 2vw, 20px)"
           cursor="pointer"
         >
           <Avatar.Root
             w="clamp(40px, 4vw, 48px)"
             h="clamp(40px, 4vw, 48px)"
           >
-            <Avatar.Fallback name="Admin User" /> 
+            <Avatar.Fallback name="Admin User" />
             <Avatar.Image src="" />
           </Avatar.Root>
         </Box>
