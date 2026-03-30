@@ -26,6 +26,8 @@ import {
   DeleteTemplateModal,
 } from "./components";
 
+import { Sidebar } from "@/components/Sidebar";
+
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { AdminNavbar } from "../navbar/AdminNavbar";

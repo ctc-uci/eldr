@@ -1,3 +1,5 @@
+// This component is lofi and not in use.
+
 import { useState, useEffect } from "react";
 
 import {
@@ -732,7 +734,7 @@ export const EventDetail = () => {
             display="flex"
             overflow="auto"
           >
-            {/* 
+            {/*
                       Figure out what to do with Cases here
                       */}
           </TabPanel>

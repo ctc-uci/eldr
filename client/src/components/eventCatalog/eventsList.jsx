@@ -1,5 +1,7 @@
 import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
+import { formatClinicLocationList } from "./clinicLocationFormat";
+
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
   const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
@@ -81,13 +83,13 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               {event.name}
             </Text>
 
-            {/* Address */}
+            {/* Location (city, state zip / online / hybrid) */}
             <Text
               fontSize="14px"
               fontWeight={400}
               color="#6B7280"
             >
-              {event.location}
+              {formatClinicLocationList(event)}
             </Text>
 
             {/* Tags */}
