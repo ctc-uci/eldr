@@ -13,11 +13,12 @@ import {
     Divider,
     Spacer,
     useToast,
-    useBreakpointValue
+    useBreakpointValue,
+    Icon,
   } from "@chakra-ui/react";
 
-import { SearchIcon } from "@chakra-ui/icons";
 import { FaCheck } from "react-icons/fa";
+import { FiSearch } from "react-icons/fi";
 import { FaX } from "react-icons/fa6";
 import { HiOutlineArrowsUpDown } from "react-icons/hi2";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
@@ -154,7 +155,7 @@ export const CaseCatalog = () => {
         <HStack bg="#D0D0D0" px={8} py={4} h="90px" justify="center">
             <InputGroup>
                 <InputLeftElement pointerEvents="none" >
-                <SearchIcon color='gray.300' />
+                <Icon as={FiSearch} color="gray.300" />
                 </InputLeftElement>
                 <Input placeholder="Search for a case..." borderRadius="lg" bg="white"/>
             </InputGroup>
