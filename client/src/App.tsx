@@ -15,6 +15,8 @@ import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
+import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { StaffLayout } from "./components/staff/StaffLayout";
 // import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
 import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
@@ -123,7 +125,20 @@ const App = () => {
                   path="/catalog"
                   element={<CaseCatalog />}
                 /> */}
-
+                
+                <Route
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/volunteer-management"
+                    element={<VolunteerManagement />}
+                  />
+                </Route>
                 {/* <Route
                   path="/volunteer-management"
                   element={<ProtectedRoute element={<VolunteerManagement />} />}
@@ -191,6 +206,14 @@ const App = () => {
                   element={<ProtectedRoute element={<Dashboard />} />}
                 />
                 <Route
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
+                >
+                <Route
                   path="/admin"
                   element={
                     <ProtectedRoute
@@ -199,6 +222,7 @@ const App = () => {
                     />
                   }
                 />
+                </Route>
                 <Route
                   path="/"
                   element={

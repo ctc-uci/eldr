@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { ChevronLeftIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
   Flex,
   Heading,
+  Icon,
   Input,
   Select,
   SimpleGrid,
   Text,
 } from "@chakra-ui/react";
+import { FiChevronLeft } from "react-icons/fi";
 
 import { useForm, UseFormRegisterReturn } from "react-hook-form";
 
@@ -202,7 +203,7 @@ export const VolunteerProfilePanel = ({
               bg: "gray.200",
             }}
           >
-            <ChevronLeftIcon />
+            <Icon as={FiChevronLeft} />
           </Box>
         )}
 

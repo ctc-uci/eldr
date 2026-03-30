@@ -17,7 +17,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@chakra-ui/icons": "^2.2.6",
     "@chakra-ui/react": "^3.33.0",
     "@emotion/react": "^11.14.0",
     "@hookform/resolvers": "^3.9.0",

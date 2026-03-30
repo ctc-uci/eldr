@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { InfoIcon, SearchIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -8,6 +7,7 @@ import {
   Flex,
   Heading,
   HStack,
+  Icon,
   Input,
   InputGroup,
   InputLeftElement,
@@ -25,8 +25,7 @@ import {
   Tr,
   VStack,
 } from "@chakra-ui/react";
-
-import { FiSend } from "react-icons/fi";
+import { FiInfo, FiSearch, FiSend } from "react-icons/fi";
 
 import BackButton from "../BackButton";
 import { Case } from "../types/case";
@@ -166,7 +165,7 @@ const SendView = ({
               bg="white"
               borderColor="black"
               color="black"
-              leftIcon={<InfoIcon />}
+              leftIcon={<Icon as={FiInfo} />}
               onClick={onCaseClick}
             >
               View Case
@@ -181,7 +180,7 @@ const SendView = ({
           <HStack spacing={4}>
             <InputGroup flex={1}>
               <InputLeftElement pointerEvents="none">
-                <SearchIcon color="gray.400" />
+                <Icon as={FiSearch} color="gray.400" />
               </InputLeftElement>
               <Input
                 placeholder="Search Volunteer"
