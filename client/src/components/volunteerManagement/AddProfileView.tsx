@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Breadcrumb, Button, Flex, Heading, Icon, Input, NativeSelect, Tabs, Text } from "@chakra-ui/react";
 import { LuCircleUser, LuBriefcase } from "react-icons/lu";
 import { FiSearch, FiX } from "react-icons/fi";
@@ -8,11 +8,68 @@ import { useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { VolunteerProfileFormData } from "./VolunteerProfilePanel";
 
+interface LanguageOption { id: number; language: string; }
+interface LanguageEntry { languageId: number; language: string; proficiency: string; }
+
+const TagInput = ({
+  tags,
+  tagInput,
+  onTagInputChange,
+  onAddTag,
+  onRemoveTag,
+}: {
+  tags: string[];
+  tagInput: string;
+  onTagInputChange: (v: string) => void;
+  onAddTag: (v: string) => void;
+  onRemoveTag: (v: string) => void;
+}) => (
+  <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3} minH="80px">
+    <Flex gap={2} wrap="wrap" align="center">
+      {tags.map((t) => (
+        <Flex key={t} align="center" gap={1} px={2} py={0.5} bg="gray.100" borderRadius="sm" fontSize="sm">
+          {t}
+          <Icon as={FiX} boxSize={3} cursor="pointer" color="gray.400" _hover={{ color: "gray.700" }} onClick={() => onRemoveTag(t)} />
+        </Flex>
+      ))}
+      <Flex align="center" gap={1}>
+        <Input
+          size="xs"
+          variant="unstyled"
+          placeholder="Add tag here..."
+          bg="transparent"
+          value={tagInput}
+          onChange={(e) => onTagInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && tagInput.trim()) {
+              e.preventDefault();
+              onAddTag(tagInput.trim());
+              onTagInputChange("");
+            }
+          }}
+          w="120px"
+          color="black"
+          _placeholder={{ color: "#A1A1AA" }}
+        />
+        {tagInput && (
+          <Icon as={FiX} boxSize={3} cursor="pointer" color="gray.400" onClick={() => onTagInputChange("")} />
+        )}
+      </Flex>
+    </Flex>
+  </Box>
+);
+
 export const AddProfileView = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
-  const { register, handleSubmit, watch } = useForm<VolunteerProfileFormData>();
+  const { register, handleSubmit, watch, trigger } = useForm<VolunteerProfileFormData>();
   const roleValue = watch("role");
+
+  const [activeTab, setActiveTab] = useState("profile");
+  const [profileCompleted, setProfileCompleted] = useState(false);
+
+  // Reference data from DB
+  const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
 
   // Occupation state
   const [affiliated, setAffiliated] = useState("");
@@ -20,76 +77,59 @@ export const AddProfileView = () => {
   const [lawSchoolYear, setLawSchoolYear] = useState("");
   const [stateBarCertState, setStateBarCertState] = useState("");
   const [stateBarNumber, setStateBarNumber] = useState("");
-  const [languages, setLanguages] = useState<{ language: string; proficiency: string }[]>([{ language: "", proficiency: "" }]);
+  const [languages, setLanguages] = useState<LanguageEntry[]>([{ languageId: 0, language: "", proficiency: "" }]);
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
   const [experience, setExperience] = useState<string[]>([]);
   const [experienceInput, setExperienceInput] = useState("");
 
-  const onSubmit = async (data: VolunteerProfileFormData) => {
+  useEffect(() => {
+    backend.get<LanguageOption[]>("/languages").then((res) => setLanguageOptions(res.data));
+  }, [backend]);
+
+  const handleContinue = async () => {
+    const valid = await trigger(["firstName", "lastName", "phoneNumber", "email", "role"]);
+    if (!valid) return;
+    setProfileCompleted(true);
+    setActiveTab("occupation");
+  };
+
+  const handleTabChange = (details: { value: string }) => {
+    if (details.value === "occupation" && !profileCompleted) return;
+    setActiveTab(details.value);
+  };
+
+  const onCreateProfile = async (data: VolunteerProfileFormData) => {
     try {
-      await backend.post("/volunteers", {
-        firebaseUid: "placeholder-uid7",
+      const volunteerRes = await backend.post<{ id: number }>("/volunteers", {
+        firebaseUid: `placeholder-${Date.now()}`,
         first_name: data.firstName,
         last_name: data.lastName,
         email: data.email,
         phone_number: data.phoneNumber,
-        role: data.role,
-        experience_level: data.experienceLevel,
+        is_notary: notaryStatus === "active",
       });
+
+      const volunteerId = volunteerRes.data.id;
+
+      const tasks: Promise<unknown>[] = [];
+
+      const validLanguages = languages.filter((l) => l.languageId !== 0);
+      if (validLanguages.length > 0) {
+        tasks.push(
+          backend.post(`/volunteers/${volunteerId}/languages`, {
+            languages: validLanguages.map((l) => ({ languageId: l.languageId, isLiterate: true })),
+          })
+        );
+      }
+
+
+      await Promise.all(tasks);
       navigate("/volunteer-management");
     } catch (error) {
       console.error("Error creating volunteer:", error);
     }
   };
-
-  const TagInput = ({
-    tags,
-    tagInput,
-    onTagInputChange,
-    onAddTag,
-    onRemoveTag,
-  }: {
-    tags: string[];
-    tagInput: string;
-    onTagInputChange: (v: string) => void;
-    onAddTag: (v: string) => void;
-    onRemoveTag: (v: string) => void;
-  }) => (
-    <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3} minH="80px">
-      <Flex gap={2} wrap="wrap" align="center">
-        {tags.map((t) => (
-          <Flex key={t} align="center" gap={1} px={2} py={0.5} bg="gray.100" borderRadius="sm" fontSize="sm">
-            {t}
-            <Icon as={FiX} boxSize={3} cursor="pointer" color="gray.400" _hover={{ color: "gray.700" }} onClick={() => onRemoveTag(t)} />
-          </Flex>
-        ))}
-        <Flex align="center" gap={1}>
-          <Input
-            size="xs"
-            variant="unstyled"
-            placeholder="Add tag here..."
-            bg="transparent"
-            value={tagInput}
-            onChange={(e) => onTagInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && tagInput.trim()) {
-                e.preventDefault();
-                onAddTag(tagInput.trim());
-                onTagInputChange("");
-              }
-            }}
-            w="120px"
-            color="#A1A1AA"
-            _placeholder={{ color: "#A1A1AA" }}
-          />
-          {tagInput && (
-            <Icon as={FiX} boxSize={3} cursor="pointer" color="gray.400" onClick={() => onTagInputChange("")} />
-          )}
-        </Flex>
-      </Flex>
-    </Box>
-  );
 
   return (
     <Box p={6}>
@@ -109,14 +149,23 @@ export const AddProfileView = () => {
         </Breadcrumb.List>
       </Breadcrumb.Root>
 
-      <Tabs.Root defaultValue="profile" variant="outline">
+      <Tabs.Root value={activeTab} onValueChange={handleTabChange} variant="outline">
         <Tabs.List borderBottom="none" pb={0}>
           <Tabs.Trigger value="profile" h="8" gap={2}><LuCircleUser /> Profile Information</Tabs.Trigger>
-          <Tabs.Trigger value="occupation" h="8" gap={2}><LuBriefcase /> Occupation & Credentials</Tabs.Trigger>
+          <Tabs.Trigger
+            value="occupation"
+            h="8"
+            gap={2}
+            disabled={!profileCompleted}
+            opacity={!profileCompleted ? 0.4 : 1}
+            cursor={!profileCompleted ? "not-allowed" : "pointer"}
+          >
+            <LuBriefcase /> Occupation & Credentials
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="profile" pt={0}>
-          <Box borderWidth="1px" borderTopWidth={0} borderColor="#E4E4E7" borderBottomRadius="md" borderTopRadius={0} p={8} as="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box borderWidth="1px" borderTopWidth={0} borderColor="#E4E4E7" borderBottomRadius="md" borderTopRadius={0} p={8}>
             <Text fontSize="lg" fontWeight="semibold" color="#2563EB" mb={6}>Profile Information</Text>
 
             <Flex gap={4} mb={6}>
@@ -142,7 +191,11 @@ export const AddProfileView = () => {
               <Box flex={1}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>Role <Box as="span" color="red.500">*</Box></Text>
                 <NativeSelect.Root borderColor="#E4E4E7">
-                  <NativeSelect.Field placeholder="Type here to search" color={!roleValue ? "#A1A1AA" : "inherit"} {...register("role", { required: true })}>
+                  <NativeSelect.Field
+                    placeholder="Type here to search"
+                    color={!roleValue ? "#A1A1AA" : "inherit"}
+                    {...register("role", { required: true })}
+                  >
                     <option value="volunteer">Volunteer</option>
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
@@ -154,7 +207,9 @@ export const AddProfileView = () => {
             </Flex>
 
             <Flex justify="flex-end">
-              <Button type="submit" bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }}>Continue</Button>
+              <Button bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }} onClick={handleContinue}>
+                Continue
+              </Button>
             </Flex>
           </Box>
         </Tabs.Content>
@@ -165,7 +220,7 @@ export const AddProfileView = () => {
             <Flex align="center" justify="space-between" mb={8}>
               <Text fontSize="lg" fontWeight="semibold" color="#2563EB">Occupation & Credentials</Text>
               <Flex gap={3}>
-                <Button bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }} gap={2} onClick={handleSubmit(onSubmit)}>
+                <Button bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }} gap={2} onClick={handleSubmit(onCreateProfile)}>
                   <LuCircleUser />
                   Create Profile
                 </Button>
@@ -175,7 +230,7 @@ export const AddProfileView = () => {
               </Flex>
             </Flex>
 
-            {/* Row 1: Affiliated, Notary Status, Law School Year */}
+            {/* Row 1 */}
             <Flex gap={6} mb={8}>
               <Box flex={1}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>Affiliated Employer/Education <Box as="span" color="red.500">*</Box></Text>
@@ -226,7 +281,7 @@ export const AddProfileView = () => {
               </Box>
             </Flex>
 
-            {/* Row 2: State Bar Cert, State Bar Number, Interests */}
+            {/* Row 2 */}
             <Flex gap={6} mb={8} align="flex-start">
               <Box w="180px" flexShrink={0}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>State Bar Certificate State</Text>
@@ -246,17 +301,13 @@ export const AddProfileView = () => {
               </Box>
               <Box w="200px" flexShrink={0}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>State Bar Number</Text>
-                <NativeSelect.Root borderColor="#E4E4E7">
-                  <NativeSelect.Field
-                    placeholder="Select here"
-                    color={!stateBarNumber ? "#A1A1AA" : "inherit"}
-                    value={stateBarNumber}
-                    onChange={(e) => setStateBarNumber(e.target.value)}
-                  >
-                    <option value="123456">123456</option>
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
+                <Input
+                  borderColor="#E4E4E7"
+                  placeholder="Enter number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                  value={stateBarNumber}
+                  onChange={(e) => setStateBarNumber(e.target.value)}
+                />
               </Box>
               <Box flex={1}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>Interest(s)</Text>
@@ -270,7 +321,7 @@ export const AddProfileView = () => {
               </Box>
             </Flex>
 
-            {/* Row 3: Languages, Experience */}
+            {/* Row 3 */}
             <Flex gap={6} align="flex-start">
               <Box flex={1}>
                 <Text fontSize="sm" fontWeight="semibold" mb={2}>Languages</Text>
@@ -281,12 +332,16 @@ export const AddProfileView = () => {
                       <NativeSelect.Root borderColor="#E4E4E7" flex={1}>
                         <NativeSelect.Field
                           placeholder="Language"
-                          color={!entry.language ? "#A1A1AA" : "inherit"}
-                          value={entry.language}
-                          onChange={(e) => setLanguages((prev) => prev.map((l, idx) => idx === i ? { ...l, language: e.target.value } : l))}
+                          color={!entry.languageId ? "#A1A1AA" : "inherit"}
+                          value={entry.languageId || ""}
+                          onChange={(e) => {
+                            const id = Number(e.target.value);
+                            const lang = languageOptions.find((l) => l.id === id);
+                            setLanguages((prev) => prev.map((l, idx) => idx === i ? { ...l, languageId: id, language: lang?.language ?? "" } : l));
+                          }}
                         >
-                          {["English", "Spanish", "French", "Mandarin", "Japanese", "Korean", "Arabic", "Portuguese"].map((lang) => (
-                            <option key={lang} value={lang}>{lang}</option>
+                          {languageOptions.map((l) => (
+                            <option key={l.id} value={l.id}>{l.language}</option>
                           ))}
                         </NativeSelect.Field>
                         <NativeSelect.Indicator />
@@ -309,7 +364,7 @@ export const AddProfileView = () => {
                       )}
                     </Flex>
                   ))}
-                  <Button size="xs" variant="ghost" color="blue.500" mt={2} gap={1} onClick={() => setLanguages((prev) => [...prev, { language: "", proficiency: "" }])}>
+                  <Button size="xs" variant="ghost" color="blue.500" mt={2} gap={1} onClick={() => setLanguages((prev) => [...prev, { languageId: 0, language: "", proficiency: "" }])}>
                     + Add Language
                   </Button>
                 </Box>
