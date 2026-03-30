@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Box, Button, Checkbox, Drawer, Flex, Icon, Text } from "@chakra-ui/react";
 import { FiX, FiChevronUp, FiChevronDown, FiSliders } from "react-icons/fi";
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-
+// TODO Need to change data to more applicable to app
+const OCCUPATIONS = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
+const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discrimination", "Labor", "Criminal Justice"];
+const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandarin", "Portuguese", "Spanish"];
 
 
 interface SortFilterDrawerProps {
@@ -67,26 +69,10 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
 };
 
 export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawerProps) => {
-  const { backend } = useBackendContext();
   const [sortBy, setSortBy] = useState<"active" | "inactive">("active");
   const [checkedOccupations, setCheckedOccupations] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
   const [checkedLanguages, setCheckedLanguages] = useState<Set<string>>(new Set());
-  const [occupations, setOccupations] = useState<string[]>([]);
-  const [interests, setInterests] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<string[]>([]);
-
-  useEffect(() => {
-    backend.get<{ id: number; roleName: string }[]>("/roles").then((res) => {
-      setOccupations(res.data.map((r) => r.roleName));
-    });
-    backend.get<{ id: number; areasOfPractice: string }[]>("/areas-of-practice").then((res) => {
-      setInterests(res.data.map((a) => a.areasOfPractice));
-    });
-    backend.get<{ id: number; language: string }[]>("/languages").then((res) => {
-      setLanguages(res.data.map((l) => l.language));
-    });
-  }, [backend]);
 
   const toggle = (setter: React.Dispatch<React.SetStateAction<Set<string>>>) => (item: string) => {
     setter((prev) => {
@@ -177,9 +163,9 @@ export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawer
 
             {/* Filter Categories */}
             <Text fontWeight="bold" fontSize="sm" mb={2}>Filter Categories</Text>
-            <FilterSection label="Occupation" items={occupations} checked={checkedOccupations} onToggle={toggle(setCheckedOccupations)} />
-            <FilterSection label="Interest" items={interests} checked={checkedInterests} onToggle={toggle(setCheckedInterests)} />
-            <FilterSection label="Language" items={languages} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
+            <FilterSection label="Occupation" items={OCCUPATIONS} checked={checkedOccupations} onToggle={toggle(setCheckedOccupations)} />
+            <FilterSection label="Interest" items={INTERESTS} checked={checkedInterests} onToggle={toggle(setCheckedInterests)} />
+            <FilterSection label="Language" items={LANGUAGES} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
           </Drawer.Body>
 
           {/* Footer */}
