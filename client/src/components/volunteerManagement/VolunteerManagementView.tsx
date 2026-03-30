@@ -138,7 +138,7 @@ export const VolunteerManagementView = () => {
               bg="transparent"
               borderRadius="none"
               borderBottom="1px solid transparent"
-              _hover={{ color: "red.400", borderBottomColor: "red.400", _active: { color: "red.600", borderBottomColor: "transparent" } }}
+              _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }}
               p={0}
               onClick={() => setDeleteModalOpen(true)}
             >
