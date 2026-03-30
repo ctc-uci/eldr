@@ -1,3 +1,8 @@
+/*
+Volunteer Navbar
+Implement on all associated volunteer pages
+*/
+
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
 import { BriefcaseBusiness, ClipboardList } from "lucide-react";
@@ -7,7 +12,7 @@ export const Navbar = () => {
     <Flex
       as="nav"
       w="100%"
-      h="64px"
+      h="128px"
       px="32px"
       align="center"
       justify="space-between"
@@ -53,11 +58,13 @@ export const Navbar = () => {
           <BriefcaseBusiness size={18} />
           <Text>Cases</Text>
         </Link>
-
-        <Avatar.Root size="sm">
-          <Avatar.Fallback name="User" />
-          <Avatar.Image src="" />
-        </Avatar.Root>
+        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP*/}
+        <Link href = "/volunteer-profile">
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name="User" />
+            <Avatar.Image src="" />
+          </Avatar.Root>
+        </Link>
       </HStack>
     </Flex>
   );

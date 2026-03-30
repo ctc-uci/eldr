@@ -25,6 +25,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { getClinicLocationDisplay } from "./clinicLocationFormat";
+
 export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
   const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
@@ -63,6 +65,11 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
   };
   const endDateTime = getEventEndDateTime();
   const isPastEvent = endDateTime ? endDateTime < new Date() : false;
+
+  const { localityLine, meetingLink } = getClinicLocationDisplay(event);
+  const locationType = event.locationType ?? event.location_type;
+  const showMeetingLink =
+    meetingLink && (locationType === "online" || locationType === "hybrid");
 
   return (
     <Flex
@@ -120,13 +127,38 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
           w="full"
           size="xs"
         />
-        <Text
-          display="flex"
-          alignItems="center"
+        <Flex
+          alignItems="flex-start"
           gap="18px"
         >
-          <MapPin /> {event.location}
-        </Text>
+          <Box
+            flexShrink={0}
+            mt="2px"
+          >
+            <MapPin />
+          </Box>
+          <VStack
+            align="flex-start"
+            gap="4px"
+            flex="1"
+          >
+            <Text lineHeight="1.4">{localityLine}</Text>
+            {showMeetingLink ? (
+              <Text
+                as="a"
+                href={meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="#2563EB"
+                fontSize="13px"
+                fontWeight={500}
+                textDecoration="underline"
+              >
+                Meeting link
+              </Text>
+            ) : null}
+          </VStack>
+        </Flex>
         <Separator
           w="full"
           size="xs"

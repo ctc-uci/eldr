@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Box,
@@ -18,33 +18,7 @@ import {
 
 import { LuChevronUp } from "react-icons/lu";
 
-const filterCategories = [
-  {
-    label: "Type",
-    options: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  },
-  {
-    label: "Language",
-    options: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
-  },
-  {
-    label: "Location",
-    options: ["Virtual", "In-person"],
-  },
-  {
-    label: "Occupation",
-    options: [
-      "Attorney",
-      "Law Student 1L",
-      "Law Student 2L",
-      "Law Student 3L",
-      "Law Student LLM",
-      "Undergraduate Student",
-      "Paralegal/Legal Worker",
-      "Paralegal Student",
-    ],
-  },
-];
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   return (
@@ -74,8 +48,8 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         <VStack align="stretch" gap="10px" pl="8px" pb="12px">
           {options.map((option) => (
             <Checkbox.Root
-              key={option}
-              checked={selectedFilters.includes(option)}
+              key={option.id}
+              checked={selectedFilters.some((f) => f.id === option.id)}
               onCheckedChange={() => onToggle(option)}
               size="sm"
             >
@@ -83,7 +57,7 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
               <Checkbox.Control />
               <Checkbox.Label>
                 <Text fontSize="14px" fontWeight={400} color="#374151">
-                  {option}
+                  {option.text}
                 </Text>
               </Checkbox.Label>
             </Checkbox.Root>
@@ -95,10 +69,64 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
 };
 
 export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedFilters, setSelectedFilters, filteredCount }) => {
+  const { backend } = useBackendContext();
+
+  const [filterCategories, setFilterCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [typesRes, languagesRes, occupationsRes] = await Promise.all([
+        backend.get('/areas-of-practice'),
+        backend.get('/languages/with-volunteers'),
+        backend.get('/roles'),
+      ]);
+
+      const categories = [
+        {
+          label: "Type",
+          key: "areasOfPracticeIds",
+          options: typesRes.data.map((t) => ({ id: "areasOfPracticeId" + t.id, text: t.areasOfPractice })),
+        },
+        {
+          label: "Language",
+          key: "languageIds",
+          options: languagesRes.data.map((l) => ({ id: "languageId" + l.id, text: l.language })),
+        },
+        {
+          label: "Location",
+          key: "locations",
+          // ids must match clinics.location_type enum (API normalizes legacy labels)
+          options: [
+            { id: "online", text: "Online (virtual)" },
+            { id: "in-person", text: "In-person" },
+            { id: "hybrid", text: "Hybrid" },
+          ],
+        },
+        {
+          label: "Occupation",
+          key: "roleIds",
+          options: occupationsRes.data.map((o) => ({ id: "roleId" + o.id, text: o.roleName })),
+        },
+      ];
+
+      setFilterCategories(categories);
+    } catch (e) {
+      console.error("Error fetching filter options:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
+
   const toggleFilter = (option) => {
     setSelectedFilters((prev) =>
-      prev.includes(option)
-        ? prev.filter((f) => f !== option)
+      prev.some((f) => f.id === option.id)
+        ? prev.filter((f) => f.id !== option.id)
         : [...prev, option]
     );
   };
@@ -197,7 +225,7 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   <HStack gap="6px" flexWrap="wrap">
                     {selectedFilters.map((filter) => (
                       <Button
-                        key={filter}
+                        key={filter.id}
                         size="xs"
                         variant="outline"
                         borderColor="#D1D5DB"
@@ -209,7 +237,7 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                         px="8px"
                         onClick={() => toggleFilter(filter)}
                       >
-                        {filter} ×
+                        {filter.text} ×
                       </Button>
                     ))}
                   </HStack>
@@ -221,17 +249,23 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                 <Text fontSize="16px" fontWeight={600} color="#111827" mb="8px">
                   Filter Categories
                 </Text>
-                <Stack gap="0" pl="8px">
-                  {filterCategories.map((category) => (
-                    <FilterCategory
-                      key={category.label}
-                      label={category.label}
+                {isLoading ? (
+                  <Text fontSize="14px" color="#6B7280">
+                    Loading filter options...
+                  </Text>
+                ) : (
+                  <Stack gap="0" pl="8px">
+                    {filterCategories.map((category) => (
+                      <FilterCategory
+                        key={category.label}
+                        label={category.label}
                       options={category.options}
                       selectedFilters={selectedFilters}
                       onToggle={toggleFilter}
                     />
                   ))}
                 </Stack>
+                )}
               </Box>
             </Drawer.Body>
 
@@ -262,8 +296,9 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   px="24px"
                   _hover={{ bg: "#1F2937" }}
                   onClick={() => onOpenChange(false)}
+                  disabled={filteredCount === 0}
                 >
-                  See {filteredCount} Results
+                  {filteredCount > 0 ? `See ${filteredCount} Results` : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>
