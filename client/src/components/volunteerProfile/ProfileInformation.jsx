@@ -15,6 +15,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
+import InputMask from "react-input-mask";
 
 import {
   NOTARY_OPTIONS,
@@ -281,11 +282,19 @@ export const ProfileInformation = ({
                 <FieldLabel>Phone Number</FieldLabel>
                 {isEditing ? (
                   <Field.Root>
-                    <Input
-                      size="sm"
-                      value={data.phone}
+                    <InputMask
+                      mask="(999) 999-9999" // can change mask if designer's input mask changes
+                      value={data.phone ?? ""}
                       onChange={(e) => update({ phone: e.target.value })}
-                    />
+                    >
+                      {(inputProps) => (
+                        <Input
+                          {...inputProps}
+                          size="sm"
+                          placeholder="(___) ___-____"
+                        />
+                      )}
+                    </InputMask>
                   </Field.Root>
                 ) : (
                   <ReadValue>{data.phone}</ReadValue>
