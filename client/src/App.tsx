@@ -20,6 +20,7 @@ import { StaffLayout } from "./components/navbar/StaffLayout";
 import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
+import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
@@ -159,6 +160,10 @@ const App = () => {
                   element={<EventCatalog />}
                 />
                 <Route
+                  path="/manage-tags/*"
+                  element={<TagManagement />}
+                />
+                {/* <Route
                   path="/admin-profile"
                   element={<AdminProfile />}
                 />
