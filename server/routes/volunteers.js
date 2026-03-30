@@ -113,8 +113,15 @@ volunteersRouter.get("/", async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
-        SELECT *
-        FROM volunteers;
+        SELECT v.*,
+          COALESCE(
+            array_agg(r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles
+        FROM volunteers v
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        GROUP BY v.id;
       `
     );
     res.status(200).json(keysToCamel(volunteersQuery));

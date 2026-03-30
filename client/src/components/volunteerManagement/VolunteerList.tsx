@@ -148,7 +148,7 @@ export const VolunteerList = ({
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="gray.600">{volunteer.role ?? "—"}</Text>
+                    <Text fontSize="sm" color="gray.600">{volunteer.roles?.join(", ") || "—"}</Text>
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -303,7 +303,7 @@ export const VolunteerList = ({
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" fontWeight="semibold">{volunteer.role ?? "—"}</Text>
+                    <Text fontSize="sm" fontWeight="semibold" color="#52525B">{volunteer.roles?.join(", ") || "—"}</Text>
                   </Table.Cell>
                   <Table.Cell>
                     <Text fontSize="sm" color="gray.600">
