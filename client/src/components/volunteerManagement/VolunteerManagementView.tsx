@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
 import { FiSearch, FiArrowRight } from "react-icons/fi";
-import { LuCircleUser } from "react-icons/lu";
-import { LuListFilter } from "react-icons/lu";
+import { LuCircleUser, LuListFilter } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -12,6 +11,7 @@ import { Volunteer } from "@/types/volunteer";
 import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 import { SortFilterDrawer } from "./SortFilterDrawer";
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
 
 type ViewMode = "list" | "split";
 
@@ -26,6 +26,7 @@ export const VolunteerManagementView = () => {
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +131,19 @@ export const VolunteerManagementView = () => {
         </Heading>
         {checkedIds.size > 0 && (
           <Flex gap={4} mb={2} ml={2}>
-            <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Delete</Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="gray.600"
+              bg="transparent"
+              borderRadius="none"
+              borderBottom="1px solid transparent"
+              _hover={{ color: "red.400", borderBottomColor: "red.400", _active: { color: "red.600", borderBottomColor: "transparent" } }}
+              p={0}
+              onClick={() => setDeleteModalOpen(true)}
+            >
+              Delete
+            </Button>
             <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Archive</Button>
           </Flex>
         )}
@@ -200,6 +213,22 @@ export const VolunteerManagementView = () => {
           </Box>
         )}
       </Flex>
+
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        count={checkedIds.size}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={async () => {
+          await Promise.all([...checkedIds].map((id) => backend.delete(`/volunteers/${id}`)));
+          setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+          if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
+            setSelectedVolunteer(null);
+            setViewMode("list");
+          }
+          setCheckedIds(new Set());
+          setDeleteModalOpen(false);
+        }}
+      />
 
       <SortFilterDrawer
         open={filterDrawerOpen}
