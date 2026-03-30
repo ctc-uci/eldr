@@ -16,8 +16,7 @@ import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset} from "./components/adminProfile/adminPassReset";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-import { StaffLayout } from "./components/staff/StaffLayout";
-// import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { StaffLayout } from "./components/navbar/StaffLayout";
 import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
@@ -54,13 +53,11 @@ const App = () => {
                 <Route
                   path="/adminForgotPass"
                   element={<AdminForgotPass/>}
-                >
-                </Route>
+                />
                 <Route
                   path="/adminPassReset"
                   element={<AdminPassReset/>}
-                >
-                </Route>
+                />
 
                 <Route
                   path="/volunteer-profile"
@@ -121,11 +118,7 @@ const App = () => {
                     />
                   }
                 />
-                {/* <Route
-                  path="/catalog"
-                  element={<CaseCatalog />}
-                /> */}
-                
+
                 <Route
                   element={
                     <ProtectedRoute
@@ -139,10 +132,6 @@ const App = () => {
                     element={<VolunteerManagement />}
                   />
                 </Route>
-                {/* <Route
-                  path="/volunteer-management"
-                  element={<ProtectedRoute element={<VolunteerManagement />} />}
-                /> */}
                 <Route
                   path = "/events"
                   element={
@@ -173,7 +162,13 @@ const App = () => {
                   path="/admin-profile"
                   element={<AdminProfile />}
                 />
+
+                {/* Case Catalog Routes (Removed from MVP, ignore for now) */}
                 {/* <Route
+                  path="/case-catalog"
+                  element={<CaseCatalog />}
+                />
+                <Route
                   path="/caseManagement"
                   element={<CaseManagement />}
                 /> */}
