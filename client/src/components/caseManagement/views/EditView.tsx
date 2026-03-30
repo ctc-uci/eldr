@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { DeleteIcon } from "@chakra-ui/icons";
 import {
   Alert,
   AlertIcon,
@@ -11,6 +10,7 @@ import {
   FormLabel,
   Heading,
   HStack,
+  Icon,
   Input,
   Select,
   Text,
@@ -18,6 +18,7 @@ import {
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
+import { FiTrash2 } from "react-icons/fi";
 
 import BackButton from "../BackButton";
 import DeleteConfirm from "../DeleteConfirm";
@@ -91,7 +92,7 @@ const EditView = ({
             variant="outline"
             borderColor="black"
             color="black"
-            leftIcon={<DeleteIcon />}
+            leftIcon={<Icon as={FiTrash2} />}
             onClick={onOpen}
           >
             Delete Case

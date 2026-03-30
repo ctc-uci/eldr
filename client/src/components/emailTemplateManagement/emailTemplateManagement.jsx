@@ -20,14 +20,18 @@ import {
   NewTemplatePopover,
   NewFolderPopover,
   EmptyFolderState,
-  Sidebar,
   NewTemplateSection,
   SaveTemplatePopover,
   FolderNotFoundModal,
   DeleteTemplateModal,
 } from "./components";
 
+import { Sidebar } from "@/components/Sidebar";
+
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
+import { AdminNavbar } from "../navbar/AdminNavbar";
+// NOTE: Added AdminNavbar
 
 export const EmailTemplateManagement = () => {
   const { backend } = useBackendContext();
@@ -399,7 +403,7 @@ export const EmailTemplateManagement = () => {
 
   return (
     <Flex minH="100vh" bg="#FAFBFC">
-      <Sidebar />
+      <AdminNavbar />
       <Flex direction="column" flex="1" px={10} py={8} minH="100vh">
         {/* Search Bar */}
         <Box position="relative" width="100%">
