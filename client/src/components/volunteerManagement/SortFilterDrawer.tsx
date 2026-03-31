@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, Drawer, Flex, Icon, Text } from "@chakra-ui/reac
 import { FiX, FiChevronUp, FiChevronDown, FiSliders } from "react-icons/fi";
 
 // TODO Need to change data to more applicable to app
-const OCCUPATIONS = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
+const ROLES = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
 const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discrimination", "Labor", "Criminal Justice"];
 const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandarin", "Portuguese", "Spanish"];
 
@@ -70,7 +70,7 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
 
 export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawerProps) => {
   const [sortBy, setSortBy] = useState<"active" | "inactive">("active");
-  const [checkedOccupations, setCheckedOccupations] = useState<Set<string>>(new Set());
+  const [checkedRoles, setCheckedRoles] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
   const [checkedLanguages, setCheckedLanguages] = useState<Set<string>>(new Set());
 
@@ -83,20 +83,20 @@ export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawer
   };
 
   const allSelected = [
-    ...checkedOccupations,
+    ...checkedRoles,
     ...checkedInterests,
     ...checkedLanguages,
   ];
 
   const removeFilter = (f: string) => {
-    if (checkedOccupations.has(f)) toggle(setCheckedOccupations)(f);
+    if (checkedRoles.has(f)) toggle(setCheckedRoles)(f);
     else if (checkedInterests.has(f)) toggle(setCheckedInterests)(f);
     else toggle(setCheckedLanguages)(f);
   };
 
   const handleClear = () => {
     setSortBy("active");
-    setCheckedOccupations(new Set());
+    setCheckedRoles(new Set());
     setCheckedInterests(new Set());
     setCheckedLanguages(new Set());
   };
@@ -163,7 +163,7 @@ export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawer
 
             {/* Filter Categories */}
             <Text fontWeight="bold" fontSize="sm" mb={2}>Filter Categories</Text>
-            <FilterSection label="Occupation" items={OCCUPATIONS} checked={checkedOccupations} onToggle={toggle(setCheckedOccupations)} />
+            <FilterSection label="Role" items={ROLES} checked={checkedRoles} onToggle={toggle(setCheckedRoles)} />
             <FilterSection label="Interest" items={INTERESTS} checked={checkedInterests} onToggle={toggle(setCheckedInterests)} />
             <FilterSection label="Language" items={LANGUAGES} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
           </Drawer.Body>
