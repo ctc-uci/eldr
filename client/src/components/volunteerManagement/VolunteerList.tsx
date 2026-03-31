@@ -106,7 +106,7 @@ export const VolunteerList = ({
         onClick={sortField ? () => handleSort(sortField) : undefined}
       >
         {label}
-        {active ? (sortDir === "asc" ? <LuChevronUp size={12} /> : <LuChevronDown size={12} />) : <LuChevronsUpDown size={12} />}
+        {sortField && (active ? (sortDir === "asc" ? <LuChevronUp size={12} /> : <LuChevronDown size={12} />) : <LuChevronsUpDown size={12} />)}
       </Flex>
     );
   };

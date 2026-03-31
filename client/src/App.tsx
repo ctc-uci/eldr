@@ -104,6 +104,10 @@ const App = () => {
                     path="/volunteer-management/new"
                     element={<AddProfileView />}
                   />
+                  <Route
+                    path="/admin"
+                    element={<Admin />}
+                  />
                 </Route>
                 {/* <Route
                   path = "/events"
@@ -166,15 +170,6 @@ const App = () => {
                 <Route
                   path="/dashboard"
                   element={<ProtectedRoute element={<Dashboard />} />}
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute
-                      element={<Admin />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
                 />
                 <Route
                   path="/"
