@@ -129,6 +129,8 @@ export const AdminLogin: React.FC = () => {
           return;
         }
 
+        await refreshToken();
+
         const usersResponse = await backend.get("/users");
         const latestUsers = (usersResponse.data ?? []) as UserRecord[];
 
@@ -138,7 +140,6 @@ export const AdminLogin: React.FC = () => {
           return;
         }
 
-        await refreshToken();
         navigate("/adminDashboard");
       } catch (error: unknown) {
         const firebaseError = error as { message?: string };

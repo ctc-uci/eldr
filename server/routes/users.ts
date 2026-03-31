@@ -60,7 +60,7 @@ usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
     const { firebaseUid } = req.params;
     const callerUid = res.locals.decodedToken?.uid;
 
-    if (callerUid && callerUid !== firebaseUid) {
+    if (!callerUid || callerUid !== firebaseUid) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -112,7 +112,7 @@ usersRouter.put("/update", verifyRole("volunteer"), async (req, res) => {
     const { email, firebaseUid } = req.body;
     const callerUid = res.locals.decodedToken?.uid;
 
-    if (callerUid && callerUid !== firebaseUid) {
+    if (!callerUid || callerUid !== firebaseUid) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
