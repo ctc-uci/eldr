@@ -1,12 +1,13 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const foldersRouter = Router();
 
 // GET: list all folders
 // /folders
-foldersRouter.get("/", async (req, res) => {
+foldersRouter.get("/", verifyRole("staff"), async (req, res) => {
   try {
     const folders = await db.query(
       "SELECT * FROM folders ORDER BY id ASC"
@@ -20,7 +21,7 @@ foldersRouter.get("/", async (req, res) => {
 
 // POST: create a new folder
 // /folders
-foldersRouter.post("/", async (req, res) => {
+foldersRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { name } = req.body;
 
@@ -39,7 +40,7 @@ foldersRouter.post("/", async (req, res) => {
 
 // GET: search for folder by name
 // /folders/search?name=xxx
-foldersRouter.get("/search", async (req, res) => {
+foldersRouter.get("/search", verifyRole("staff"), async (req, res) => {
   try {
     const { name } = req.query;
 
@@ -65,7 +66,7 @@ foldersRouter.get("/search", async (req, res) => {
 
 // GET: get one folder by id
 // /folders/:id
-foldersRouter.get("/:id", async (req, res) => {
+foldersRouter.get("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -84,7 +85,7 @@ foldersRouter.get("/:id", async (req, res) => {
 
 // GET: get all templates in a folder
 // /folders/:id/templates
-foldersRouter.get("/:id/templates", async (req, res) => {
+foldersRouter.get("/:id/templates", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -106,7 +107,7 @@ foldersRouter.get("/:id/templates", async (req, res) => {
 
 // PUT: update a folder
 // /folders/:id
-foldersRouter.put("/:id", async (req, res) => {
+foldersRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -129,7 +130,7 @@ foldersRouter.put("/:id", async (req, res) => {
 
 // DELETE: delete a folder
 // /folders/:id
-foldersRouter.delete("/:id", async (req, res) => {
+foldersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 

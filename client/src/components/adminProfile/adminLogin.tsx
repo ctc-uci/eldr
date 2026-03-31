@@ -42,6 +42,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
+import { refreshToken } from "@/utils/auth/firebase";
 
 type UserRecord = {
   email?: string;
@@ -120,6 +121,8 @@ export const AdminLogin: React.FC = () => {
       try {
         const result = await getRedirectResult(auth);
         if (!result) return;
+
+        await refreshToken();
 
         const ssoEmail = (result.user.email ?? "").trim().toLowerCase();
         if (!ssoEmail) {

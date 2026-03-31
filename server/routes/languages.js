@@ -1,11 +1,12 @@
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 import { keysToCamel } from "@/common/utils";
+import { verifyRole } from "@/middleware";
 
 export const languagesRouter = Router();
 
 // Post a language
-languagesRouter.post("/", async (req, res) => {
+languagesRouter.post("/", verifyRole("staff"), async (req, res) => {
     try {
         const { language } = req.body;
         const languageResult = await db.query(
@@ -20,7 +21,7 @@ languagesRouter.post("/", async (req, res) => {
 });
 
 // Get all langauges
-languagesRouter.get("/", async (_, res) => {
+languagesRouter.get("/", verifyRole("volunteer"), async (_, res) => {
     try {
         const languages = await db.query(`SELECT * FROM languages ORDER BY id ASC`);
 
@@ -31,7 +32,7 @@ languagesRouter.get("/", async (_, res) => {
 });
 
 // Get all languages with 1+ volunteers tied to them
-languagesRouter.get("/with-volunteers", async (_, res) => {
+languagesRouter.get("/with-volunteers", verifyRole("volunteer"), async (_, res) => {
     try {
         const languages = await db.query(`
             SELECT languages.* FROM languages
@@ -50,7 +51,7 @@ languagesRouter.get("/with-volunteers", async (_, res) => {
 
 
 // Get a language by ID
-languagesRouter.get("/:id", async (req, res) => {
+languagesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
     try {
         const { id } = req.params;
         const language = await db.query(`SELECT * FROM languages WHERE id = $1`, [id]);
@@ -62,7 +63,7 @@ languagesRouter.get("/:id", async (req, res) => {
 });
 
 // Update a language by ID
-languagesRouter.put("/:id", async (req, res) => {
+languagesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
         const { language } = req.body;
@@ -78,7 +79,7 @@ languagesRouter.put("/:id", async (req, res) => {
 });
 
 // Delete a language by ID
-languagesRouter.delete("/:id", async (req, res) => {
+languagesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
         await db.query(`DELETE FROM languages WHERE id = $1`, [id]);

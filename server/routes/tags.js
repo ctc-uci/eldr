@@ -1,11 +1,12 @@
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 import { keysToCamel } from "@/common/utils";
+import { verifyRole } from "@/middleware";
 
 export const tagsRouter = Router();
 
 // Create a new tag
-tagsRouter.post("/", async (req, res) => {
+tagsRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { text, description } = req.body;
 
@@ -29,7 +30,7 @@ tagsRouter.post("/", async (req, res) => {
 });
 
 // Get all tags with case, clinic (event), and volunteer counts
-tagsRouter.get("/", async (req, res) => {
+tagsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const searchRaw = typeof req.query.search === "string" ? req.query.search : null;
     const search = searchRaw?.trim() ? searchRaw.trim() : null;
@@ -70,7 +71,7 @@ tagsRouter.get("/", async (req, res) => {
 });
 
 // Get a single tag via ID with counts
-tagsRouter.get("/:id", async (req, res) => {
+tagsRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -100,7 +101,7 @@ tagsRouter.get("/:id", async (req, res) => {
 });
 
 // Update a tag via ID
-tagsRouter.put("/:id", async (req, res) => {
+tagsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const { text, description } = req.body;
@@ -125,7 +126,7 @@ tagsRouter.put("/:id", async (req, res) => {
 });
 
 // Delete a single tag via ID
-tagsRouter.delete("/:id", async (req, res) => {
+tagsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 

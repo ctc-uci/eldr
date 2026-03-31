@@ -1,5 +1,6 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const clinicsRouter = Router();
@@ -12,7 +13,7 @@ const allowedClinicTypes = [
 ];
 
 // Create a workshop
-clinicsRouter.post("/", async (req, res) => {
+clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const {
       name,
@@ -77,7 +78,7 @@ clinicsRouter.post("/", async (req, res) => {
 });
 
 // Get all workshops
-clinicsRouter.get("/", async (req, res) => {
+clinicsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const clinics = await db.query("SELECT * FROM clinics");
     res.status(200).json(keysToCamel(clinics));
@@ -94,7 +95,7 @@ clinicsRouter.get("/", async (req, res) => {
 // location - clinics.location_type enum (in-person, hybrid, online)
 // occupation - clinic roles / roles table
 // /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=in-person,online&roleIds=1,2
-clinicsRouter.get("/search", async (req, res) => {
+clinicsRouter.get("/search", verifyRole("volunteer"), async (req, res) => {
   try {
     const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
 
@@ -142,7 +143,7 @@ clinicsRouter.get("/search", async (req, res) => {
 });
 
 // Get a single workshop
-clinicsRouter.get("/:id", async (req, res) => {
+clinicsRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
     const clinic = await db.query("SELECT * FROM clinics WHERE id = $1", [id]);
@@ -156,7 +157,7 @@ clinicsRouter.get("/:id", async (req, res) => {
 });
 
 // Update a workshop
-clinicsRouter.put("/:id", async (req, res) => {
+clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -243,7 +244,7 @@ clinicsRouter.put("/:id", async (req, res) => {
 });
 
 // Delete a workshop
-clinicsRouter.delete("/:id", async (req, res) => {
+clinicsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const clinic = await db.query(
@@ -261,7 +262,7 @@ clinicsRouter.delete("/:id", async (req, res) => {
 
 // Workshop Languages Routes
 // Assign a language to a workshop
-clinicsRouter.post("/:clinicId/languages", async (req, res) => {
+clinicsRouter.post("/:clinicId/languages", verifyRole("staff"), async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { languageId, proficiency } = req.body;
@@ -280,7 +281,7 @@ clinicsRouter.post("/:clinicId/languages", async (req, res) => {
 });
 
 // Remove a language from a workshop
-clinicsRouter.delete("/:clinicId/languages/:languageId", async (req, res) => {
+clinicsRouter.delete("/:clinicId/languages/:languageId", verifyRole("staff"), async (req, res) => {
   try {
     const { clinicId, languageId } = req.params;
     const result = await db.query(
@@ -303,7 +304,7 @@ clinicsRouter.delete("/:clinicId/languages/:languageId", async (req, res) => {
 });
 
 // List all languages for a workshop
-clinicsRouter.get("/:clinicId/languages", async (req, res) => {
+clinicsRouter.get("/:clinicId/languages", verifyRole("volunteer"), async (req, res) => {
   try {
     const { clinicId } = req.params;
 
@@ -322,7 +323,7 @@ clinicsRouter.get("/:clinicId/languages", async (req, res) => {
 });
 
 // Workshop Registration Routes
-clinicsRouter.get("/:clinicId/registrations", async (req, res) => {
+clinicsRouter.get("/:clinicId/registrations", verifyRole("staff"), async (req, res) => {
   try {
     const { clinicId } = req.params;
     const data = await db.query(
@@ -343,7 +344,7 @@ clinicsRouter.get("/:clinicId/registrations", async (req, res) => {
   }
 });
 
-clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
+clinicsRouter.post("/:clinicId/registrations", verifyRole("volunteer"), async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
@@ -364,6 +365,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
 
 clinicsRouter.delete(
   "/:clinicId/registrations/:volunteerId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { clinicId, volunteerId } = req.params;
@@ -389,6 +391,7 @@ clinicsRouter.delete(
 
 clinicsRouter.patch(
   "/:clinicId/registrations/:volunteerId/attendance",
+  verifyRole("staff"),
   async (req, res) => {
     try {
       const { clinicId, volunteerId } = req.params;
@@ -418,7 +421,7 @@ clinicsRouter.patch(
 // Workshop Areas of Practice Routes
 // POST: assign an area to a workshop
 // /workshops/{workshopId}/areas-of-practice
-clinicsRouter.post("/:clinicId/areas-of-practice", async (req, res) => {
+clinicsRouter.post("/:clinicId/areas-of-practice", verifyRole("staff"), async (req, res) => {
   try {
     const { areaOfPracticeId } = req.body; // get JSON body
     const { clinicId } = req.params; // get URL parameters
@@ -442,6 +445,7 @@ clinicsRouter.post("/:clinicId/areas-of-practice", async (req, res) => {
 // /workshops/{workshopId}/areas-of-practice/{areaId}
 clinicsRouter.delete(
   "/:clinicId/areas-of-practice/:areaId",
+  verifyRole("staff"),
   async (req, res) => {
     try {
       const { clinicId, areaId } = req.params;
@@ -464,7 +468,7 @@ clinicsRouter.delete(
 
 // GET: list all areas for a clinic, including area IDs and text
 // /clinics/{clinicId}/areas-of-practice
-clinicsRouter.get("/:clinicId/areas-of-practice", async (req, res) => {
+clinicsRouter.get("/:clinicId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
   try {
     const { clinicId } = req.params;
 
@@ -485,7 +489,7 @@ clinicsRouter.get("/:clinicId/areas-of-practice", async (req, res) => {
 // Clinic Roles Routes
 // POST: assign a role to a clinic
 // /clinics/{clinicId}/roles
-clinicsRouter.post("/:clinicId/roles", async (req, res) => {
+clinicsRouter.post("/:clinicId/roles", verifyRole("staff"), async (req, res) => {
   try {
     const { roleId } = req.body; // get JSON body
     const { clinicId } = req.params; // get URL parameters
@@ -507,7 +511,7 @@ clinicsRouter.post("/:clinicId/roles", async (req, res) => {
 
 // DELETE: remove a role from a clinic
 // /clinics/{clinicId}/roles/{roleId}
-clinicsRouter.delete("/:clinicId/roles/:roleId", async (req, res) => {
+clinicsRouter.delete("/:clinicId/roles/:roleId", verifyRole("staff"), async (req, res) => {
   try {
     const { clinicId, roleId } = req.params;
 
@@ -530,7 +534,7 @@ clinicsRouter.delete("/:clinicId/roles/:roleId", async (req, res) => {
 
 // GET: list all roles for a clinic, including role IDs and text
 // /clinics/{clinicId}/roles
-clinicsRouter.get("/:clinicId/roles", async (req, res) => {
+clinicsRouter.get("/:clinicId/roles", verifyRole("volunteer"), async (req, res) => {
   try {
     const { clinicId } = req.params;
 
@@ -551,7 +555,7 @@ clinicsRouter.get("/:clinicId/roles", async (req, res) => {
 // Clinic Tags Routes
 // POST: assign a tag to a clinic
 // /clinics/{clinicId}/tags
-clinicsRouter.post("/:clinicId/tags", async (req, res) => {
+clinicsRouter.post("/:clinicId/tags", verifyRole("staff"), async (req, res) => {
   try {
     const { tagId } = req.body; // get JSON body
     const { clinicId } = req.params; // get URL parameters
@@ -573,7 +577,7 @@ clinicsRouter.post("/:clinicId/tags", async (req, res) => {
 
 // DELETE: remove a tag from a clinic
 // /clinics/{clinicId}/tags/{tagId}
-clinicsRouter.delete("/:clinicId/tags/:tagId", async (req, res) => {
+clinicsRouter.delete("/:clinicId/tags/:tagId", verifyRole("staff"), async (req, res) => {
   try {
     const { clinicId, tagId } = req.params;
 
@@ -596,7 +600,7 @@ clinicsRouter.delete("/:clinicId/tags/:tagId", async (req, res) => {
 
 // GET: list all tags for a clinic, including tag IDs and text
 // /clinics/{clinicId}/tags
-clinicsRouter.get("/:clinicId/tags", async (req, res) => {
+clinicsRouter.get("/:clinicId/tags", verifyRole("volunteer"), async (req, res) => {
   try {
     const { clinicId } = req.params;
 
