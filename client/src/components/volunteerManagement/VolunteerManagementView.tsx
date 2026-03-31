@@ -201,8 +201,6 @@ export const VolunteerManagementView = () => {
                       last_name: data.lastName,
                       email: data.email,
                       phone_number: data.phoneNumber,
-                      role: data.role,
-                      experience_level: data.experienceLevel,
                     }
                   );
                   setSelectedVolunteer((prev) =>

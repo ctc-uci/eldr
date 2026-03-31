@@ -67,9 +67,10 @@ adminsRouter.post("/create", async (req, res) => {
       if (err.code === "23505") {
         const existingUser = await db.query(
           `
-          SELECT id
-          FROM users
-          WHERE email = $1;
+          UPDATE users
+          SET role = 'admin'
+          WHERE email = $1
+          RETURNING id;
           `,
           [email]
         );
