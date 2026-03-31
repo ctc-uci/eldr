@@ -43,6 +43,8 @@ import {
   signOut,
 } from "firebase/auth";
 import { refreshToken } from "@/utils/auth/firebase";
+import { clearCookies } from "@/utils/auth/cookie";
+import { Cookies } from "react-cookie";
 
 type UserRecord = {
   email?: string;
@@ -136,6 +138,7 @@ export const AdminLogin: React.FC = () => {
 
         if (!isAdmin(ssoEmail, latestUsers)) {
           await signOut(auth);
+          clearCookies(new Cookies());
           setSsoError("No staff account exists with those credentials.");
           return;
         }
