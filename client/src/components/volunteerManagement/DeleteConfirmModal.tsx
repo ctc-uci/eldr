@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Button, Dialog, Flex, Icon, Portal } from "@chakra-ui/react";
 import { FiAlertTriangle, FiX } from "react-icons/fi";
 
@@ -9,6 +10,20 @@ interface DeleteConfirmModalProps {
 }
 
 export const DeleteConfirmModal = ({ open, count, onClose, onConfirm }: DeleteConfirmModalProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } catch (error) {
+      console.error("Error deleting volunteer(s):", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={(e) => { if (!e.open) onClose(); }}>
       <Portal>
@@ -52,9 +67,10 @@ export const DeleteConfirmModal = ({ open, count, onClose, onConfirm }: DeleteCo
                 borderRadius="lg"
                 _hover={{ bg: "#487C9E" }}
                 fontSize="md"
-                onClick={onConfirm}
+                disabled={isDeleting}
+                onClick={handleDelete}
               >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

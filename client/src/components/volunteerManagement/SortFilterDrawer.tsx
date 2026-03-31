@@ -8,10 +8,18 @@ const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discr
 const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandarin", "Portuguese", "Spanish"];
 
 
+interface FilterState {
+  sortBy: "active" | "inactive";
+  roles: Set<string>;
+  interests: Set<string>;
+  languages: Set<string>;
+}
+
 interface SortFilterDrawerProps {
   open: boolean;
   onClose: () => void;
   totalCount: number;
+  onApply?: (filters: FilterState) => void;
 }
 
 interface FilterSectionProps {
@@ -54,7 +62,6 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
                 cursor="pointer"
                 size="sm"
                 checked={checked.has(item)}
-                onCheckedChange={() => onToggle(item)}
               >
                 <Checkbox.HiddenInput />
                 <Checkbox.Control borderColor="gray.300" borderRadius="sm" />
@@ -68,7 +75,7 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
   );
 };
 
-export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawerProps) => {
+export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFilterDrawerProps) => {
   const [sortBy, setSortBy] = useState<"active" | "inactive">("active");
   const [checkedRoles, setCheckedRoles] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
@@ -186,6 +193,10 @@ export const SortFilterDrawer = ({ open, onClose, totalCount }: SortFilterDrawer
                 color="white"
                 _hover={{ bg: "#3F3F46" }}
                 gap={2}
+                onClick={() => {
+                  onApply?.({ sortBy, roles: checkedRoles, interests: checkedInterests, languages: checkedLanguages });
+                  onClose();
+                }}
               >
                 <FiSliders />
                 See Results

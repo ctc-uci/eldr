@@ -159,7 +159,7 @@ export const VolunteerManagementView = () => {
           minW={viewMode === "split" ? "300px" : undefined}
           h="100%"
           overflowY="auto"
-          onClick={() => { if (viewMode === "split") { setViewMode("list"); setSelectedVolunteer(null); } }}
+          onClick={(e) => { if (viewMode === "split" && e.target === e.currentTarget) { setViewMode("list"); setSelectedVolunteer(null); } }}
         >
           <VolunteerList
             variant={viewMode === "list" ? "table" : "list"}

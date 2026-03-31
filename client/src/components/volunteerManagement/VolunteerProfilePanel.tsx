@@ -379,7 +379,8 @@ export const VolunteerProfilePanel = ({
                             onKeyDown={(e) => {
                               if (e.key === "Enter" && tagInput.trim()) {
                                 e.preventDefault();
-                                setInterests((prev) => [...prev, tagInput.trim()]);
+                                const tag = tagInput.trim();
+                                setInterests((prev) => prev.includes(tag) ? prev : [...prev, tag]);
                                 setTagInput("");
                               }
                             }}

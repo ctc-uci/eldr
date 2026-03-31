@@ -60,6 +60,10 @@ export const VolunteerList = ({
   const [sortKey, setSortKey] = useState<keyof Volunteer | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
+  useEffect(() => {
+    setPage(1);
+  }, [volunteers]);
+
   const handleSort = (key: keyof Volunteer) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
@@ -115,7 +119,7 @@ export const VolunteerList = ({
             <Table.Header>
               <Table.Row bg="#EFF6FF">
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600"><SortHeader label="Name" sortField="firstName" /></Table.ColumnHeader>
-                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600"><SortHeader label="Role" sortField="role" /></Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600"><SortHeader label="Role" /></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -251,7 +255,7 @@ export const VolunteerList = ({
                   <SortHeader label="Name" sortField="firstName" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Role" sortField="role" />
+                  <SortHeader label="Role" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
                   <SortHeader label="Interests" />

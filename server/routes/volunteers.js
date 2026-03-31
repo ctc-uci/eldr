@@ -218,26 +218,6 @@ volunteersRouter.put("/:id", async (req, res) => {
   }
 });
 
-// Delete a single volunteer via ID
-volunteersRouter.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await db.query(
-      `
-        DELETE
-        FROM volunteers
-        WHERE id = $1;
-      `,
-      [id]
-    );
-
-    res.status(200).send(`Volunteer ${id} deleted successfully`);
-  } catch (e) {
-    res.status(500).send(e.message);
-  }
-});
-
 // -----------------------------
 // Volunteer Areas of Practice Routes
 // -----------------------------

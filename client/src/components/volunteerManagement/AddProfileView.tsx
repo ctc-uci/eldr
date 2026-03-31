@@ -91,7 +91,7 @@ export const AddProfileView = () => {
   const [experienceInput, setExperienceInput] = useState("");
 
   useEffect(() => {
-    backend.get<LanguageOption[]>("/languages").then((res) => setLanguageOptions(res.data));
+    backend.get<LanguageOption[]>("/languages").then((res) => setLanguageOptions(res.data)).catch((error) => console.error("Error fetching languages:", error));
   }, [backend]);
 
   const handleContinue = async () => {
@@ -109,7 +109,7 @@ export const AddProfileView = () => {
   const onCreateProfile = async (data: VolunteerProfileFormData) => {
     try {
       const volunteerRes = await backend.post<{ id: number }>("/volunteers", {
-        firebaseUid: `placeholder-${Date.now()}`,
+        firebaseUid: crypto.randomUUID(),
         first_name: data.firstName,
         last_name: data.lastName,
         email: data.email,
@@ -322,7 +322,7 @@ export const AddProfileView = () => {
                   tags={interests}
                   tagInput={interestInput}
                   onTagInputChange={setInterestInput}
-                  onAddTag={(v) => setInterests((prev) => [...prev, v])}
+                  onAddTag={(v) => setInterests((prev) => prev.includes(v) ? prev : [...prev, v])}
                   onRemoveTag={(v) => setInterests((prev) => prev.filter((i) => i !== v))}
                 />
               </Box>
@@ -382,7 +382,7 @@ export const AddProfileView = () => {
                   tags={experience}
                   tagInput={experienceInput}
                   onTagInputChange={setExperienceInput}
-                  onAddTag={(v) => setExperience((prev) => [...prev, v])}
+                  onAddTag={(v) => setExperience((prev) => prev.includes(v) ? prev : [...prev, v])}
                   onRemoveTag={(v) => setExperience((prev) => prev.filter((e) => e !== v))}
                 />
               </Box>
