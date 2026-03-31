@@ -146,6 +146,8 @@ export const AdminLogin: React.FC = () => {
         navigate("/adminDashboard");
       } catch (error: unknown) {
         const firebaseError = error as { message?: string };
+        await signOut(auth);
+        clearCookies(new Cookies());
         setSsoError(firebaseError.message ?? "Sign in failed. Please try again.");
       }
     };
