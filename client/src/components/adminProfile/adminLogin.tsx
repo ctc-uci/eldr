@@ -122,8 +122,6 @@ export const AdminLogin: React.FC = () => {
         const result = await getRedirectResult(auth);
         if (!result) return;
 
-        await refreshToken();
-
         const ssoEmail = (result.user.email ?? "").trim().toLowerCase();
         if (!ssoEmail) {
           await signOut(auth);
@@ -140,6 +138,7 @@ export const AdminLogin: React.FC = () => {
           return;
         }
 
+        await refreshToken();
         navigate("/adminDashboard");
       } catch (error: unknown) {
         const firebaseError = error as { message?: string };

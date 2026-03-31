@@ -348,7 +348,20 @@ clinicsRouter.post("/:clinicId/registrations", verifyRole("volunteer"), async (r
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
-      const data = await db.query(
+
+    const callerUid = res.locals.decodedToken?.uid;
+    if (callerUid) {
+      const callerRows = await db.query(
+        `SELECT u.id, u.role FROM users u WHERE u.firebase_uid = $1 LIMIT 1`,
+        [callerUid]
+      );
+      const caller = callerRows[0];
+      if (caller?.role === "volunteer" && String(caller.id) !== String(volunteerId)) {
+        return res.status(403).json({ message: "Forbidden: cannot register for another volunteer" });
+      }
+    }
+
+    const data = await db.query(
       `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
@@ -369,6 +382,19 @@ clinicsRouter.delete(
   async (req, res) => {
     try {
       const { clinicId, volunteerId } = req.params;
+
+      const callerUid = res.locals.decodedToken?.uid;
+      if (callerUid) {
+        const callerRows = await db.query(
+          `SELECT u.id, u.role FROM users u WHERE u.firebase_uid = $1 LIMIT 1`,
+          [callerUid]
+        );
+        const caller = callerRows[0];
+        if (caller?.role === "volunteer" && String(caller.id) !== String(volunteerId)) {
+          return res.status(403).json({ message: "Forbidden: cannot cancel registration for another volunteer" });
+        }
+      }
+
       const data = await db.query(
         `
             DELETE FROM clinic_registration

@@ -58,6 +58,11 @@ usersRouter.get("/", verifyRole("staff"), async (req, res) => {
 usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (callerUid && callerUid !== firebaseUid) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const user = await db.query("SELECT * FROM users WHERE firebase_uid = $1", [
       firebaseUid,
@@ -105,6 +110,11 @@ usersRouter.post("/create", async (req, res) => {
 usersRouter.put("/update", verifyRole("volunteer"), async (req, res) => {
   try {
     const { email, firebaseUid } = req.body;
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (callerUid && callerUid !== firebaseUid) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const user = await db.query(
       "UPDATE users SET email = $1 WHERE firebase_uid = $2 RETURNING *",
@@ -128,8 +138,8 @@ usersRouter.get("/admin/all", verifyRole(["staff", "supervisor"]), async (req, r
   }
 });
 
-// Update a user's password via Firebase Admin (no auth token required — caller must know the email)
-usersRouter.put("/update-password", verifyRole("volunteer"), async (req, res) => {
+// Update a user's password via Firebase Admin
+usersRouter.put("/update-password", verifyRole("supervisor"), async (req, res) => {
   try {
     const { email, newPassword } = req.body;
 
