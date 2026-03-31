@@ -52,46 +52,30 @@ adminsRouter.post("/create", async (req, res) => {
       return res.status(400).send("firebaseUid and email are required");
     }
 
-    // Create or reuse a base user with admin role
-    let userId;
-    try {
-      const userResult = await db.query(
+    const admin = await db.tx(async t => {
+      // Upsert the base user record, promoting an existing user to admin if needed.
+      // ON CONFLICT avoids a separate error-catching round-trip and keeps the
+      // user-role update and admin insert in the same atomic transaction.
+      const userResult = await t.query(
         `INSERT INTO users (email, firebase_uid, role)
-         VALUES ($1, $2, $3)
-         RETURNING *`,
-        [email, firebaseUid, "admin"]
+         VALUES ($1, $2, 'admin')
+         ON CONFLICT (email) DO UPDATE SET role = 'admin'
+         RETURNING id`,
+        [email, firebaseUid]
       );
 
-      userId = userResult[0].id;
-    } catch (err) {
-      if (err.code === "23505") {
-        const existingUser = await db.query(
-          `
-          UPDATE users
-          SET role = 'admin'
-          WHERE email = $1
-          RETURNING id;
-          `,
-          [email]
-        );
-
-        if (!existingUser.length) {
-          throw err;
-        }
-
-        userId = existingUser[0].id;
-      } else {
-        throw err;
+      if (!userResult.length) {
+        throw new Error("Failed to create or find user");
       }
-    }
 
-    const admin = await db.query(
-      `INSERT INTO admins 
-        (id, first_name, last_name, email, calendar_email)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [userId, firstName, lastName, email, calendarEmail]
-    );
+      return t.query(
+        `INSERT INTO admins
+          (id, first_name, last_name, email, calendar_email)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [userResult[0].id, firstName, lastName, email, calendarEmail]
+      );
+    });
 
     res.status(200).json(keysToCamel(admin));
   } catch (err) {
