@@ -1,0 +1,36 @@
+server/routes/users.ts
+  9279474d7cbb09eb 63,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "8b4e89583f553dc1a496219b3c20f62c2062abb0",
+  "prompts": {
+    "65b7ccbc5332db6a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1c10e0ae-6276-4fa3-b871-e4eada70a1a3",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 20,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "9279474d7cbb09eb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9c659c69-9dd1-4343-bd15-3ffb7d84fd18",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
