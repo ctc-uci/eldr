@@ -250,8 +250,8 @@ export const VolunteerProfilePanel = ({
                   type="select"
                   options={[
                     { value: "volunteer", label: "Volunteer" },
-                    { value: "admin", label: "Admin" },
                     { value: "staff", label: "Staff" },
+                    { value: "supervisor", label: "Supervisor" },
                   ]}
                 />
               </SimpleGrid>

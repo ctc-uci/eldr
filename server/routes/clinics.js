@@ -4,13 +4,19 @@ import { Router } from "express";
 
 export const clinicsRouter = Router();
 
+const allowedLocationTypes = ["in-person", "hybrid", "online"];
+const allowedClinicTypes = [
+  "Estate Planning",
+  "Limited Conservatorship",
+  "Probate Note Clearing",
+];
+
 // Create a workshop
 clinicsRouter.post("/", async (req, res) => {
   try {
     const {
       name,
       description,
-      location,
       start_time,
       end_time,
       date,
@@ -23,28 +29,30 @@ clinicsRouter.post("/", async (req, res) => {
       city,
       state,
       zip,
-      type,
       meeting_link,
+      location_type,
+      type,
     } = req.body;
 
-    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
-
-    if (
-      (location && !allowedLocationTypes.includes(location)) ||
-      (type && !allowedLocationTypes.includes(type))
-    ) {
+    if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+      });
+    }
+
+    if (type && !allowedClinicTypes.includes(type)) {
+      return res.status(400).json({
+        message:
+          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
       });
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, location, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, type, meeting_link)
+      `INSERT INTO clinics (name, description, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
       [
         name,
         description,
-        location,
         start_time,
         end_time,
         date,
@@ -57,8 +65,9 @@ clinicsRouter.post("/", async (req, res) => {
         city,
         state,
         zip,
-        type,
         meeting_link,
+        location_type,
+        type,
       ]
     );
     res.status(201).json(keysToCamel(clinic[0]));
@@ -74,6 +83,61 @@ clinicsRouter.get("/", async (req, res) => {
     res.status(200).json(keysToCamel(clinics));
   } catch (e) {
     res.status(500).send(e.message);
+  }
+});
+
+
+
+// GET: list all clinics based on filters (type, language, location, occupation)
+// type - clinics areas of practice / areas of practice table
+// language - clinic languages / languages table
+// location - clinics.location_type enum (in-person, hybrid, online)
+// occupation - clinic roles / roles table
+// /clinics/search?areaOfPracticeIds=1,2,3&languageIds=1,2&locations=in-person,online&roleIds=1,2
+clinicsRouter.get("/search", async (req, res) => {
+  try {
+    const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
+
+    // parse comma-separated strings into arrays for proper SQL querying
+    const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
+    const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
+    const locationsRaw = locations ? locations.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    const invalidLocations = locationsRaw.filter((t) => !allowedLocationTypes.includes(t));
+    if (invalidLocations.length > 0) {
+      return res.status(400).json({
+        message: "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
+      });
+    }
+    const locationsArr = locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
+    const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
+
+    // IS NULL - if no filters provided for a category, ignore that category in filtering
+    // EXISTS with subquery - check if clinic has at least one of the selected options for that category
+    const clinics = await db.query(
+      `SELECT * FROM clinics C
+        WHERE ($1::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_areas_of_practice CAP
+          WHERE CAP.clinic_id = C.id AND CAP.area_of_practice_id = ANY($1::int[])
+        ))
+        AND ($2::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_languages CL
+          WHERE CL.clinic_id = C.id AND CL.language_id = ANY($2::int[])
+        ))
+        AND ($3::text[] IS NULL OR C.location_type::text = ANY($3::text[]))
+        AND ($4::int[] IS NULL OR EXISTS (
+          SELECT 1 FROM clinic_roles CR
+          WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])
+      ))`,
+      [
+        areaIdsArr,
+        languageIdsArr,
+        locationsArr,
+        roleIdsArr,
+      ]
+    );
+    res.status(200).json(keysToCamel(clinics));
+  } catch (err) {
+    res.status(500).send(err.message);
   }
 });
 
@@ -98,7 +162,6 @@ clinicsRouter.put("/:id", async (req, res) => {
     const {
       name,
       description,
-      location,
       start_time,
       end_time,
       date,
@@ -111,18 +174,21 @@ clinicsRouter.put("/:id", async (req, res) => {
       city,
       state,
       zip,
-      type,
       meeting_link,
+      location_type,
+      type,
     } = req.body;
 
-    const allowedLocationTypes = ["In-Person", "Hybrid", "Virtual"];
-
-    if (
-      (location && !allowedLocationTypes.includes(location)) ||
-      (type && !allowedLocationTypes.includes(type))
-    ) {
+    if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location or type. Must be 'In-Person', 'Hybrid', or 'Virtual'.",
+        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+      });
+    }
+
+    if (type && !allowedClinicTypes.includes(type)) {
+      return res.status(400).json({
+        message:
+          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
       });
     }
 
@@ -130,26 +196,25 @@ clinicsRouter.put("/:id", async (req, res) => {
       `UPDATE clinics SET 
         name = $1, 
         description = $2, 
-        location = $3, 
-        start_time = $4, 
-        end_time = $5, 
-        date = $6, 
-        attendees = $7, 
-        min_attendees = $8, 
-        capacity = $9, 
-        max_target_roles = $10, 
-        parking = $11,
-        address = $12,
-        city = $13,
-        state = $14,
-        zip = $15,
-        type = $16,
-        meeting_link = $17
+        start_time = $3, 
+        end_time = $4, 
+        date = $5, 
+        attendees = $6, 
+        min_attendees = $7, 
+        capacity = $8, 
+        max_target_roles = $9, 
+        parking = $10,
+        address = $11,
+        city = $12,
+        state = $13,
+        zip = $14,
+        meeting_link = $15,
+        location_type = $16, 
+        type = $17
        WHERE id = $18 RETURNING *`,
       [
         name,
         description,
-        location,
         start_time,
         end_time,
         date,
@@ -162,8 +227,9 @@ clinicsRouter.put("/:id", async (req, res) => {
         city,
         state,
         zip,
-        type,
         meeting_link,
+        location_type,
+        type,
         id,
       ]
     );
@@ -473,6 +539,71 @@ clinicsRouter.get("/:clinicId/roles", async (req, res) => {
              FROM clinic_roles cr
              JOIN roles r ON cr.role_id = r.id
              WHERE cr.clinic_id = $1`,
+      [clinicId]
+    );
+
+    res.status(200).json(keysToCamel(listAll));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Clinic Tags Routes
+// POST: assign a tag to a clinic
+// /clinics/{clinicId}/tags
+clinicsRouter.post("/:clinicId/tags", async (req, res) => {
+  try {
+    const { tagId } = req.body; // get JSON body
+    const { clinicId } = req.params; // get URL parameters
+
+    if (!tagId) {
+      return res.status(400).json({ message: "Tag ID is required" });
+    }
+
+    const newRelationship = await db.query(
+      "INSERT INTO clinic_tags (clinic_id, tag_id) VALUES ($1, $2) RETURNING *",
+      [clinicId, tagId]
+    );
+
+    res.status(201).json(keysToCamel(newRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// DELETE: remove a tag from a clinic
+// /clinics/{clinicId}/tags/{tagId}
+clinicsRouter.delete("/:clinicId/tags/:tagId", async (req, res) => {
+  try {
+    const { clinicId, tagId } = req.params;
+
+    const deletedRelationship = await db.query(
+      "DELETE FROM clinic_tags WHERE clinic_id = $1 AND tag_id = $2 RETURNING *",
+      [clinicId, tagId]
+    );
+
+    if (deletedRelationship.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Tag not assigned to this clinic" });
+    }
+
+    res.status(200).json(keysToCamel(deletedRelationship));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// GET: list all tags for a clinic, including tag IDs and text
+// /clinics/{clinicId}/tags
+clinicsRouter.get("/:clinicId/tags", async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+
+    const listAll = await db.query(
+      `SELECT t.id, t.tag FROM clinic_tags ct
+       JOIN tags t ON ct.tag_id = t.id
+       WHERE ct.clinic_id = $1`,
       [clinicId]
     );
 

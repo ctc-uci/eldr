@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithCustomToken } from "firebase/auth";
 
 import { BsInstagram } from "react-icons/bs";
 import { FaGoogle } from "react-icons/fa";
@@ -19,7 +20,6 @@ import { FiLinkedin } from "react-icons/fi";
 import {
   LuArrowRight,
   LuFacebook,
-  LuKeyRound,
   LuMail,
   LuUser,
 } from "react-icons/lu";
@@ -27,6 +27,7 @@ import { RiMicrosoftLine } from "react-icons/ri";
 import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { auth } from "@/utils/auth/firebase";
 import {
   authenticateGoogleUser,
   authenticateMicrosoftUser,
@@ -48,14 +49,14 @@ type VolunteerLookupRow = {
   email?: string;
 };
 
-const LoginStep = ({ onNext, onBack }: Props) => {
+const LoginStep = ({ onNext }: Props) => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
-  const { login, handleRedirectResult } = useAuthContext();
+  const { handleRedirectResult } = useAuthContext();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
 
   const toastLoginError = useCallback((msg: string) => {
     toaster.error({
@@ -66,8 +67,8 @@ const LoginStep = ({ onNext, onBack }: Props) => {
 
   const handleLogin = async () => {
     try {
-      if (!firstName.trim() || !lastName.trim() || !password) {
-        toastLoginError("Please enter first name, last name, and password.");
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        toastLoginError("Please enter first name, last name, and email.");
         return;
       }
 
@@ -76,44 +77,37 @@ const LoginStep = ({ onNext, onBack }: Props) => {
 
       const normalizedInputFirst = firstName.trim().toLowerCase();
       const normalizedInputLast = lastName.trim().toLowerCase();
+      const normalizedInputEmail = email.trim().toLowerCase();
 
-      const matchingVolunteers = volunteers.filter((v) => {
+      const matchingVolunteer = volunteers.find((v) => {
         const volunteerFirstName = (v.firstName ?? v.first_name ?? "").trim().toLowerCase();
         const volunteerLastName = (v.lastName ?? v.last_name ?? "").trim().toLowerCase();
+        const volunteerEmail = (v.email ?? "").trim().toLowerCase();
         return (
           volunteerFirstName === normalizedInputFirst &&
           volunteerLastName === normalizedInputLast &&
-          Boolean(v.email?.trim())
+          volunteerEmail === normalizedInputEmail
         );
       });
 
-      if (!matchingVolunteers.length) {
+      if (!matchingVolunteer) {
         toastLoginError(
-          "No account found with this first and last name. Please check your information or create an account."
+          "No account found with this first name, last name, and email. Please check your information or create an account."
         );
         return;
       }
 
-      let didAuthenticate = false;
-      let lastAuthError: unknown = null;
+      const normalizedVolunteerEmail = matchingVolunteer.email!.trim().toLowerCase();
+      const tokenResponse = await backend.post("/users/custom-token", {
+        email: normalizedVolunteerEmail,
+      });
 
-      // Support duplicate names by validating password against each matched email.
-      for (const volunteer of matchingVolunteers) {
-        try {
-          await login({
-            email: volunteer.email!.trim().toLowerCase(),
-            password,
-          });
-          didAuthenticate = true;
-          break;
-        } catch (authError) {
-          lastAuthError = authError;
-        }
+      const customToken = tokenResponse.data?.customToken as string | undefined;
+      if (!customToken) {
+        throw new Error("Unable to generate authentication token.");
       }
 
-      if (!didAuthenticate) {
-        throw lastAuthError ?? new Error("Unable to sign in with provided credentials.");
-      }
+      await signInWithCustomToken(auth, customToken);
 
       navigate("/dashboard");
     } catch (err: unknown) {
@@ -122,11 +116,12 @@ const LoginStep = ({ onNext, onBack }: Props) => {
       const firebaseErrorMsg = authError?.message;
 
       switch (errorCode) {
-        case "auth/wrong-password":
         case "auth/invalid-credential":
         case "auth/invalid-email":
         case "auth/user-not-found":
-          toastLoginError("First name, last name, or password does not match our records!");
+        case "auth/invalid-custom-token":
+        case "auth/custom-token-mismatch":
+          toastLoginError("First name, last name, or email does not match our records!");
           break;
         case "auth/unverified-email":
           toastLoginError("Please verify your email address.");
@@ -217,8 +212,7 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 color="gray.600"
               >
                 Log in using your CC Credentials. If you don't have one, click
-                on the create link below. If you need to reset your password,
-                click "Forgot Password".
+                on the create link below.
               </Text>
             </Box>
 
@@ -368,28 +362,14 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             </Box>
 
             <Box w="30vw" minW="320px" maxW="460px">
-              <Flex
-                justify="space-between"
-                align="center"
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight={500}
+                color="black"
                 mb="6px"
               >
-                <Text
-                  fontSize={{ base: "13px", md: "14px" }}
-                  fontWeight={500}
-                  color="black"
-                >
-                  Password
-                </Text>
-                <Link
-                  href="#"
-                  fontSize="13px"
-                  color="blue.500"
-                  textDecoration="underline"
-                  onClick={onBack}
-                >
-                  Forgot Password?
-                </Link>
-              </Flex>
+                Email
+              </Text>
               <Flex
                 align="center"
                 border="1px solid"
@@ -399,13 +379,13 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuKeyRound
+                <LuMail
                   size={16}
                   color="#9CA3AF"
                 />
                 <Input
-                  placeholder="Enter Password"
-                  type="password"
+                  placeholder="Enter Email"
+                  type="email"
                   border="none"
                   outline="none"
                   p="0"
@@ -414,8 +394,8 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                   color="black"
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Flex>
             </Box>

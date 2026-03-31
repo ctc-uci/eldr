@@ -8,6 +8,8 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
+import { formatClinicLocationList } from "./clinicLocationFormat";
+
 const getAreaLabel = (area) =>
   area.areasOfPractice ?? area.areas_of_practice ?? "";
 
@@ -210,13 +212,13 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                 {event.name}
               </Text>
 
-              {/* Address */}
+              {/* Location (city, state zip / online / hybrid) */}
               <Text
                 fontSize="14px"
                 fontWeight={400}
                 color="#6B7280"
               >
-                {event.location}
+                {formatClinicLocationList(event)}
               </Text>
 
               {/* Status + Tags */}

@@ -382,7 +382,7 @@ volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
 
 // Batch upsert languages for a volunteer
 // POST /volunteers/:volunteerId/languages
-// body: { languages: [{ languageId, isLiterate }] }
+// body: { languages: [{ languageId, proficiency?, isLiterate? }] }
 volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
   try {
     const { volunteerId } = req.params;
@@ -393,9 +393,9 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     }
 
     for (const entry of languages) {
-      if (!entry?.languageId || typeof entry?.isLiterate !== "boolean") {
+      if (!entry?.languageId) {
         return res.status(400).json({
-          message: "Each language must include languageId and isLiterate (boolean)",
+          message: "Each language must include languageId",
         });
       }
     }
@@ -406,8 +406,17 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
 
     const params = [volunteerId];
     for (const entry of languages) {
-      const proficiency = entry.isLiterate ? "proficient" : "proficient";
-      params.push(entry.languageId, entry.isLiterate, proficiency);
+      const normalizedProficiency = String(entry?.proficiency ?? "")
+        .trim()
+        .toLowerCase();
+      const proficiency = ["proficient", "professional", "native/fluent"].includes(
+        normalizedProficiency
+      )
+        ? normalizedProficiency
+        : "proficient";
+      const isLiterate =
+        typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
+      params.push(entry.languageId, isLiterate, proficiency);
     }
 
     const result = await db.query(
@@ -417,10 +426,7 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
         ON CONFLICT (volunteer_id, language_id)
         DO UPDATE SET
           is_literate = EXCLUDED.is_literate,
-          proficiency = CASE
-            WHEN EXCLUDED.is_literate THEN 'proficient'::proficiency_level
-            ELSE 'proficient'::proficiency_level
-          END
+          proficiency = EXCLUDED.proficiency
         RETURNING *;
       `,
       params

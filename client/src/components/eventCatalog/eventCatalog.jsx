@@ -1,40 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Box, Button, Flex, Image, useBreakpointValue } from "@chakra-ui/react";
+import { Box, Button, Flex, useBreakpointValue } from "@chakra-ui/react";
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdChevronLeft } from "react-icons/md";
 
-import { Navbar } from "../navbar/Navbar";
 import { EventInfo } from "./eventInfo";
 import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
 import { TopBar } from "./topBar";
-
-// Filter categories for grouping (OR within category, AND across categories)
-const filterCategories = {
-  Type: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  Language: [
-    "Arabic",
-    "Japanese",
-    "Korean",
-    "Mandarin",
-    "Spanish",
-    "Vietnamese",
-  ],
-  Location: ["Virtual", "In-person"],
-  Occupation: [
-    "Attorney",
-    "Law Student 1L",
-    "Law Student 2L",
-    "Law Student 3L",
-    "Law Student LLM",
-    "Undergraduate Student",
-    "Paralegal/Legal Worker",
-    "Paralegal Student",
-  ],
-};
 
 export const EventCatalog = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -49,69 +24,78 @@ export const EventCatalog = () => {
   const { currentUser } = useAuthContext();
   const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
+  /** Search blob for location-ish fields (street address omitted from public catalog) */
+  const getEventLocationSearchText = (event) => {
+    const parts = [
+      event.locationType,
+      event.city,
+      event.state,
+      event.zip,
+      event.meetingLink,
+    ].filter(Boolean);
+    return parts.join(" ").toLowerCase();
+  };
+
+  // Shared function to enrich events with languages, areas, registrations, and formatted dates
+  const enrichEvents = async (baseEvents, volId) => {
+    const dateFormatter = new Intl.DateTimeFormat("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "2-digit",
+      timeZone: "UTC",
+    });
+
+    const timeFormatter = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+
+    return Promise.all(
+      baseEvents.map(async (event) => {
+        const [langRes, areaRes, regRes] = await Promise.all([
+          backend.get(`/clinics/${event.id}/languages`),
+          backend.get(`/clinics/${event.id}/areas-of-practice`),
+          backend.get(`/clinics/${event.id}/registrations`),
+        ]);
+
+        const myRegistration = regRes.data.find((reg) => reg.id === volId);
+
+        const displayDate = event.date
+          ? dateFormatter.format(new Date(event.date))
+          : "Date TBD";
+
+        let displayTime = "Time TBD";
+        if (event.startTime && event.endTime) {
+          const start = timeFormatter.format(new Date(event.startTime));
+          const end = timeFormatter.format(new Date(event.endTime));
+          displayTime = `${start} - ${end}`;
+        }
+
+        return {
+          ...event,
+          languages: langRes.data,
+          areas: areaRes.data,
+          displayDate,
+          displayTime,
+          isRegistered: !!myRegistration,
+          hasAttended: myRegistration ? myRegistration.hasAttended : false,
+        };
+      })
+    );
+  };
+
+  // Initial fetch - get volunteer ID and all events
   useEffect(() => {
     const fetchFullEventData = async () => {
       try {
         const userRes = await backend.get(`/users/${currentUser.uid}`);
-        const volunteerId = userRes.data[0].id;
-        setVolunteerId(volunteerId);
+        const volId = userRes.data[0].id;
+        setVolunteerId(volId);
 
         const res = await backend.get("/clinics");
-        const baseEvents = res.data;
-
-        const dateFormatter = new Intl.DateTimeFormat("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "2-digit",
-          timeZone: "UTC",
-        });
-
-        const timeFormatter = new Intl.DateTimeFormat("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-          timeZone: "UTC",
-        });
-
-        // Map over events and create promises for the extra data
-        const fullEvents = await Promise.all(
-          baseEvents.map(async (event) => {
-            const [langRes, areaRes, regRes] = await Promise.all([
-              backend.get(`/clinics/${event.id}/languages`),
-              backend.get(`/clinics/${event.id}/areas-of-practice`),
-              backend.get(`/clinics/${event.id}/registrations`),
-            ]);
-
-            const myRegistration = regRes.data.find(
-              (reg) => reg.id === volunteerId
-            );
-
-            // Format Date
-            const displayDate = event.date
-              ? dateFormatter.format(new Date(event.date))
-              : "Date TBD";
-
-            // Format Time Range
-            let displayTime = "Time TBD";
-            if (event.startTime && event.endTime) {
-              const start = timeFormatter.format(new Date(event.startTime));
-              const end = timeFormatter.format(new Date(event.endTime));
-              displayTime = `${start} - ${end}`;
-            }
-
-            // Return a merged object
-            return {
-              ...event,
-              languages: langRes.data,
-              areas: areaRes.data,
-              displayDate,
-              displayTime,
-              isRegistered: !!myRegistration,
-              hasAttended: myRegistration ? myRegistration.hasAttended : false,
-            };
-          })
-        );
-
+        const fullEvents = await enrichEvents(res.data, volId);
         setEvents(fullEvents);
       } catch (error) {
         console.error("Failed to fetch event details:", error);
@@ -131,51 +115,15 @@ export const EventCatalog = () => {
       result = result.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
-          e.location.toLowerCase().includes(q) ||
-          e.description.toLowerCase().includes(q) ||
+          getEventLocationSearchText(e).includes(q) ||
+          (e.description && e.description.toLowerCase().includes(q)) ||
           e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
           e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
       );
     }
 
-    // Apply filters - group by category, OR within same category, AND across categories
-    if (selectedFilters.length > 0) {
-      // Group selected filters by their category
-      const filtersByCategory = {};
-      selectedFilters.forEach((filter) => {
-        for (const [category, options] of Object.entries(filterCategories)) {
-          if (options.includes(filter)) {
-            if (!filtersByCategory[category]) {
-              filtersByCategory[category] = [];
-            }
-            filtersByCategory[category].push(filter);
-            break;
-          }
-        }
-      });
-
-      result = result.filter((event) => {
-        // Every category that has active filters must return true
-        return Object.entries(filtersByCategory).every(
-          ([category, activeFilters]) => {
-            switch (category) {
-              case "Language":
-                return activeFilters.some((f) => event.languages.includes(f));
-              case "Type":
-                return activeFilters.some((f) => event.areas.includes(f));
-              // Events currently don't have the right "location" field or "occupation" field to use these filters from the design
-              // case "Location":
-              //   // Assuming location is a string like "Virtual" or "In-person"
-              //   return activeFilters.some((f) => event.location === f);
-              // case "Occupation":
-              //   return activeFilters.some((f) => event.occupation === f);
-              default:
-                return true;
-            }
-          }
-        );
-      });
-    }
+    // Category filters are applied server-side via /clinics/search when filters are selected;
+    // search + sort run here on the current `events` list.
 
     // Apply sort
     if (sortBy === "upcoming") {
@@ -189,7 +137,7 @@ export const EventCatalog = () => {
     }
 
     return result;
-  }, [searchQuery, selectedFilters, sortBy, events]);
+  }, [searchQuery, sortBy, events]);
 
   useEffect(() => {
     // Only auto-select if we have events and haven't selected one yet
@@ -202,6 +150,64 @@ export const EventCatalog = () => {
     setSelectedEvent(event);
     setShowDetails(true);
   };
+
+  // fetch filtered events when filters change
+  useEffect(() => {
+    const fetchFilteredEvents = async () => {
+      if (!volunteerId) return;
+
+      try {
+        // group filter IDs by category for making API query params
+        const areaIds = [];
+        const langIds = [];
+        const roleIds = [];
+        const locs = [];
+
+        selectedFilters.forEach((filter) => {
+          if (filter.id.startsWith('areasOfPracticeId')) {
+            areaIds.push(filter.id.replace('areasOfPracticeId', ''));
+          } else if (filter.id.startsWith('languageId')) {
+            langIds.push(filter.id.replace('languageId', ''));
+          } else if (filter.id.startsWith('roleId')) {
+            roleIds.push(filter.id.replace('roleId', ''));
+          } else {
+            locs.push(filter.id);
+          }
+        });
+
+        // build query params with comma-separated values
+        const params = new URLSearchParams();
+        if (areaIds.length > 0) params.set('areaOfPracticeIds', areaIds.join(','));
+        if (langIds.length > 0) params.set('languageIds', langIds.join(','));
+        if (roleIds.length > 0) params.set('roleIds', roleIds.join(','));
+        if (locs.length > 0) params.set('locations', locs.join(','));
+
+        const res = await backend.get(`/clinics/search?${params.toString()}`);
+        const enrichedEvents = await enrichEvents(res.data, volunteerId);
+        setEvents(enrichedEvents);
+      } catch (error) {
+        console.error("Failed to fetch filtered events:", error);
+      }
+    };
+
+    const fetchAllEvents = async () => {
+      if (!volunteerId) return;
+
+      try {
+        const res = await backend.get('/clinics');
+        const enrichedEvents = await enrichEvents(res.data, volunteerId);
+        setEvents(enrichedEvents);
+      } catch (error) {
+        console.error("Failed to fetch all events:", error);
+      }
+    };
+
+    if (selectedFilters.length > 0) {
+      fetchFilteredEvents();
+    } else if (volunteerId) {
+      fetchAllEvents();
+    }
+  }, [selectedFilters, volunteerId, backend]);
 
   const handleRegister = async (clinicId) => {
     if (!volunteerId) return;
@@ -244,32 +250,10 @@ export const EventCatalog = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex
-      direction="column"
-      h="100vh"
-    >
-      {/* Mobile: centered logo header | Desktop: full Navbar */}
-      {isMobile ? (
-        <Flex
-          w="100%"
-          h="80px"
-          align="center"
-          justify="center"
-          bg="white"
-          flexShrink={0}
-        >
-          <Image
-            src="/eldr-logo.png"
-            alt="Elder Law & Disability Rights Center"
-            h="60px"
-            objectFit="contain"
-          />
-        </Flex>
-      ) : (
-        <Navbar />
-      )}
+    <Flex direction="column" flex="1" minH="100vh" overflow="hidden">
       <Flex
         flex="1"
+        minH={0}
         overflow="hidden"
       >
         {/* Left panel: tabs + search + list */}
@@ -345,8 +329,8 @@ export const EventCatalog = () => {
             </Button>
           )}
 
-          <EventInfo 
-            event={selectedEvent} 
+          <EventInfo
+            event={selectedEvent}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
           />
