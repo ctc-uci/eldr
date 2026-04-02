@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
       },
     },
 
+    preview: {
+      allowedHosts: ['eldr.up.railway.app'],
+    },
+
     test: {
       globals: true,
       environment: 'jsdom',
