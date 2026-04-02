@@ -5,7 +5,8 @@
       "commands": [
         "corepack enable",
         "corepack prepare yarn@1.22.22 --activate",
-        "yarn install"
+        "yarn install --ignore-scripts",
+        "yarn patch-package"
       ]
     },
     "build": {
