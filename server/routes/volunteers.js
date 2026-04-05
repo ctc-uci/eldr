@@ -108,7 +108,7 @@ volunteersRouter.post("/", async (req, res) => {
   }
 });
 
-// Get all volunteers
+// Get all active (non-archived) volunteers
 volunteersRouter.get("/", async (req, res) => {
   try {
     const volunteersQuery = await db.query(
@@ -121,10 +121,88 @@ volunteersRouter.get("/", async (req, res) => {
         FROM volunteers v
         LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
         LEFT JOIN roles r ON vr.role_id = r.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
+        )
         GROUP BY v.id;
       `
     );
     res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Get all archived volunteers
+volunteersRouter.get("/archived", async (req, res) => {
+  try {
+    const volunteersQuery = await db.query(
+      `
+        SELECT v.*,
+          av.archived_date,
+          av.reactivation,
+          av.archived_notes,
+          COALESCE(
+            array_agg(r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles
+        FROM volunteers v
+        JOIN volunteer_archived av ON av.volunteer_id = v.id
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        GROUP BY v.id, av.archived_date, av.reactivation, av.archived_notes;
+      `
+    );
+    res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Archive a volunteer
+volunteersRouter.patch("/:id/archive", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reactivation, notes } = req.body;
+
+    const result = await db.query(
+      `
+        INSERT INTO volunteer_archived (volunteer_id, reactivation, archived_notes)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (volunteer_id) DO UPDATE
+          SET archived_date  = NOW(),
+              reactivation   = EXCLUDED.reactivation,
+              archived_notes = EXCLUDED.archived_notes
+        RETURNING *;
+      `,
+      [id, reactivation ?? null, notes ?? null]
+    );
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Unarchive a volunteer
+volunteersRouter.patch("/:id/unarchive", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `
+        DELETE FROM volunteer_archived
+        WHERE volunteer_id = $1
+        RETURNING *;
+      `,
+      [id]
+    );
+
+    if (!result.length) {
+      return res.status(404).json({ message: "Volunteer not found in archived list" });
+    }
+
+    res.status(200).json(keysToCamel(result[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }

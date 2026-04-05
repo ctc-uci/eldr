@@ -4,10 +4,11 @@ import { LuArchive, LuTrash2, LuX } from "react-icons/lu";
 interface BulkActionBarProps {
   count: number;
   onDelete: () => void;
+  onArchive: () => void;
   onClear: () => void;
 }
 
-export const BulkActionBar = ({ count, onDelete, onClear }: BulkActionBarProps) => {
+export const BulkActionBar = ({ count, onDelete, onArchive, onClear }: BulkActionBarProps) => {
   return (
     <Flex
       position="fixed"
@@ -29,8 +30,7 @@ export const BulkActionBar = ({ count, onDelete, onClear }: BulkActionBarProps) 
         {count} selected
       </Text>
       <Box w="1px" h={5} bg="gray.200" />
-      {/* TODO: Implement archive functionality */}
-      <Button size="sm" variant="ghost" color="gray.700" gap={1.5} border="1px solid #E4E4E7">
+      <Button size="sm" variant="ghost" color="gray.700" gap={1.5} border="1px solid #E4E4E7" onClick={onArchive}>
         <LuArchive size={15} />
         Archive
       </Button>
