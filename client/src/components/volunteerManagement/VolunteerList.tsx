@@ -71,8 +71,12 @@ export const VolunteerList = ({
 
   const sortedVolunteers = sortKey
     ? [...volunteers].sort((a, b) => {
-        const av = (a[sortKey] ?? "") as string;
-        const bv = (b[sortKey] ?? "") as string;
+        const raw = (v: Volunteer) => {
+          const val = v[sortKey];
+          return Array.isArray(val) ? val[0] ?? "" : (val ?? "");
+        };
+        const av = String(raw(a));
+        const bv = String(raw(b));
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       })
     : volunteers;
@@ -191,16 +195,17 @@ export const VolunteerList = ({
                   <SortHeader label="Name" sortField="firstName" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Role" />
+                  <SortHeader label="Role" sortField="roles" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Interests" />
+                  <SortHeader label="Interests" sortField="specializations" />
                 </Table.ColumnHeader>
+                {/* // TODO: Add sortField once mostRecentEvent is added to Volunteer type */}
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
                   <SortHeader label="Most Recent Event" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  Preference
+                  <SortHeader label="Preference" sortField="experienceLevel" />
                 </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>

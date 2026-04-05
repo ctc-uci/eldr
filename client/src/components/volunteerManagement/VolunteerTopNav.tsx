@@ -21,7 +21,7 @@ export const VolunteerTopNav = () => {
 
   return (
     <Box p={6}>
-      <Heading size="2xl" mb={4}>
+      <Heading size="2xl" mb={10}>
         User Management
       </Heading>
 
