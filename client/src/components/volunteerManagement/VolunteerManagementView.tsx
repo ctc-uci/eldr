@@ -1,42 +1,36 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
-import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
+import { Box, Button, Flex, Tabs, Text } from "@chakra-ui/react";
+import { LuArchive, LuBriefcase, LuCircleUser, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
-import { FiArrowRight, FiSearch } from "react-icons/fi";
-import { LuCircleUser, LuListFilter } from "react-icons/lu";
-import { useNavigate } from "react-router-dom";
 
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
-import { FilterDrawer } from "./FilterDrawer";
-import { VolunteerList } from "./VolunteerList";
+import { PAGE_SIZE, getPageItems, VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 
 type ViewMode = "list" | "split";
 
-export const VolunteerManagementView = () => {
+interface VolunteerManagementViewProps {
+  debouncedQuery: string;
+}
+
+const TABS: { value: string; icon: ReactNode; label: string }[] = [
+  { value: "volunteers", icon: <LuCircleUser />, label: "Volunteer" },
+  { value: "staff", icon: <LuBriefcase />, label: "Staff" },
+  { value: "archived", icon: <LuArchive />, label: "Archived" },
+];
+
+export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementViewProps) => {
   const { backend } = useBackendContext();
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
-    null
-  );
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedQuery(val), 250);
-  };
+  const [page, setPage] = useState(1);
 
   const fuzzyMatch = (query: string, target: string): boolean => {
     if (!query) return true;
@@ -50,10 +44,12 @@ export const VolunteerManagementView = () => {
   };
 
   const filteredVolunteers = debouncedQuery
-    ? volunteers.filter((v) =>
-        fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`)
-      )
+    ? volunteers.filter((v) => fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`))
     : volunteers;
+
+  useEffect(() => {
+    setPage(1);
+  }, [filteredVolunteers.length]);
 
   useEffect(() => {
     (async () => {
@@ -62,139 +58,120 @@ export const VolunteerManagementView = () => {
     })();
   }, [backend]);
 
-  return (
-    <Box
-      p={4}
-      h="100%"
-    >
-      <>
-        <Flex
-          gap={2}
-          align="center"
-          mb={4}
+  const totalPages = Math.ceil(filteredVolunteers.length / PAGE_SIZE);
+
+  const showingStart = (page - 1) * PAGE_SIZE + 1;
+  const showingEnd = Math.min(page * PAGE_SIZE, filteredVolunteers.length);
+
+  const pagination = filteredVolunteers.length > PAGE_SIZE ? (
+    <Flex direction="column" align="flex-end" py={3} gap={2}>
+      <Text fontSize="sm" color="gray.500">
+        Showing {showingStart} to {showingEnd} of {filteredVolunteers.length}
+      </Text>
+      <Flex>
+        <Button
+          size="sm"
+          variant="ghost"
+          borderRadius="none"
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+          border="1px solid #E4E4E7"
+          _hover={{ bg: "gray.100" }}
+          _active={{ bg: "gray.200" }}
+          p={0}
         >
-          <Button
-            size="md"
-            variant="outline"
-            backgroundColor="#FAFAFA"
-            onClick={() => setFilterDrawerOpen(true)}
-          >
-            <LuListFilter />
-            Filter
-          </Button>
-          <Flex
-            align="center"
-            borderWidth="1px"
-            borderColor="gray.300"
-            borderRadius="sm"
-            px={2}
-            w="100%"
-            h="40px"
-          >
-            <Input
-              placeholder="Search..."
-              fontSize="md"
-              border="none"
-              _placeholder={{ color: "#A1A1AA" }}
-              _focusVisible={{
-                border: "none",
-                boxShadow: "none",
-                outline: "none",
-              }}
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
-            <Box
-              color="gray.400"
-              flexShrink={0}
-              mr={2}
+          <LuChevronLeft />
+        </Button>
+        {getPageItems(page, totalPages).map((item, i) =>
+          typeof item === "object" ? (
+            <Button
+              key={`ellipsis-${i}`}
+              size="sm"
+              variant="ghost"
+              borderRadius="none"
+              border="1px solid #E4E4E7"
+              _hover={{ bg: "gray.100" }}
+              _active={{ bg: "gray.200" }}
+              onClick={() => setPage(item.target)}
+              p={0}
             >
-              <FiSearch />
-            </Box>
-          </Flex>
+              ...
+            </Button>
+          ) : (
+            <Button
+              key={item}
+              size="sm"
+              borderRadius="none"
+              border="1px solid #E4E4E7"
+              variant={item === page ? "solid" : "ghost"}
+              bg={item === page ? "black" : undefined}
+              color={item === page ? "white" : undefined}
+              _hover={item === page ? { bg: "black" } : undefined}
+              onClick={() => setPage(item)}
+            >
+              {item}
+            </Button>
+          )
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          borderRadius="none"
+          disabled={page === totalPages}
+          onClick={() => setPage((p) => p + 1)}
+          border="1px solid #E4E4E7"
+          _hover={{ bg: "gray.100" }}
+          _active={{ bg: "gray.200" }}
+          p={0}
+        >
+          <LuChevronRight />
+        </Button>
+      </Flex>
+    </Flex>
+  ) : null;
+
+  const volunteersTable = (
+    <>
+      {checkedIds.size > 0 && (
+        <Flex gap={4} mb={2} ml={2}>
           <Button
-            size="md"
-            bg="#5F80A0"
-            color="white"
-            borderRadius="md"
-            py={4}
-            gap={2}
-            _hover={{ bg: "#487C9E" }}
-            onClick={() => navigate("/volunteer-management/new")}
+            size="sm"
+            variant="ghost"
+            color="gray.600"
+            bg="transparent"
+            borderRadius="none"
+            borderBottom="1px solid transparent"
+            _hover={{
+              color: "blue.400",
+              borderBottomColor: "blue.400",
+              _active: { color: "blue.600", borderBottomColor: "transparent" },
+            }}
+            p={0}
+            onClick={() => setDeleteModalOpen(true)}
           >
-            <LuCircleUser />
-            Add Profile
-            <FiArrowRight />
+            Delete
+          </Button>
+          {/* TODO: Implement archive functionality */}
+          <Button
+            size="sm"
+            variant="ghost"
+            color="gray.600"
+            bg="transparent"
+            borderRadius="none"
+            borderBottom="1px solid transparent"
+            _hover={{
+              color: "blue.400",
+              borderBottomColor: "blue.400",
+              _active: { color: "blue.600", borderBottomColor: "transparent" },
+            }}
+            p={0}
+          >
+            Archive
           </Button>
         </Flex>
-        <Heading
-          size="lg"
-          mb={2}
-        >
-          Volunteers{" "}
-          <Box
-            as="span"
-            color="#52525B"
-            fontWeight="normal"
-            ml={1}
-          >
-            {filteredVolunteers.length}
-          </Box>
-        </Heading>
-        {checkedIds.size > 0 && (
-          <Flex
-            gap={4}
-            mb={2}
-            ml={2}
-          >
-            <Button
-              size="sm"
-              variant="ghost"
-              color="gray.600"
-              bg="transparent"
-              borderRadius="none"
-              borderBottom="1px solid transparent"
-              _hover={{
-                color: "blue.400",
-                borderBottomColor: "blue.400",
-                _active: {
-                  color: "blue.600",
-                  borderBottomColor: "transparent",
-                },
-              }}
-              p={0}
-              onClick={() => setDeleteModalOpen(true)}
-            >
-              Delete
-            </Button>
-            {/* TODO: Implement archive functionality */}
-            <Button
-              size="sm"
-              variant="ghost"
-              color="gray.600"
-              bg="transparent"
-              borderRadius="none"
-              borderBottom="1px solid transparent"
-              _hover={{
-                color: "blue.400",
-                borderBottomColor: "blue.400",
-                _active: {
-                  color: "blue.600",
-                  borderBottomColor: "transparent",
-                },
-              }}
-              p={0}
-            >
-              Archive
-            </Button>
-          </Flex>
-        )}
-      </>
+      )}
 
-      <Flex
-        h="calc(100vh - 140px)"
-        gap={6}
-      >
+      <Flex gap={6}>
         <Box
           w={viewMode === "split" ? "50%" : "100%"}
           minW={viewMode === "split" ? "300px" : undefined}
@@ -224,16 +201,13 @@ export const VolunteerManagementView = () => {
             setVolunteers={setVolunteers}
             checkedIds={checkedIds}
             setCheckedIds={setCheckedIds}
+            page={page}
+            setPage={setPage}
           />
         </Box>
 
         {viewMode === "split" && (
-          <Box
-            w="50%"
-            h="100%"
-            overflowY="auto"
-            pl={6}
-          >
+          <Box w="50%" h="100%" overflowY="auto" pl={6}>
             <VolunteerProfilePanel
               showBack
               onBack={() => setViewMode("list")}
@@ -246,15 +220,41 @@ export const VolunteerManagementView = () => {
                   email: data.email,
                   phone_number: data.phoneNumber,
                 });
-                setSelectedVolunteer((prev) =>
-                  prev ? { ...prev, ...data } : prev
-                );
+                setSelectedVolunteer((prev) => prev ? { ...prev, ...data } : prev);
                 setRefreshTrigger((prev) => prev + 1);
               }}
             />
           </Box>
         )}
       </Flex>
+    </>
+  );
+
+  return (
+    <Box h="100%">
+      <Tabs.Root defaultValue="volunteers" variant="outline">
+        <Tabs.List w="fit-content">
+          {TABS.map(({ value, icon, label }) => (
+            <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A", bg: "white" }}>
+              <Flex align="center" gap={1}>{icon} {label}</Flex>
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
+
+        <Tabs.Content value="volunteers" p={0} pt={0} border="1px solid #E4E4E7">
+          {volunteersTable}
+        </Tabs.Content>
+        {/* TODO: Implement staff view */}
+        <Tabs.Content value="staff" p={0} border="1px solid #E4E4E7">
+          <p>staff!</p>
+        </Tabs.Content>
+        {/* TODO: Implement archived volunteers view */}
+        <Tabs.Content value="archived" p={0} border="1px solid #E4E4E7">
+          <p>archived!</p>
+        </Tabs.Content>
+      </Tabs.Root>
+        
+      {pagination}
 
       <DeleteConfirmModal
         open={deleteModalOpen}
@@ -272,12 +272,6 @@ export const VolunteerManagementView = () => {
           setCheckedIds(new Set());
           setDeleteModalOpen(false);
         }}
-      />
-
-      <FilterDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        totalCount={volunteers.length}
       />
     </Box>
   );

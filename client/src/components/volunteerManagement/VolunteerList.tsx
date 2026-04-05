@@ -1,15 +1,15 @@
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
-import { Box, Button, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
-import { LuChevronsUpDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuChevronDown } from "react-icons/lu";
+import { Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
+import { LuChevronsUpDown, LuChevronUp, LuChevronDown } from "react-icons/lu";
 
-const PAGE_SIZE = 8;
+export const PAGE_SIZE = 8;
 
-type PageItem = number | { type: "ellipsis"; target: number };
+export type PageItem = number | { type: "ellipsis"; target: number };
 
 const WINDOW = 3;
 
-function getPageItems(page: number, totalPages: number): PageItem[] {
+export function getPageItems(page: number, totalPages: number): PageItem[] {
   if (totalPages <= 4) return Array.from({ length: totalPages }, (_, i) => i + 1);
 
   // Near start: [1, 2, 3, ..., N]
@@ -43,6 +43,8 @@ interface VolunteerListProps {
   setVolunteers: Dispatch<SetStateAction<Volunteer[]>>;
   checkedIds: Set<number>;
   setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
+  page: number;
+  setPage: Dispatch<SetStateAction<number>>;
 }
 
 export const VolunteerList = ({
@@ -54,15 +56,12 @@ export const VolunteerList = ({
   setVolunteers,
   checkedIds,
   setCheckedIds,
+  page,
+  setPage,
 }: VolunteerListProps) => {
   const { backend } = useBackendContext();
-  const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<keyof Volunteer | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  useEffect(() => {
-    setPage(1);
-  }, [volunteers]);
 
   const handleSort = (key: keyof Volunteer) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -114,7 +113,7 @@ export const VolunteerList = ({
   return (
     <Box>
       {variant === "list" && (
-        <Box mt={4}>
+        <Box>
           <Table.Root size="md">
             <Table.Header>
               <Table.Row bg="#EFF6FF">
@@ -158,74 +157,11 @@ export const VolunteerList = ({
               ))}
             </Table.Body>
           </Table.Root>
-          {sortedVolunteers.length > PAGE_SIZE && (
-            <Flex align="center" justify="flex-end" px={4} py={3} borderTopWidth="1px" borderTopColor="gray.100">
-              <Flex>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  borderRadius="none"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
-                  border="1.5px solid #E4E4E7"
-                  _hover={{ bg: "gray.100" }}
-                  _active={{ bg: "gray.200" }}
-                  p={0}
-                >
-                  <LuChevronLeft />
-                </Button>
-                {getPageItems(page, Math.ceil(sortedVolunteers.length / PAGE_SIZE)).map((item, i) =>
-                  typeof item === "object" ? (
-                    <Button
-                      key={`ellipsis-${i}`}
-                      size="sm"
-                      variant="ghost"
-                      borderRadius="none"
-                      border="1px solid #E4E4E7"
-                      _hover={{ bg: "gray.100" }}
-                      _active={{ bg: "gray.200" }}
-                      onClick={() => setPage(item.target)}
-                      p={0}
-                    >
-                      ...
-                    </Button>
-                  ) : (
-                    <Button
-                      key={item}
-                      size="sm"
-                      borderRadius="none"
-                      border="1px solid #E4E4E7"
-                      variant={item === page ? "solid" : "ghost"}
-                      bg={item === page ? "black" : undefined}
-                      color={item === page ? "white" : undefined}
-                      _hover={item === page ? { bg: "black" } : undefined}
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </Button>
-                  )
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  borderRadius="none"
-                  disabled={page === Math.ceil(sortedVolunteers.length / PAGE_SIZE)}
-                  onClick={() => setPage((p) => p + 1)}
-                  border="1px solid #E4E4E7"
-                  _hover={{ bg: "gray.100" }}
-                  _active={{ bg: "gray.200" }}
-                  p={0}
-                >
-                  <LuChevronRight />
-                </Button>
-              </Flex>
-            </Flex>
-          )}
         </Box>
       )}
 
       {variant === "table" && (
-        <Box mt={4} overflow="hidden">
+        <Box overflow="hidden">
           <Table.Root size="md">
             <Table.Header>
               <Table.Row bg="#EFF6FF">
@@ -324,69 +260,6 @@ export const VolunteerList = ({
               ))}
             </Table.Body>
           </Table.Root>
-          {sortedVolunteers.length > PAGE_SIZE && (
-            <Flex align="center" justify="flex-end" px={4} py={3} borderTopWidth="1px" borderTopColor="gray.100">
-              <Flex>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  borderRadius="none"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
-                  border="1px solid #E4E4E7"
-                  _hover={{ bg: "gray.100" }}
-                  _active={{ bg: "gray.200" }}
-                  p={0}
-                >
-                  <LuChevronLeft />
-                </Button>
-                {getPageItems(page, Math.ceil(sortedVolunteers.length / PAGE_SIZE)).map((item, i) =>
-                  typeof item === "object" ? (
-                    <Button
-                      key={`ellipsis-${i}`}
-                      size="sm"
-                      variant="ghost"
-                      borderRadius="none"
-                      border="1px solid #E4E4E7"
-                      _hover={{ bg: "gray.100" }}
-                      _active={{ bg: "gray.200" }}
-                      onClick={() => setPage(item.target)}
-                      p={0}
-                    >
-                      ...
-                    </Button>
-                  ) : (
-                    <Button
-                      key={item}
-                      size="sm"
-                      borderRadius="none"
-                      border="1px solid #E4E4E7"
-                      variant={item === page ? "solid" : "ghost"}
-                      bg={item === page ? "black" : undefined}
-                      color={item === page ? "white" : undefined}
-                      _hover={item === page ? { bg: "black" } : undefined}
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </Button>
-                  )
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  borderRadius="none"
-                  disabled={page === Math.ceil(sortedVolunteers.length / PAGE_SIZE)}
-                  onClick={() => setPage((p) => p + 1)}
-                  border="1px solid #E4E4E7"
-                  _hover={{ bg: "gray.100" }}
-                  _active={{ bg: "gray.200" }}
-                  p={0}
-                >
-                  <LuChevronRight />
-                </Button>
-              </Flex>
-            </Flex>
-          )}
         </Box>
       )}
     </Box>
