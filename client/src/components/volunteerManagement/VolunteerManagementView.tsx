@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Box, Button, Flex, Heading, Input } from "@chakra-ui/react";
-import { FiSearch, FiArrowRight } from "react-icons/fi";
-import { LuCircleUser, LuListFilter } from "react-icons/lu";
-import { useNavigate } from "react-router-dom";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
+import { FiArrowRight, FiSearch } from "react-icons/fi";
+import { LuCircleUser, LuListFilter } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { FilterDrawer } from "./FilterDrawer";
 import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
-import { SortFilterDrawer } from "./SortFilterDrawer";
-import { DeleteConfirmModal } from "./DeleteConfirmModal";
 
 type ViewMode = "list" | "split";
 
@@ -68,11 +68,20 @@ export const VolunteerManagementView = () => {
       h="100%"
     >
       <>
-      <Flex
+        <Flex
           gap={2}
           align="center"
           mb={4}
         >
+          <Button
+            size="md"
+            variant="outline"
+            backgroundColor="#FAFAFA"
+            onClick={() => setFilterDrawerOpen(true)}
+          >
+            <LuListFilter />
+            Filter
+          </Button>
           <Flex
             align="center"
             borderWidth="1px"
@@ -95,19 +104,14 @@ export const VolunteerManagementView = () => {
               value={searchQuery}
               onChange={handleSearchChange}
             />
-            <Box color="gray.400" flexShrink={0} mr={2}>
+            <Box
+              color="gray.400"
+              flexShrink={0}
+              mr={2}
+            >
               <FiSearch />
             </Box>
           </Flex>
-          <Button
-            size="md"
-            variant="outline"
-            backgroundColor="#FAFAFA"
-            onClick={() => setFilterDrawerOpen(true)}
-          >
-            <LuListFilter />
-            Sort and Filter
-          </Button>
           <Button
             size="md"
             bg="#5F80A0"
@@ -127,10 +131,22 @@ export const VolunteerManagementView = () => {
           size="lg"
           mb={2}
         >
-          Volunteers <Box as="span" color="#52525B" fontWeight="normal" ml={1}>{filteredVolunteers.length}</Box>
+          Volunteers{" "}
+          <Box
+            as="span"
+            color="#52525B"
+            fontWeight="normal"
+            ml={1}
+          >
+            {filteredVolunteers.length}
+          </Box>
         </Heading>
         {checkedIds.size > 0 && (
-          <Flex gap={4} mb={2} ml={2}>
+          <Flex
+            gap={4}
+            mb={2}
+            ml={2}
+          >
             <Button
               size="sm"
               variant="ghost"
@@ -138,14 +154,39 @@ export const VolunteerManagementView = () => {
               bg="transparent"
               borderRadius="none"
               borderBottom="1px solid transparent"
-              _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }}
+              _hover={{
+                color: "blue.400",
+                borderBottomColor: "blue.400",
+                _active: {
+                  color: "blue.600",
+                  borderBottomColor: "transparent",
+                },
+              }}
               p={0}
               onClick={() => setDeleteModalOpen(true)}
             >
               Delete
             </Button>
             {/* TODO: Implement archive functionality */}
-            <Button size="sm" variant="ghost" color="gray.600" bg="transparent" borderRadius="none" borderBottom="1px solid transparent" _hover={{ color: "blue.400", borderBottomColor: "blue.400", _active: { color: "blue.600", borderBottomColor: "transparent" } }} p={0}>Archive</Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="gray.600"
+              bg="transparent"
+              borderRadius="none"
+              borderBottom="1px solid transparent"
+              _hover={{
+                color: "blue.400",
+                borderBottomColor: "blue.400",
+                _active: {
+                  color: "blue.600",
+                  borderBottomColor: "transparent",
+                },
+              }}
+              p={0}
+            >
+              Archive
+            </Button>
           </Flex>
         )}
       </>
@@ -159,7 +200,12 @@ export const VolunteerManagementView = () => {
           minW={viewMode === "split" ? "300px" : undefined}
           h="100%"
           overflowY="auto"
-          onClick={(e) => { if (viewMode === "split" && e.target === e.currentTarget) { setViewMode("list"); setSelectedVolunteer(null); } }}
+          onClick={(e) => {
+            if (viewMode === "split" && e.target === e.currentTarget) {
+              setViewMode("list");
+              setSelectedVolunteer(null);
+            }
+          }}
         >
           <VolunteerList
             variant={viewMode === "list" ? "table" : "list"}
@@ -189,26 +235,23 @@ export const VolunteerManagementView = () => {
             pl={6}
           >
             <VolunteerProfilePanel
-                showBack
-                onBack={() => setViewMode("list")}
-                volunteer={selectedVolunteer}
-                onConfirm={async (data) => {
-                  if (!selectedVolunteer) return;
-                  await backend.put(
-                    `/volunteers/${selectedVolunteer.id}`,
-                    {
-                      first_name: data.firstName,
-                      last_name: data.lastName,
-                      email: data.email,
-                      phone_number: data.phoneNumber,
-                    }
-                  );
-                  setSelectedVolunteer((prev) =>
-                    prev ? { ...prev, ...data } : prev
-                  );
-                  setRefreshTrigger((prev) => prev + 1);
-                }}
-              />
+              showBack
+              onBack={() => setViewMode("list")}
+              volunteer={selectedVolunteer}
+              onConfirm={async (data) => {
+                if (!selectedVolunteer) return;
+                await backend.put(`/volunteers/${selectedVolunteer.id}`, {
+                  first_name: data.firstName,
+                  last_name: data.lastName,
+                  email: data.email,
+                  phone_number: data.phoneNumber,
+                });
+                setSelectedVolunteer((prev) =>
+                  prev ? { ...prev, ...data } : prev
+                );
+                setRefreshTrigger((prev) => prev + 1);
+              }}
+            />
           </Box>
         )}
       </Flex>
@@ -218,7 +261,9 @@ export const VolunteerManagementView = () => {
         count={checkedIds.size}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
-          await Promise.all([...checkedIds].map((id) => backend.delete(`/volunteers/${id}`)));
+          await Promise.all(
+            [...checkedIds].map((id) => backend.delete(`/volunteers/${id}`))
+          );
           setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
           if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
             setSelectedVolunteer(null);
@@ -229,7 +274,7 @@ export const VolunteerManagementView = () => {
         }}
       />
 
-      <SortFilterDrawer
+      <FilterDrawer
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
         totalCount={volunteers.length}

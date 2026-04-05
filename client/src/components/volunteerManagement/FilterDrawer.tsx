@@ -9,13 +9,12 @@ const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandari
 
 
 interface FilterState {
-  sortBy: "active" | "inactive";
   roles: Set<string>;
   interests: Set<string>;
   languages: Set<string>;
 }
 
-interface SortFilterDrawerProps {
+interface FilterDrawerProps {
   open: boolean;
   onClose: () => void;
   totalCount: number;
@@ -75,8 +74,7 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
   );
 };
 
-export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFilterDrawerProps) => {
-  const [sortBy, setSortBy] = useState<"active" | "inactive">("active");
+export const FilterDrawer = ({ open, onClose, totalCount, onApply }: FilterDrawerProps) => {
   const [checkedRoles, setCheckedRoles] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
   const [checkedLanguages, setCheckedLanguages] = useState<Set<string>>(new Set());
@@ -102,7 +100,6 @@ export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFil
   };
 
   const handleClear = () => {
-    setSortBy("active");
     setCheckedRoles(new Set());
     setCheckedInterests(new Set());
     setCheckedLanguages(new Set());
@@ -116,7 +113,7 @@ export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFil
           {/* Header */}
           <Drawer.Header borderBottomWidth="1px" borderColor="gray.200" pb={4}>
             <Flex justify="space-between" align="center" w="100%">
-              <Drawer.Title fontSize="xl" fontWeight="bold">Sort and Filter</Drawer.Title>
+              <Drawer.Title fontSize="xl" fontWeight="bold">Filter</Drawer.Title>
               <Drawer.CloseTrigger asChild>
                 <Icon as={FiX} boxSize={5} cursor="pointer" color="gray.500" _hover={{ color: "gray.800" }} />
               </Drawer.CloseTrigger>
@@ -125,31 +122,8 @@ export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFil
 
           {/* Body */}
           <Drawer.Body flex="1" overflowY="auto" px={4} py={4}>
-            {/* Sort By */}
-            <Text fontWeight="bold" fontSize="sm" mb={3}>Sort By</Text>
-            <Flex mb={5} bg="gray.100" borderRadius="md" p="2px" w="fit-content">
-              {(["active", "inactive"] as const).map((opt) => (
-                <Box
-                  key={opt}
-                  px={4}
-                  py={1.5}
-                  borderRadius="md"
-                  fontSize="sm"
-                  bg={sortBy === opt ? "white" : "transparent"}
-                  boxShadow={sortBy === opt ? "sm" : "none"}
-                  color={sortBy === opt ? "gray.800" : "gray.500"}
-                  cursor="pointer"
-                  userSelect="none"
-                  onClick={() => setSortBy(opt)}
-                  transition="all 0.15s"
-                >
-                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                </Box>
-              ))}
-            </Flex>
-
             {/* Selected Filters */}
-            <Text fontWeight="bold" fontSize="sm" mb={2}>Selected Filters</Text>
+            <Text fontWeight="bold" fontSize="md" mb={2}>Selected Filters</Text>
             <Box borderWidth="1px" borderColor="gray.200" borderRadius="md" minH="40px" p={2} mb={5}>
               <Flex gap={2} wrap="wrap">
                 {allSelected.map((f) => (
@@ -169,7 +143,7 @@ export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFil
             </Box>
 
             {/* Filter Categories */}
-            <Text fontWeight="bold" fontSize="sm" mb={2}>Filter Categories</Text>
+            <Text fontWeight="bold" fontSize="md" mb={2}>Filter Categories</Text>
             <FilterSection label="Role" items={ROLES} checked={checkedRoles} onToggle={toggle(setCheckedRoles)} />
             <FilterSection label="Interest" items={INTERESTS} checked={checkedInterests} onToggle={toggle(setCheckedInterests)} />
             <FilterSection label="Language" items={LANGUAGES} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
@@ -194,7 +168,7 @@ export const SortFilterDrawer = ({ open, onClose, totalCount, onApply }: SortFil
                 _hover={{ bg: "#3F3F46" }}
                 gap={2}
                 onClick={() => {
-                  onApply?.({ sortBy, roles: checkedRoles, interests: checkedInterests, languages: checkedLanguages });
+                  onApply?.({ roles: checkedRoles, interests: checkedInterests, languages: checkedLanguages });
                   onClose();
                 }}
               >
