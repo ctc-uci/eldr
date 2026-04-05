@@ -1,13 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 
-import { Box, Button, Flex, Tabs, Text } from "@chakra-ui/react";
-import { LuArchive, LuBriefcase, LuCircleUser, LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { Box, Flex, Tabs } from "@chakra-ui/react";
+import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
 
+import { BulkActionBar } from "./BulkActionBar";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
-import { PAGE_SIZE, getPageItems, VolunteerList } from "./VolunteerList";
+import { Pagination } from "./Pagination";
+import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 
 type ViewMode = "list" | "split";
@@ -58,119 +60,9 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
     })();
   }, [backend]);
 
-  const totalPages = Math.ceil(filteredVolunteers.length / PAGE_SIZE);
-
-  const showingStart = (page - 1) * PAGE_SIZE + 1;
-  const showingEnd = Math.min(page * PAGE_SIZE, filteredVolunteers.length);
-
-  const pagination = filteredVolunteers.length > PAGE_SIZE ? (
-    <Flex direction="column" align="flex-end" py={3} gap={2}>
-      <Text fontSize="sm" color="gray.500">
-        Showing {showingStart} to {showingEnd} of {filteredVolunteers.length}
-      </Text>
-      <Flex>
-        <Button
-          size="sm"
-          variant="ghost"
-          borderRadius="none"
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-          border="1px solid #E4E4E7"
-          _hover={{ bg: "gray.100" }}
-          _active={{ bg: "gray.200" }}
-          p={0}
-        >
-          <LuChevronLeft />
-        </Button>
-        {getPageItems(page, totalPages).map((item, i) =>
-          typeof item === "object" ? (
-            <Button
-              key={`ellipsis-${i}`}
-              size="sm"
-              variant="ghost"
-              borderRadius="none"
-              border="1px solid #E4E4E7"
-              _hover={{ bg: "gray.100" }}
-              _active={{ bg: "gray.200" }}
-              onClick={() => setPage(item.target)}
-              p={0}
-            >
-              ...
-            </Button>
-          ) : (
-            <Button
-              key={item}
-              size="sm"
-              borderRadius="none"
-              border="1px solid #E4E4E7"
-              variant={item === page ? "solid" : "ghost"}
-              bg={item === page ? "black" : undefined}
-              color={item === page ? "white" : undefined}
-              _hover={item === page ? { bg: "black" } : undefined}
-              onClick={() => setPage(item)}
-            >
-              {item}
-            </Button>
-          )
-        )}
-        <Button
-          size="sm"
-          variant="ghost"
-          borderRadius="none"
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          border="1px solid #E4E4E7"
-          _hover={{ bg: "gray.100" }}
-          _active={{ bg: "gray.200" }}
-          p={0}
-        >
-          <LuChevronRight />
-        </Button>
-      </Flex>
-    </Flex>
-  ) : null;
 
   const volunteersTable = (
     <>
-      {checkedIds.size > 0 && (
-        <Flex gap={4} mb={2} ml={2}>
-          <Button
-            size="sm"
-            variant="ghost"
-            color="gray.600"
-            bg="transparent"
-            borderRadius="none"
-            borderBottom="1px solid transparent"
-            _hover={{
-              color: "blue.400",
-              borderBottomColor: "blue.400",
-              _active: { color: "blue.600", borderBottomColor: "transparent" },
-            }}
-            p={0}
-            onClick={() => setDeleteModalOpen(true)}
-          >
-            Delete
-          </Button>
-          {/* TODO: Implement archive functionality */}
-          <Button
-            size="sm"
-            variant="ghost"
-            color="gray.600"
-            bg="transparent"
-            borderRadius="none"
-            borderBottom="1px solid transparent"
-            _hover={{
-              color: "blue.400",
-              borderBottomColor: "blue.400",
-              _active: { color: "blue.600", borderBottomColor: "transparent" },
-            }}
-            p={0}
-          >
-            Archive
-          </Button>
-        </Flex>
-      )}
-
       <Flex gap={6}>
         <Box
           w={viewMode === "split" ? "50%" : "100%"}
@@ -231,7 +123,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
   );
 
   return (
-    <Box h="100%">
+    <Box h="100%" position="relative">
       <Tabs.Root defaultValue="volunteers" variant="outline">
         <Tabs.List w="fit-content">
           {TABS.map(({ value, icon, label }) => (
@@ -254,7 +146,19 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
         </Tabs.Content>
       </Tabs.Root>
         
-      {pagination}
+      <Pagination
+        page={page}
+        totalCount={filteredVolunteers.length}
+        onPageChange={setPage}
+      />
+
+      {checkedIds.size > 0 && (
+        <BulkActionBar
+          count={checkedIds.size}
+          onDelete={() => setDeleteModalOpen(true)}
+          onClear={() => setCheckedIds(new Set())}
+        />
+      )}
 
       <DeleteConfirmModal
         open={deleteModalOpen}
