@@ -24,15 +24,17 @@ export const ArchivedList = ({
   checkedIds,
   setCheckedIds,
 }: ArchivedListProps) => {
-  // TODO: Replace with real backend endpoint once /volunteers/archived is implemented
   const { backend } = useBackendContext();
   const [sortKey, setSortKey] = useState<keyof ArchivedVolunteer | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     (async () => {
-      const res = await backend.get<ArchivedVolunteer[]>("/volunteers/archived");
-      setArchivedVolunteers(res.data);
+      const [volunteersRes, staffRes] = await Promise.all([
+        backend.get<ArchivedVolunteer[]>("/volunteers/archived"),
+        backend.get<ArchivedVolunteer[]>("/admins/archived"),
+      ]);
+      setArchivedVolunteers([...volunteersRes.data, ...staffRes.data]);
     })();
   }, [backend, setArchivedVolunteers]);
 

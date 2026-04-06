@@ -15,7 +15,7 @@ adminsRouter.get("/", verifyRole("supervisor"), async (req, res) => {
   }
 });
 
-// GET /admins/staff - get all staff and supervisors for the staff table
+// GET /admins/staff - get all active (non-archived) staff and supervisors
 adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res) => {
   try {
     const staff = await db.query(
@@ -29,10 +29,87 @@ adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res)
           a.start_date,
           CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role
         FROM admins a
+        WHERE NOT EXISTS (
+          SELECT 1 FROM admin_archived aa WHERE aa.admin_id = a.id
+        )
         ORDER BY a.last_name ASC, a.first_name ASC;
       `
     );
     res.status(200).json(keysToCamel(staff));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// GET /admins/archived - get all archived staff
+adminsRouter.get("/archived", verifyRole(["staff", "supervisor"]), async (req, res) => {
+  try {
+    const archived = await db.query(
+      `
+        SELECT
+          a.id,
+          a.first_name,
+          a.last_name,
+          a.email,
+          CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role,
+          aa.archived_date,
+          aa.reactivation,
+          aa.archived_notes
+        FROM admins a
+        JOIN admin_archived aa ON aa.admin_id = a.id
+        ORDER BY aa.archived_date DESC;
+      `
+    );
+    res.status(200).json(keysToCamel(archived));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// PATCH /admins/:id/archive - archive a staff member
+adminsRouter.patch("/:id/archive", verifyRole(["staff", "supervisor"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reactivation, notes } = req.body;
+
+    const result = await db.query(
+      `
+        INSERT INTO admin_archived (admin_id, reactivation, archived_notes)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (admin_id) DO UPDATE
+          SET archived_date  = NOW(),
+              reactivation   = EXCLUDED.reactivation,
+              archived_notes = EXCLUDED.archived_notes
+        RETURNING *;
+      `,
+      [id, reactivation ?? null, notes ?? null]
+    );
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+// PATCH /admins/:id/unarchive - unarchive a staff member
+adminsRouter.patch("/:id/unarchive", verifyRole(["staff", "supervisor"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `
+        DELETE FROM admin_archived
+        WHERE admin_id = $1
+        RETURNING *;
+      `,
+      [id]
+    );
+
+    if (!result.length) {
+      return res.status(404).json({ message: "Staff member not found in archived list" });
+    }
+
+    res.status(200).json(keysToCamel(result[0]));
   } catch (err) {
     res.status(400).send(err.message);
   }

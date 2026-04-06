@@ -203,34 +203,58 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
           count={checkedIds.size}
           onDelete={() => setDeleteModalOpen(true)}
           onArchive={async () => {
-            const toArchive = volunteers.filter((v) => checkedIds.has(v.id));
             const now = new Date().toISOString();
 
-            // Optimistically update both lists
-            setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
-            setArchivedVolunteers((prev) => [
-              ...prev,
-              ...toArchive.map((v) => ({
-                id: v.id,
-                firstName: v.firstName,
-                lastName: v.lastName,
-                email: v.email,
-                roles: v.roles,
-                archivedDate: now,
-                reactivation: undefined,
-                archivedNotes: undefined,
-              })),
-            ]);
+            if (activeTab === "staff") {
+              const toArchive = staffMembers.filter((s) => checkedIds.has(s.id));
 
-            if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
-              setSelectedVolunteer(null);
-              setViewMode("list");
+              setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
+              setArchivedVolunteers((prev) => [
+                ...prev,
+                ...toArchive.map((s) => ({
+                  id: s.id,
+                  firstName: s.firstName,
+                  lastName: s.lastName,
+                  email: s.email,
+                  roles: [s.role],
+                  archivedDate: now,
+                  reactivation: undefined,
+                  archivedNotes: undefined,
+                })),
+              ]);
+              setCheckedIds(new Set());
+
+              await Promise.all(
+                toArchive.map((s) => backend.patch(`/admins/${s.id}/archive`))
+              );
+            } else {
+              const toArchive = volunteers.filter((v) => checkedIds.has(v.id));
+
+              setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+              setArchivedVolunteers((prev) => [
+                ...prev,
+                ...toArchive.map((v) => ({
+                  id: v.id,
+                  firstName: v.firstName,
+                  lastName: v.lastName,
+                  email: v.email,
+                  roles: v.roles,
+                  archivedDate: now,
+                  reactivation: undefined,
+                  archivedNotes: undefined,
+                })),
+              ]);
+
+              if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
+                setSelectedVolunteer(null);
+                setViewMode("list");
+              }
+              setCheckedIds(new Set());
+
+              await Promise.all(
+                toArchive.map((v) => backend.patch(`/volunteers/${v.id}/archive`))
+              );
             }
-            setCheckedIds(new Set());
-
-            await Promise.all(
-              toArchive.map((v) => backend.patch(`/volunteers/${v.id}/archive`))
-            );
           }}
           onClear={() => setCheckedIds(new Set())}
         />
