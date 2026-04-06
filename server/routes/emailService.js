@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
-dotenv.config({ path: "./client/.env" });
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -24,6 +24,5 @@ export async function sendEmail({ to, subject, html }) {
     html,
   });
 
-  //console.log("Email sent:", info.response);
   return info;
 }

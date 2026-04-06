@@ -1,7 +1,8 @@
-import express from "express";
-import { sendEmail } from "./emailService.js";
-import { db } from "@/db/db-pgp"; 
 import { keysToCamel } from "@/common/utils";
+import { db } from "@/db/db-pgp";
+import express from "express";
+
+import { sendEmail } from "./emailService.js";
 
 const router = express.Router();
 
@@ -28,18 +29,14 @@ router.post("/schedule", async (req, res) => {
 
     const newEmail = await db.query(query, values);
 
-    res.status(200).json({ 
-      success: true, 
-      queuedEmail: keysToCamel(newEmail)[0] 
+    res.status(200).json({
+      success: true,
+      queuedEmail: keysToCamel(newEmail)[0],
     });
   } catch (err) {
-    console.error("Database error:", err);
+    //console.error("Database error:", err);
     res.status(400).send(err.message);
   }
 });
 
 export default router;
-
-
-
-

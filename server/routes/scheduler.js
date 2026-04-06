@@ -1,5 +1,6 @@
-import cron from "node-cron";
 import { db } from "@/db/db-pgp";
+import cron from "node-cron";
+
 import { sendEmail } from "./emailService.js";
 
 // This cron expression '* * * * *' means "Run every 1 minute"
@@ -7,12 +8,14 @@ cron.schedule("* * * * *", async () => {
   console.log("⏰ Checking for scheduled emails...");
 
   try {
-    // Find emails ready to send
+    // Claim rows atomically so overlapping cron ticks (or multiple workers) cannot
+    // process the same pending rows before any UPDATE commits.
     const pendingEmails = await db.query(`
-      SELECT * 
-      FROM scheduled_emails
+      UPDATE scheduled_emails
+      SET status = 'sending'
       WHERE status = 'pending'
-      AND send_at <= NOW();
+        AND send_at <= NOW()
+      RETURNING *;
     `);
 
     if (pendingEmails.length === 0) {
@@ -38,14 +41,15 @@ cron.schedule("* * * * *", async () => {
         );
 
         console.log(`✅ Sent scheduled email ID: ${email.id}`);
-
       } catch (sendError) {
         console.error(`❌ Failed to send email ID: ${email.id}`, sendError);
 
-        // Leave status as 'pending' so it retries next cron cycle
+        await db.query(
+          `UPDATE scheduled_emails SET status = 'pending' WHERE id = $1`,
+          [email.id]
+        );
       }
     }
-
   } catch (dbError) {
     console.error("Database error while checking scheduled emails:", dbError);
   }
