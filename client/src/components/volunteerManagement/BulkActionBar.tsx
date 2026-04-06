@@ -1,14 +1,25 @@
 import { Box, Button, Flex, Text } from "@chakra-ui/react";
-import { LuArchive, LuTrash2, LuX } from "react-icons/lu";
+import { LuArchive, LuArchiveRestore, LuTrash2, LuX } from "react-icons/lu";
 
 interface BulkActionBarProps {
   count: number;
   onDelete: () => void;
   onArchive: () => void;
+  onUnarchive?: () => void;
   onClear: () => void;
+  showArchive?: boolean;
+  showUnarchive?: boolean;
 }
 
-export const BulkActionBar = ({ count, onDelete, onArchive, onClear }: BulkActionBarProps) => {
+export const BulkActionBar = ({
+  count,
+  onDelete,
+  onArchive,
+  onUnarchive,
+  onClear,
+  showArchive = true,
+  showUnarchive = false,
+}: BulkActionBarProps) => {
   return (
     <Flex
       position="fixed"
@@ -30,10 +41,18 @@ export const BulkActionBar = ({ count, onDelete, onArchive, onClear }: BulkActio
         {count} selected
       </Text>
       <Box w="1px" h={5} bg="gray.200" />
-      <Button size="sm" variant="ghost" color="gray.700" gap={1.5} border="1px solid #E4E4E7" onClick={onArchive}>
-        <LuArchive size={15} />
-        Archive
-      </Button>
+      {showArchive && (
+        <Button size="sm" variant="ghost" color="gray.700" gap={1.5} border="1px solid #E4E4E7" onClick={onArchive}>
+          <LuArchive size={15} />
+          Archive
+        </Button>
+      )}
+      {showUnarchive && (
+        <Button size="sm" variant="ghost" color="gray.700" gap={1.5} border="1px solid #E4E4E7" onClick={onUnarchive}>
+          <LuArchiveRestore size={15} />
+          Unarchive
+        </Button>
+      )}
       <Button
         size="sm"
         variant="ghost"

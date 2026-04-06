@@ -201,6 +201,22 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
       {checkedIds.size > 0 && (
         <BulkActionBar
           count={checkedIds.size}
+          showArchive={activeTab !== "archived"}
+          showUnarchive={activeTab === "archived"}
+          onUnarchive={async () => {
+            const toUnarchive = archivedVolunteers.filter((v) => checkedIds.has(v.id));
+
+            setArchivedVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+            setCheckedIds(new Set());
+
+            await Promise.all(
+              toUnarchive.map((v) =>
+                v.roles?.some((r) => r === "Staff" || r === "Supervisor")
+                  ? backend.patch(`/admins/${v.id}/unarchive`)
+                  : backend.patch(`/volunteers/${v.id}/unarchive`)
+              )
+            );
+          }}
           onDelete={() => setDeleteModalOpen(true)}
           onArchive={async () => {
             const now = new Date().toISOString();
