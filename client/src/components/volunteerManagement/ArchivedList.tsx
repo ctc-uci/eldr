@@ -28,6 +28,7 @@ export const ArchivedList = ({
   setCheckedIds,
   onSelect,
   selectedId,
+  variant = "table",
 }: ArchivedListProps) => {
   const { backend } = useBackendContext();
   const [sortKey, setSortKey] = useState<keyof ArchivedVolunteer | null>(null);
@@ -65,7 +66,7 @@ export const ArchivedList = ({
     e.stopPropagation();
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -90,66 +91,76 @@ export const ArchivedList = ({
   };
 
   const pageSlice = sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const isList = variant === "list";
 
   return (
     <Box overflow="hidden">
       <Table.Root size="md">
         <Table.Header>
           <Table.Row bg="#EFF6FF">
-            <Table.ColumnHeader w="40px">
-              <Checkbox.Root
-                cursor="pointer"
-                size="sm"
-                checked={
-                  sortedVolunteers.length > 0 &&
-                  pageSlice.every((v) => checkedIds.has(v.id))
-                }
-                onCheckedChange={() => {
-                  const pageIds = pageSlice.map((v) => v.id);
-                  const allChecked = pageIds.every((id) => checkedIds.has(id));
-                  setCheckedIds((prev) => {
-                    const next = new Set(prev);
-                    if (allChecked) pageIds.forEach((id) => next.delete(id));
-                    else pageIds.forEach((id) => next.add(id));
-                    return next;
-                  });
-                }}
-              >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control />
-              </Checkbox.Root>
-            </Table.ColumnHeader>
+            {!isList && (
+              <Table.ColumnHeader w="40px">
+                <Checkbox.Root
+                  cursor="pointer"
+                  size="sm"
+                  checked={
+                    sortedVolunteers.length > 0 &&
+                    pageSlice.every((v) => checkedIds.has(v.id))
+                  }
+                  onCheckedChange={() => {
+                    const pageIds = pageSlice.map((v) => v.id);
+                    const allChecked = pageIds.every((id) => checkedIds.has(id));
+                    setCheckedIds((prev) => {
+                      const next = new Set(prev);
+                      if (allChecked) pageIds.forEach((id) => next.delete(id));
+                      else pageIds.forEach((id) => next.add(id));
+                      return next;
+                    });
+                  }}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                </Checkbox.Root>
+              </Table.ColumnHeader>
+            )}
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
               <SortHeader label="Name" sortField="firstName" />
             </Table.ColumnHeader>
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
               <SortHeader label="Role" sortField="roles" />
             </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Reactivation" sortField="reactivation" />
-            </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Archived Date" sortField="archivedDate" />
-            </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              Notes
-            </Table.ColumnHeader>
+            {!isList && (
+              <>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Reactivation" sortField="reactivation" />
+                </Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Archived Date" sortField="archivedDate" />
+                </Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  Notes
+                </Table.ColumnHeader>
+              </>
+            )}
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {pageSlice.map((volunteer) => (
             <Table.Row
               key={volunteer.id}
-              bg={checkedIds.has(volunteer.id) ? "blue.50" : selectedId === volunteer.id ? "blue.50" : "transparent"}
+              bg={!isList && checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
+              boxShadow={selectedId === volunteer.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
-              onClick={() => onSelect?.(volunteer)}
+              onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
             >
-              <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
-                <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control />
-                </Checkbox.Root>
-              </Table.Cell>
+              {!isList && (
+                <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
+                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                  </Checkbox.Root>
+                </Table.Cell>
+              )}
               <Table.Cell>
                 <Flex align="center" gap={3}>
                   <Box w="36px" h="36px" borderRadius="full" bg="gray.200" flexShrink={0} />
@@ -164,15 +175,19 @@ export const ArchivedList = ({
               <Table.Cell>
                 <Text fontSize="sm" color="black">{volunteer.roles?.join(", ") || "—"}</Text>
               </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.reactivation ?? "—"}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.archivedDate ? new Date(volunteer.archivedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.archivedNotes ?? "—"}</Text>
-              </Table.Cell>
+              {!isList && (
+                <>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.reactivation ?? "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.archivedDate ? new Date(volunteer.archivedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.archivedNotes ?? "—"}</Text>
+                  </Table.Cell>
+                </>
+              )}
             </Table.Row>
           ))}
         </Table.Body>

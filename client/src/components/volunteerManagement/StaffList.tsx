@@ -16,6 +16,7 @@ interface StaffListProps {
   setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
   onSelect?: (member: StaffMember) => void;
   selectedId?: number;
+  variant?: "table" | "list";
 }
 
 export const StaffList = ({
@@ -27,6 +28,7 @@ export const StaffList = ({
   setCheckedIds,
   onSelect,
   selectedId,
+  variant = "table",
 }: StaffListProps) => {
   const { backend } = useBackendContext();
   const [sortKey, setSortKey] = useState<keyof StaffMember | null>(null);
@@ -92,63 +94,73 @@ export const StaffList = ({
     });
   };
 
+  const isList = variant === "list";
+
   return (
     <Box overflow="hidden">
       <Table.Root size="md">
         <Table.Header>
           <Table.Row bg="#EFF6FF">
-            <Table.ColumnHeader w="40px">
-              <Checkbox.Root
-                cursor="pointer"
-                size="sm"
-                checked={
-                  sortedStaff.length > 0 &&
-                  pageSlice.every((s) => checkedIds.has(s.id))
-                }
-                onCheckedChange={() => {
-                  const pageIds = pageSlice.map((s) => s.id);
-                  const allChecked = pageIds.every((id) => checkedIds.has(id));
-                  setCheckedIds((prev) => {
-                    const next = new Set(prev);
-                    if (allChecked) pageIds.forEach((id) => next.delete(id));
-                    else pageIds.forEach((id) => next.add(id));
-                    return next;
-                  });
-                }}
-              >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control />
-              </Checkbox.Root>
-            </Table.ColumnHeader>
+            {!isList && (
+              <Table.ColumnHeader w="40px">
+                <Checkbox.Root
+                  cursor="pointer"
+                  size="sm"
+                  checked={
+                    sortedStaff.length > 0 &&
+                    pageSlice.every((s) => checkedIds.has(s.id))
+                  }
+                  onCheckedChange={() => {
+                    const pageIds = pageSlice.map((s) => s.id);
+                    const allChecked = pageIds.every((id) => checkedIds.has(id));
+                    setCheckedIds((prev) => {
+                      const next = new Set(prev);
+                      if (allChecked) pageIds.forEach((id) => next.delete(id));
+                      else pageIds.forEach((id) => next.add(id));
+                      return next;
+                    });
+                  }}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                </Checkbox.Root>
+              </Table.ColumnHeader>
+            )}
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
               <SortHeader label="Name" sortField="firstName" />
             </Table.ColumnHeader>
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
               <SortHeader label="Role" sortField="role" />
             </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Phone Number" sortField="phoneNumber" />
-            </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Start Date" sortField="startDate" />
-            </Table.ColumnHeader>
+            {!isList && (
+              <>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Phone Number" sortField="phoneNumber" />
+                </Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Start Date" sortField="startDate" />
+                </Table.ColumnHeader>
+              </>
+            )}
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {pageSlice.map((member) => (
             <Table.Row
               key={member.id}
-              bg={checkedIds.has(member.id) ? "blue.50" : selectedId === member.id ? "blue.50" : "transparent"}
+              bg={!isList && checkedIds.has(member.id) ? "blue.50" : "transparent"}
               boxShadow={selectedId === member.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); onSelect?.(member); }}
             >
-              <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
-                <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control />
-                </Checkbox.Root>
-              </Table.Cell>
+              {!isList && (
+                <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
+                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                  </Checkbox.Root>
+                </Table.Cell>
+              )}
               <Table.Cell>
                 <Flex align="center" gap={3}>
                   <Box w="36px" h="36px" borderRadius="full" bg="gray.200" flexShrink={0} />
@@ -163,12 +175,16 @@ export const StaffList = ({
               <Table.Cell>
                 <Text fontSize="sm" color="black">{member.role}</Text>
               </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{member.phoneNumber ?? "—"}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{formatDate(member.startDate)}</Text>
-              </Table.Cell>
+              {!isList && (
+                <>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{member.phoneNumber ?? "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{formatDate(member.startDate)}</Text>
+                  </Table.Cell>
+                </>
+              )}
             </Table.Row>
           ))}
         </Table.Body>

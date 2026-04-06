@@ -189,6 +189,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               overflowY="auto"
             >
               <StaffList
+                variant={staffViewMode === "split" ? "list" : "table"}
                 page={staffPage}
                 setPage={setStaffPage}
                 staffMembers={staffMembers}
@@ -229,6 +230,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               overflowY="auto"
             >
               <ArchivedList
+                variant={archivedViewMode === "split" ? "list" : "table"}
                 page={archivedPage}
                 setPage={setArchivedPage}
                 archivedVolunteers={archivedVolunteers}
