@@ -1,0 +1,66 @@
+client/src/components/volunteerManagement/VolunteerList.tsx
+  35db7cbaf1321ea2 191,230
+client/src/components/volunteerManagement/StaffList.tsx
+  35db7cbaf1321ea2 125,160
+client/src/components/volunteerManagement/ArchivedList.tsx
+  35db7cbaf1321ea2 122,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6f00d23ecea13053eaa8546b2b6aba6f23d5526e",
+  "prompts": {
+    "35db7cbaf1321ea2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "63cd9eff-092b-4305-ae22-397869fba359",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "3e1e3a242eefe23c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cca58c77-b7f8-46d9-bdd4-c07c62611d82",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "69b1faca54c7c547": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "829cf1a4-35bc-48f4-925b-836391bf8ad6",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "f3f7366f03483ea7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "20132dcf-f4ff-464e-91c4-de5c75c0ac1c",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
