@@ -15,6 +15,29 @@ adminsRouter.get("/", verifyRole("supervisor"), async (req, res) => {
   }
 });
 
+// GET /admins/staff - get all staff and supervisors for the staff table
+adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res) => {
+  try {
+    const staff = await db.query(
+      `
+        SELECT
+          a.id,
+          a.first_name,
+          a.last_name,
+          a.email,
+          a.phone_number,
+          a.start_date,
+          CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role
+        FROM admins a
+        ORDER BY a.last_name ASC, a.first_name ASC;
+      `
+    );
+    res.status(200).json(keysToCamel(staff));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
 // GET /admins/id/:id - get admin by database ID
 adminsRouter.get("/id/:id", verifyRole(["staff", "supervisor"]), async (req, res) => {
   try {

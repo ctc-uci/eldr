@@ -11,6 +11,16 @@ export interface Volunteer {
   experienceLevel?: string;
 }
 
+export interface StaffMember {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  phoneNumber?: string;
+  startDate?: string;
+}
+
 export interface ArchivedVolunteer {
   id: number;
   firstName: string;

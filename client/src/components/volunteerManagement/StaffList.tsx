@@ -4,55 +4,50 @@ import { Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
 import { LuChevronsUpDown, LuChevronUp, LuChevronDown } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { ArchivedVolunteer } from "@/types/volunteer";
+import { StaffMember } from "@/types/volunteer";
 import { PAGE_SIZE } from "./VolunteerList";
 
-interface ArchivedListProps {
+interface StaffListProps {
   page: number;
   setPage: Dispatch<SetStateAction<number>>;
-  archivedVolunteers: ArchivedVolunteer[];
-  setArchivedVolunteers: Dispatch<SetStateAction<ArchivedVolunteer[]>>;
+  staffMembers: StaffMember[];
+  setStaffMembers: Dispatch<SetStateAction<StaffMember[]>>;
   checkedIds: Set<number>;
   setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
 }
 
-export const ArchivedList = ({
+export const StaffList = ({
   page,
   setPage,
-  archivedVolunteers,
-  setArchivedVolunteers,
+  staffMembers,
+  setStaffMembers,
   checkedIds,
   setCheckedIds,
-}: ArchivedListProps) => {
-  // TODO: Replace with real backend endpoint once /volunteers/archived is implemented
+}: StaffListProps) => {
   const { backend } = useBackendContext();
-  const [sortKey, setSortKey] = useState<keyof ArchivedVolunteer | null>(null);
+  const [sortKey, setSortKey] = useState<keyof StaffMember | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     (async () => {
-      const res = await backend.get<ArchivedVolunteer[]>("/volunteers/archived");
-      setArchivedVolunteers(res.data);
+      const res = await backend.get<StaffMember[]>("/admins/staff");
+      setStaffMembers(res.data);
     })();
-  }, [backend, setArchivedVolunteers]);
+  }, [backend, setStaffMembers]);
 
-  const handleSort = (key: keyof ArchivedVolunteer) => {
+  const handleSort = (key: keyof StaffMember) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
     setPage(1);
   };
 
-  const sortedVolunteers = sortKey
-    ? [...archivedVolunteers].sort((a, b) => {
-        const raw = (v: ArchivedVolunteer) => {
-          const val = v[sortKey];
-          return Array.isArray(val) ? val[0] ?? "" : (val ?? "");
-        };
-        const av = String(raw(a));
-        const bv = String(raw(b));
+  const sortedStaff = sortKey
+    ? [...staffMembers].sort((a, b) => {
+        const av = String(a[sortKey] ?? "");
+        const bv = String(b[sortKey] ?? "");
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       })
-    : archivedVolunteers;
+    : staffMembers;
 
   const toggleCheck = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
@@ -63,7 +58,7 @@ export const ArchivedList = ({
     });
   };
 
-  const SortHeader = ({ label, sortField }: { label: string; sortField?: keyof ArchivedVolunteer }) => {
+  const SortHeader = ({ label, sortField }: { label: string; sortField?: keyof StaffMember }) => {
     const active = sortField && sortKey === sortField;
     return (
       <Flex
@@ -82,7 +77,16 @@ export const ArchivedList = ({
     );
   };
 
-  const pageSlice = sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageSlice = sortedStaff.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   return (
     <Box overflow="hidden">
@@ -94,11 +98,11 @@ export const ArchivedList = ({
                 cursor="pointer"
                 size="sm"
                 checked={
-                  sortedVolunteers.length > 0 &&
-                  pageSlice.every((v) => checkedIds.has(v.id))
+                  sortedStaff.length > 0 &&
+                  pageSlice.every((s) => checkedIds.has(s.id))
                 }
                 onCheckedChange={() => {
-                  const pageIds = pageSlice.map((v) => v.id);
+                  const pageIds = pageSlice.map((s) => s.id);
                   const allChecked = pageIds.every((id) => checkedIds.has(id));
                   setCheckedIds((prev) => {
                     const next = new Set(prev);
@@ -116,28 +120,25 @@ export const ArchivedList = ({
               <SortHeader label="Name" sortField="firstName" />
             </Table.ColumnHeader>
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Role" sortField="roles" />
+              <SortHeader label="Role" sortField="role" />
             </Table.ColumnHeader>
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Reactivation" sortField="reactivation" />
+              <SortHeader label="Phone Number" sortField="phoneNumber" />
             </Table.ColumnHeader>
             <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Archived Date" sortField="archivedDate" />
-            </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              Notes
+              <SortHeader label="Start Date" sortField="startDate" />
             </Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {pageSlice.map((volunteer) => (
+          {pageSlice.map((member) => (
             <Table.Row
-              key={volunteer.id}
-              bg={checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
+              key={member.id}
+              bg={checkedIds.has(member.id) ? "blue.50" : "transparent"}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
             >
-              <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
-                <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>
+              <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
+                <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
                   <Checkbox.HiddenInput />
                   <Checkbox.Control />
                 </Checkbox.Root>
@@ -146,24 +147,21 @@ export const ArchivedList = ({
                 <Flex align="center" gap={3}>
                   <Box w="36px" h="36px" borderRadius="full" bg="gray.200" flexShrink={0} />
                   <Box>
-                    <Text fontSize="sm" fontWeight="semibold">
-                      {volunteer.firstName} {volunteer.lastName}
+                    <Text fontSize="sm" fontWeight="semibold" color="black">
+                      {member.firstName} {member.lastName}
                     </Text>
-                    <Text fontSize="xs" color="gray.500">{volunteer.email}</Text>
+                    <Text fontSize="xs" color="gray.500">{member.email}</Text>
                   </Box>
                 </Flex>
               </Table.Cell>
               <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.roles?.join(", ") || "—"}</Text>
+                <Text fontSize="sm" color="black">{member.role}</Text>
               </Table.Cell>
               <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.reactivation ?? "—"}</Text>
+                <Text fontSize="sm" color="black">{member.phoneNumber ?? "—"}</Text>
               </Table.Cell>
               <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.archivedDate ? new Date(volunteer.archivedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" color="black">{volunteer.archivedNotes ?? "—"}</Text>
+                <Text fontSize="sm" color="black">{formatDate(member.startDate)}</Text>
               </Table.Cell>
             </Table.Row>
           ))}

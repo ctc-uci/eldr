@@ -248,18 +248,18 @@ export const VolunteerList = ({
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" fontWeight="semibold" color="#52525B">{volunteer.roles?.join(", ") || "—"}</Text>
+                    <Text fontSize="sm" color="black">{volunteer.roles?.join(", ") || "—"}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="black">
                       {volunteer.specializations?.join(", ") ?? "—"}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="gray.600">—</Text>
+                    <Text fontSize="sm" color="black">—</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="gray.600">—</Text>
+                    <Text fontSize="sm" color="black">—</Text>
                   </Table.Cell>
                 </Table.Row>
               ))}

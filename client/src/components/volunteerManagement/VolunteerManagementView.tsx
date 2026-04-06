@@ -4,9 +4,10 @@ import { Box, Flex, Tabs } from "@chakra-ui/react";
 import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { ArchivedVolunteer, Volunteer } from "@/types/volunteer";
+import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
 
 import { ArchivedList } from "./ArchivedList";
+import { StaffList } from "./StaffList";
 import { BulkActionBar } from "./BulkActionBar";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { Pagination } from "./Pagination";
@@ -36,6 +37,10 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [page, setPage] = useState(1);
+
+  // Staff tab state
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [staffPage, setStaffPage] = useState(1);
 
   // Archived tab state
   const [archivedVolunteers, setArchivedVolunteers] = useState<ArchivedVolunteer[]>([]);
@@ -134,11 +139,18 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
     </Flex>
   );
 
-  const paginationCount = activeTab === "archived"
-    ? archivedVolunteers.length
-    : filteredVolunteers.length;
-  const currentPage = activeTab === "archived" ? archivedPage : page;
-  const onPageChange = activeTab === "archived" ? setArchivedPage : setPage;
+  const paginationCount =
+    activeTab === "archived" ? archivedVolunteers.length :
+    activeTab === "staff" ? staffMembers.length :
+    filteredVolunteers.length;
+  const currentPage =
+    activeTab === "archived" ? archivedPage :
+    activeTab === "staff" ? staffPage :
+    page;
+  const onPageChange =
+    activeTab === "archived" ? setArchivedPage :
+    activeTab === "staff" ? setStaffPage :
+    setPage;
 
   return (
     <Box h="100%" position="relative">
@@ -158,9 +170,15 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
         <Tabs.Content value="volunteers" p={0} pt={0} border="1px solid #E4E4E7">
           {volunteersTable}
         </Tabs.Content>
-        {/* TODO: Implement staff view */}
         <Tabs.Content value="staff" p={0} border="1px solid #E4E4E7">
-          <p>staff!</p>
+          <StaffList
+            page={staffPage}
+            setPage={setStaffPage}
+            staffMembers={staffMembers}
+            setStaffMembers={setStaffMembers}
+            checkedIds={checkedIds}
+            setCheckedIds={setCheckedIds}
+          />
         </Tabs.Content>
         <Tabs.Content value="archived" p={0} border="1px solid #E4E4E7">
           <ArchivedList
