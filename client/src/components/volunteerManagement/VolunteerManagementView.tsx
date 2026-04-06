@@ -9,6 +9,7 @@ import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
 import { ArchivedList } from "./ArchivedList";
 import { ArchivedProfilePanel } from "./ArchivedProfilePanel";
 import { StaffList } from "./StaffList";
+import { StaffProfilePanel } from "./StaffProfilePanel";
 import { BulkActionBar } from "./BulkActionBar";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { Pagination } from "./Pagination";
@@ -42,6 +43,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
   // Staff tab state
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [staffPage, setStaffPage] = useState(1);
+  const [selectedStaffMember, setSelectedStaffMember] = useState<StaffMember | null>(null);
+  const [staffViewMode, setStaffViewMode] = useState<ViewMode>("list");
 
   // Archived tab state
   const [archivedVolunteers, setArchivedVolunteers] = useState<ArchivedVolunteer[]>([]);
@@ -76,6 +79,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
     setCheckedIds(new Set());
     setSelectedArchivedVolunteer(null);
     setArchivedViewMode("list");
+    setSelectedStaffMember(null);
+    setStaffViewMode("list");
   }, [activeTab]);
 
   useEffect(() => {
@@ -176,14 +181,44 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
           {volunteersTable}
         </Tabs.Content>
         <Tabs.Content value="staff" p={0} border="1px solid #E4E4E7">
-          <StaffList
-            page={staffPage}
-            setPage={setStaffPage}
-            staffMembers={staffMembers}
-            setStaffMembers={setStaffMembers}
-            checkedIds={checkedIds}
-            setCheckedIds={setCheckedIds}
-          />
+          <Flex gap={6}>
+            <Box
+              w={staffViewMode === "split" ? "50%" : "100%"}
+              minW={staffViewMode === "split" ? "300px" : undefined}
+              h="100%"
+              overflowY="auto"
+            >
+              <StaffList
+                page={staffPage}
+                setPage={setStaffPage}
+                staffMembers={staffMembers}
+                setStaffMembers={setStaffMembers}
+                checkedIds={checkedIds}
+                setCheckedIds={setCheckedIds}
+                selectedId={selectedStaffMember?.id}
+                onSelect={(member) => {
+                  if (selectedStaffMember?.id === member.id) {
+                    setSelectedStaffMember(null);
+                    setStaffViewMode("list");
+                  } else {
+                    setSelectedStaffMember(member);
+                    setStaffViewMode("split");
+                  }
+                }}
+              />
+            </Box>
+            {staffViewMode === "split" && (
+              <Box w="50%" h="100%" overflowY="auto" p={6}>
+                <StaffProfilePanel
+                  staff={selectedStaffMember}
+                  onBack={() => {
+                    setStaffViewMode("list");
+                    setSelectedStaffMember(null);
+                  }}
+                />
+              </Box>
+            )}
+          </Flex>
         </Tabs.Content>
         <Tabs.Content value="archived" p={0} border="1px solid #E4E4E7">
           <Flex gap={6}>

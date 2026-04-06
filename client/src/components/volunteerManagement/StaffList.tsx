@@ -14,6 +14,8 @@ interface StaffListProps {
   setStaffMembers: Dispatch<SetStateAction<StaffMember[]>>;
   checkedIds: Set<number>;
   setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
+  onSelect?: (member: StaffMember) => void;
+  selectedId?: number;
 }
 
 export const StaffList = ({
@@ -23,6 +25,8 @@ export const StaffList = ({
   setStaffMembers,
   checkedIds,
   setCheckedIds,
+  onSelect,
+  selectedId,
 }: StaffListProps) => {
   const { backend } = useBackendContext();
   const [sortKey, setSortKey] = useState<keyof StaffMember | null>(null);
@@ -53,7 +57,7 @@ export const StaffList = ({
     e.stopPropagation();
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -134,8 +138,10 @@ export const StaffList = ({
           {pageSlice.map((member) => (
             <Table.Row
               key={member.id}
-              bg={checkedIds.has(member.id) ? "blue.50" : "transparent"}
+              bg={checkedIds.has(member.id) ? "blue.50" : selectedId === member.id ? "blue.50" : "transparent"}
+              boxShadow={selectedId === member.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
+              onClick={(e) => { e.stopPropagation(); onSelect?.(member); }}
             >
               <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
                 <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
