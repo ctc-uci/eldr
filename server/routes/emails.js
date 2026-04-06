@@ -34,7 +34,7 @@ router.post("/schedule", async (req, res) => {
       queuedEmail: keysToCamel(newEmail)[0],
     });
   } catch (err) {
-    //console.error("Database error:", err);
+    console.error("Database error:", err);
     res.status(400).send(err.message);
   }
 });
