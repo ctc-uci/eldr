@@ -7,6 +7,7 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
 
 import { ArchivedList } from "./ArchivedList";
+import { ArchivedProfilePanel } from "./ArchivedProfilePanel";
 import { StaffList } from "./StaffList";
 import { BulkActionBar } from "./BulkActionBar";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
@@ -45,6 +46,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
   // Archived tab state
   const [archivedVolunteers, setArchivedVolunteers] = useState<ArchivedVolunteer[]>([]);
   const [archivedPage, setArchivedPage] = useState(1);
+  const [selectedArchivedVolunteer, setSelectedArchivedVolunteer] = useState<ArchivedVolunteer | null>(null);
+  const [archivedViewMode, setArchivedViewMode] = useState<ViewMode>("list");
 
   // Shared state
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
@@ -71,6 +74,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
 
   useEffect(() => {
     setCheckedIds(new Set());
+    setSelectedArchivedVolunteer(null);
+    setArchivedViewMode("list");
   }, [activeTab]);
 
   useEffect(() => {
@@ -117,7 +122,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
       </Box>
 
       {viewMode === "split" && (
-        <Box w="50%" h="100%" overflowY="auto" pl={6}>
+        <Box w="50%" h="100%" overflowY="auto" p={6}>
           <VolunteerProfilePanel
             showBack
             onBack={() => setViewMode("list")}
@@ -181,14 +186,81 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
           />
         </Tabs.Content>
         <Tabs.Content value="archived" p={0} border="1px solid #E4E4E7">
-          <ArchivedList
-            page={archivedPage}
-            setPage={setArchivedPage}
-            archivedVolunteers={archivedVolunteers}
-            setArchivedVolunteers={setArchivedVolunteers}
-            checkedIds={checkedIds}
-            setCheckedIds={setCheckedIds}
-          />
+          <Flex gap={6}>
+            <Box
+              w={archivedViewMode === "split" ? "50%" : "100%"}
+              minW={archivedViewMode === "split" ? "300px" : undefined}
+              h="100%"
+              overflowY="auto"
+            >
+              <ArchivedList
+                page={archivedPage}
+                setPage={setArchivedPage}
+                archivedVolunteers={archivedVolunteers}
+                setArchivedVolunteers={setArchivedVolunteers}
+                checkedIds={checkedIds}
+                setCheckedIds={setCheckedIds}
+                selectedId={selectedArchivedVolunteer?.id}
+                onSelect={(volunteer) => {
+                  if (selectedArchivedVolunteer?.id === volunteer.id) {
+                    setSelectedArchivedVolunteer(null);
+                    setArchivedViewMode("list");
+                  } else {
+                    setSelectedArchivedVolunteer(volunteer);
+                    setArchivedViewMode("split");
+                  }
+                }}
+              />
+            </Box>
+            {archivedViewMode === "split" && (
+              <Box w="50%" h="100%" overflowY="auto" p={6}>
+                <ArchivedProfilePanel
+                  volunteer={selectedArchivedVolunteer}
+                  onBack={() => {
+                    setArchivedViewMode("list");
+                    setSelectedArchivedVolunteer(null);
+                  }}
+                  onConfirm={async (data) => {
+                    if (!selectedArchivedVolunteer) return;
+                    const isStaff = selectedArchivedVolunteer.roles?.some(
+                      (r) => r === "Staff" || r === "Supervisor"
+                    );
+                    await Promise.all([
+                      isStaff
+                        ? backend.put(`/admins/${selectedArchivedVolunteer.id}`, {
+                            firstName: data.firstName,
+                            lastName: data.lastName,
+                            email: data.email,
+                          })
+                        : backend.put(`/volunteers/${selectedArchivedVolunteer.id}`, {
+                            first_name: data.firstName,
+                            last_name: data.lastName,
+                            email: data.email,
+                            phone_number: data.phoneNumber,
+                          }),
+                      (isStaff
+                        ? backend.patch(`/admins/${selectedArchivedVolunteer.id}/archive`, {
+                            reactivation: data.reactivation || null,
+                            notes: data.archivedNotes || null,
+                          })
+                        : backend.patch(`/volunteers/${selectedArchivedVolunteer.id}/archive`, {
+                            reactivation: data.reactivation || null,
+                            notes: data.archivedNotes || null,
+                          })),
+                    ]);
+                    setSelectedArchivedVolunteer((prev) =>
+                      prev ? { ...prev, ...data } : prev
+                    );
+                    setArchivedVolunteers((prev) =>
+                      prev.map((v) =>
+                        v.id === selectedArchivedVolunteer.id ? { ...v, ...data } : v
+                      )
+                    );
+                  }}
+                />
+              </Box>
+            )}
+          </Flex>
         </Tabs.Content>
       </Tabs.Root>
 

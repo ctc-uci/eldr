@@ -14,6 +14,9 @@ interface ArchivedListProps {
   setArchivedVolunteers: Dispatch<SetStateAction<ArchivedVolunteer[]>>;
   checkedIds: Set<number>;
   setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
+  onSelect?: (volunteer: ArchivedVolunteer) => void;
+  selectedId?: number;
+  variant?: "table" | "list";
 }
 
 export const ArchivedList = ({
@@ -23,6 +26,8 @@ export const ArchivedList = ({
   setArchivedVolunteers,
   checkedIds,
   setCheckedIds,
+  onSelect,
+  selectedId,
 }: ArchivedListProps) => {
   const { backend } = useBackendContext();
   const [sortKey, setSortKey] = useState<keyof ArchivedVolunteer | null>(null);
@@ -135,8 +140,9 @@ export const ArchivedList = ({
           {pageSlice.map((volunteer) => (
             <Table.Row
               key={volunteer.id}
-              bg={checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
+              bg={checkedIds.has(volunteer.id) ? "blue.50" : selectedId === volunteer.id ? "blue.50" : "transparent"}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
+              onClick={() => onSelect?.(volunteer)}
             >
               <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
                 <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>

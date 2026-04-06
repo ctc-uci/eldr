@@ -26,6 +26,7 @@ export interface ArchivedVolunteer {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber?: string;
   roles?: string[];
   reactivation?: string;
   archivedDate?: string;
