@@ -188,7 +188,7 @@ export const VolunteerList = ({
                     }}
                   >
                     <Checkbox.HiddenInput />
-                    <Checkbox.Control />
+                    <Checkbox.Control cursor="pointer" />
                   </Checkbox.Root>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
@@ -227,7 +227,7 @@ export const VolunteerList = ({
                       checked={checkedIds.has(volunteer.id)}
                     >
                       <Checkbox.HiddenInput />
-                      <Checkbox.Control />
+                      <Checkbox.Control cursor="pointer" />
                     </Checkbox.Root>
                   </Table.Cell>
                   <Table.Cell>

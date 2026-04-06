@@ -119,7 +119,7 @@ export const ArchivedList = ({
                   }}
                 >
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control />
+                  <Checkbox.Control cursor="pointer" />
                 </Checkbox.Root>
               </Table.ColumnHeader>
             )}
@@ -157,7 +157,7 @@ export const ArchivedList = ({
                 <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
                   <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>
                     <Checkbox.HiddenInput />
-                    <Checkbox.Control />
+                    <Checkbox.Control cursor="pointer" />
                   </Checkbox.Root>
                 </Table.Cell>
               )}

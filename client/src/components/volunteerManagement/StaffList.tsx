@@ -122,7 +122,7 @@ export const StaffList = ({
                   }}
                 >
                   <Checkbox.HiddenInput />
-                  <Checkbox.Control />
+                  <Checkbox.Control cursor="pointer" />
                 </Checkbox.Root>
               </Table.ColumnHeader>
             )}
@@ -157,7 +157,7 @@ export const StaffList = ({
                 <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
                   <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
                     <Checkbox.HiddenInput />
-                    <Checkbox.Control />
+                    <Checkbox.Control cursor="pointer" />
                   </Checkbox.Root>
                 </Table.Cell>
               )}
