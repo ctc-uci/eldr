@@ -36,14 +36,14 @@ export const VolunteerProfilePanel = ({
   volunteer,
 }: VolunteerProfilePanelProps) => {
   const [languages, setLanguages] = useState<{ language: string; proficiency: string }[]>([]);
-  const [interests, setInterests] = useState<string[]>([]);
 
   useEffect(() => {
     if (volunteer) {
       setLanguages((volunteer.languages ?? []).map((l) => ({ language: l, proficiency: "" })));
-      setInterests(volunteer.specializations ?? []);
     }
   }, [volunteer]);
+
+  const interests = volunteer?.areasOfPractice ?? [];
 
   if (variant === "new") {
     return (

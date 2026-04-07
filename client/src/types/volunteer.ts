@@ -6,7 +6,7 @@ export interface Volunteer {
   phoneNumber?: string;
   role?: string;
   roles?: string[];
-  specializations?: string[];
+  areasOfPractice?: string[];
   languages?: string[];
   experienceLevel?: string;
 }

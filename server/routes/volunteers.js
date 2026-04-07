@@ -115,12 +115,18 @@ volunteersRouter.get("/", async (req, res) => {
       `
         SELECT v.*,
           COALESCE(
-            array_agg(r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            array_agg(DISTINCT r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
             '{}'::text[]
-          ) AS roles
+          ) AS roles,
+          COALESCE(
+            array_agg(DISTINCT aop.areas_of_practice) FILTER (WHERE aop.areas_of_practice IS NOT NULL),
+            '{}'::text[]
+          ) AS areas_of_practice
         FROM volunteers v
         LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
         LEFT JOIN roles r ON vr.role_id = r.id
+        LEFT JOIN volunteer_areas_of_practice vaop ON v.id = vaop.volunteer_id
+        LEFT JOIN areas_of_practice aop ON vaop.area_of_practice_id = aop.id
         WHERE NOT EXISTS (
           SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
         )

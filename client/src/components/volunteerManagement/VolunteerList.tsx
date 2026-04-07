@@ -198,7 +198,7 @@ export const VolunteerList = ({
                   <SortHeader label="Role" sortField="roles" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Interests" sortField="specializations" />
+                  <SortHeader label="Interests" sortField="areasOfPractice" />
                 </Table.ColumnHeader>
                 {/* // TODO: Add sortField once mostRecentEvent is added to Volunteer type */}
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
@@ -252,7 +252,7 @@ export const VolunteerList = ({
                   </Table.Cell>
                   <Table.Cell>
                     <Text fontSize="sm" color="black">
-                      {volunteer.specializations?.join(", ") ?? "—"}
+                      {volunteer.areasOfPractice?.join(", ") ?? "—"}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
