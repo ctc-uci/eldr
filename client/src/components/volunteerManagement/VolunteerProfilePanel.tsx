@@ -199,7 +199,7 @@ export const VolunteerProfilePanel = ({
       lastName: volunteer.lastName,
       phoneNumber: volunteer.phoneNumber ?? "",
       email: volunteer.email,
-      role: volunteer.role ?? "",
+      role: volunteer.roles?.[0] ?? volunteer.role ?? "",
       notaryStatus: volunteer.isNotary === true ? "active" : volunteer.isNotary === false ? "inactive" : "",
       lawSchoolYear: volunteer.lawSchoolYear ?? "",
       stateBarCertState: volunteer.stateBarCertificate ?? "",
