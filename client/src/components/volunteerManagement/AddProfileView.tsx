@@ -108,33 +108,76 @@ export const AddProfileView = () => {
 
   const onCreateProfile = async (data: VolunteerProfileFormData) => {
     try {
-      const volunteerRes = await backend.post<{ id: number }>("/volunteers", {
-        firebaseUid: crypto.randomUUID(),
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        phone_number: data.phoneNumber,
-        is_notary: notaryStatus === "active",
-      });
+      const isStaff = data.role === "staff" || data.role === "supervisor";
 
-      const volunteerId = volunteerRes.data.id;
+      if (isStaff) {
+        await backend.post("/admins", {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          isSupervisor: data.role === "supervisor",
+        });
+      } else {
+        const volunteerRes = await backend.post<{ id: number }>("/volunteers", {
+          firebaseUid: crypto.randomUUID(),
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone_number: data.phoneNumber,
+          is_notary: notaryStatus === "active" ? true : notaryStatus === "inactive" ? false : null,
+        });
 
-      const tasks: Promise<unknown>[] = [];
+        const volunteerId = volunteerRes.data.id;
 
-      const validLanguages = languages.filter((l) => l.languageId !== 0);
-      if (validLanguages.length > 0) {
+        const tasks: Promise<unknown>[] = [];
+
+        // Save extra credential fields
         tasks.push(
-          backend.post(`/volunteers/${volunteerId}/languages`, {
-            languages: validLanguages.map((l) => ({ languageId: l.languageId, isLiterate: true })),
+          backend.put(`/volunteers/${volunteerId}`, {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            phone_number: data.phoneNumber,
+            is_notary: notaryStatus === "active" ? true : notaryStatus === "inactive" ? false : null,
+            affiliated_employer: affiliated || null,
+            law_school_year: lawSchoolYear || null,
+            state_bar_certificate: stateBarCertState || null,
+            state_bar_number: stateBarNumber || null,
           })
         );
+
+        const validLanguages = languages.filter((l) => l.languageId !== 0);
+        if (validLanguages.length > 0) {
+          tasks.push(
+            backend.post(`/volunteers/${volunteerId}/languages`, {
+              languages: validLanguages.map((l) => ({
+                languageId: l.languageId,
+                proficiency: l.proficiency || "proficient",
+                isLiterate: true,
+              })),
+            })
+          );
+        }
+
+        // Save interests
+        for (const name of interests) {
+          const res = await backend.get<{ id: number; areasOfPractice: string }[]>("/areas-of-practice");
+          const area = res.data.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
+          if (area) {
+            tasks.push(backend.post(`/volunteers/${volunteerId}/areas-of-practice`, { areaOfPracticeId: area.id }));
+          } else {
+            const created = await backend.post<{ id: number }>("/areas-of-practice", { areaOfPractice: name });
+            tasks.push(backend.post(`/volunteers/${volunteerId}/areas-of-practice`, { areaOfPracticeId: created.data.id }));
+          }
+        }
+
+        await Promise.all(tasks);
       }
 
-
-      await Promise.all(tasks);
       navigate("/volunteer-management");
     } catch (error) {
-      console.error("Error creating volunteer:", error);
+      console.error("Error creating profile:", error);
     }
   };
 
@@ -205,7 +248,6 @@ export const AddProfileView = () => {
                   >
                     <option value="volunteer">Volunteer</option>
                     <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>

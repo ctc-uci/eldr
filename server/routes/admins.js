@@ -5,6 +5,47 @@ import { Router } from "express";
 
 export const adminsRouter = Router();
 
+// POST /admins - create a new staff/supervisor
+adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
+  try {
+    const { firstName, lastName, email, phoneNumber, isSupervisor } = req.body;
+
+    if (!email) return res.status(400).send("email is required");
+
+    let userId;
+    try {
+      const userResult = await db.query(
+        `INSERT INTO users (email, firebase_uid) VALUES ($1, $2) RETURNING *`,
+        [email, crypto.randomUUID()]
+      );
+      userId = userResult[0].id;
+    } catch (err) {
+      if (err.code === "23505") {
+        const existing = await db.query(`SELECT id FROM users WHERE email = $1`, [email]);
+        if (!existing.length) throw err;
+        userId = existing[0].id;
+      } else {
+        throw err;
+      }
+    }
+
+    const existing = await db.query(`SELECT id FROM admins WHERE id = $1`, [userId]);
+    if (existing.length) {
+      return res.status(409).json({ message: "Admin already exists", admin: keysToCamel(existing[0]) });
+    }
+
+    const result = await db.query(
+      `INSERT INTO admins (id, first_name, last_name, email, phone_number, is_supervisor)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [userId, firstName, lastName, email, phoneNumber ?? null, isSupervisor ?? false]
+    );
+
+    res.status(201).json(keysToCamel(result[0]));
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // GET /admins - get all admins
 adminsRouter.get("/", verifyRole("supervisor"), async (req, res) => {
   try {
