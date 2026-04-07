@@ -42,6 +42,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
+import { refreshToken } from "@/utils/auth/firebase";
+import { clearCookies } from "@/utils/auth/cookie";
+import { Cookies } from "react-cookie";
 
 type UserRecord = {
   email?: string;
@@ -128,11 +131,14 @@ export const AdminLogin: React.FC = () => {
           return;
         }
 
+        await refreshToken();
+
         const usersResponse = await backend.get("/users");
         const latestUsers = (usersResponse.data ?? []) as UserRecord[];
 
         if (!isAdmin(ssoEmail, latestUsers)) {
           await signOut(auth);
+          clearCookies(new Cookies());
           setSsoError("No staff account exists with those credentials.");
           return;
         }
@@ -140,6 +146,8 @@ export const AdminLogin: React.FC = () => {
         navigate("/adminDashboard");
       } catch (error: unknown) {
         const firebaseError = error as { message?: string };
+        await signOut(auth);
+        clearCookies(new Cookies());
         setSsoError(firebaseError.message ?? "Sign in failed. Please try again.");
       }
     };

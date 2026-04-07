@@ -44,7 +44,7 @@ usersRouter.post("/custom-token", async (req, res) => {
 });
 
 // Get all users
-usersRouter.get("/", async (req, res) => {
+usersRouter.get("/", verifyRole("staff"), async (req, res) => {
   try {
     const users = await db.query(`SELECT * FROM users ORDER BY id ASC`);
 
@@ -55,9 +55,14 @@ usersRouter.get("/", async (req, res) => {
 });
 
 // Get a user by ID
-usersRouter.get("/:firebaseUid", async (req, res) => {
+usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (process.env.NODE_ENV === "production" && (!callerUid || callerUid !== firebaseUid)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const user = await db.query("SELECT * FROM users WHERE firebase_uid = $1", [
       firebaseUid,
@@ -70,7 +75,7 @@ usersRouter.get("/:firebaseUid", async (req, res) => {
 });
 
 // Delete a user by ID, both in Firebase and NPO DB
-usersRouter.delete("/:firebaseUid", async (req, res) => {
+usersRouter.delete("/:firebaseUid", verifyRole("supervisor"), async (req, res) => {
   try {
     const { firebaseUid } = req.params;
 
@@ -102,9 +107,14 @@ usersRouter.post("/create", async (req, res) => {
 });
 
 // Update a user by ID
-usersRouter.put("/update", async (req, res) => {
+usersRouter.put("/update", verifyRole("volunteer"), async (req, res) => {
   try {
     const { email, firebaseUid } = req.body;
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (process.env.NODE_ENV === "production" && (!callerUid || callerUid !== firebaseUid)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const user = await db.query(
       "UPDATE users SET email = $1 WHERE firebase_uid = $2 RETURNING *",
@@ -128,8 +138,8 @@ usersRouter.get("/admin/all", verifyRole(["staff", "supervisor"]), async (req, r
   }
 });
 
-// Update a user's password via Firebase Admin (no auth token required — caller must know the email)
-usersRouter.put("/update-password", async (req, res) => {
+// Update a user's password via Firebase Admin
+usersRouter.put("/update-password", verifyRole("supervisor"), async (req, res) => {
   try {
     const { email, newPassword } = req.body;
 

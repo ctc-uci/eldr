@@ -14,7 +14,7 @@ import {
 } from "firebase/auth";
 import { NavigateFunction } from "react-router-dom";
 
-import { auth } from "../utils/auth/firebase";
+import { auth, refreshToken } from "../utils/auth/firebase";
 import { useBackendContext } from "./hooks/useBackendContext";
 
 interface AuthContextProps {
@@ -91,6 +91,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const result = await getRedirectResult(auth);
 
       if (result) {
+        await refreshToken();
+
         const response = await backend.get(`/users/${result.user.uid}`);
         if (response.data.length === 0) {
           try {

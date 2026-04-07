@@ -1,11 +1,12 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
 
 // Create a new volunteer
-volunteersRouter.post("/", async (req, res) => {
+volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const {
       firebaseUid,
@@ -109,7 +110,7 @@ volunteersRouter.post("/", async (req, res) => {
 });
 
 // Get all volunteers
-volunteersRouter.get("/", async (req, res) => {
+volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
@@ -124,7 +125,7 @@ volunteersRouter.get("/", async (req, res) => {
 });
 
 // Get a single volunteer via ID
-volunteersRouter.get("/:id", async (req, res) => {
+volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -144,7 +145,7 @@ volunteersRouter.get("/:id", async (req, res) => {
 });
 
 // Update a volunteer's information via ID
-volunteersRouter.put("/:id", async (req, res) => {
+volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -195,7 +196,7 @@ volunteersRouter.put("/:id", async (req, res) => {
 });
 
 // Delete a single volunteer via ID
-volunteersRouter.delete("/:id", async (req, res) => {
+volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -221,7 +222,7 @@ volunteersRouter.delete("/:id", async (req, res) => {
 // Assign an area of practice to a volunteer
 // POST /volunteers/:volunteerId/areas-of-practice
 // body: { areaOfPracticeId }
-volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
+volunteersRouter.post("/:volunteerId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
     const { areaOfPracticeId } = req.body;
@@ -256,7 +257,7 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
 
 // List all areas of practice for a volunteer
 // GET /volunteers/:volunteerId/areas-of-practice
-volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
+volunteersRouter.get("/:volunteerId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
@@ -283,6 +284,7 @@ volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
 // DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
 volunteersRouter.delete(
   "/:volunteerId/areas-of-practice/:areaOfPracticeId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { volunteerId, areaOfPracticeId } = req.params;
@@ -313,7 +315,7 @@ volunteersRouter.delete(
 // Volunteer Tags Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
+volunteersRouter.post("/:volunteerId/tags", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
     const { tagId } = req.body;
@@ -333,7 +335,7 @@ volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
   }
 });
 
-volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
+volunteersRouter.delete("/:volunteerId/tags/:tagId", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId, tagId } = req.params;
 
@@ -352,7 +354,7 @@ volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
   }
 });
 
-volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
+volunteersRouter.get("/:volunteerId/tags", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
@@ -379,7 +381,7 @@ volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
 // Batch upsert languages for a volunteer
 // POST /volunteers/:volunteerId/languages
 // body: { languages: [{ languageId, proficiency?, isLiterate? }] }
-volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
+volunteersRouter.post("/:volunteerId/languages", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
     const { languages } = req.body;
@@ -435,7 +437,7 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
 });
 
 // List all languages for a volunteer (joins to languages.language)
-volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
+volunteersRouter.get("/:volunteerId/languages", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
@@ -459,6 +461,7 @@ volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
 // Remove a language from a volunteer
 volunteersRouter.delete(
   "/:volunteerId/languages/:languageId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { volunteerId, languageId } = req.params;
@@ -489,7 +492,7 @@ volunteersRouter.delete(
 // Volunteer Roles Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
+volunteersRouter.post("/:volunteerId/roles", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
     const { roleId } = req.body;
@@ -513,7 +516,7 @@ volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
   }
 });
 
-volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
+volunteersRouter.delete("/:volunteerId/roles/:roleId", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId, roleId } = req.params;
 
@@ -536,7 +539,7 @@ volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
   }
 });
 
-volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
+volunteersRouter.get("/:volunteerId/roles", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
 
@@ -560,7 +563,7 @@ volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
 // Volunteer Locations Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
+volunteersRouter.post("/:volunteerId/locations", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
     const { locationId } = req.body;
@@ -584,7 +587,7 @@ volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
   }
 });
 
-volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
+volunteersRouter.delete("/:volunteerId/locations/:locationId", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId, locationId } = req.params;
 
@@ -607,7 +610,7 @@ volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) 
   }
 });
 
-volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
+volunteersRouter.get("/:volunteerId/locations", verifyRole("volunteer"), async (req, res) => {
   try {
     const { volunteerId } = req.params;
 

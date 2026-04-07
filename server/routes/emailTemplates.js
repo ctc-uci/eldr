@@ -1,12 +1,13 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const emailTemplatesRouter = Router();
 
 // GET: list all email templates
 // /email-templates
-emailTemplatesRouter.get("/", async (req, res) => {
+emailTemplatesRouter.get("/", verifyRole("staff"), async (req, res) => {
   try {
     const templates = await db.query(
       "SELECT * FROM email_templates ORDER BY id ASC"
@@ -20,7 +21,7 @@ emailTemplatesRouter.get("/", async (req, res) => {
 
 // POST: create a new email template
 // /email-templates
-emailTemplatesRouter.post("/", async (req, res) => {
+emailTemplatesRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { name, template_text, subject } = req.body;
 
@@ -46,7 +47,7 @@ emailTemplatesRouter.post("/", async (req, res) => {
 // Nested routes for folders (must be before /:id to match first)
 // GET: list all folders for an email template
 // /email-templates/:emailTemplateId/folders
-emailTemplatesRouter.get("/:emailTemplateId/folders", async (req, res) => {
+emailTemplatesRouter.get("/:emailTemplateId/folders", verifyRole("staff"), async (req, res) => {
   try {
     const { emailTemplateId } = req.params;
 
@@ -67,7 +68,7 @@ emailTemplatesRouter.get("/:emailTemplateId/folders", async (req, res) => {
 
 // POST: add a folder to an email template
 // /email-templates/:emailTemplateId/folders
-emailTemplatesRouter.post("/:emailTemplateId/folders", async (req, res) => {
+emailTemplatesRouter.post("/:emailTemplateId/folders", verifyRole("staff"), async (req, res) => {
   try {
     const { emailTemplateId } = req.params;
     const { folderId } = req.body;
@@ -93,6 +94,7 @@ emailTemplatesRouter.post("/:emailTemplateId/folders", async (req, res) => {
 // /email-templates/:emailTemplateId/folders/:folderId
 emailTemplatesRouter.delete(
   "/:emailTemplateId/folders/:folderId",
+  verifyRole("staff"),
   async (req, res) => {
     try {
       const { emailTemplateId, folderId } = req.params;
@@ -117,7 +119,7 @@ emailTemplatesRouter.delete(
 
 // GET: get one email template by id
 // /email-templates/:id
-emailTemplatesRouter.get("/:id", async (req, res) => {
+emailTemplatesRouter.get("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -139,7 +141,7 @@ emailTemplatesRouter.get("/:id", async (req, res) => {
 
 // PUT: update an email template
 // /email-templates/:id
-emailTemplatesRouter.put("/:id", async (req, res) => {
+emailTemplatesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, template_text, subject } = req.body;
@@ -170,7 +172,7 @@ emailTemplatesRouter.put("/:id", async (req, res) => {
 
 // DELETE: delete an email template
 // /email-templates/:id
-emailTemplatesRouter.delete("/:id", async (req, res) => {
+emailTemplatesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
