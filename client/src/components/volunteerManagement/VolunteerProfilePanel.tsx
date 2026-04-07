@@ -316,7 +316,8 @@ export const VolunteerProfilePanel = ({
       {/* Confidential Form Verified */}
       <Flex
         borderWidth="1px"
-        borderColor="gray.300"
+        borderColor={volunteer.isSignedConfidentiality ? "gray.300" : "orange.300"}
+        bg={volunteer.isSignedConfidentiality ? "white" : "orange.50"}
         borderRadius="md"
         w="fit-content"
         px={3}
@@ -325,8 +326,14 @@ export const VolunteerProfilePanel = ({
         align="center"
         gap={2}
       >
-        <Icon as={FiCheck} boxSize={4} />
-        <Text fontWeight="bold" fontSize="sm">Confidential Form Verified</Text>
+        <Icon
+          as={volunteer.isSignedConfidentiality ? FiCheck : FiX}
+          boxSize={4}
+          color={volunteer.isSignedConfidentiality ? "inherit" : "orange.500"}
+        />
+        <Text fontWeight="bold" fontSize="sm" color={volunteer.isSignedConfidentiality ? "inherit" : "orange.600"}>
+          {volunteer.isSignedConfidentiality ? "Confidential Form Verified" : "Confidential Form Not Signed"}
+        </Text>
       </Flex>
 
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>

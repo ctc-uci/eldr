@@ -10,6 +10,7 @@ export interface Volunteer {
   languages?: string[];
   experienceLevel?: string;
   mostRecentEvent?: string;
+  isSignedConfidentiality?: string;
 }
 
 export interface StaffMember {
