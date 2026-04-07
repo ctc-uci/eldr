@@ -28,6 +28,7 @@ export interface VolunteerProfileFormData {
   email: string;
   phoneNumber: string;
   experienceLevel: string;
+  areasOfPractice?: string[];
 }
 
 interface LanguageOption { id: number; language: string; }
@@ -154,6 +155,7 @@ export const VolunteerProfilePanel = ({
     notaryStatus: "", lawSchoolYear: "", stateBarCertState: "", stateBarNumber: "", affiliated: "",
   });
   const [editLanguages, setEditLanguages] = useState<LanguageEntry[]>([]);
+  const [originalLanguageIds, setOriginalLanguageIds] = useState<number[]>([]);
   const [editInterests, setEditInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
 
@@ -204,11 +206,9 @@ export const VolunteerProfilePanel = ({
       const res = await backend.get<{ id: number; language: string; proficiency: string }[]>(
         `/volunteers/${volunteer.id}/languages`
       );
-      setEditLanguages(
-        res.data.length > 0
-          ? res.data.map((l) => ({ languageId: l.id, language: l.language, proficiency: l.proficiency }))
-          : [{ languageId: 0, language: "", proficiency: "" }]
-      );
+      const mapped = res.data.map((l) => ({ languageId: l.id, language: l.language, proficiency: l.proficiency }));
+      setEditLanguages(mapped.length > 0 ? mapped : [{ languageId: 0, language: "", proficiency: "" }]);
+      setOriginalLanguageIds(res.data.map((l) => l.id));
     } catch {
       setEditLanguages([{ languageId: 0, language: "", proficiency: "" }]);
     }
@@ -227,6 +227,15 @@ export const VolunteerProfilePanel = ({
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
+    const currentLanguageIds = validLanguages.map((l) => l.languageId);
+    const removedLanguageIds = originalLanguageIds.filter((id) => !currentLanguageIds.includes(id));
+
+    await Promise.all(
+      removedLanguageIds.map((id) =>
+        backend.delete(`/volunteers/${volunteer.id}/languages/${id}`)
+      )
+    );
+
     if (validLanguages.length > 0) {
       await backend.post(`/volunteers/${volunteer.id}/languages`, {
         languages: validLanguages.map((l) => ({
@@ -256,6 +265,14 @@ export const VolunteerProfilePanel = ({
       }),
     ]);
 
+    // Optimistically update view mode state
+    setLanguages(
+      validLanguages.map((l) => ({
+        language: l.language,
+        proficiency: l.proficiency,
+      }))
+    );
+
     setIsEditing(false);
     setIsSaved(true);
     await onConfirm?.({
@@ -265,6 +282,7 @@ export const VolunteerProfilePanel = ({
       phoneNumber: form.phoneNumber,
       role: form.role,
       experienceLevel: volunteer.experienceLevel ?? "",
+      areasOfPractice: editInterests,
     });
   };
 
