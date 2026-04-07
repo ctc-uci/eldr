@@ -261,6 +261,7 @@ export const VolunteerList = ({
                         : "—"}
                     </Text>
                   </Table.Cell>
+                  {/* // TODO: Implement Preference column — source from volunteer_areas_of_practice.experience_level */}
                   <Table.Cell>
                     <Text fontSize="sm" color="black">—</Text>
                   </Table.Cell>
