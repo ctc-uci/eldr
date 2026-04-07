@@ -40,7 +40,15 @@ export const ArchivedList = ({
         backend.get<ArchivedVolunteer[]>("/volunteers/archived"),
         backend.get<ArchivedVolunteer[]>("/admins/archived"),
       ]);
-      setArchivedVolunteers([...volunteersRes.data, ...staffRes.data]);
+      setArchivedVolunteers([
+        ...volunteersRes.data.map((v) => ({ ...v, listKey: `v-${v.id}`, source: "volunteer" as const })),
+        ...staffRes.data.map((v: ArchivedVolunteer & { role?: string }) => ({
+          ...v,
+          listKey: `s-${v.id}`,
+          source: "staff" as const,
+          roles: v.roles ?? (v.role ? [v.role] : []),
+        })),
+      ]);
     })();
   }, [backend, setArchivedVolunteers]);
 
@@ -147,7 +155,7 @@ export const ArchivedList = ({
         <Table.Body>
           {pageSlice.map((volunteer) => (
             <Table.Row
-              key={volunteer.id}
+              key={volunteer.listKey}
               bg={!isList && checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
               boxShadow={selectedId === volunteer.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}

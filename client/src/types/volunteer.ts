@@ -30,6 +30,8 @@ export interface StaffMember {
 
 export interface ArchivedVolunteer {
   id: number;
+  listKey: string;
+  source: "volunteer" | "staff";
   firstName: string;
   lastName: string;
   email: string;

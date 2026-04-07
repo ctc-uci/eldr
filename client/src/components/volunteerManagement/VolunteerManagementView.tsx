@@ -257,41 +257,12 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                     setArchivedViewMode("list");
                     setSelectedArchivedVolunteer(null);
                   }}
-                  onConfirm={async (data) => {
+                  onConfirm={(data) => {
                     if (!selectedArchivedVolunteer) return;
-                    const isStaff = selectedArchivedVolunteer.roles?.some(
-                      (r) => r === "Staff" || r === "Supervisor"
-                    );
-                    await Promise.all([
-                      isStaff
-                        ? backend.put(`/admins/${selectedArchivedVolunteer.id}`, {
-                            firstName: data.firstName,
-                            lastName: data.lastName,
-                            email: data.email,
-                          })
-                        : backend.put(`/volunteers/${selectedArchivedVolunteer.id}`, {
-                            first_name: data.firstName,
-                            last_name: data.lastName,
-                            email: data.email,
-                            phone_number: data.phoneNumber,
-                          }),
-                      (isStaff
-                        ? backend.patch(`/admins/${selectedArchivedVolunteer.id}/archive`, {
-                            reactivation: data.reactivation || null,
-                            notes: data.archivedNotes || null,
-                          })
-                        : backend.patch(`/volunteers/${selectedArchivedVolunteer.id}/archive`, {
-                            reactivation: data.reactivation || null,
-                            notes: data.archivedNotes || null,
-                          })),
-                    ]);
-                    setSelectedArchivedVolunteer((prev) =>
-                      prev ? { ...prev, ...data } : prev
-                    );
+                    const updated = { ...selectedArchivedVolunteer, ...data };
+                    setSelectedArchivedVolunteer(updated);
                     setArchivedVolunteers((prev) =>
-                      prev.map((v) =>
-                        v.id === selectedArchivedVolunteer.id ? { ...v, ...data } : v
-                      )
+                      prev.map((v) => v.id === selectedArchivedVolunteer.id ? updated : v)
                     );
                   }}
                 />
@@ -320,7 +291,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
 
             await Promise.all(
               toUnarchive.map((v) =>
-                v.roles?.some((r) => r === "Staff" || r === "Supervisor")
+                v.source === "staff"
                   ? backend.patch(`/admins/${v.id}/unarchive`)
                   : backend.patch(`/volunteers/${v.id}/unarchive`)
               )
@@ -338,6 +309,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                 ...prev,
                 ...toArchive.map((s) => ({
                   id: s.id,
+                  listKey: `s-${s.id}`,
+                  source: "staff" as const,
                   firstName: s.firstName,
                   lastName: s.lastName,
                   email: s.email,
@@ -360,6 +333,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                 ...prev,
                 ...toArchive.map((v) => ({
                   id: v.id,
+                  listKey: `v-${v.id}`,
+                  source: "volunteer" as const,
                   firstName: v.firstName,
                   lastName: v.lastName,
                   email: v.email,

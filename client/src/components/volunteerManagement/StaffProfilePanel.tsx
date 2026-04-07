@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Box, Input, SimpleGrid, Tabs, Text } from "@chakra-ui/react";
+import { Box, Input, NativeSelect, SimpleGrid, Tabs, Text } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { useRoleContext } from "@/contexts/hooks/useRoleContext";
@@ -19,6 +19,7 @@ interface FormState {
   phoneNumber: string;
   email: string;
   role: string;
+  startDate: string;
 }
 
 export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelProps) => {
@@ -27,8 +28,9 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [form, setForm] = useState<FormState>({
-    firstName: "", lastName: "", phoneNumber: "", email: "", role: "",
+    firstName: "", lastName: "", phoneNumber: "", email: "", role: "", startDate: "",
   });
+  const [editRole, setEditRole] = useState("");
 
   const staffId = staff?.id;
 
@@ -45,7 +47,9 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
       phoneNumber: staff.phoneNumber ?? "",
       email: staff.email,
       role: staff.role,
+      startDate: staff.startDate ? staff.startDate.split("T")[0] : "",
     });
+    setEditRole(staff.role?.toLowerCase() === "supervisor" ? "supervisor" : "staff");
     setIsEditing(true);
   };
 
@@ -55,13 +59,18 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
+      isSupervisor: editRole === "supervisor",
+      startDate: form.startDate || null,
     });
+    const resolvedRole = editRole === "supervisor" ? "Supervisor" : "Staff";
     setIsEditing(false);
     setIsSaved(true);
     onSaved?.({
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
+      role: resolvedRole,
+      startDate: form.startDate || undefined,
     });
   };
 
@@ -72,7 +81,7 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
   if (!staff) return null;
 
   const formattedStartDate = staff.startDate
-    ? new Date(staff.startDate).toLocaleDateString("en-US", {
+    ? new Date(staff.startDate.split("T")[0] + "T00:00:00").toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
@@ -119,11 +128,23 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
               ))}
               <Box>
                 <Text fontSize="sm" fontWeight="bold" mb={1}>Role</Text>
-                <Text fontSize="sm" color="gray.500">{staff.role}</Text>
+                <NativeSelect.Root borderColor="#E4E4E7" size="sm">
+                  <NativeSelect.Field value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+                    <option value="staff">Staff</option>
+                    <option value="supervisor">Supervisor</option>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
               </Box>
               <Box>
                 <Text fontSize="sm" fontWeight="bold" mb={1}>Start Date</Text>
-                <Text fontSize="sm" color="gray.500">{formattedStartDate || "—"}</Text>
+                <Input
+                  size="sm"
+                  type="date"
+                  borderColor="#E4E4E7"
+                  value={form.startDate}
+                  onChange={setField("startDate")}
+                />
               </Box>
             </SimpleGrid>
           ) : (

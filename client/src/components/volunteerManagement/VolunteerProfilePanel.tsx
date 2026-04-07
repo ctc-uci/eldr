@@ -29,6 +29,7 @@ export interface VolunteerProfileFormData {
   phoneNumber: string;
   experienceLevel: string;
   areasOfPractice?: string[];
+  roles?: string[];
   affiliatedEmployer?: string;
   lawSchoolYear?: string;
   stateBarCertificate?: string;
@@ -39,6 +40,8 @@ export interface VolunteerProfileFormData {
 interface LanguageOption { id: number; language: string; }
 interface LanguageEntry { languageId: number; language: string; proficiency: string; }
 interface AreaOption { id: number; areasOfPractice: string; }
+interface RoleOption { id: number; roleName: string; }
+interface RoleEntry { id: number; roleName: string; }
 
 interface FormState {
   firstName: string;
@@ -164,6 +167,12 @@ export const VolunteerProfilePanel = ({
   const [editInterests, setEditInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
 
+  // Role edit state
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  const [editRoles, setEditRoles] = useState<RoleEntry[]>([]);
+  const [originalRoleIds, setOriginalRoleIds] = useState<number[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+
   // Reference data
   const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
   const [areaOptions, setAreaOptions] = useState<AreaOption[]>([]);
@@ -174,6 +183,9 @@ export const VolunteerProfilePanel = ({
       .catch(() => {});
     backend.get<AreaOption[]>("/areas-of-practice")
       .then((res) => setAreaOptions(res.data))
+      .catch(() => {});
+    backend.get<RoleOption[]>("/roles")
+      .then((res) => setRoleOptions(res.data))
       .catch(() => {});
   }, [backend]);
 
@@ -207,6 +219,17 @@ export const VolunteerProfilePanel = ({
       affiliated: volunteer.affiliatedEmployer ?? "",
     });
     setEditInterests(volunteer.areasOfPractice ?? []);
+
+    try {
+      const res = await backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`);
+      setEditRoles(res.data);
+      setOriginalRoleIds(res.data.map((r) => r.id));
+    } catch {
+      setEditRoles([]);
+      setOriginalRoleIds([]);
+    }
+    setSelectedRoleId("");
+
     try {
       const res = await backend.get<{ id: number; language: string; proficiency: string }[]>(
         `/volunteers/${volunteer.id}/languages`
@@ -255,6 +278,14 @@ export const VolunteerProfilePanel = ({
       });
     }
 
+    const currentRoleIds = editRoles.map((r) => r.id);
+    const rolesToAdd = currentRoleIds.filter((id) => !originalRoleIds.includes(id));
+    const rolesToRemove = originalRoleIds.filter((id) => !currentRoleIds.includes(id));
+    await Promise.all([
+      ...rolesToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/roles`, { roleId: id })),
+      ...rolesToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/roles/${id}`)),
+    ]);
+
     const original = volunteer.areasOfPractice ?? [];
     const toAdd = editInterests.filter((name) => !original.includes(name));
     const toRemove = original.filter((name) => !editInterests.includes(name));
@@ -289,7 +320,8 @@ export const VolunteerProfilePanel = ({
       lastName: form.lastName,
       email: form.email,
       phoneNumber: form.phoneNumber,
-      role: form.role,
+      role: editRoles[0]?.roleName ?? form.role,
+      roles: editRoles.map((r) => r.roleName),
       experienceLevel: volunteer.experienceLevel ?? "",
       areasOfPractice: editInterests,
       affiliatedEmployer: form.affiliated || undefined,
@@ -360,10 +392,10 @@ export const VolunteerProfilePanel = ({
         <Tabs.Content value="profile" pt={6}>
           {isEditing ? (
             <SimpleGrid columns={2} gap={4} maxW="560px">
-              {(["firstName", "lastName", "phoneNumber", "email", "role"] as const).map((key) => (
+              {(["firstName", "lastName", "phoneNumber", "email"] as const).map((key) => (
                 <Box key={key}>
-                  <Text fontSize="sm" fontWeight="bold" mb={1} textTransform="capitalize">
-                    {key === "phoneNumber" ? "Phone Number" : key === "firstName" ? "First Name" : key === "lastName" ? "Last Name" : key.charAt(0).toUpperCase() + key.slice(1)}
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>
+                    {key === "phoneNumber" ? "Phone Number" : key === "firstName" ? "First Name" : key === "lastName" ? "Last Name" : "Email"}
                   </Text>
                   <Input
                     size="sm"
@@ -374,6 +406,47 @@ export const VolunteerProfilePanel = ({
                   />
                 </Box>
               ))}
+              <Box gridColumn="span 2">
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Role</Text>
+                <Flex gap={2} wrap="wrap" mb={2}>
+                  {editRoles.map((r) => (
+                    <Flex key={r.id} align="center" gap={1} px={2} py={0.5} bg="gray.100" borderRadius="sm" fontSize="sm">
+                      {r.roleName}
+                      <Icon as={FiX} boxSize={3} cursor="pointer" color="gray.400" _hover={{ color: "gray.700" }} onClick={() => setEditRoles((prev) => prev.filter((x) => x.id !== r.id))} />
+                    </Flex>
+                  ))}
+                </Flex>
+                <Flex gap={2} align="center">
+                  <NativeSelect.Root borderColor="#E4E4E7" size="sm" flex={1} maxW="200px">
+                    <NativeSelect.Field
+                      placeholder="Add role..."
+                      color={!selectedRoleId ? "#A1A1AA" : "inherit"}
+                      value={selectedRoleId}
+                      onChange={(e) => setSelectedRoleId(e.target.value)}
+                    >
+                      {roleOptions
+                        .filter((o) => !editRoles.some((r) => r.id === o.id))
+                        .map((o) => <option key={o.id} value={o.id}>{o.roleName}</option>)}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={!selectedRoleId}
+                    onClick={() => {
+                      const id = Number(selectedRoleId);
+                      const option = roleOptions.find((o) => o.id === id);
+                      if (option) {
+                        setEditRoles((prev) => [...prev, { id: option.id, roleName: option.roleName }]);
+                        setSelectedRoleId("");
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Flex>
+              </Box>
             </SimpleGrid>
           ) : (
             <SimpleGrid columns={2} gap={6} maxW="560px">
@@ -381,7 +454,10 @@ export const VolunteerProfilePanel = ({
               <ProfileField label="Last Name" value={volunteer.lastName} />
               <ProfileField label="Phone Number" value={volunteer.phoneNumber || ""} />
               <ProfileField label="Email" value={volunteer.email} />
-              <ProfileField label="Role" value={volunteer.role || "Volunteer"} />
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Role</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.roles?.join(", ") || volunteer.role || "—"}</Text>
+              </Box>
             </SimpleGrid>
           )}
         </Tabs.Content>

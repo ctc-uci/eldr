@@ -192,7 +192,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       return res.status(400).send("Invalid staff profile id");
     }
 
-    const { firstName, lastName, email, calendarEmail, isSupervisor } = req.body;
+    const { firstName, lastName, email, calendarEmail, isSupervisor, startDate } = req.body;
 
     const result = await db.query(
       `UPDATE admins
@@ -200,10 +200,11 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
            last_name = $2,
            email = $3,
            calendar_email = $4,
-           is_supervisor = COALESCE($5, is_supervisor)
+           is_supervisor = COALESCE($5, is_supervisor),
+           start_date = COALESCE($7, start_date)
        WHERE id = $6
        RETURNING *`,
-      [firstName, lastName, email, calendarEmail, isSupervisor, adminId]
+      [firstName, lastName, email, calendarEmail, isSupervisor, adminId, startDate || null]
     );
 
     if (result.rowCount === 0) {

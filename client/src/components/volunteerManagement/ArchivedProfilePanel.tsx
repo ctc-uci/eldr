@@ -1,5 +1,9 @@
-import { Box, SimpleGrid, Tabs, Text } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 
+import { Box, Button, Flex, Icon, Input, NativeSelect, SimpleGrid, Tabs, Text, Textarea } from "@chakra-ui/react";
+import { FiX } from "react-icons/fi";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { ArchivedVolunteer } from "@/types/volunteer";
 import { ProfileField, ProfilePanelShell } from "./ProfilePanelShell";
 
@@ -10,6 +14,7 @@ export interface ArchivedProfileFormData {
   email: string;
   reactivation: string;
   archivedNotes: string;
+  roles?: string[];
 }
 
 interface ArchivedProfilePanelProps {
@@ -18,7 +23,131 @@ interface ArchivedProfilePanelProps {
   onConfirm?: (data: ArchivedProfileFormData) => Promise<void> | void;
 }
 
-export const ArchivedProfilePanel = ({ volunteer, onBack }: ArchivedProfilePanelProps) => {
+interface FormState {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  reactivation: string;
+  archivedNotes: string;
+}
+
+interface RoleOption { id: number; roleName: string; }
+interface RoleEntry { id: number; roleName: string; }
+
+export const ArchivedProfilePanel = ({ volunteer, onBack, onConfirm }: ArchivedProfilePanelProps) => {
+  const { backend } = useBackendContext();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [form, setForm] = useState<FormState>({
+    firstName: "", lastName: "", phoneNumber: "", email: "", reactivation: "", archivedNotes: "",
+  });
+
+  // Role editing state
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  const [editRoles, setEditRoles] = useState<RoleEntry[]>([]);
+  const [originalRoleIds, setOriginalRoleIds] = useState<number[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+
+  const volunteerId = volunteer?.id;
+  const isStaff = volunteer?.source === "staff";
+
+  useEffect(() => {
+    setIsEditing(false);
+    setIsSaved(false);
+  }, [volunteerId]);
+
+  useEffect(() => {
+    backend.get<RoleOption[]>("/roles")
+      .then((res) => setRoleOptions(res.data))
+      .catch(() => {});
+  }, [backend]);
+
+  const enterEditMode = async () => {
+    if (!volunteer) return;
+    setForm({
+      firstName: volunteer.firstName,
+      lastName: volunteer.lastName,
+      phoneNumber: volunteer.phoneNumber ?? "",
+      email: volunteer.email,
+      reactivation: volunteer.reactivation ?? "",
+      archivedNotes: volunteer.archivedNotes ?? "",
+    });
+
+    if (!isStaff) {
+      try {
+        const res = await backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`);
+        setEditRoles(res.data);
+        setOriginalRoleIds(res.data.map((r) => r.id));
+      } catch {
+        setEditRoles([]);
+        setOriginalRoleIds([]);
+      }
+    }
+
+    setSelectedRoleId("");
+    setIsEditing(true);
+  };
+
+  const addRole = () => {
+    const id = Number(selectedRoleId);
+    if (!id) return;
+    const option = roleOptions.find((r) => r.id === id);
+    if (!option || editRoles.some((r) => r.id === id)) return;
+    setEditRoles((prev) => [...prev, { id: option.id, roleName: option.roleName }]);
+    setSelectedRoleId("");
+  };
+
+  const removeRole = (id: number) => {
+    setEditRoles((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleSave = async () => {
+    if (!volunteer) return;
+
+    const saves: Promise<unknown>[] = [
+      isStaff
+        ? backend.put(`/admins/${volunteer.id}`, {
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+          })
+        : backend.put(`/volunteers/${volunteer.id}`, {
+            first_name: form.firstName,
+            last_name: form.lastName,
+            email: form.email,
+            phone_number: form.phoneNumber,
+          }),
+      isStaff
+        ? backend.patch(`/admins/${volunteer.id}/archive`, {
+            reactivation: form.reactivation || null,
+            notes: form.archivedNotes || null,
+          })
+        : backend.patch(`/volunteers/${volunteer.id}/archive`, {
+            reactivation: form.reactivation || null,
+            notes: form.archivedNotes || null,
+          }),
+    ];
+
+    if (!isStaff) {
+      const currentIds = editRoles.map((r) => r.id);
+      const toAdd = currentIds.filter((id) => !originalRoleIds.includes(id));
+      const toRemove = originalRoleIds.filter((id) => !currentIds.includes(id));
+      toAdd.forEach((id) => saves.push(backend.post(`/volunteers/${volunteer.id}/roles`, { roleId: id })));
+      toRemove.forEach((id) => saves.push(backend.delete(`/volunteers/${volunteer.id}/roles/${id}`)));
+    }
+
+    await Promise.all(saves);
+
+    setIsEditing(false);
+    setIsSaved(true);
+    await onConfirm?.({ ...form, roles: isStaff ? volunteer.roles : editRoles.map((r) => r.roleName) });
+  };
+
+  const setField = (key: keyof FormState) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
   if (!volunteer) return null;
 
   const formattedArchivedDate = volunteer.archivedDate
@@ -32,8 +161,13 @@ export const ArchivedProfilePanel = ({ volunteer, onBack }: ArchivedProfilePanel
   return (
     <ProfilePanelShell
       name={`${volunteer.firstName} ${volunteer.lastName}`}
+      breadcrumbLabel="Archived Profile"
       onBack={onBack}
       roles={volunteer.roles}
+      isEditing={isEditing}
+      isSaved={isSaved}
+      onEditToggle={enterEditMode}
+      onSave={handleSave}
     >
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>
         <Tabs.List w="100%">
@@ -42,33 +176,145 @@ export const ArchivedProfilePanel = ({ volunteer, onBack }: ArchivedProfilePanel
         </Tabs.List>
 
         <Tabs.Content value="profile" pt={6}>
-          <SimpleGrid columns={2} gap={6} maxW="560px">
-            <ProfileField label="First Name" value={volunteer.firstName} />
-            <ProfileField label="Last Name" value={volunteer.lastName} />
-            <ProfileField label="Phone Number" value={volunteer.phoneNumber} />
-            <ProfileField label="Email" value={volunteer.email} />
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Role</Text>
-              <Text fontSize="sm" color="gray.500">{volunteer.roles?.join(", ") || "—"}</Text>
-            </Box>
-          </SimpleGrid>
+          {isEditing ? (
+            <SimpleGrid columns={2} gap={4} maxW="560px">
+              {(["firstName", "lastName", "phoneNumber", "email"] as const).map((key) => (
+                <Box key={key}>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>
+                    {key === "firstName" ? "First Name"
+                      : key === "lastName" ? "Last Name"
+                      : key === "phoneNumber" ? "Phone Number"
+                      : "Email"}
+                  </Text>
+                  <Input
+                    size="sm"
+                    borderColor="#E4E4E7"
+                    value={form[key]}
+                    onChange={setField(key)}
+                    _placeholder={{ color: "#A1A1AA" }}
+                  />
+                </Box>
+              ))}
+
+              {/* Role editing — volunteers only */}
+              <Box gridColumn="span 2">
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Role</Text>
+                {isStaff ? (
+                  <Text fontSize="sm" color="gray.500">{volunteer.roles?.join(", ") || "—"}</Text>
+                ) : (
+                  <Box>
+                    <Flex gap={2} wrap="wrap" mb={2}>
+                      {editRoles.map((r) => (
+                        <Flex
+                          key={r.id}
+                          align="center"
+                          gap={1}
+                          px={2}
+                          py={0.5}
+                          bg="gray.100"
+                          borderRadius="sm"
+                          fontSize="sm"
+                        >
+                          {r.roleName}
+                          <Icon
+                            as={FiX}
+                            boxSize={3}
+                            cursor="pointer"
+                            color="gray.400"
+                            _hover={{ color: "gray.700" }}
+                            onClick={() => removeRole(r.id)}
+                          />
+                        </Flex>
+                      ))}
+                    </Flex>
+                    <Flex gap={2} align="center">
+                      <NativeSelect.Root borderColor="#E4E4E7" size="sm" flex={1} maxW="200px">
+                        <NativeSelect.Field
+                          placeholder="Add role..."
+                          color={!selectedRoleId ? "#A1A1AA" : "inherit"}
+                          value={selectedRoleId}
+                          onChange={(e) => setSelectedRoleId(e.target.value)}
+                        >
+                          {roleOptions
+                            .filter((o) => !editRoles.some((r) => r.id === o.id))
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>{o.roleName}</option>
+                            ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <Button size="xs" variant="outline" onClick={addRole} disabled={!selectedRoleId}>
+                        Add
+                      </Button>
+                    </Flex>
+                  </Box>
+                )}
+              </Box>
+            </SimpleGrid>
+          ) : (
+            <SimpleGrid columns={2} gap={6} maxW="560px">
+              <ProfileField label="First Name" value={volunteer.firstName} />
+              <ProfileField label="Last Name" value={volunteer.lastName} />
+              <ProfileField label="Phone Number" value={volunteer.phoneNumber} />
+              <ProfileField label="Email" value={volunteer.email} />
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Role</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.roles?.join(", ") || "—"}</Text>
+              </Box>
+            </SimpleGrid>
+          )}
         </Tabs.Content>
 
         <Tabs.Content value="record" pt={6}>
-          <SimpleGrid columns={2} gap={6} maxW="560px">
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Reactivation</Text>
-              <Text fontSize="sm" color="gray.500">{volunteer.reactivation || "—"}</Text>
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Archived Date</Text>
-              <Text fontSize="sm" color="gray.500">{formattedArchivedDate || "—"}</Text>
-            </Box>
-            <Box gridColumn="span 2">
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Note</Text>
-              <Text fontSize="sm" color="gray.500">{volunteer.archivedNotes || "—"}</Text>
-            </Box>
-          </SimpleGrid>
+          {isEditing ? (
+            <SimpleGrid columns={2} gap={4} maxW="560px">
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Reactivation</Text>
+                <NativeSelect.Root borderColor="#E4E4E7" size="sm">
+                  <NativeSelect.Field
+                    value={form.reactivation}
+                    onChange={(e) => setForm((prev) => ({ ...prev, reactivation: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="Review">Review</option>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Archived Date</Text>
+                <Text fontSize="sm" color="gray.500">{formattedArchivedDate || "—"}</Text>
+              </Box>
+              <Box gridColumn="span 2">
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Note</Text>
+                <Textarea
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.archivedNotes}
+                  onChange={setField("archivedNotes")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                  rows={3}
+                />
+              </Box>
+            </SimpleGrid>
+          ) : (
+            <SimpleGrid columns={2} gap={6} maxW="560px">
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Reactivation</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.reactivation || "—"}</Text>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Archived Date</Text>
+                <Text fontSize="sm" color="gray.500">{formattedArchivedDate || "—"}</Text>
+              </Box>
+              <Box gridColumn="span 2">
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Note</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.archivedNotes || "—"}</Text>
+              </Box>
+            </SimpleGrid>
+          )}
         </Tabs.Content>
       </Tabs.Root>
     </ProfilePanelShell>
