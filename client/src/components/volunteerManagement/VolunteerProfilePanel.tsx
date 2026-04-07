@@ -40,6 +40,7 @@ export interface VolunteerProfileFormData {
 interface LanguageOption { id: number; language: string; }
 interface LanguageEntry { languageId: number; language: string; proficiency: string; }
 interface AreaOption { id: number; areasOfPractice: string; }
+interface AreaEntry { id: number | null; name: string; }
 interface RoleOption { id: number; roleName: string; }
 interface RoleEntry { id: number; roleName: string; }
 
@@ -63,79 +64,6 @@ interface VolunteerProfilePanelProps {
   onConfirm?: (data: VolunteerProfileFormData) => Promise<void> | void;
   volunteer?: Volunteer | null;
 }
-
-// ---------------------------------------------------------------------------
-// TagInput
-// ---------------------------------------------------------------------------
-
-const TagInput = ({
-  tags,
-  tagInput,
-  onTagInputChange,
-  onAddTag,
-  onRemoveTag,
-}: {
-  tags: string[];
-  tagInput: string;
-  onTagInputChange: (v: string) => void;
-  onAddTag: (v: string) => void;
-  onRemoveTag: (v: string) => void;
-}) => (
-  <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3} minH="80px">
-    <Flex gap={2} wrap="wrap" align="center">
-      {tags.map((t) => (
-        <Flex
-          key={t}
-          align="center"
-          gap={1}
-          px={2}
-          py={0.5}
-          bg="gray.100"
-          borderRadius="sm"
-          fontSize="sm"
-        >
-          {t}
-          <Icon
-            as={FiX}
-            boxSize={3}
-            cursor="pointer"
-            color="gray.400"
-            _hover={{ color: "gray.700" }}
-            onClick={() => onRemoveTag(t)}
-          />
-        </Flex>
-      ))}
-      <Flex align="center" gap={1}>
-        <Input
-          size="xs"
-          placeholder="Add tag..."
-          border="none"
-          value={tagInput}
-          onChange={(e) => onTagInputChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && tagInput.trim()) {
-              e.preventDefault();
-              onAddTag(tagInput.trim());
-              onTagInputChange("");
-            }
-          }}
-          w="100px"
-          color="black"
-          _placeholder={{ color: "#A1A1AA" }}
-        />
-        {tagInput && (
-          <Icon
-            as={FiX}
-            boxSize={3}
-            cursor="pointer"
-            color="gray.400"
-            onClick={() => onTagInputChange("")}
-          />
-        )}
-      </Flex>
-    </Flex>
-  </Box>
-);
 
 // ---------------------------------------------------------------------------
 // VolunteerProfilePanel
@@ -164,7 +92,8 @@ export const VolunteerProfilePanel = ({
   });
   const [editLanguages, setEditLanguages] = useState<LanguageEntry[]>([]);
   const [originalLanguageIds, setOriginalLanguageIds] = useState<number[]>([]);
-  const [editInterests, setEditInterests] = useState<string[]>([]);
+  const [editInterests, setEditInterests] = useState<AreaEntry[]>([]);
+  const [originalInterestIds, setOriginalInterestIds] = useState<number[]>([]);
   const [interestInput, setInterestInput] = useState("");
 
   // Role edit state
@@ -218,7 +147,17 @@ export const VolunteerProfilePanel = ({
       stateBarNumber: volunteer.stateBarNumber ?? "",
       affiliated: volunteer.affiliatedEmployer ?? "",
     });
-    setEditInterests(volunteer.areasOfPractice ?? []);
+    try {
+      const res = await backend.get<{ areaOfPracticeId: number; areasOfPractice: string }[]>(
+        `/volunteers/${volunteer.id}/areas-of-practice`
+      );
+      setEditInterests(res.data.map((a) => ({ id: a.areaOfPracticeId, name: a.areasOfPractice })));
+      setOriginalInterestIds(res.data.map((a) => a.areaOfPracticeId));
+    } catch {
+      setEditInterests([]);
+      setOriginalInterestIds([]);
+    }
+    setInterestInput("");
 
     try {
       const res = await backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`);
@@ -286,23 +225,40 @@ export const VolunteerProfilePanel = ({
       ...rolesToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/roles/${id}`)),
     ]);
 
-    const original = volunteer.areasOfPractice ?? [];
-    const toAdd = editInterests.filter((name) => !original.includes(name));
-    const toRemove = original.filter((name) => !editInterests.includes(name));
+    // Resolve null-id interests: match by name or create new area
+    const resolvedInterests: { id: number; name: string }[] = [];
+    for (const interest of editInterests) {
+      if (interest.id !== null) {
+        resolvedInterests.push({ id: interest.id, name: interest.name });
+      } else {
+        const existing = areaOptions.find(
+          (a) => a.areasOfPractice.toLowerCase() === interest.name.toLowerCase()
+        );
+        if (existing) {
+          resolvedInterests.push({ id: existing.id, name: existing.areasOfPractice });
+        } else {
+          try {
+            const res = await backend.post<{ id: number; areasOfPractice: string }>(
+              "/areas-of-practice",
+              { areaOfPractice: interest.name }
+            );
+            const newId = res.data.id;
+            resolvedInterests.push({ id: newId, name: interest.name });
+            setAreaOptions((prev) => [...prev, { id: newId, areasOfPractice: interest.name }]);
+          } catch (err) {
+            console.error("Failed to create area of practice:", err);
+          }
+        }
+      }
+    }
+
+    const currentInterestIds = resolvedInterests.map((a) => a.id);
+    const interestsToAdd = currentInterestIds.filter((id) => !originalInterestIds.includes(id));
+    const interestsToRemove = originalInterestIds.filter((id) => !currentInterestIds.includes(id));
 
     await Promise.all([
-      ...toAdd.map((name) => {
-        const area = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
-        return area
-          ? backend.post(`/volunteers/${volunteer.id}/areas-of-practice`, { areaOfPracticeId: area.id })
-          : Promise.resolve();
-      }),
-      ...toRemove.map((name) => {
-        const area = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
-        return area
-          ? backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${area.id}`)
-          : Promise.resolve();
-      }),
+      ...interestsToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/areas-of-practice`, { areaOfPracticeId: id })),
+      ...interestsToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${id}`)),
     ]);
 
     // Optimistically update view mode state
@@ -323,7 +279,7 @@ export const VolunteerProfilePanel = ({
       role: editRoles[0]?.roleName ?? form.role,
       roles: editRoles.map((r) => r.roleName),
       experienceLevel: volunteer.experienceLevel ?? "",
-      areasOfPractice: editInterests,
+      areasOfPractice: resolvedInterests.map((a) => a.name),
       affiliatedEmployer: form.affiliated || undefined,
       lawSchoolYear: form.lawSchoolYear || undefined,
       stateBarCertificate: form.stateBarCertState || undefined,
@@ -348,7 +304,7 @@ export const VolunteerProfilePanel = ({
     );
   }
 
-  const interests = isEditing ? editInterests : (volunteer.areasOfPractice ?? []);
+  const interests = volunteer.areasOfPractice ?? [];
 
   return (
     <ProfilePanelShell
@@ -620,17 +576,63 @@ export const VolunteerProfilePanel = ({
               {/* Interests */}
               <Box>
                 <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
-                <TagInput
-                  tags={editInterests}
-                  tagInput={interestInput}
-                  onTagInputChange={setInterestInput}
-                  onAddTag={(v) =>
-                    setEditInterests((prev) => (prev.includes(v) ? prev : [...prev, v]))
-                  }
-                  onRemoveTag={(v) =>
-                    setEditInterests((prev) => prev.filter((i) => i !== v))
-                  }
-                />
+                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3}>
+                  <Flex gap={2} wrap="wrap" align="center">
+                    {editInterests.map((interest, idx) => (
+                      <Flex
+                        key={idx}
+                        align="center"
+                        gap={1}
+                        px={2}
+                        py={0.5}
+                        bg="gray.100"
+                        borderRadius="sm"
+                        fontSize="sm"
+                      >
+                        {interest.name}
+                        <Icon
+                          as={FiX}
+                          boxSize={3}
+                          cursor="pointer"
+                          color="gray.400"
+                          _hover={{ color: "gray.700" }}
+                          onClick={() => setEditInterests((prev) => prev.filter((_, i) => i !== idx))}
+                        />
+                      </Flex>
+                    ))}
+                    <Flex align="center" gap={1}>
+                      <Input
+                        size="xs"
+                        placeholder="Add tag..."
+                        border="none"
+                        value={interestInput}
+                        onChange={(e) => setInterestInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && interestInput.trim()) {
+                            e.preventDefault();
+                            const name = interestInput.trim();
+                            if (!editInterests.some((i) => i.name.toLowerCase() === name.toLowerCase())) {
+                              setEditInterests((prev) => [...prev, { id: null, name }]);
+                            }
+                            setInterestInput("");
+                          }
+                        }}
+                        w="100px"
+                        color="black"
+                        _placeholder={{ color: "#A1A1AA" }}
+                      />
+                      {interestInput && (
+                        <Icon
+                          as={FiX}
+                          boxSize={3}
+                          cursor="pointer"
+                          color="gray.400"
+                          onClick={() => setInterestInput("")}
+                        />
+                      )}
+                    </Flex>
+                  </Flex>
+                </Box>
               </Box>
             </Box>
           ) : (

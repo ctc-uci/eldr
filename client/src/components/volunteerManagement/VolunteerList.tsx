@@ -251,7 +251,7 @@ export const VolunteerList = ({
                   </Table.Cell>
                   <Table.Cell>
                     <Text fontSize="sm" color="black">
-                      {volunteer.areasOfPractice?.join(", ") ?? "—"}
+                      {volunteer.areasOfPractice?.join(", ") || "—"}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
