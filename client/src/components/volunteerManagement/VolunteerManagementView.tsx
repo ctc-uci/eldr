@@ -210,6 +210,12 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                     setStaffViewMode("list");
                     setSelectedStaffMember(null);
                   }}
+                  onSaved={(data) => {
+                    setSelectedStaffMember((prev) => prev ? { ...prev, ...data } : prev);
+                    setStaffMembers((prev) =>
+                      prev.map((s) => s.id === selectedStaffMember?.id ? { ...s, ...data } : s)
+                    );
+                  }}
                 />
               </Box>
             )}

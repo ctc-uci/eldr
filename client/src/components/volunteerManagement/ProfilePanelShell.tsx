@@ -49,6 +49,7 @@ interface ProfilePanelShellProps {
   children: ReactNode;
   isEditing?: boolean;
   isSaved?: boolean;
+  canEdit?: boolean;
   onEditToggle?: () => void;
   onSave?: () => void;
   /** @deprecated no longer used */
@@ -63,6 +64,7 @@ export const ProfilePanelShell = ({
   children,
   isEditing = false,
   isSaved = false,
+  canEdit = true,
   onEditToggle,
   onSave,
 }: ProfilePanelShellProps) => (
@@ -128,7 +130,7 @@ export const ProfilePanelShell = ({
           <Icon as={LuSave} boxSize={4} />
           Save
         </Button>
-      ) : (
+      ) : canEdit ? (
         <Button
           type="button"
           size="sm"
@@ -141,7 +143,7 @@ export const ProfilePanelShell = ({
           <FiEdit2 />
           Edit
         </Button>
-      )}
+      ) : null}
     </Flex>
 
     {roles && roles.length > 0 && (
