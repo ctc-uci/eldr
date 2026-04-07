@@ -275,6 +275,10 @@ volunteersRouter.put("/:id", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     await db.query(
@@ -288,7 +292,11 @@ volunteersRouter.put("/:id", async (req, res) => {
             form_link = COALESCE($7, form_link),
             is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
             is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary)
+            is_notary = COALESCE($10, is_notary),
+            affiliated_employer = COALESCE($11, affiliated_employer),
+            law_school_year = COALESCE($12, law_school_year),
+            state_bar_certificate = COALESCE($13, state_bar_certificate),
+            state_bar_number = COALESCE($14, state_bar_number)
         WHERE id = $1;
       `,
       [
@@ -302,6 +310,10 @@ volunteersRouter.put("/:id", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer ?? null,
+        law_school_year ?? null,
+        state_bar_certificate ?? null,
+        state_bar_number ?? null,
       ]
     );
 

@@ -12,5 +12,9 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     form_completed BOOLEAN,
     form_link TEXT,
     is_signed_confidentiality TIMESTAMP,
+    affiliated_employer TEXT,
+    law_school_year TEXT,
+    state_bar_certificate TEXT,
+    state_bar_number TEXT,
     FOREIGN KEY (id) REFERENCES users(id)
 );

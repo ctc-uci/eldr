@@ -29,6 +29,11 @@ export interface VolunteerProfileFormData {
   phoneNumber: string;
   experienceLevel: string;
   areasOfPractice?: string[];
+  affiliatedEmployer?: string;
+  lawSchoolYear?: string;
+  stateBarCertificate?: string;
+  stateBarNumber?: string;
+  isNotary?: boolean | null;
 }
 
 interface LanguageOption { id: number; language: string; }
@@ -195,11 +200,11 @@ export const VolunteerProfilePanel = ({
       phoneNumber: volunteer.phoneNumber ?? "",
       email: volunteer.email,
       role: volunteer.role ?? "",
-      notaryStatus: "",
-      lawSchoolYear: "",
-      stateBarCertState: "",
-      stateBarNumber: "",
-      affiliated: "",
+      notaryStatus: volunteer.isNotary === true ? "active" : volunteer.isNotary === false ? "inactive" : "",
+      lawSchoolYear: volunteer.lawSchoolYear ?? "",
+      stateBarCertState: volunteer.stateBarCertificate ?? "",
+      stateBarNumber: volunteer.stateBarNumber ?? "",
+      affiliated: volunteer.affiliatedEmployer ?? "",
     });
     setEditInterests(volunteer.areasOfPractice ?? []);
     try {
@@ -224,6 +229,10 @@ export const VolunteerProfilePanel = ({
       email: form.email,
       phone_number: form.phoneNumber,
       is_notary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
+      affiliated_employer: form.affiliated || null,
+      law_school_year: form.lawSchoolYear || null,
+      state_bar_certificate: form.stateBarCertState || null,
+      state_bar_number: form.stateBarNumber || null,
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
@@ -283,6 +292,11 @@ export const VolunteerProfilePanel = ({
       role: form.role,
       experienceLevel: volunteer.experienceLevel ?? "",
       areasOfPractice: editInterests,
+      affiliatedEmployer: form.affiliated || undefined,
+      lawSchoolYear: form.lawSchoolYear || undefined,
+      stateBarCertificate: form.stateBarCertState || undefined,
+      stateBarNumber: form.stateBarNumber || undefined,
+      isNotary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
     });
   };
 
@@ -547,25 +561,27 @@ export const VolunteerProfilePanel = ({
             <Box>
               <Box mb={6}>
                 <Text fontSize="sm" fontWeight="bold" mb={1}>Affiliated Employer/Education</Text>
-                <Text fontSize="sm" color="gray.500">—</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.affiliatedEmployer || "—"}</Text>
               </Box>
 
               <SimpleGrid columns={2} gap={6} maxW="560px" mb={6}>
                 <Box>
                   <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
-                  <Text fontSize="sm" color="gray.500">—</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {volunteer.isNotary === true ? "Active" : volunteer.isNotary === false ? "Inactive" : "—"}
+                  </Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
-                  <Text fontSize="sm" color="gray.500">—</Text>
+                  <Text fontSize="sm" color="gray.500">{volunteer.lawSchoolYear || "—"}</Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
-                  <Text fontSize="sm" color="gray.500">—</Text>
+                  <Text fontSize="sm" color="gray.500">{volunteer.stateBarCertificate || "—"}</Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
-                  <Text fontSize="sm" color="gray.500">—</Text>
+                  <Text fontSize="sm" color="gray.500">{volunteer.stateBarNumber || "—"}</Text>
                 </Box>
               </SimpleGrid>
 

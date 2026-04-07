@@ -11,6 +11,10 @@ export interface Volunteer {
   experienceLevel?: string;
   mostRecentEvent?: string;
   isSignedConfidentiality?: string;
+  affiliatedEmployer?: string;
+  lawSchoolYear?: string;
+  stateBarCertificate?: string;
+  stateBarNumber?: string;
 }
 
 export interface StaffMember {
