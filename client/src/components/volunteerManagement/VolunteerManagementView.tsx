@@ -71,9 +71,25 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
     ? volunteers.filter((v) => fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`))
     : volunteers;
 
+  const filteredStaff = debouncedQuery
+    ? staffMembers.filter((s) => fuzzyMatch(debouncedQuery, `${s.firstName} ${s.lastName}`))
+    : staffMembers;
+
+  const filteredArchived = debouncedQuery
+    ? archivedVolunteers.filter((v) => fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`))
+    : archivedVolunteers;
+
   useEffect(() => {
     setPage(1);
   }, [filteredVolunteers.length]);
+
+  useEffect(() => {
+    setStaffPage(1);
+  }, [filteredStaff.length]);
+
+  useEffect(() => {
+    setArchivedPage(1);
+  }, [filteredArchived.length]);
 
   useEffect(() => {
     setCheckedIds(new Set());
@@ -144,8 +160,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
   );
 
   const paginationCount =
-    activeTab === "archived" ? archivedVolunteers.length :
-    activeTab === "staff" ? staffMembers.length :
+    activeTab === "archived" ? filteredArchived.length :
+    activeTab === "staff" ? filteredStaff.length :
     filteredVolunteers.length;
   const currentPage =
     activeTab === "archived" ? archivedPage :
@@ -186,7 +202,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                 variant={staffViewMode === "split" ? "list" : "table"}
                 page={staffPage}
                 setPage={setStaffPage}
-                staffMembers={staffMembers}
+                staffMembers={filteredStaff}
                 setStaffMembers={setStaffMembers}
                 checkedIds={checkedIds}
                 setCheckedIds={setCheckedIds}
@@ -233,7 +249,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                 variant={archivedViewMode === "split" ? "list" : "table"}
                 page={archivedPage}
                 setPage={setArchivedPage}
-                archivedVolunteers={archivedVolunteers}
+                archivedVolunteers={filteredArchived}
                 setArchivedVolunteers={setArchivedVolunteers}
                 checkedIds={checkedIds}
                 setCheckedIds={setCheckedIds}
