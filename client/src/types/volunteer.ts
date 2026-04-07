@@ -11,6 +11,7 @@ export interface Volunteer {
   experienceLevel?: string;
   mostRecentEvent?: string;
   isSignedConfidentiality?: string;
+  isNotary?: boolean;
   affiliatedEmployer?: string;
   lawSchoolYear?: string;
   stateBarCertificate?: string;
