@@ -1,5 +1,6 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { admin } from "@/config/firebase";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
@@ -7,16 +8,26 @@ export const adminsRouter = Router();
 
 // POST /admins - create a new staff/supervisor
 adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
+  let firebaseUid = null;
   try {
     const { firstName, lastName, email, phoneNumber, isSupervisor } = req.body;
 
     if (!email) return res.status(400).send("email is required");
 
+    // Create Firebase Auth account with a temporary password
+    const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
+    const firebaseUser = await admin.auth().createUser({
+      email,
+      password: tempPassword,
+      displayName: `${firstName} ${lastName}`,
+    });
+    firebaseUid = firebaseUser.uid;
+
     let userId;
     try {
       const userResult = await db.query(
-        `INSERT INTO users (email, firebase_uid) VALUES ($1, $2) RETURNING *`,
-        [email, crypto.randomUUID()]
+        `INSERT INTO users (email, firebase_uid, role) VALUES ($1, $2, $3) RETURNING *`,
+        [email, firebaseUid, isSupervisor ? "supervisor" : "staff"]
       );
       userId = userResult[0].id;
     } catch (err) {
@@ -42,6 +53,10 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
 
     res.status(201).json(keysToCamel(result[0]));
   } catch (err) {
+    // Clean up Firebase user if DB insert failed
+    if (firebaseUid) {
+      await admin.auth().deleteUser(firebaseUid).catch(() => {});
+    }
     res.status(500).send(err.message);
   }
 });
@@ -266,10 +281,10 @@ adminsRouter.delete("/:id", verifyRole("supervisor"), async (req, res) => {
       return res.status(400).send("Invalid staff profile id");
     }
 
+    const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [adminId]);
+
     const result = await db.query(
-      `DELETE FROM admins
-       WHERE id = $1
-       RETURNING *`,
+      `DELETE FROM admins WHERE id = $1 RETURNING *`,
       [adminId]
     );
 
@@ -277,10 +292,13 @@ adminsRouter.delete("/:id", verifyRole("supervisor"), async (req, res) => {
       return res.status(404).send("Staff profile not found");
     }
 
-    res.status(200).json({
-      message: "Staff profile deleted successfully",
-      admin: keysToCamel(result),
-    });
+    await db.query(`DELETE FROM users WHERE id = $1`, [adminId]);
+
+    if (userRow.length && userRow[0].firebase_uid) {
+      await admin.auth().deleteUser(userRow[0].firebase_uid).catch(() => {});
+    }
+
+    res.status(200).json({ message: "Staff profile deleted successfully" });
   } catch (err) {
     res.status(500).send(err.message);
   }

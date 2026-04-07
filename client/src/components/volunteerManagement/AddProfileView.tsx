@@ -246,8 +246,8 @@ export const AddProfileView = () => {
                     color={!roleValue ? "#A1A1AA" : "inherit"}
                     {...register("role", { required: true })}
                   >
-                    <option value="volunteer">Volunteer</option>
                     <option value="staff">Staff</option>
+                    <option value="supervisor">Supervisor</option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>

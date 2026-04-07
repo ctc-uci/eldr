@@ -1,5 +1,6 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { admin } from "@/config/firebase";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
@@ -247,13 +248,16 @@ volunteersRouter.get("/:id", async (req, res) => {
 volunteersRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await db.query(
-      `
-        DELETE FROM volunteers
-        WHERE id = $1;
-      `,
-      [id]
-    );
+
+    const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [id]);
+
+    await db.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
+    await db.query(`DELETE FROM users WHERE id = $1`, [id]);
+
+    if (userRow.length && userRow[0].firebase_uid) {
+      await admin.auth().deleteUser(userRow[0].firebase_uid).catch(() => {});
+    }
+
     res.status(200).send(`Volunteer ${id} deleted successfully`);
   } catch (e) {
     res.status(500).send(e.message);

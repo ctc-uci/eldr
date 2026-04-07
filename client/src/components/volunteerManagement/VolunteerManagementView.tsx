@@ -381,13 +381,24 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
         count={checkedIds.size}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
-          await Promise.all(
-            [...checkedIds].map((id) => backend.delete(`/volunteers/${id}`))
-          );
-          setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
-          if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
-            setSelectedVolunteer(null);
-            setViewMode("list");
+          if (activeTab === "staff") {
+            await Promise.all(
+              [...checkedIds].map((id) => backend.delete(`/admins/${id}`))
+            );
+            setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
+            if (selectedStaffMember && checkedIds.has(selectedStaffMember.id)) {
+              setSelectedStaffMember(null);
+              setStaffViewMode("list");
+            }
+          } else {
+            await Promise.all(
+              [...checkedIds].map((id) => backend.delete(`/volunteers/${id}`))
+            );
+            setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+            if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
+              setSelectedVolunteer(null);
+              setViewMode("list");
+            }
           }
           setCheckedIds(new Set());
           setDeleteModalOpen(false);
