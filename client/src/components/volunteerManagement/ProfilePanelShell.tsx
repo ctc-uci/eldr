@@ -6,9 +6,11 @@ import {
   Button,
   Flex,
   Heading,
+  Icon,
   Text,
 } from "@chakra-ui/react";
-import { FiEdit2 } from "react-icons/fi";
+import { FiCheck, FiEdit2 } from "react-icons/fi";
+import { LuTriangleAlert, LuSave } from "react-icons/lu";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 // ---------------------------------------------------------------------------
@@ -45,10 +47,10 @@ interface ProfilePanelShellProps {
   onBack?: () => void;
   roles?: string[];
   children: ReactNode;
-  /** @deprecated no longer used */
   isEditing?: boolean;
-  /** @deprecated no longer used */
-  onEditStart?: () => void;
+  isSaved?: boolean;
+  onEditToggle?: () => void;
+  onSave?: () => void;
   /** @deprecated no longer used */
   formId?: string;
 }
@@ -59,8 +61,12 @@ export const ProfilePanelShell = ({
   onBack,
   roles,
   children,
+  isEditing = false,
+  isSaved = false,
+  onEditToggle,
+  onSave,
 }: ProfilePanelShellProps) => (
-  <Box mt={4} mr={4} minH="464px" maxH="464px">
+  <Box mt={4} mr={4}>
     <Breadcrumb.Root fontSize="sm" color="#27272A" mb={4}>
       <Breadcrumb.List>
         <Breadcrumb.Item>
@@ -77,11 +83,65 @@ export const ProfilePanelShell = ({
 
     <Flex align="center" mb={4} gap={3}>
       <Heading size="xl" fontWeight="bold">{name}</Heading>
+      {isEditing && (
+        <Flex
+          align="center"
+          gap={1.5}
+          px={3}
+          py={1}
+          bg="yellow.50"
+          border="1px solid"
+          borderColor="yellow.300"
+          borderRadius="md"
+          color="yellow.800"
+        >
+          <Icon as={LuTriangleAlert} boxSize={3.5} />
+          <Text fontSize="sm" fontWeight="medium">Edit Mode</Text>
+        </Flex>
+      )}
+      {!isEditing && isSaved && (
+        <Flex
+          align="center"
+          gap={1.5}
+          px={3}
+          py={1}
+          bg="green.50"
+          border="1px solid"
+          borderColor="green.300"
+          borderRadius="md"
+          color="green.700"
+        >
+          <Icon as={FiCheck} boxSize={3.5} />
+          <Text fontSize="sm" fontWeight="medium">Updated</Text>
+        </Flex>
+      )}
       <Box flex="1" />
-      <Button type="button" size="sm" bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }} gap={2}>
-        <FiEdit2 />
-        Edit
-      </Button>
+      {isEditing ? (
+        <Button
+          size="sm"
+          bg="#27272A"
+          color="white"
+          _hover={{ bg: "#3F3F46" }}
+          gap={2}
+          onClick={onSave}
+        >
+          <Icon as={LuSave} boxSize={4} />
+          Save
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          bg="#5F80A0"
+          color="white"
+          _hover={{ bg: "#487C9E" }}
+          gap={2}
+          onClick={onEditToggle}
+        >
+          <FiEdit2 />
+          Edit
+        </Button>
+      )}
     </Flex>
 
     {roles && roles.length > 0 && (

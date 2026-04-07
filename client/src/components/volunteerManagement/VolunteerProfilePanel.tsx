@@ -2,16 +2,24 @@ import { useEffect, useState } from "react";
 
 import {
   Box,
+  Button,
   Flex,
   Icon,
+  Input,
+  NativeSelect,
   SimpleGrid,
   Tabs,
   Text,
 } from "@chakra-ui/react";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiX } from "react-icons/fi";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
 import { ProfileField, ProfilePanelShell } from "./ProfilePanelShell";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface VolunteerProfileFormData {
   firstName: string;
@@ -22,6 +30,23 @@ export interface VolunteerProfileFormData {
   experienceLevel: string;
 }
 
+interface LanguageOption { id: number; language: string; }
+interface LanguageEntry { languageId: number; language: string; proficiency: string; }
+interface AreaOption { id: number; areasOfPractice: string; }
+
+interface FormState {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  role: string;
+  notaryStatus: string;
+  lawSchoolYear: string;
+  stateBarCertState: string;
+  stateBarNumber: string;
+  affiliated: string;
+}
+
 interface VolunteerProfilePanelProps {
   variant?: string;
   showBack?: boolean;
@@ -30,20 +55,218 @@ interface VolunteerProfilePanelProps {
   volunteer?: Volunteer | null;
 }
 
+// ---------------------------------------------------------------------------
+// TagInput
+// ---------------------------------------------------------------------------
+
+const TagInput = ({
+  tags,
+  tagInput,
+  onTagInputChange,
+  onAddTag,
+  onRemoveTag,
+}: {
+  tags: string[];
+  tagInput: string;
+  onTagInputChange: (v: string) => void;
+  onAddTag: (v: string) => void;
+  onRemoveTag: (v: string) => void;
+}) => (
+  <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3} minH="80px">
+    <Flex gap={2} wrap="wrap" align="center">
+      {tags.map((t) => (
+        <Flex
+          key={t}
+          align="center"
+          gap={1}
+          px={2}
+          py={0.5}
+          bg="gray.100"
+          borderRadius="sm"
+          fontSize="sm"
+        >
+          {t}
+          <Icon
+            as={FiX}
+            boxSize={3}
+            cursor="pointer"
+            color="gray.400"
+            _hover={{ color: "gray.700" }}
+            onClick={() => onRemoveTag(t)}
+          />
+        </Flex>
+      ))}
+      <Flex align="center" gap={1}>
+        <Input
+          size="xs"
+          placeholder="Add tag..."
+          border="none"
+          value={tagInput}
+          onChange={(e) => onTagInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && tagInput.trim()) {
+              e.preventDefault();
+              onAddTag(tagInput.trim());
+              onTagInputChange("");
+            }
+          }}
+          w="100px"
+          color="black"
+          _placeholder={{ color: "#A1A1AA" }}
+        />
+        {tagInput && (
+          <Icon
+            as={FiX}
+            boxSize={3}
+            cursor="pointer"
+            color="gray.400"
+            onClick={() => onTagInputChange("")}
+          />
+        )}
+      </Flex>
+    </Flex>
+  </Box>
+);
+
+// ---------------------------------------------------------------------------
+// VolunteerProfilePanel
+// ---------------------------------------------------------------------------
+
+const PROFICIENCY_OPTIONS = ["Native", "Fluent", "Advanced", "Intermediate", "Elementary"];
+const LAW_SCHOOL_YEARS = ["1L", "2L", "3L", "Graduate"];
+
 export const VolunteerProfilePanel = ({
   variant = "profile",
   onBack,
   volunteer,
+  onConfirm,
 }: VolunteerProfilePanelProps) => {
+  const { backend } = useBackendContext();
+
+  // View mode
   const [languages, setLanguages] = useState<{ language: string; proficiency: string }[]>([]);
 
-  useEffect(() => {
-    if (volunteer) {
-      setLanguages((volunteer.languages ?? []).map((l) => ({ language: l, proficiency: "" })));
-    }
-  }, [volunteer]);
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [form, setForm] = useState<FormState>({
+    firstName: "", lastName: "", phoneNumber: "", email: "", role: "",
+    notaryStatus: "", lawSchoolYear: "", stateBarCertState: "", stateBarNumber: "", affiliated: "",
+  });
+  const [editLanguages, setEditLanguages] = useState<LanguageEntry[]>([]);
+  const [editInterests, setEditInterests] = useState<string[]>([]);
+  const [interestInput, setInterestInput] = useState("");
 
-  const interests = volunteer?.areasOfPractice ?? [];
+  // Reference data
+  const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
+  const [areaOptions, setAreaOptions] = useState<AreaOption[]>([]);
+
+  useEffect(() => {
+    backend.get<LanguageOption[]>("/languages")
+      .then((res) => setLanguageOptions(res.data))
+      .catch(() => {});
+    backend.get<AreaOption[]>("/areas-of-practice")
+      .then((res) => setAreaOptions(res.data))
+      .catch(() => {});
+  }, [backend]);
+
+  const volunteerId = volunteer?.id;
+
+  useEffect(() => {
+    if (!volunteerId) return;
+    setIsEditing(false);
+    setIsSaved(false);
+    backend
+      .get<{ id: number; language: string; proficiency: string }[]>(`/volunteers/${volunteerId}/languages`)
+      .then((res) => setLanguages(res.data.map((l) => ({ language: l.language, proficiency: l.proficiency }))))
+      .catch(() => setLanguages([]));
+  }, [volunteerId, backend]);
+
+  const setField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const enterEditMode = async () => {
+    if (!volunteer) return;
+    setForm({
+      firstName: volunteer.firstName,
+      lastName: volunteer.lastName,
+      phoneNumber: volunteer.phoneNumber ?? "",
+      email: volunteer.email,
+      role: volunteer.role ?? "",
+      notaryStatus: "",
+      lawSchoolYear: "",
+      stateBarCertState: "",
+      stateBarNumber: "",
+      affiliated: "",
+    });
+    setEditInterests(volunteer.areasOfPractice ?? []);
+    try {
+      const res = await backend.get<{ id: number; language: string; proficiency: string }[]>(
+        `/volunteers/${volunteer.id}/languages`
+      );
+      setEditLanguages(
+        res.data.length > 0
+          ? res.data.map((l) => ({ languageId: l.id, language: l.language, proficiency: l.proficiency }))
+          : [{ languageId: 0, language: "", proficiency: "" }]
+      );
+    } catch {
+      setEditLanguages([{ languageId: 0, language: "", proficiency: "" }]);
+    }
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!volunteer) return;
+
+    await backend.put(`/volunteers/${volunteer.id}`, {
+      first_name: form.firstName,
+      last_name: form.lastName,
+      email: form.email,
+      phone_number: form.phoneNumber,
+      is_notary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
+    });
+
+    const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
+    if (validLanguages.length > 0) {
+      await backend.post(`/volunteers/${volunteer.id}/languages`, {
+        languages: validLanguages.map((l) => ({
+          languageId: l.languageId,
+          proficiency: l.proficiency || "proficient",
+          isLiterate: true,
+        })),
+      });
+    }
+
+    const original = volunteer.areasOfPractice ?? [];
+    const toAdd = editInterests.filter((name) => !original.includes(name));
+    const toRemove = original.filter((name) => !editInterests.includes(name));
+
+    await Promise.all([
+      ...toAdd.map((name) => {
+        const area = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
+        return area
+          ? backend.post(`/volunteers/${volunteer.id}/areas-of-practice`, { areaOfPracticeId: area.id })
+          : Promise.resolve();
+      }),
+      ...toRemove.map((name) => {
+        const area = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
+        return area
+          ? backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${area.id}`)
+          : Promise.resolve();
+      }),
+    ]);
+
+    setIsEditing(false);
+    setIsSaved(true);
+    await onConfirm?.({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      phoneNumber: form.phoneNumber,
+      role: form.role,
+      experienceLevel: volunteer.experienceLevel ?? "",
+    });
+  };
 
   if (variant === "new") {
     return (
@@ -61,13 +284,29 @@ export const VolunteerProfilePanel = ({
     );
   }
 
+  const interests = isEditing ? editInterests : (volunteer.areasOfPractice ?? []);
+
   return (
     <ProfilePanelShell
       name={`${volunteer.firstName} ${volunteer.lastName}`}
       onBack={onBack}
+      isEditing={isEditing}
+      isSaved={isSaved}
+      onEditToggle={enterEditMode}
+      onSave={handleSave}
     >
       {/* Confidential Form Verified */}
-      <Flex borderWidth="1px" borderColor="gray.300" borderRadius="md" w="fit-content" px={3} py={2} mb={4} align="center" gap={2}>
+      <Flex
+        borderWidth="1px"
+        borderColor="gray.300"
+        borderRadius="md"
+        w="fit-content"
+        px={3}
+        py={2}
+        mb={4}
+        align="center"
+        gap={2}
+      >
         <Icon as={FiCheck} boxSize={4} />
         <Text fontWeight="bold" fontSize="sm">Confidential Form Verified</Text>
       </Flex>
@@ -75,73 +314,281 @@ export const VolunteerProfilePanel = ({
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>
         <Tabs.List w="100%">
           <Tabs.Trigger value="profile" w="100%" h="8">Profile Information</Tabs.Trigger>
-          <Tabs.Trigger value="occupation" w="100%" h="8">Occupation & Credentials</Tabs.Trigger>
+          <Tabs.Trigger value="occupation" w="100%" h="8">Occupation &amp; Credentials</Tabs.Trigger>
         </Tabs.List>
 
+        {/* ── Profile Information ── */}
         <Tabs.Content value="profile" pt={6}>
-          <SimpleGrid columns={2} gap={6} maxW="560px">
-            <ProfileField label="First Name" value={volunteer.firstName} />
-            <ProfileField label="Last Name" value={volunteer.lastName} />
-            <ProfileField label="Phone Number" value={volunteer.phoneNumber || ""} />
-            <ProfileField label="Email" value={volunteer.email} />
-            <ProfileField label="Role" value={volunteer.role || "Volunteer"} />
-          </SimpleGrid>
+          {isEditing ? (
+            <SimpleGrid columns={2} gap={4} maxW="560px">
+              {(["firstName", "lastName", "phoneNumber", "email", "role"] as const).map((key) => (
+                <Box key={key}>
+                  <Text fontSize="sm" fontWeight="bold" mb={1} textTransform="capitalize">
+                    {key === "phoneNumber" ? "Phone Number" : key === "firstName" ? "First Name" : key === "lastName" ? "Last Name" : key.charAt(0).toUpperCase() + key.slice(1)}
+                  </Text>
+                  <Input
+                    size="sm"
+                    borderColor="#E4E4E7"
+                    value={form[key]}
+                    onChange={setField(key)}
+                    _placeholder={{ color: "#A1A1AA" }}
+                  />
+                </Box>
+              ))}
+            </SimpleGrid>
+          ) : (
+            <SimpleGrid columns={2} gap={6} maxW="560px">
+              <ProfileField label="First Name" value={volunteer.firstName} />
+              <ProfileField label="Last Name" value={volunteer.lastName} />
+              <ProfileField label="Phone Number" value={volunteer.phoneNumber || ""} />
+              <ProfileField label="Email" value={volunteer.email} />
+              <ProfileField label="Role" value={volunteer.role || "Volunteer"} />
+            </SimpleGrid>
+          )}
         </Tabs.Content>
 
+        {/* ── Occupation & Credentials ── */}
         <Tabs.Content value="occupation" pt={6}>
-          <SimpleGrid columns={2} gap={6} maxW="560px" mb={6}>
+          {isEditing ? (
             <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
-              <Text fontSize="sm" color="gray.500">—</Text>
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
-              <Text fontSize="sm" color="gray.500">—</Text>
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
-              <Text fontSize="sm" color="gray.500">—</Text>
-            </Box>
-            <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
-              <Text fontSize="sm" color="gray.500">—</Text>
-            </Box>
-          </SimpleGrid>
+              {/* Affiliated Employer/Education */}
+              <Box mb={5}>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Affiliated Employer/Education</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  placeholder="Type here"
+                  _placeholder={{ color: "#A1A1AA" }}
+                  value={form.affiliated}
+                  onChange={setField("affiliated")}
+                />
+              </Box>
 
-          {/* Languages */}
-          <Box mb={6}>
-            <Text fontSize="sm" fontWeight="bold" mb={2}>Languages</Text>
-            <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={4} maxW="400px">
-              {languages.length > 0 ? (
-                languages.map((entry, i) => (
-                  <SimpleGrid key={i} columns={2} mb={2} gap={2}>
-                    <Text fontSize="sm">{entry.language}</Text>
-                    <Text fontSize="sm" color="gray.500">{entry.proficiency || "—"}</Text>
-                  </SimpleGrid>
-                ))
-              ) : (
-                <Text fontSize="sm" color="gray.500">—</Text>
-              )}
-            </Box>
-          </Box>
+              {/* Notary / Law School Year */}
+              <SimpleGrid columns={2} gap={4} maxW="560px" mb={5}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
+                  <NativeSelect.Root borderColor="#E4E4E7" size="sm">
+                    <NativeSelect.Field
+                      placeholder="Select"
+                      color={!form.notaryStatus ? "#A1A1AA" : "inherit"}
+                      value={form.notaryStatus}
+                      onChange={setField("notaryStatus")}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="none">None</option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
+                  <NativeSelect.Root borderColor="#E4E4E7" size="sm">
+                    <NativeSelect.Field
+                      placeholder="Select"
+                      color={!form.lawSchoolYear ? "#A1A1AA" : "inherit"}
+                      value={form.lawSchoolYear}
+                      onChange={setField("lawSchoolYear")}
+                    >
+                      {LAW_SCHOOL_YEARS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Box>
 
-          {/* Interests */}
-          <Box>
-            <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
-            <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={4} maxW="400px">
-              {interests.length > 0 ? (
-                <Flex gap={2} wrap="wrap">
-                  {interests.map((s) => (
-                    <Flex key={s} align="center" gap={1} px={3} py={1} bg="gray.100" borderRadius="sm" fontSize="sm">
-                      {s}
+                {/* State Bar Certificate / Number */}
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
+                  <Input
+                    size="sm"
+                    borderColor="#E4E4E7"
+                    placeholder="e.g. California, United States"
+                    _placeholder={{ color: "#A1A1AA" }}
+                    value={form.stateBarCertState}
+                    onChange={setField("stateBarCertState")}
+                  />
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
+                  <Input
+                    size="sm"
+                    borderColor="#E4E4E7"
+                    placeholder="Enter number"
+                    _placeholder={{ color: "#A1A1AA" }}
+                    value={form.stateBarNumber}
+                    onChange={setField("stateBarNumber")}
+                  />
+                </Box>
+              </SimpleGrid>
+
+              {/* Languages */}
+              <Box mb={5}>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Languages</Text>
+                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={4}>
+                  <Text fontSize="sm" color="gray.500" mb={3}>
+                    Select the languages and your proficiency level
+                  </Text>
+                  {editLanguages.map((entry, i) => (
+                    <Flex key={i} gap={2} mb={2} align="center">
+                      <NativeSelect.Root borderColor="#E4E4E7" flex={1} size="sm">
+                        <NativeSelect.Field
+                          placeholder="Language"
+                          color={!entry.languageId ? "#A1A1AA" : "inherit"}
+                          value={entry.languageId || ""}
+                          onChange={(e) => {
+                            const id = Number(e.target.value);
+                            const lang = languageOptions.find((l) => l.id === id);
+                            setEditLanguages((prev) =>
+                              prev.map((l, idx) =>
+                                idx === i ? { ...l, languageId: id, language: lang?.language ?? "" } : l
+                              )
+                            );
+                          }}
+                        >
+                          {languageOptions.map((l) => (
+                            <option key={l.id} value={l.id}>{l.language}</option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <NativeSelect.Root borderColor="#E4E4E7" flex={1} size="sm">
+                        <NativeSelect.Field
+                          placeholder="Proficiency"
+                          color={!entry.proficiency ? "#A1A1AA" : "inherit"}
+                          value={entry.proficiency}
+                          onChange={(e) =>
+                            setEditLanguages((prev) =>
+                              prev.map((l, idx) =>
+                                idx === i ? { ...l, proficiency: e.target.value } : l
+                              )
+                            )
+                          }
+                        >
+                          {PROFICIENCY_OPTIONS.map((p) => (
+                            <option key={p} value={p.toLowerCase()}>{p}</option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      {editLanguages.length > 1 && (
+                        <Icon
+                          as={FiX}
+                          boxSize={3}
+                          cursor="pointer"
+                          color="gray.400"
+                          _hover={{ color: "gray.700" }}
+                          onClick={() =>
+                            setEditLanguages((prev) => prev.filter((_, idx) => idx !== i))
+                          }
+                        />
+                      )}
                     </Flex>
                   ))}
-                </Flex>
-              ) : (
-                <Text fontSize="sm" color="gray.500">—</Text>
-              )}
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="blue.500"
+                    mt={2}
+                    gap={1}
+                    onClick={() =>
+                      setEditLanguages((prev) => [...prev, { languageId: 0, language: "", proficiency: "" }])
+                    }
+                  >
+                    + Add Language
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Interests */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
+                <TagInput
+                  tags={editInterests}
+                  tagInput={interestInput}
+                  onTagInputChange={setInterestInput}
+                  onAddTag={(v) =>
+                    setEditInterests((prev) => (prev.includes(v) ? prev : [...prev, v]))
+                  }
+                  onRemoveTag={(v) =>
+                    setEditInterests((prev) => prev.filter((i) => i !== v))
+                  }
+                />
+              </Box>
             </Box>
-          </Box>
+          ) : (
+            <Box>
+              <Box mb={6}>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Affiliated Employer/Education</Text>
+                <Text fontSize="sm" color="gray.500">—</Text>
+              </Box>
+
+              <SimpleGrid columns={2} gap={6} maxW="560px" mb={6}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
+                  <Text fontSize="sm" color="gray.500">—</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
+                  <Text fontSize="sm" color="gray.500">—</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
+                  <Text fontSize="sm" color="gray.500">—</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
+                  <Text fontSize="sm" color="gray.500">—</Text>
+                </Box>
+              </SimpleGrid>
+
+              {/* Languages */}
+              <Box mb={6}>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Languages</Text>
+                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="xl" p={5} justifyContent="center" maxWidth="400px">
+                  {languages.length > 0 ? (
+                    languages.map((entry, i) => (
+                      <SimpleGrid key={i} columns={2} px={2} py={1.5}>
+                        <Text fontSize="sm">{entry.language}</Text>
+                        <Text fontSize="sm">{entry.proficiency ? entry.proficiency.charAt(0).toUpperCase() + entry.proficiency.slice(1) : "—"}</Text>
+                      </SimpleGrid>
+                    ))
+                  ) : (
+                    <Text fontSize="sm" color="gray.500" px={2}>—</Text>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Interests */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
+                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={4} maxW="400px">
+                  {interests.length > 0 ? (
+                    <Flex gap={2} wrap="wrap">
+                      {interests.map((s) => (
+                        <Flex
+                          key={s}
+                          align="center"
+                          gap={1}
+                          px={3}
+                          py={1}
+                          bg="gray.100"
+                          borderRadius="sm"
+                          fontSize="sm"
+                        >
+                          {s}
+                        </Flex>
+                      ))}
+                    </Flex>
+                  ) : (
+                    <Text fontSize="sm" color="gray.500">—</Text>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+          )}
         </Tabs.Content>
       </Tabs.Root>
     </ProfilePanelShell>

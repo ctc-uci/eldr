@@ -132,14 +132,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
             showBack
             onBack={() => setViewMode("list")}
             volunteer={selectedVolunteer}
-            onConfirm={async (data) => {
+            onConfirm={(data) => {
               if (!selectedVolunteer) return;
-              await backend.put(`/volunteers/${selectedVolunteer.id}`, {
-                first_name: data.firstName,
-                last_name: data.lastName,
-                email: data.email,
-                phone_number: data.phoneNumber,
-              });
               setSelectedVolunteer((prev) => prev ? { ...prev, ...data } : prev);
               setRefreshTrigger((prev) => prev + 1);
             }}
