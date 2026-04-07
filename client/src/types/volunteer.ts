@@ -9,6 +9,7 @@ export interface Volunteer {
   areasOfPractice?: string[];
   languages?: string[];
   experienceLevel?: string;
+  mostRecentEvent?: string;
 }
 
 export interface StaffMember {

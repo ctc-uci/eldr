@@ -200,9 +200,8 @@ export const VolunteerList = ({
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
                   <SortHeader label="Interests" sortField="areasOfPractice" />
                 </Table.ColumnHeader>
-                {/* // TODO: Add sortField once mostRecentEvent is added to Volunteer type */}
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Most Recent Event" />
+                  <SortHeader label="Most Recent Event" sortField="mostRecentEvent" />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
                   <SortHeader label="Preference" sortField="experienceLevel" />
@@ -256,7 +255,11 @@ export const VolunteerList = ({
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="black">—</Text>
+                    <Text fontSize="sm" color="black">
+                      {volunteer.mostRecentEvent
+                        ? new Date(volunteer.mostRecentEvent).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        : "—"}
+                    </Text>
                   </Table.Cell>
                   <Table.Cell>
                     <Text fontSize="sm" color="black">—</Text>

@@ -121,7 +121,16 @@ volunteersRouter.get("/", async (req, res) => {
           COALESCE(
             array_agg(DISTINCT aop.areas_of_practice) FILTER (WHERE aop.areas_of_practice IS NOT NULL),
             '{}'::text[]
-          ) AS areas_of_practice
+          ) AS areas_of_practice,
+          (
+            SELECT c.date
+            FROM clinic_registration cr
+            JOIN clinics c ON cr.clinic_id = c.id
+            WHERE cr.volunteer_id = v.id
+              AND cr.has_attended = TRUE
+            ORDER BY c.date DESC
+            LIMIT 1
+          ) AS most_recent_event
         FROM volunteers v
         LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
         LEFT JOIN roles r ON vr.role_id = r.id
