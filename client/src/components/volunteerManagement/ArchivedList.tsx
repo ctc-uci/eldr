@@ -12,10 +12,10 @@ interface ArchivedListProps {
   setPage: Dispatch<SetStateAction<number>>;
   archivedVolunteers: ArchivedVolunteer[];
   setArchivedVolunteers: Dispatch<SetStateAction<ArchivedVolunteer[]>>;
-  checkedIds: Set<number>;
-  setCheckedIds: Dispatch<SetStateAction<Set<number>>>;
+  checkedKeys: Set<string>;
+  setCheckedKeys: Dispatch<SetStateAction<Set<string>>>;
   onSelect?: (volunteer: ArchivedVolunteer) => void;
-  selectedId?: number;
+  selectedKey?: string;
   variant?: "table" | "list";
 }
 
@@ -24,10 +24,10 @@ export const ArchivedList = ({
   setPage,
   archivedVolunteers,
   setArchivedVolunteers,
-  checkedIds,
-  setCheckedIds,
+  checkedKeys,
+  setCheckedKeys,
   onSelect,
-  selectedId,
+  selectedKey,
   variant = "table",
 }: ArchivedListProps) => {
   const { backend } = useBackendContext();
@@ -70,11 +70,11 @@ export const ArchivedList = ({
       })
     : archivedVolunteers;
 
-  const toggleCheck = (e: React.MouseEvent, id: number) => {
+  const toggleCheck = (e: React.MouseEvent, key: string) => {
     e.stopPropagation();
-    setCheckedIds((prev) => {
+    setCheckedKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
   };
@@ -112,16 +112,16 @@ export const ArchivedList = ({
                   cursor="pointer"
                   size="sm"
                   checked={
-                    sortedVolunteers.length > 0 &&
-                    pageSlice.every((v) => checkedIds.has(v.id))
+                    pageSlice.length > 0 &&
+                    pageSlice.every((v) => checkedKeys.has(v.listKey))
                   }
                   onCheckedChange={() => {
-                    const pageIds = pageSlice.map((v) => v.id);
-                    const allChecked = pageIds.every((id) => checkedIds.has(id));
-                    setCheckedIds((prev) => {
+                    const pageKeys = pageSlice.map((v) => v.listKey);
+                    const allChecked = pageKeys.every((k) => checkedKeys.has(k));
+                    setCheckedKeys((prev) => {
                       const next = new Set(prev);
-                      if (allChecked) pageIds.forEach((id) => next.delete(id));
-                      else pageIds.forEach((id) => next.add(id));
+                      if (allChecked) pageKeys.forEach((k) => next.delete(k));
+                      else pageKeys.forEach((k) => next.add(k));
                       return next;
                     });
                   }}
@@ -156,14 +156,14 @@ export const ArchivedList = ({
           {pageSlice.map((volunteer) => (
             <Table.Row
               key={volunteer.listKey}
-              bg={!isList && checkedIds.has(volunteer.id) ? "blue.50" : "transparent"}
-              boxShadow={selectedId === volunteer.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
+              bg={!isList && checkedKeys.has(volunteer.listKey) ? "blue.50" : "transparent"}
+              boxShadow={selectedKey === volunteer.listKey ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
             >
               {!isList && (
-                <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
-                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(volunteer.id)}>
+                <Table.Cell onClick={(e) => toggleCheck(e, volunteer.listKey)}>
+                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedKeys.has(volunteer.listKey)}>
                     <Checkbox.HiddenInput />
                     <Checkbox.Control cursor="pointer" />
                   </Checkbox.Root>

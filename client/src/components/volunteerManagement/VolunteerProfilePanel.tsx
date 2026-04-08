@@ -86,6 +86,7 @@ export const VolunteerProfilePanel = ({
   // Edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: "", lastName: "", phoneNumber: "", email: "", role: "",
     notaryStatus: "", lawSchoolYear: "", stateBarCertState: "", stateBarNumber: "", affiliated: "",
@@ -184,6 +185,8 @@ export const VolunteerProfilePanel = ({
 
   const handleSave = async () => {
     if (!volunteer) return;
+    setSaveError(null);
+    try {
 
     await backend.put(`/volunteers/${volunteer.id}`, {
       first_name: form.firstName,
@@ -286,6 +289,10 @@ export const VolunteerProfilePanel = ({
       stateBarNumber: form.stateBarNumber || undefined,
       isNotary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
     });
+    } catch (err) {
+      console.error("Failed to save volunteer:", err);
+      setSaveError("Failed to save changes. Please try again.");
+    }
   };
 
   if (variant === "new") {
@@ -315,6 +322,9 @@ export const VolunteerProfilePanel = ({
       onEditToggle={enterEditMode}
       onSave={handleSave}
     >
+      {saveError && (
+        <Text fontSize="sm" color="red.500" mb={3}>{saveError}</Text>
+      )}
       {/* Confidential Form Verified */}
       <Flex
         borderWidth="1px"

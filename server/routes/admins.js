@@ -32,6 +32,11 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
       userId = userResult[0].id;
     } catch (err) {
       if (err.code === "23505") {
+        // Clean up the Firebase user we just created — email already exists in users
+        if (firebaseUid) {
+          await admin.auth().deleteUser(firebaseUid).catch(() => {});
+          firebaseUid = null;
+        }
         const existing = await db.query(`SELECT id FROM users WHERE email = $1`, [email]);
         if (!existing.length) throw err;
         userId = existing[0].id;

@@ -36,8 +36,12 @@ export const StaffList = ({
 
   useEffect(() => {
     (async () => {
-      const res = await backend.get<StaffMember[]>("/admins/staff");
-      setStaffMembers(res.data);
+      try {
+        const res = await backend.get<StaffMember[]>("/admins/staff");
+        setStaffMembers(res.data);
+      } catch (err) {
+        console.error("Failed to fetch staff:", err);
+      }
     })();
   }, [backend, setStaffMembers]);
 
@@ -107,7 +111,7 @@ export const StaffList = ({
                   cursor="pointer"
                   size="sm"
                   checked={
-                    sortedStaff.length > 0 &&
+                    pageSlice.length > 0 &&
                     pageSlice.every((s) => checkedIds.has(s.id))
                   }
                   onCheckedChange={() => {

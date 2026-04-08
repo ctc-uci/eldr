@@ -251,11 +251,13 @@ volunteersRouter.delete("/:id", async (req, res) => {
 
     const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [id]);
 
-    await db.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
-    await db.query(`DELETE FROM users WHERE id = $1`, [id]);
+    await db.tx(async (t) => {
+      await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
+      await t.query(`DELETE FROM users WHERE id = $1`, [id]);
+    });
 
     if (userRow.length && userRow[0].firebase_uid) {
-      await admin.auth().deleteUser(userRow[0].firebase_uid).catch(() => {});
+      await admin.auth().deleteUser(userRow[0].firebase_uid).catch((err) => console.error("Failed to delete Firebase user:", err));
     }
 
     res.status(200).send(`Volunteer ${id} deleted successfully`);

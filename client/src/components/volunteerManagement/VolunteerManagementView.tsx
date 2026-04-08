@@ -54,6 +54,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
 
   // Shared state
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [archivedCheckedKeys, setArchivedCheckedKeys] = useState<Set<string>>(new Set());
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const fuzzyMatch = (query: string, target: string): boolean => {
@@ -93,6 +94,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
 
   useEffect(() => {
     setCheckedIds(new Set());
+    setArchivedCheckedKeys(new Set());
     setSelectedArchivedVolunteer(null);
     setArchivedViewMode("list");
     setSelectedStaffMember(null);
@@ -251,9 +253,9 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
                 setPage={setArchivedPage}
                 archivedVolunteers={filteredArchived}
                 setArchivedVolunteers={setArchivedVolunteers}
-                checkedIds={checkedIds}
-                setCheckedIds={setCheckedIds}
-                selectedId={selectedArchivedVolunteer?.id}
+                checkedKeys={archivedCheckedKeys}
+                setCheckedKeys={setArchivedCheckedKeys}
+                selectedKey={selectedArchivedVolunteer?.listKey}
                 onSelect={(volunteer) => {
                   if (selectedArchivedVolunteer?.id === volunteer.id) {
                     setSelectedArchivedVolunteer(null);
@@ -294,16 +296,47 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
         onPageChange={onPageChange}
       />
 
-      {checkedIds.size > 0 && (
+      {(checkedIds.size > 0 || archivedCheckedKeys.size > 0) && (
         <BulkActionBar
-          count={checkedIds.size}
+          count={activeTab === "archived" ? archivedCheckedKeys.size : checkedIds.size}
           showArchive={activeTab !== "archived"}
           showUnarchive={activeTab === "archived"}
           onUnarchive={async () => {
-            const toUnarchive = archivedVolunteers.filter((v) => checkedIds.has(v.id));
+            const toUnarchive = archivedVolunteers.filter((v) => archivedCheckedKeys.has(v.listKey));
 
-            setArchivedVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
-            setCheckedIds(new Set());
+            setArchivedVolunteers((prev) => prev.filter((v) => !archivedCheckedKeys.has(v.listKey)));
+
+            const restoredVolunteers = toUnarchive.filter((v) => v.source === "volunteer");
+            const restoredStaff = toUnarchive.filter((v) => v.source === "staff");
+
+            if (restoredVolunteers.length > 0) {
+              setVolunteers((prev) => [
+                ...prev,
+                ...restoredVolunteers.map((v) => ({
+                  id: v.id,
+                  firstName: v.firstName,
+                  lastName: v.lastName,
+                  email: v.email,
+                  phoneNumber: v.phoneNumber,
+                  roles: v.roles,
+                })),
+              ]);
+            }
+            if (restoredStaff.length > 0) {
+              setStaffMembers((prev) => [
+                ...prev,
+                ...restoredStaff.map((v) => ({
+                  id: v.id,
+                  firstName: v.firstName,
+                  lastName: v.lastName,
+                  email: v.email,
+                  role: v.roles?.[0] ?? "",
+                  phoneNumber: v.phoneNumber,
+                })),
+              ]);
+            }
+
+            setArchivedCheckedKeys(new Set());
 
             await Promise.all(
               toUnarchive.map((v) =>
@@ -372,7 +405,10 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               );
             }
           }}
-          onClear={() => setCheckedIds(new Set())}
+          onClear={() => {
+            setCheckedIds(new Set());
+            setArchivedCheckedKeys(new Set());
+          }}
         />
       )}
 
@@ -381,7 +417,22 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
         count={checkedIds.size}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
-          if (activeTab === "staff") {
+          if (activeTab === "archived") {
+            const toDelete = archivedVolunteers.filter((v) => archivedCheckedKeys.has(v.listKey));
+            await Promise.all(
+              toDelete.map((v) =>
+                v.source === "staff"
+                  ? backend.delete(`/admins/${v.id}`)
+                  : backend.delete(`/volunteers/${v.id}`)
+              )
+            );
+            setArchivedVolunteers((prev) => prev.filter((v) => !archivedCheckedKeys.has(v.listKey)));
+            if (selectedArchivedVolunteer && archivedCheckedKeys.has(selectedArchivedVolunteer.listKey)) {
+              setSelectedArchivedVolunteer(null);
+              setArchivedViewMode("list");
+            }
+            setArchivedCheckedKeys(new Set());
+          } else if (activeTab === "staff") {
             await Promise.all(
               [...checkedIds].map((id) => backend.delete(`/admins/${id}`))
             );
@@ -390,6 +441,7 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               setSelectedStaffMember(null);
               setStaffViewMode("list");
             }
+            setCheckedIds(new Set());
           } else {
             await Promise.all(
               [...checkedIds].map((id) => backend.delete(`/volunteers/${id}`))
@@ -399,8 +451,8 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               setSelectedVolunteer(null);
               setViewMode("list");
             }
+            setCheckedIds(new Set());
           }
-          setCheckedIds(new Set());
           setDeleteModalOpen(false);
         }}
       />

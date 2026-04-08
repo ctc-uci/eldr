@@ -39,6 +39,7 @@ export const ArchivedProfilePanel = ({ volunteer, onBack, onConfirm }: ArchivedP
   const { backend } = useBackendContext();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: "", lastName: "", phoneNumber: "", email: "", reactivation: "", archivedNotes: "",
   });
@@ -104,6 +105,8 @@ export const ArchivedProfilePanel = ({ volunteer, onBack, onConfirm }: ArchivedP
 
   const handleSave = async () => {
     if (!volunteer) return;
+    setSaveError(null);
+    try {
 
     const saves: Promise<unknown>[] = [
       isStaff
@@ -142,6 +145,10 @@ export const ArchivedProfilePanel = ({ volunteer, onBack, onConfirm }: ArchivedP
     setIsEditing(false);
     setIsSaved(true);
     await onConfirm?.({ ...form, roles: isStaff ? volunteer.roles : editRoles.map((r) => r.roleName) });
+    } catch (err) {
+      console.error("Failed to save:", err);
+      setSaveError("Failed to save changes. Please try again.");
+    }
   };
 
   const setField = (key: keyof FormState) =>
@@ -169,6 +176,9 @@ export const ArchivedProfilePanel = ({ volunteer, onBack, onConfirm }: ArchivedP
       onEditToggle={enterEditMode}
       onSave={handleSave}
     >
+      {saveError && (
+        <Text fontSize="sm" color="red.500" mb={3}>{saveError}</Text>
+      )}
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>
         <Tabs.List w="100%">
           <Tabs.Trigger value="profile" w="100%" h="8">Profile Information</Tabs.Trigger>

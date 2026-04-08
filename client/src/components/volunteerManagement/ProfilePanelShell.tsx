@@ -11,8 +11,6 @@ import {
 } from "@chakra-ui/react";
 import { FiCheck, FiEdit2 } from "react-icons/fi";
 import { LuTriangleAlert, LuSave } from "react-icons/lu";
-import type { UseFormRegisterReturn } from "react-hook-form";
-
 // ---------------------------------------------------------------------------
 // ProfileField — shared read-only field
 // ---------------------------------------------------------------------------
@@ -20,11 +18,6 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 interface ProfileFieldProps {
   label: string;
   value?: string;
-  type?: "text" | "select" | "textarea";
-  options?: { value: string; label: string }[];
-  /** @deprecated kept for compatibility; always treated as false */
-  isEditing?: boolean;
-  registerProps?: UseFormRegisterReturn;
 }
 
 export const ProfileField = ({

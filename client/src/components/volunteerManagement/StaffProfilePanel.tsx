@@ -59,6 +59,7 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
+      phoneNumber: form.phoneNumber,
       isSupervisor: editRole === "supervisor",
       startDate: form.startDate || null,
     });
@@ -69,6 +70,7 @@ export const StaffProfilePanel = ({ staff, onBack, onSaved }: StaffProfilePanelP
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
+      phoneNumber: form.phoneNumber || undefined,
       role: resolvedRole,
       startDate: form.startDate || undefined,
     });

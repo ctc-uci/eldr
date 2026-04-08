@@ -10,7 +10,7 @@ export interface Volunteer {
   languages?: string[];
   experienceLevel?: string;
   mostRecentEvent?: string;
-  isSignedConfidentiality?: string;
+  isSignedConfidentiality?: boolean;
   isNotary?: boolean;
   affiliatedEmployer?: string;
   lawSchoolYear?: string;

@@ -161,9 +161,10 @@ export const AddProfileView = () => {
         }
 
         // Save interests
+        const areasRes = await backend.get<{ id: number; areasOfPractice: string }[]>("/areas-of-practice");
+        const areasList = areasRes.data;
         for (const name of interests) {
-          const res = await backend.get<{ id: number; areasOfPractice: string }[]>("/areas-of-practice");
-          const area = res.data.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
+          const area = areasList.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
           if (area) {
             tasks.push(backend.post(`/volunteers/${volunteerId}/areas-of-practice`, { areaOfPracticeId: area.id }));
           } else {
