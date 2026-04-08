@@ -352,6 +352,9 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
 
             if (activeTab === "staff") {
               const toArchive = staffMembers.filter((s) => checkedIds.has(s.id));
+              const prevStaff = [...staffMembers];
+              const prevArchived = [...archivedVolunteers];
+              const prevChecked = new Set(checkedIds);
 
               setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
               setArchivedVolunteers((prev) => [
@@ -371,11 +374,21 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               ]);
               setCheckedIds(new Set());
 
-              await Promise.all(
-                toArchive.map((s) => backend.patch(`/admins/${s.id}/archive`))
-              );
+              try {
+                await Promise.all(
+                  toArchive.map((s) => backend.patch(`/admins/${s.id}/archive`))
+                );
+              } catch (err) {
+                console.error("Failed to archive staff:", err);
+                setStaffMembers(prevStaff);
+                setArchivedVolunteers(prevArchived);
+                setCheckedIds(prevChecked);
+              }
             } else {
               const toArchive = volunteers.filter((v) => checkedIds.has(v.id));
+              const prevVolunteers = [...volunteers];
+              const prevArchived = [...archivedVolunteers];
+              const prevChecked = new Set(checkedIds);
 
               setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
               setArchivedVolunteers((prev) => [
@@ -400,9 +413,16 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
               }
               setCheckedIds(new Set());
 
-              await Promise.all(
-                toArchive.map((v) => backend.patch(`/volunteers/${v.id}/archive`))
-              );
+              try {
+                await Promise.all(
+                  toArchive.map((v) => backend.patch(`/volunteers/${v.id}/archive`))
+                );
+              } catch (err) {
+                console.error("Failed to archive volunteers:", err);
+                setVolunteers(prevVolunteers);
+                setArchivedVolunteers(prevArchived);
+                setCheckedIds(prevChecked);
+              }
             }
           }}
           onClear={() => {

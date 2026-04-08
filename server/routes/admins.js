@@ -288,6 +288,8 @@ adminsRouter.delete("/:id", verifyRole("supervisor"), async (req, res) => {
 
     const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [adminId]);
 
+    await db.query(`DELETE FROM admin_archived WHERE admin_id = $1`, [adminId]);
+
     const result = await db.query(
       `DELETE FROM admins WHERE id = $1 RETURNING *`,
       [adminId]

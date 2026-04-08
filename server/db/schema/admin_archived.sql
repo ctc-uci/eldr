@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS public.admin_archived
     archived_date  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     reactivation   TEXT,
     archived_notes TEXT,
-    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE RESTRICT
 );

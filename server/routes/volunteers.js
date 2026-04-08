@@ -252,6 +252,7 @@ volunteersRouter.delete("/:id", async (req, res) => {
     const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [id]);
 
     await db.tx(async (t) => {
+      await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [id]);
       await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
       await t.query(`DELETE FROM users WHERE id = $1`, [id]);
     });

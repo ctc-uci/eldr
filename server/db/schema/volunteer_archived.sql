@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS public.volunteer_archived
     archived_date  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     reactivation   TEXT,
     archived_notes TEXT,
-    FOREIGN KEY (volunteer_id) REFERENCES volunteers(id) ON DELETE CASCADE
+    FOREIGN KEY (volunteer_id) REFERENCES volunteers(id) ON DELETE RESTRICT
 );
