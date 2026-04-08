@@ -102,7 +102,12 @@ const App = () => {
                   />
                   <Route
                     path="/volunteer-management/new"
-                    element={<AddProfileView />}
+                    element={
+                      <ProtectedRoute
+                        element={<AddProfileView />}
+                        allowedRoles={["supervisor"]}
+                      />
+                    }
                   />
                   <Route
                     path="/admin"
