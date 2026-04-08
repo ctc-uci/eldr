@@ -8,7 +8,7 @@ const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discr
 const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandarin", "Portuguese", "Spanish"];
 
 
-interface FilterState {
+export interface FilterState {
   roles: Set<string>;
   interests: Set<string>;
   languages: Set<string>;
@@ -103,6 +103,7 @@ export const FilterDrawer = ({ open, onClose, totalCount, onApply }: FilterDrawe
     setCheckedRoles(new Set());
     setCheckedInterests(new Set());
     setCheckedLanguages(new Set());
+    onApply?.({ roles: new Set(), interests: new Set(), languages: new Set() });
   };
 
   return (

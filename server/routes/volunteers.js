@@ -123,6 +123,10 @@ volunteersRouter.get("/", async (req, res) => {
             array_agg(DISTINCT aop.areas_of_practice) FILTER (WHERE aop.areas_of_practice IS NOT NULL),
             '{}'::text[]
           ) AS areas_of_practice,
+          COALESCE(
+            array_agg(DISTINCT l.language) FILTER (WHERE l.language IS NOT NULL),
+            '{}'::text[]
+          ) AS languages,
           (
             SELECT c.date
             FROM clinic_registration cr
@@ -137,6 +141,8 @@ volunteersRouter.get("/", async (req, res) => {
         LEFT JOIN roles r ON vr.role_id = r.id
         LEFT JOIN volunteer_areas_of_practice vaop ON v.id = vaop.volunteer_id
         LEFT JOIN areas_of_practice aop ON vaop.area_of_practice_id = aop.id
+        LEFT JOIN volunteer_language vl ON v.id = vl.volunteer_id
+        LEFT JOIN languages l ON vl.language_id = l.id
         WHERE NOT EXISTS (
           SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
         )

@@ -5,6 +5,7 @@ import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
+import { FilterState } from "./FilterDrawer";
 
 import { ArchivedList } from "./ArchivedList";
 import { ArchivedProfilePanel } from "./ArchivedProfilePanel";
@@ -21,6 +22,7 @@ type ActiveTab = "volunteers" | "staff" | "archived";
 
 interface VolunteerManagementViewProps {
   debouncedQuery: string;
+  filters: FilterState;
 }
 
 const TABS: { value: ActiveTab; icon: ReactNode; label: string }[] = [
@@ -29,7 +31,7 @@ const TABS: { value: ActiveTab; icon: ReactNode; label: string }[] = [
   { value: "archived", icon: <LuArchive />, label: "Archived" },
 ];
 
-export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementViewProps) => {
+export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerManagementViewProps) => {
   const { backend } = useBackendContext();
   const [activeTab, setActiveTab] = useState<ActiveTab>("volunteers");
 
@@ -68,17 +70,25 @@ export const VolunteerManagementView = ({ debouncedQuery }: VolunteerManagementV
     return qi === q.length;
   };
 
-  const filteredVolunteers = debouncedQuery
-    ? volunteers.filter((v) => fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`))
-    : volunteers;
+  const filteredVolunteers = volunteers.filter((v) => {
+    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
+    const matchesRoles = filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
+    const matchesInterests = filters.interests.size === 0 || v.areasOfPractice?.some((a) => filters.interests.has(a));
+    const matchesLanguages = filters.languages.size === 0 || v.languages?.some((l) => filters.languages.has(l));
+    return matchesSearch && matchesRoles && matchesInterests && matchesLanguages;
+  });
 
-  const filteredStaff = debouncedQuery
-    ? staffMembers.filter((s) => fuzzyMatch(debouncedQuery, `${s.firstName} ${s.lastName}`))
-    : staffMembers;
+  const filteredStaff = staffMembers.filter((s) => {
+    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${s.firstName} ${s.lastName}`);
+    const matchesRoles = filters.roles.size === 0 || filters.roles.has(s.role);
+    return matchesSearch && matchesRoles;
+  });
 
-  const filteredArchived = debouncedQuery
-    ? archivedVolunteers.filter((v) => fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`))
-    : archivedVolunteers;
+  const filteredArchived = archivedVolunteers.filter((v) => {
+    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
+    const matchesRoles = filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
+    return matchesSearch && matchesRoles;
+  });
 
   useEffect(() => {
     setPage(1);
