@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Box, Button, Flex, HStack, Tag, Text, VStack } from "@chakra-ui/react";
 
 import {
@@ -9,12 +10,32 @@ import {
   LuUsers,
 } from "react-icons/lu";
 import { MdOutlineMailOutline } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 export const CreatedEvent = () => {
+  const { eventId } = useParams();
   const { state: locationState } = useLocation();
   const navigate = useNavigate();
-  const eventData = locationState?.eventData;
+  const { backend } = useBackendContext();
+  const [eventData, setEventData] = useState(locationState?.eventData ?? null);
+
+  useEffect(() => {
+    if (eventData) return;
+    const fetch = async () => {
+      try {
+        const [clinicRes, langRes] = await Promise.all([
+          backend.get(`/clinics/${eventId}`),
+          backend.get(`/clinics/${eventId}/languages`),
+        ]);
+        setEventData({ ...clinicRes.data, languages: langRes.data });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetch();
+  }, [backend, eventId, eventData]);
+
   const {
     name = "This is an upcoming Clinic Event",
     date,
@@ -177,7 +198,7 @@ export const CreatedEvent = () => {
             gap={2}
             mt={1}
           >
-            {[type, capitalizeLocationType(locationType), ...languages]
+            {[type, capitalizeLocationType(locationType), ...languages.map((l) => (typeof l === "string" ? l : l.language))]
               .filter(Boolean)
               .map((tag) => (
                 <Tag.Root
