@@ -238,6 +238,7 @@ export const CreatedEvent = () => {
             gap={3}
             px={4}
             _hover={{ bg: "gray.50" }}
+            onClick={() => navigate(`/events/${eventId}/edit/header`)}
           >
             <LuPencil />
             Edit Event

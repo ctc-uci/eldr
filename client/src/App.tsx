@@ -121,6 +121,7 @@ const App = () => {
                   <Route path="/events/:eventId" element={<CreatedEvent />} />
                   <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
                   <Route path="/events/create/:tab" element={<CreateEvent />} />
+                  <Route path="/events/:eventId/edit/:tab" element={<CreateEvent />} />
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}

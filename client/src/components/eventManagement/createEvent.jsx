@@ -20,10 +20,22 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 
+const parseTimeField = (ts) => {
+  if (!ts) return { time: "", period: "AM" };
+  const d = new Date(ts);
+  let h = d.getUTCHours();
+  const m = d.getUTCMinutes();
+  const period = h >= 12 ? "PM" : "AM";
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return { time: `${h}:${String(m).padStart(2, "0")}`, period };
+};
+
 export const CreateEvent = () => {
   const { backend } = useBackendContext();
-  const { tab } = useParams();
+  const { tab, eventId } = useParams();
   const navigate = useNavigate();
+  const isEditing = !!eventId;
   const activeTab = tab ?? "header";
   const [type, setType] = useState("");
   const [eventName, setEventName] = useState("");
@@ -45,11 +57,42 @@ export const CreateEvent = () => {
   const [allLanguages, setAllLanguages] = useState([]);
 
   useEffect(() => {
-    backend
-      .get("/languages")
-      .then((res) => setAllLanguages(res.data))
-      .catch(() => {});
+    backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
   }, [backend]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const fetchExisting = async () => {
+      try {
+        const [clinicRes, langRes] = await Promise.all([
+          backend.get(`/clinics/${eventId}`),
+          backend.get(`/clinics/${eventId}/languages`),
+        ]);
+        const c = clinicRes.data;
+        setType(c.type ?? "");
+        setEventName(c.name ?? "");
+        setLocationType(c.locationType ?? "in-person");
+        setAddress(c.address ?? "");
+        setCity(c.city ?? "");
+        setState(c.state ?? "");
+        setZip(c.zip ?? "");
+        setZoomLink(c.meetingLink ?? "");
+        setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
+        setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
+        setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
+        const start = parseTimeField(c.startTime);
+        setStartTime(start.time);
+        setStartPeriod(start.period);
+        const end = parseTimeField(c.endTime);
+        setEndTime(end.time);
+        setEndPeriod(end.period);
+        setLanguages(langRes.data.map((l) => l.language));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchExisting();
+  }, [isEditing, eventId, backend]);
 
   const filteredLanguages = useMemo(
     () =>
@@ -197,7 +240,7 @@ export const CreateEvent = () => {
         <Text
           color="blue.500"
           cursor="pointer"
-          onClick={() => navigate("/events")}
+          onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
         >
           View Event
         </Text>
@@ -209,7 +252,7 @@ export const CreateEvent = () => {
         fontWeight="semibold"
         color="gray.800"
       >
-        Create New Event
+        {isEditing ? "Edit Event" : "Create New Event"}
       </Text>
 
       {/* Tabs */}
@@ -234,7 +277,7 @@ export const CreateEvent = () => {
             px={4}
             py={3}
             fontSize="sm"
-            onClick={() => navigate(`/events/create/${tab.key}`)}
+            onClick={() => navigate(isEditing ? `/events/${eventId}/edit/${tab.key}` : `/events/create/${tab.key}`)}
             _hover={{ bg: "transparent", color: "gray.600" }}
           >
             <MdOutlineMailOutline />
@@ -648,7 +691,7 @@ export const CreateEvent = () => {
           fontSize="sm"
           border="1px solid #CBD5E0"
           color="gray.600"
-          onClick={() => navigate("/events")}
+          onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
         >
           Cancel
         </Button>
