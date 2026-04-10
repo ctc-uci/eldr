@@ -252,7 +252,15 @@ export const CreatedEvent = () => {
             justifyContent="flex-start"
             gap={3}
             px={4}
-            _hover={{ bg: "gray.50" }}
+            _hover={{ bg: "red.50", borderColor: "red.200", color: "red.600" }}
+            onClick={async () => {
+              try {
+                await backend.delete(`/clinics/${eventId}`);
+                navigate("/events");
+              } catch (err) {
+                console.error(err);
+              }
+            }}
           >
             <LuArchive />
             Archive Event
