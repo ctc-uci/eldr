@@ -138,7 +138,7 @@ export const CreateEvent = () => {
         })
       );
 
-      navigate("/events/create/success", { state: { eventData: { ...clinicRes.data, languages } } });
+      navigate(`/events/${clinicId}`, { state: { eventData: { ...clinicRes.data, languages } } });
     } catch (err) {
       console.error(err);
     }

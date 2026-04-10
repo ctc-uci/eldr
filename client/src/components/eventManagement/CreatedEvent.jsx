@@ -12,7 +12,7 @@ import { MdOutlineMailOutline } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
 
 
-export const NewCreatedEvent = () => {
+export const CreatedEvent = () => {
   const { state: locationState } = useLocation();
   const navigate = useNavigate();
   const eventData = locationState?.eventData;

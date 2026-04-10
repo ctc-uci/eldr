@@ -24,7 +24,7 @@ import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
 import { CreateEvent } from "./components/eventManagement/createEvent";
-import { NewCreatedEvent } from "./components/eventManagement/NewCreatedEvent";
+import { CreatedEvent } from "./components/eventManagement/CreatedEvent";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
@@ -118,9 +118,8 @@ const App = () => {
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
                   />
-                  <Route path="/events/:eventId" element={<EventsSubPagePlaceholder />} />
+                  <Route path="/events/:eventId" element={<CreatedEvent />} />
                   <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
-                  <Route path="/events/create/success" element={<NewCreatedEvent />} />
                   <Route path="/events/create/:tab" element={<CreateEvent />} />
                 </Route>
 
