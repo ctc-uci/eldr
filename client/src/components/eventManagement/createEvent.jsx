@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Combobox,
+  createListCollection,
   Flex,
   HStack,
   Input,
@@ -13,7 +14,6 @@ import {
   Text,
   VStack,
   Wrap,
-  createListCollection,
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -45,19 +45,23 @@ export const CreateEvent = () => {
   const [allLanguages, setAllLanguages] = useState([]);
 
   useEffect(() => {
-    backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
+    backend
+      .get("/languages")
+      .then((res) => setAllLanguages(res.data))
+      .catch(() => {});
   }, [backend]);
 
   const filteredLanguages = useMemo(
-    () => allLanguages
-      .map((l) => l.language)
-      .filter((l) => l.toLowerCase().includes(languageSearch.toLowerCase())),
-    [allLanguages, languageSearch],
+    () =>
+      allLanguages
+        .map((l) => l.language)
+        .filter((l) => l.toLowerCase().includes(languageSearch.toLowerCase())),
+    [allLanguages, languageSearch]
   );
 
   const languageCollection = useMemo(
     () => createListCollection({ items: filteredLanguages }),
-    [filteredLanguages],
+    [filteredLanguages]
   );
 
   const tabs = [
@@ -138,7 +142,9 @@ export const CreateEvent = () => {
         })
       );
 
-      navigate(`/events/${clinicId}`, { state: { eventData: { ...clinicRes.data, languages } } });
+      navigate(`/events/${clinicId}`, {
+        state: { eventData: { ...clinicRes.data, languages } },
+      });
     } catch (err) {
       console.error(err);
     }
@@ -176,449 +182,477 @@ export const CreateEvent = () => {
       pb={10}
       gap={8}
     >
-        {/* Breadcrumb */}
-        <HStack
-          fontSize="lg"
-          gap={1}
-        >
-          <Text
-            fontWeight="semibold"
-            color="gray.700"
-          >
-            Event Catalog
-          </Text>
-          <Text color="gray.400">›</Text>
-          <Text
-            color="blue.500"
-            cursor="pointer"
-            onClick={() => navigate("/events")}
-          >
-            View Event
-          </Text>
-        </HStack>
-
-        {/* Title */}
+      {/* Breadcrumb */}
+      <HStack
+        fontSize="lg"
+        gap={1}
+      >
         <Text
-          fontSize="4xl"
           fontWeight="semibold"
-          color="gray.800"
+          color="gray.700"
         >
-          Create New Event
+          Event Catalog
         </Text>
-
-        {/* Tabs */}
-        <HStack
-          gap={0}
-          borderBottom="2px solid #E2E8F0"
-          w="100%"
+        <Text color="gray.400">›</Text>
+        <Text
+          color="blue.500"
+          cursor="pointer"
+          onClick={() => navigate("/events")}
         >
-          {tabs.map((tab) => (
-            <Button
-              key={tab.key}
-              variant="ghost"
-              borderRadius={0}
-              borderBottom={
-                activeTab === tab.key
-                  ? "2px solid #2B6CB0"
-                  : "2px solid transparent"
-              }
-              mb="-2px"
-              color={activeTab === tab.key ? "blue.600" : "gray.400"}
-              fontWeight={activeTab === tab.key ? "semibold" : "normal"}
-              px={4}
-              py={3}
-              fontSize="sm"
-              onClick={() => navigate(`/events/create/${tab.key}`)}
-              _hover={{ bg: "transparent", color: "gray.600" }}
-            >
-              <MdOutlineMailOutline />
-              {tab.label}
-            </Button>
-          ))}
-        </HStack>
+          View Event
+        </Text>
+      </HStack>
 
-        {/* Form card */}
-        {activeTab === "header" && (
-          <Box
-            w="100%"
-            bg="white"
-            border="1px solid #E2E8F0"
-            borderRadius="lg"
-            p={8}
+      {/* Title */}
+      <Text
+        fontSize="4xl"
+        fontWeight="semibold"
+        color="gray.800"
+      >
+        Create New Event
+      </Text>
+
+      {/* Tabs */}
+      <HStack
+        gap={0}
+        borderBottom="2px solid #E2E8F0"
+        w="100%"
+      >
+        {tabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant="ghost"
+            borderRadius={0}
+            borderBottom={
+              activeTab === tab.key
+                ? "2px solid #2B6CB0"
+                : "2px solid transparent"
+            }
+            mb="-2px"
+            color={activeTab === tab.key ? "blue.600" : "gray.400"}
+            fontWeight={activeTab === tab.key ? "semibold" : "normal"}
+            px={4}
+            py={3}
+            fontSize="sm"
+            onClick={() => navigate(`/events/create/${tab.key}`)}
+            _hover={{ bg: "transparent", color: "gray.600" }}
           >
-            <VStack
-              align="start"
-              gap={8}
+            <MdOutlineMailOutline />
+            {tab.label}
+          </Button>
+        ))}
+      </HStack>
+
+      {/* Form card */}
+      {activeTab === "header" && (
+        <Box
+          w="100%"
+          bg="white"
+          border="1px solid #E2E8F0"
+          borderRadius="lg"
+          p={8}
+        >
+          <VStack
+            align="start"
+            gap={8}
+            w="100%"
+          >
+            {/* Row 1: Clinic Type + Event Name */}
+            <HStack
               w="100%"
+              gap={8}
+              align="end"
             >
-              {/* Row 1: Clinic Type + Event Name */}
-              <HStack
-                w="100%"
-                gap={8}
-                align="end"
+              <VStack
+                align="start"
+                gap={1}
+                w="260px"
+                flexShrink={0}
               >
-                <VStack
-                  align="start"
-                  gap={1}
-                  w="260px"
-                  flexShrink={0}
-                >
-                  <Label>Clinic Type</Label>
-                  <NativeSelect.Root w="100%">
-                    <NativeSelect.Field
-                      placeholder="Select"
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      style={selectStyle}
-                    >
-                      <option value="Estate Planning">Estate Planning</option>
-                      <option value="Limited Conservatorship">Limited Conservatorship</option>
-                      <option value="Probate Note Clearing">Probate Note Clearing</option>
-                    </NativeSelect.Field>
-                  </NativeSelect.Root>
-                </VStack>
-
-                <VStack
-                  align="start"
-                  gap={1}
-                  flex={1}
-                >
-                  <Label>Event Name</Label>
-                  <Input
-                    placeholder="Type here"
-                    value={eventName}
-                    onChange={(e) => setEventName(e.target.value)}
-                    {...fieldStyle}
-                    w="100%"
-                  />
-                </VStack>
-              </HStack>
-
-              {/* Row 2: Event Format + Location */}
-              <HStack
-                w="100%"
-                gap={8}
-                align="end"
-              >
-                <VStack
-                  align="start"
-                  gap={1}
-                  flexShrink={0}
-                >
-                  <Label>Event Format</Label>
-                  <NativeSelect.Root w="140px">
-                    <NativeSelect.Field
-                      value={locationType}
-                      onChange={(e) => setLocationType(e.target.value)}
-                      style={{ ...selectStyle, color: "black" }}
-                    >
-                      <option value="in-person">In-Person</option>
-                      <option value="hybrid">Hybrid</option>
-                      <option value="online">Online</option>
-                    </NativeSelect.Field>
-                  </NativeSelect.Root>
-                </VStack>
-
-                <VStack
-                  align="start"
-                  gap={1}
-                  flex={1}
-                >
-                  <Label>Location</Label>
-                  <HStack
-                    w="100%"
-                    gap={2}
+                <Label>Clinic Type</Label>
+                <NativeSelect.Root w="100%">
+                  <NativeSelect.Field
+                    placeholder="Select"
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    style={selectStyle}
                   >
-                    {(locationType === "in-person" ||
-                      locationType === "hybrid") && (
-                      <>
-                        <Input
-                          placeholder="Address"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          {...fieldStyle}
-                          flex={2}
-                        />
-                        <Input
-                          placeholder="City"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          {...fieldStyle}
-                          w="110px"
-                        />
-                        <Input
-                          placeholder="State"
-                          value={state}
-                          onChange={(e) => setState(e.target.value)}
-                          {...fieldStyle}
-                          w="95px"
-                          maxLength={2}
-                        />
-                        <Input
-                          placeholder="Zip Code"
-                          value={zip}
-                          onChange={(e) => setZip(e.target.value)}
-                          {...fieldStyle}
-                          w="95px"
-                        />
-                      </>
-                    )}
-                    {(locationType === "online" || locationType === "hybrid") && (
-                      <Input
-                        placeholder="Zoom Link"
-                        value={zoomLink}
-                        onChange={(e) => setZoomLink(e.target.value)}
-                        {...fieldStyle}
-                        flex={1}
-                        minW="120px"
-                      />
-                    )}
-                  </HStack>
-                </VStack>
-              </HStack>
+                    <option value="Estate Planning">Estate Planning</option>
+                    <option value="Limited Conservatorship">
+                      Limited Conservatorship
+                    </option>
+                    <option value="Probate Note Clearing">
+                      Probate Note Clearing
+                    </option>
+                  </NativeSelect.Field>
+                </NativeSelect.Root>
+              </VStack>
 
-              {/* Row 3: Date + Event Time + Target Number + Maximum */}
-              <HStack
-                w="100%"
-                gap={8}
-                align="end"
+              <VStack
+                align="start"
+                gap={1}
+                flex={1}
               >
-                <VStack
-                  align="start"
-                  gap={1}
-                >
-                  <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    {...fieldStyle}
-                    w="180px"
-                  />
-                </VStack>
+                <Label>Event Name</Label>
+                <Input
+                  placeholder="Type here"
+                  value={eventName}
+                  onChange={(e) => setEventName(e.target.value)}
+                  {...fieldStyle}
+                  w="100%"
+                />
+              </VStack>
+            </HStack>
 
-                <VStack
-                  align="start"
-                  gap={1}
+            {/* Row 2: Event Format + Location */}
+            <HStack
+              w="100%"
+              gap={8}
+              align="end"
+            >
+              <VStack
+                align="start"
+                gap={1}
+                flexShrink={0}
+              >
+                <Label>Event Format</Label>
+                <NativeSelect.Root w="140px">
+                  <NativeSelect.Field
+                    value={locationType}
+                    onChange={(e) => setLocationType(e.target.value)}
+                    style={{ ...selectStyle, color: "black" }}
+                  >
+                    <option value="in-person">In-Person</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="online">Online</option>
+                  </NativeSelect.Field>
+                </NativeSelect.Root>
+              </VStack>
+
+              <VStack
+                align="start"
+                gap={1}
+                flex={1}
+              >
+                <Label>Location</Label>
+                <HStack
+                  w="100%"
+                  gap={2}
                 >
-                  <Label>Event Time</Label>
-                  <HStack gap={2}>
+                  {(locationType === "in-person" ||
+                    locationType === "hybrid") && (
+                    <>
+                      <Input
+                        placeholder="Address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        {...fieldStyle}
+                        flex={2}
+                      />
+                      <Input
+                        placeholder="City"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        {...fieldStyle}
+                        w="110px"
+                      />
+                      <Input
+                        placeholder="State"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        {...fieldStyle}
+                        w="95px"
+                        maxLength={2}
+                      />
+                      <Input
+                        placeholder="Zip Code"
+                        value={zip}
+                        onChange={(e) => setZip(e.target.value)}
+                        {...fieldStyle}
+                        w="95px"
+                      />
+                    </>
+                  )}
+                  {(locationType === "online" || locationType === "hybrid") && (
                     <Input
-                      placeholder="9:00"
-                      value={startTime}
-                      onChange={(e) => setStartTime(formatTime(e.target.value))}
+                      placeholder="Zoom Link"
+                      value={zoomLink}
+                      onChange={(e) => setZoomLink(e.target.value)}
                       {...fieldStyle}
-                      w="70px"
-                      textAlign="center"
+                      flex={1}
+                      minW="120px"
                     />
-                    <NativeSelect.Root w="70px">
-                      <NativeSelect.Field
-                        value={startPeriod}
-                        onChange={(e) => setStartPeriod(e.target.value)}
-                        style={{
-                          ...selectStyle,
-                          paddingLeft: "8px",
-                          color: "black",
-                        }}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </NativeSelect.Field>
-                    </NativeSelect.Root>
-                    <Text color="gray.400">-</Text>
-                    <Input
-                      placeholder="12:00"
-                      value={endTime}
-                      onChange={(e) => setEndTime(formatTime(e.target.value))}
-                      {...fieldStyle}
-                      w="70px"
-                      textAlign="center"
-                    />
-                    <NativeSelect.Root w="70px">
-                      <NativeSelect.Field
-                        value={endPeriod}
-                        onChange={(e) => setEndPeriod(e.target.value)}
-                        style={{
-                          ...selectStyle,
-                          paddingLeft: "8px",
-                          color: "black",
-                        }}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </NativeSelect.Field>
-                    </NativeSelect.Root>
-                  </HStack>
-                </VStack>
+                  )}
+                </HStack>
+              </VStack>
+            </HStack>
 
-                <VStack
-                  align="start"
-                  gap={1}
-                >
-                  <Label>Target Number</Label>
-                  <Input
-                    placeholder="Type number"
-                    type="number"
-                    value={targetNumber}
-                    onChange={(e) => setTargetNumber(e.target.value)}
-                    {...fieldStyle}
-                    w="150px"
-                  />
-                </VStack>
-
-                <VStack
-                  align="start"
-                  gap={1}
-                >
-                  <Label>Maximum</Label>
-                  <Input
-                    placeholder="Type number"
-                    type="number"
-                    value={maximum}
-                    onChange={(e) => setMaximum(e.target.value)}
-                    {...fieldStyle}
-                    w="150px"
-                  />
-                </VStack>
-              </HStack>
-
-              {/* Row 4: Languages */}
+            {/* Row 3: Date + Event Time + Target Number + Maximum */}
+            <HStack
+              w="100%"
+              gap={8}
+              align="end"
+            >
               <VStack
                 align="start"
                 gap={1}
               >
-                <Label>Languages</Label>
-                <Combobox.Root
-                  multiple
-                  closeOnSelect
-                  width="320px"
-                  value={languages}
-                  collection={languageCollection}
-                  onValueChange={(details) => setLanguages(details.value)}
-                  onInputValueChange={(details) => setLanguageSearch(details.inputValue)}
-                >
-                  <Combobox.Control
-                    style={{
-                      ...selectStyle,
-                      height: "auto",
-                      minHeight: "44px",
-                      display: "flex",
-                      alignItems: "center",
-                      paddingRight: "8px",
-                    }}
-                  >
-                    <Wrap gap="1" flex={1} py={1}>
-                      {languages.map((lang) => (
-                        <Badge key={lang} colorScheme="blue" fontSize="xs" display="flex" alignItems="center" gap="1">
-                          {lang}
-                          <Box
-                            as="span"
-                            cursor="pointer"
-                            ml="4px"
-                            fontWeight="bold"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLanguages(languages.filter((l) => l !== lang));
-                            }}
-                          >
-                            ×
-                          </Box>
-                        </Badge>
-                      ))}
-                      <Combobox.Input
-                        placeholder={languages.length === 0 ? "Select languages" : ""}
-                        onKeyDown={(e) => {
-                          if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && languages.length > 0) {
-                            setLanguages(languages.slice(0, -1));
-                          }
-                        }}
-                        style={{
-                          border: "none",
-                          outline: "none",
-                          background: "transparent",
-                          fontSize: "14px",
-                          color: "#718096",
-                          minWidth: "80px",
-                          flex: 1,
-                        }}
-                      />
-                    </Wrap>
-                    <Combobox.IndicatorGroup>
-                      <Combobox.Trigger />
-                    </Combobox.IndicatorGroup>
-                  </Combobox.Control>
-                  <Portal>
-                    <Combobox.Positioner>
-                      <Combobox.Content>
-                        <Combobox.ItemGroup>
-                          <Combobox.ItemGroupLabel>Languages</Combobox.ItemGroupLabel>
-                          {filteredLanguages.map((lang) => (
-                            <Combobox.Item key={lang} item={lang}>
-                              {lang}
-                              <Combobox.ItemIndicator />
-                            </Combobox.Item>
-                          ))}
-                          <Combobox.Empty>No languages found</Combobox.Empty>
-                        </Combobox.ItemGroup>
-                      </Combobox.Content>
-                    </Combobox.Positioner>
-                  </Portal>
-                </Combobox.Root>
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  {...fieldStyle}
+                  w="180px"
+                />
               </VStack>
-            </VStack>
-          </Box>
-        )}
 
-        {activeTab !== "header" && (
-          <Flex
-            w="100%"
-            p={8}
-            bg="white"
-            border="1px solid #E2E8F0"
-            borderRadius="lg"
-            align="center"
-            justify="center"
-            minH="200px"
-          >
-            <Text
-              color="gray.400"
-              fontSize="sm"
+              <VStack
+                align="start"
+                gap={1}
+              >
+                <Label>Event Time</Label>
+                <HStack gap={2}>
+                  <Input
+                    placeholder="9:00"
+                    value={startTime}
+                    onChange={(e) => setStartTime(formatTime(e.target.value))}
+                    {...fieldStyle}
+                    w="70px"
+                    textAlign="center"
+                  />
+                  <NativeSelect.Root w="70px">
+                    <NativeSelect.Field
+                      value={startPeriod}
+                      onChange={(e) => setStartPeriod(e.target.value)}
+                      style={{
+                        ...selectStyle,
+                        paddingLeft: "8px",
+                        color: "black",
+                      }}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                  <Text color="gray.400">-</Text>
+                  <Input
+                    placeholder="12:00"
+                    value={endTime}
+                    onChange={(e) => setEndTime(formatTime(e.target.value))}
+                    {...fieldStyle}
+                    w="70px"
+                    textAlign="center"
+                  />
+                  <NativeSelect.Root w="70px">
+                    <NativeSelect.Field
+                      value={endPeriod}
+                      onChange={(e) => setEndPeriod(e.target.value)}
+                      style={{
+                        ...selectStyle,
+                        paddingLeft: "8px",
+                        color: "black",
+                      }}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                </HStack>
+              </VStack>
+
+              <VStack
+                align="start"
+                gap={1}
+              >
+                <Label>Target Number</Label>
+                <Input
+                  placeholder="Type number"
+                  type="number"
+                  value={targetNumber}
+                  onChange={(e) => setTargetNumber(e.target.value)}
+                  {...fieldStyle}
+                  w="150px"
+                />
+              </VStack>
+
+              <VStack
+                align="start"
+                gap={1}
+              >
+                <Label>Maximum</Label>
+                <Input
+                  placeholder="Type number"
+                  type="number"
+                  value={maximum}
+                  onChange={(e) => setMaximum(e.target.value)}
+                  {...fieldStyle}
+                  w="150px"
+                />
+              </VStack>
+            </HStack>
+
+            {/* Row 4: Languages */}
+            <VStack
+              align="start"
+              gap={1}
             >
-              {tabs.find((t) => t.key === activeTab)?.label}
-            </Text>
-          </Flex>
-        )}
+              <Label>Languages</Label>
+              <Combobox.Root
+                multiple
+                closeOnSelect
+                width="320px"
+                value={languages}
+                collection={languageCollection}
+                onValueChange={(details) => setLanguages(details.value)}
+                onInputValueChange={(details) =>
+                  setLanguageSearch(details.inputValue)
+                }
+              >
+                <Combobox.Control
+                  style={{
+                    ...selectStyle,
+                    height: "auto",
+                    minHeight: "44px",
+                    display: "flex",
+                    alignItems: "center",
+                    paddingRight: "8px",
+                  }}
+                >
+                  <Wrap
+                    gap="1"
+                    flex={1}
+                    py={1}
+                  >
+                    {languages.map((lang) => (
+                      <Badge
+                        key={lang}
+                        colorScheme="blue"
+                        fontSize="xs"
+                        display="flex"
+                        alignItems="center"
+                        gap="1"
+                      >
+                        {lang}
+                        <Box
+                          as="span"
+                          cursor="pointer"
+                          ml="4px"
+                          fontWeight="bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLanguages(languages.filter((l) => l !== lang));
+                          }}
+                        >
+                          ×
+                        </Box>
+                      </Badge>
+                    ))}
+                    <Combobox.Input
+                      placeholder={
+                        languages.length === 0 ? "Select languages" : ""
+                      }
+                      onKeyDown={(e) => {
+                        if (
+                          (e.key === "Backspace" || e.key === "Delete") &&
+                          e.target.value === "" &&
+                          languages.length > 0
+                        ) {
+                          setLanguages(languages.slice(0, -1));
+                        }
+                      }}
+                      style={{
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
+                        fontSize: "14px",
+                        color: "#718096",
+                        minWidth: "80px",
+                        flex: 1,
+                      }}
+                    />
+                  </Wrap>
+                  <Combobox.IndicatorGroup>
+                    <Combobox.Trigger />
+                  </Combobox.IndicatorGroup>
+                </Combobox.Control>
+                <Portal>
+                  <Combobox.Positioner>
+                    <Combobox.Content>
+                      <Combobox.ItemGroup>
+                        <Combobox.ItemGroupLabel>
+                          Languages
+                        </Combobox.ItemGroupLabel>
+                        {filteredLanguages.map((lang) => (
+                          <Combobox.Item
+                            key={lang}
+                            item={lang}
+                          >
+                            {lang}
+                            <Combobox.ItemIndicator />
+                          </Combobox.Item>
+                        ))}
+                        <Combobox.Empty>No languages found</Combobox.Empty>
+                      </Combobox.ItemGroup>
+                    </Combobox.Content>
+                  </Combobox.Positioner>
+                </Portal>
+              </Combobox.Root>
+            </VStack>
+          </VStack>
+        </Box>
+      )}
 
-        {/* Action buttons */}
-        <HStack
+      {activeTab !== "header" && (
+        <Flex
           w="100%"
-          justify="flex-end"
-          gap={3}
-          pt={2}
+          p={8}
+          bg="white"
+          border="1px solid #E2E8F0"
+          borderRadius="lg"
+          align="center"
+          justify="center"
+          minH="200px"
         >
-          <Button
-            bg="#4A7FA5"
-            color="white"
-            borderRadius="md"
-            px={6}
+          <Text
+            color="gray.400"
             fontSize="sm"
-            _hover={{ bg: "#2C5282" }}
-            onClick={handleSubmit}
           >
-            Create &amp; Save Event
-          </Button>
-          <Button
-            variant="outline"
-            borderRadius="md"
-            px={6}
-            fontSize="sm"
-            border="1px solid #CBD5E0"
-            color="gray.600"
-            onClick={() => navigate("/events")}
-          >
-            Cancel
-          </Button>
-        </HStack>
+            {tabs.find((t) => t.key === activeTab)?.label}
+          </Text>
+        </Flex>
+      )}
+
+      {/* Action buttons */}
+      <HStack
+        w="100%"
+        justify="flex-end"
+        gap={3}
+        pt={2}
+      >
+        <Button
+          bg="#4A7FA5"
+          color="white"
+          borderRadius="md"
+          px={6}
+          fontSize="sm"
+          _hover={{ bg: "#2C5282" }}
+          onClick={handleSubmit}
+        >
+          Create &amp; Save Event
+        </Button>
+        <Button
+          variant="outline"
+          borderRadius="md"
+          px={6}
+          fontSize="sm"
+          border="1px solid #CBD5E0"
+          color="gray.600"
+          onClick={() => navigate("/events")}
+        >
+          Cancel
+        </Button>
+      </HStack>
     </VStack>
   );
 };
