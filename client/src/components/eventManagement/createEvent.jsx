@@ -18,10 +18,13 @@ import {
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdOutlineMailOutline } from "react-icons/md";
+import { useNavigate, useParams } from "react-router-dom";
 
-export const CreateEvent = ({ onClose, onCreated }) => {
+export const CreateEvent = () => {
   const { backend } = useBackendContext();
-  const [activeTab, setActiveTab] = useState("header");
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  const activeTab = tab ?? "header";
   const [type, setType] = useState("");
   const [eventName, setEventName] = useState("");
   const [locationType, setLocationType] = useState("in-person");
@@ -135,7 +138,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
         })
       );
 
-      onCreated({ ...clinicRes.data, languages });
+      navigate("/events/create/success", { state: { eventData: { ...clinicRes.data, languages } } });
     } catch (err) {
       console.error(err);
     }
@@ -188,7 +191,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
           <Text
             color="blue.500"
             cursor="pointer"
-            onClick={onClose}
+            onClick={() => navigate("/events")}
           >
             View Event
           </Text>
@@ -225,7 +228,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
               px={4}
               py={3}
               fontSize="sm"
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => navigate(`/events/create/${tab.key}`)}
               _hover={{ bg: "transparent", color: "gray.600" }}
             >
               <MdOutlineMailOutline />
@@ -611,7 +614,7 @@ export const CreateEvent = ({ onClose, onCreated }) => {
             fontSize="sm"
             border="1px solid #CBD5E0"
             color="gray.600"
-            onClick={onClose}
+            onClick={() => navigate("/events")}
           >
             Cancel
           </Button>

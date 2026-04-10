@@ -18,8 +18,6 @@ import { CiSearch } from "react-icons/ci";
 import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
-import { CreateEvent } from "./createEvent";
-import { NewCreatedEvent } from "./NewCreatedEvent";
 
 const parseTimestamp = (str) => {
   if (!str) return null;
@@ -71,8 +69,6 @@ export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
-  const [view, setView] = useState("list"); // "list" | "create" | "created"
-  const [createdEventData, setCreatedEventData] = useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -103,8 +99,7 @@ export const EventManagement = () => {
   return (
     <Flex minH="100vh" flex="1" direction="column">
       <Box flex="1">
-        {view === "list" && (
-          <VStack
+        <VStack
             w="100%"
             minH="100vh"
             bg="#F5F5F5"
@@ -152,7 +147,7 @@ export const EventManagement = () => {
                 borderRadius="md"
                 px={5}
                 _hover={{ bg: "#2C5282" }}
-                onClick={() => setView("create")}
+                onClick={() => navigate("/events/create/header")}
               >
                 <LuCalendar />
                 Create New Event
@@ -317,24 +312,6 @@ export const EventManagement = () => {
               })}
             </VStack>
           </VStack>
-        )}
-
-        {view === "create" && (
-          <CreateEvent
-            onClose={() => setView("list")}
-            onCreated={(data) => {
-              setCreatedEventData(data);
-              setView("created");
-            }}
-          />
-        )}
-
-        {view === "created" && (
-          <NewCreatedEvent
-            eventData={createdEventData}
-            onClose={() => setView("list")}
-          />
-        )}
       </Box>
     </Flex>
   );

@@ -9,9 +9,13 @@ import {
   LuUsers,
 } from "react-icons/lu";
 import { MdOutlineMailOutline } from "react-icons/md";
+import { useLocation, useNavigate } from "react-router-dom";
 
 
-export const NewCreatedEvent = ({ eventData, onClose }) => {
+export const NewCreatedEvent = () => {
+  const { state: locationState } = useLocation();
+  const navigate = useNavigate();
+  const eventData = locationState?.eventData;
   const {
     name = "This is an upcoming Clinic Event",
     date,
@@ -82,7 +86,7 @@ export const NewCreatedEvent = ({ eventData, onClose }) => {
           <Text
             color="blue.500"
             cursor="pointer"
-            onClick={onClose}
+            onClick={() => navigate("/events")}
           >
             View Event
           </Text>
