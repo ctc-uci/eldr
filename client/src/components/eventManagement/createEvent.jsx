@@ -153,12 +153,11 @@ export const CreateEvent = () => {
 
   const handleSubmit = async () => {
     try {
-      const clinicRes = await backend.post("/clinics", {
+      const payload = {
         name: eventName,
         date,
         start_time: toTimestamp(startTime, startPeriod, date),
         end_time: toTimestamp(endTime, endPeriod, date),
-        attendees: 0,
         min_attendees: parseInt(targetNumber) || 1,
         capacity: parseInt(maximum) || 1,
         max_target_roles: null,
@@ -169,9 +168,27 @@ export const CreateEvent = () => {
         meeting_link: zoomLink,
         location_type: locationType,
         type,
-      });
+      };
 
-      const clinicId = clinicRes.data.id;
+      let clinicId;
+      let clinicData;
+
+      if (isEditing) {
+        const clinicRes = await backend.put(`/clinics/${eventId}`, payload);
+        clinicId = eventId;
+        clinicData = clinicRes.data;
+      } else {
+        const clinicRes = await backend.post("/clinics", { ...payload, attendees: 0 });
+        clinicId = clinicRes.data.id;
+        clinicData = clinicRes.data;
+      }
+
+      if (isEditing) {
+        const existingLangs = await backend.get(`/clinics/${clinicId}/languages`);
+        await Promise.all(
+          existingLangs.data.map((l) => backend.delete(`/clinics/${clinicId}/languages/${l.id}`))
+        );
+      }
 
       // TODO: add proficiency field to form
       await Promise.all(
@@ -186,7 +203,7 @@ export const CreateEvent = () => {
       );
 
       navigate(`/events/${clinicId}`, {
-        state: { eventData: { ...clinicRes.data, languages } },
+        state: { eventData: { ...clinicData, languages } },
       });
     } catch (err) {
       console.error(err);
