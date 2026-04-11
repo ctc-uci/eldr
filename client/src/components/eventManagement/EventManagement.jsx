@@ -6,6 +6,7 @@ import {
   Card,
   Flex,
   HStack,
+  IconButton,
   Input,
   InputGroup,
   Tag,
@@ -15,7 +16,7 @@ import {
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuCalendar, LuSlidersHorizontal } from "react-icons/lu";
+import { LuArrowRight, LuCalendar, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 const parseTimestamp = (str) => {
@@ -77,6 +78,16 @@ export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
+
+  const handleDelete = async (e, clinicId) => {
+    e.stopPropagation();
+    try {
+      await backend.delete(`/clinics/${clinicId}`);
+      setClinics((prev) => prev.filter((c) => c.id !== clinicId));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -277,72 +288,103 @@ export const EventManagement = () => {
                         </Text>
                       )}
 
-                      {/* Tags */}
-                      <HStack
-                        gap={2}
+                      {/* Tags + action icons row */}
+                      <Flex
+                        w="100%"
+                        justify="space-between"
+                        align="center"
                         mt={1}
                       >
-                        {/* Clinic type */}
-                        {clinic.type && (
-                          <Tag.Root
-                            size="md"
-                            borderRadius="md"
-                            border="0.5px solid"
-                            borderColor="gray.200"
-                            bg="gray.100"
-                            px={2}
-                            py={1}
-                          >
-                            <Tag.Label
-                              fontSize="xs"
-                              fontWeight="medium"
+                        <HStack gap={2}>
+                          {/* Clinic type */}
+                          {clinic.type && (
+                            <Tag.Root
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
                             >
-                              {clinic.type}
-                            </Tag.Label>
-                          </Tag.Root>
-                        )}
+                              <Tag.Label
+                                fontSize="xs"
+                                fontWeight="medium"
+                              >
+                                {clinic.type}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
 
-                        {/* Location type */}
-                        {clinic.locationType && (
-                          <Tag.Root
-                            size="md"
-                            borderRadius="md"
-                            border="0.5px solid"
-                            borderColor="gray.200"
-                            bg="gray.100"
-                            px={2}
-                            py={1}
-                          >
-                            <Tag.Label
-                              fontSize="xs"
-                              fontWeight="medium"
+                          {/* Location type */}
+                          {clinic.locationType && (
+                            <Tag.Root
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
                             >
-                              {capitalizeLocationType(clinic.locationType)}
-                            </Tag.Label>
-                          </Tag.Root>
-                        )}
+                              <Tag.Label
+                                fontSize="xs"
+                                fontWeight="medium"
+                              >
+                                {capitalizeLocationType(clinic.locationType)}
+                              </Tag.Label>
+                            </Tag.Root>
+                          )}
 
-                        {/* Language tags */}
-                        {(clinic.languages ?? []).map((l) => (
-                          <Tag.Root
-                            key={l.id}
-                            size="md"
-                            borderRadius="md"
-                            border="0.5px solid"
-                            borderColor="gray.200"
-                            bg="gray.100"
-                            px={2}
-                            py={1}
-                          >
-                            <Tag.Label
-                              fontSize="xs"
-                              fontWeight="medium"
+                          {/* Language tags */}
+                          {(clinic.languages ?? []).map((l) => (
+                            <Tag.Root
+                              key={l.id}
+                              size="md"
+                              borderRadius="md"
+                              border="0.5px solid"
+                              borderColor="gray.200"
+                              bg="gray.100"
+                              px={2}
+                              py={1}
                             >
-                              {l.language}
-                            </Tag.Label>
-                          </Tag.Root>
-                        ))}
-                      </HStack>
+                              <Tag.Label
+                                fontSize="xs"
+                                fontWeight="medium"
+                              >
+                                {l.language}
+                              </Tag.Label>
+                            </Tag.Root>
+                          ))}
+                        </HStack>
+
+                        {/* Edit / Delete icons */}
+                        <HStack gap={1}>
+                          <IconButton
+                            aria-label="Edit event"
+                            variant="ghost"
+                            size="sm"
+                            color="gray.500"
+                            _hover={{ color: "blue.500", bg: "blue.50" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/events/${clinic.id}/edit/header`);
+                            }}
+                          >
+                            <LuPencil />
+                          </IconButton>
+                          <IconButton
+                            aria-label="Delete event"
+                            variant="ghost"
+                            size="sm"
+                            color="gray.500"
+                            _hover={{ color: "red.500", bg: "red.50" }}
+                            onClick={(e) => handleDelete(e, clinic.id)}
+                          >
+                            <LuTrash2 />
+                          </IconButton>
+                        </HStack>
+                      </Flex>
                     </VStack>
                   </Card.Body>
                 </Card.Root>
