@@ -7,7 +7,7 @@ import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/r
 import { LuClipboardList } from "react-icons/lu";
 import { IoBriefcaseOutline } from "react-icons/io5";
 import { MdOutlineMailOutline } from "react-icons/md";
-import { RxPeople } from "react-icons/rx";
+import { RxPerson } from "react-icons/rx";
 import { useNavigate } from "react-router-dom";
 
 export const CollapsedNavbar = () => {
@@ -67,7 +67,7 @@ export const CollapsedNavbar = () => {
             title="Manage Profiles"
             boxSize="30px"
             variant="ghost"
-            as={RxPeople}
+            as={RxPerson}
             onClick={() => navigate("/volunteer-management")}
             _hover={{ bg: "#D8F1FF" }}
           />

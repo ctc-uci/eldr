@@ -47,6 +47,7 @@
   "dependencies": {
     "nodemailer": "^8.0.1",
     "react-datepicker": "^9.1.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "react-input-mask": "^2.0.4"
   }
 }

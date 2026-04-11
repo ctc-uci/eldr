@@ -22,6 +22,7 @@ import {
   LuFacebook,
   LuMail,
   LuUser,
+  LuExternalLink,
 } from "react-icons/lu";
 import { RiMicrosoftLine } from "react-icons/ri";
 import { toaster } from "@/components/ui/toaster";
@@ -175,12 +176,6 @@ const LoginStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -200,80 +195,30 @@ const LoginStep = ({ onNext }: Props) => {
           >
             <Box>
               <Heading
-                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Welcome to Volunteer Portal by Community Counsel
+                Community Counsel's Event Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                color="black"
               >
-                Log in using your CC Credentials. If you don't have one, click
-                on the create link below.
+                Need help? Visit our website{" "}
+                
+                <Link
+                href="https://eldrcenter.org/"
+                display="inline-flex"
+                alignItems="center"
+              >
+                <LuExternalLink size={16} color="#3182CE"/>
+              </Link>
               </Text>
             </Box>
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "32px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
-            </Box>
+            
           </Flex>
 
           <Flex
@@ -401,8 +346,9 @@ const LoginStep = ({ onNext }: Props) => {
             </Box>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="black"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -411,13 +357,17 @@ const LoginStep = ({ onNext }: Props) => {
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
               _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              justifyContent="center"
               px="20px"
               mt="4px"
               onClick={handleLogin}
+              position="relative"
             >
               Login
-              <LuArrowRight size={16} />
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
 
             <Flex
@@ -441,8 +391,9 @@ const LoginStep = ({ onNext }: Props) => {
             </Flex>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="black"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -463,8 +414,9 @@ const LoginStep = ({ onNext }: Props) => {
             </Button>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="black"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"

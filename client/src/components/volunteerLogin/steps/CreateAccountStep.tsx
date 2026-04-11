@@ -5,7 +5,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
   Image,
   Input,
   Link,
@@ -14,14 +13,13 @@ import {
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
+
 import {
   LuArrowRight,
-  LuFacebook,
   LuKeyRound,
   LuMail,
   LuUser,
+  LuExternalLink
 } from "react-icons/lu";
 
 import logo from "../../../assets/EldrLogo.png";
@@ -175,10 +173,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           flex="1"
           direction={{ base: "column", md: "row" }}
         >
-          {/* Left side */}
           <Flex
             direction="column"
-            justify="space-between"
+            justify="center"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -189,79 +186,27 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           >
             <Box>
               <Heading
-                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Community Counsel Account Manager
+                Community Counsel's Event Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                color="black"
               >
-                Begin creating your volunteer profile by entering the
-                information prompted.
-              </Text>
-            </Box>
+                Need help? Visit our website{" "}
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
+                <Link
                 href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
+                display="inline-flex"
+                alignItems="center"
               >
-                Community Counsel Website
+                <LuExternalLink size={16} color="#3182CE"/>
               </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
+              </Text>
             </Box>
           </Flex>
 

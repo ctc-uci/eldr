@@ -14,7 +14,13 @@ import {
   Separator,
   Text,
   VStack,
+  FormControl,
+  FormLabel,
 } from "@chakra-ui/react";
+
+import {
+  LuExternalLink,
+} from "react-icons/lu";
 
 import { useEffect, useState } from "react";
 import {
@@ -186,59 +192,26 @@ export const AdminLogin: React.FC = () => {
           px="2%"
           py="1%"
         >
-          <Image src={logo} />
+
         </Flex>
         <Flex flex="1" w="100%" bg="white">
           <VStack align="left" width="50%" px="5%" gap={1}>
             <Text fontWeight="bold" fontSize="30px" pt="15%">
-              Welcome to CC Staff Portal by Community Counsel
+              Community Counsel's Event Portal
             </Text>
-            <List.Root color="black" pt="5%">
-              <List.Item>Manage your CC Staff Account</List.Item>
-              <List.Item>Manage email templates</List.Item>
-              <List.Item>Create and manage cases through CC Case Catalog</List.Item>
-              <List.Item>Create and manage events through CC Events Catalog</List.Item>
-            </List.Root>
-            <Text fontWeight="bold" pt="30%">Need help?</Text>
-            <Text fontWeight="bold">Visit our website</Text>
+            <HStack>
+            <Text pt="3%">Need help? Visit our website </Text>
             <Link
-              textDecoration="underline"
               color="#3182CE"
               bg="white"
               href="https://eldrcenter.org/"
               pt="2%"
             >
-              Community Counsel Website
-            </Link>
-            <HStack pt="15%" gap={0}>
-              <IconButton
-                boxSize="20px"
-                as={FiFacebook}
-                variant="ghost"
-                onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
-                _hover={{ bg: "white" }}
-              />
-              <IconButton
-                boxSize="20px"
-                as={FiLinkedin}
-                variant="ghost"
-                onClick={() => window.open("https://www.linkedin.com/company/elderlawanddisabilityrightscenter/")}
-                _hover={{ bg: "white" }}
-              />
-              <IconButton
-                boxSize="20px"
-                as={FaInstagram}
-                variant="ghost"
-                onClick={() => window.open("https://www.instagram.com/eldr_center/?hl=en")}
-                _hover={{ bg: "white" }}
-              />
-              <IconButton
-                boxSize="20px"
-                as={MdOutlineEmail}
-                variant="ghost"
-                _hover={{ bg: "white" }}
-              />
-            </HStack>
+              <LuExternalLink />
+              </Link>
+              </HStack>
+                       
+            
           </VStack>
           <Separator orientation="vertical" />
           <VStack
@@ -251,8 +224,10 @@ export const AdminLogin: React.FC = () => {
             py="10%"
           >
             <VStack w="30vw" minW="320px" align="stretch" gap={3}>
-              <Field.Root invalid={!!emailError}>
-                <Field.Label fontWeight="bold">Email</Field.Label>
+              <Field.Root invalid={!!emailError} required>
+                <Field.Label fontWeight="bold">Email 
+                  <Field.RequiredIndicator />
+                </Field.Label>
                 <InputGroup width="100%" startElement={<MdOutlineEmail />}>
                   <Input
                     placeholder="example@hotmail.com"
@@ -269,8 +244,10 @@ export const AdminLogin: React.FC = () => {
                 <Field.ErrorText>{emailError}</Field.ErrorText>
               </Field.Root>
 
-              <Field.Root invalid={!!passwordError}>
-                <Field.Label fontWeight="bold">Password</Field.Label>
+              <Field.Root invalid={!!passwordError} required>
+                <Field.Label fontWeight="bold">Password
+                  <Field.RequiredIndicator />
+                </Field.Label>
                 <InputGroup
                   width="100%"
                   startElement={<HiOutlineKey />}
@@ -319,11 +296,11 @@ export const AdminLogin: React.FC = () => {
                 position="relative"
                 variant="outline"
                 borderRadius="md"
-                background={(userFilled && passFilled) ? "#3182CE" : "#D4D4D8"}
+                background={(userFilled && passFilled) ? "white" : "white"}
                 w="100%"
                 h="3vw"
-                color="white"
-                _hover={{ bg: "#5797BD" }}
+                color="black"
+                _hover={{ bg: "#F4F4F5" }}
                 disabled={!(userFilled && passFilled)}
                 onClick={handleAdminLogin}
               >
@@ -344,14 +321,14 @@ export const AdminLogin: React.FC = () => {
               </Text>
               <Button
                 variant="outline"
-                bg="#3182CE"
+                bg="white"
                 borderWidth="2px"
                 borderRadius="md"
-                w="80%"
+                w="100%"
                 alignSelf="center"
                 h="50px"
-                color="white"
-                _hover={{ bg: "#5797BD" }}
+                color="black"
+                _hover={{ bg: "#F4F4F5" }}
                 onClick={handleGoogleSso}
               >
                 <Icon as={FaGoogle} position="absolute" left="16px" top="50%" transform="translateY(-50%)" />
@@ -360,14 +337,14 @@ export const AdminLogin: React.FC = () => {
               </Button>
               <Button
                 variant="outline"
-                bg="#3182CE"
+                bg="white"
                 borderWidth="2px"
                 borderRadius="md"
-                w="80%"
+                w="100%"
                 alignSelf="center"
                 h="50px"
-                color="white"
-                _hover={{ bg: "#5797BD" }}
+                color="black"
+                _hover={{ bg: "#F4F4F5" }}
                 onClick={handleMicrosoftSso}
               >
                 <Icon as={FaMicrosoft} position="absolute" left="16px" top="50%" transform="translateY(-50%)" />
