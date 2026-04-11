@@ -178,7 +178,7 @@ export const CreateEvent = () => {
         clinicId = eventId;
         clinicData = clinicRes.data;
       } else {
-        const clinicRes = await backend.post("/clinics", { ...payload, attendees: 0 });
+        const clinicRes = await backend.post("/clinics", payload);
         clinicId = clinicRes.data.id;
         clinicData = clinicRes.data;
       }
