@@ -22,7 +22,8 @@ export const EventCatalog = () => {
   const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+  const getAreaLabel = (area) =>
+    area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   /** Search blob for location-ish fields (street address omitted from public catalog) */
   const getEventLocationSearchText = (event) => {
@@ -54,10 +55,11 @@ export const EventCatalog = () => {
 
     return Promise.all(
       baseEvents.map(async (event) => {
-        const [langRes, areaRes, regRes] = await Promise.all([
+        const [langRes, areaRes, regRes, clincTags] = await Promise.all([
           backend.get(`/clinics/${event.id}/languages`),
           backend.get(`/clinics/${event.id}/areas-of-practice`),
           backend.get(`/clinics/${event.id}/registrations`),
+          backend.get(`/clinics/${event.id}/tags`),
         ]);
 
         const myRegistration = regRes.data.find((reg) => reg.id === volId);
@@ -77,6 +79,7 @@ export const EventCatalog = () => {
           ...event,
           languages: langRes.data,
           areas: areaRes.data,
+          tags: clincTags.data,
           displayDate,
           displayTime,
           isRegistered: !!myRegistration,
@@ -164,12 +167,12 @@ export const EventCatalog = () => {
         const locs = [];
 
         selectedFilters.forEach((filter) => {
-          if (filter.id.startsWith('areasOfPracticeId')) {
-            areaIds.push(filter.id.replace('areasOfPracticeId', ''));
-          } else if (filter.id.startsWith('languageId')) {
-            langIds.push(filter.id.replace('languageId', ''));
-          } else if (filter.id.startsWith('roleId')) {
-            roleIds.push(filter.id.replace('roleId', ''));
+          if (filter.id.startsWith("areasOfPracticeId")) {
+            areaIds.push(filter.id.replace("areasOfPracticeId", ""));
+          } else if (filter.id.startsWith("languageId")) {
+            langIds.push(filter.id.replace("languageId", ""));
+          } else if (filter.id.startsWith("roleId")) {
+            roleIds.push(filter.id.replace("roleId", ""));
           } else {
             locs.push(filter.id);
           }
@@ -177,10 +180,11 @@ export const EventCatalog = () => {
 
         // build query params with comma-separated values
         const params = new URLSearchParams();
-        if (areaIds.length > 0) params.set('areaOfPracticeIds', areaIds.join(','));
-        if (langIds.length > 0) params.set('languageIds', langIds.join(','));
-        if (roleIds.length > 0) params.set('roleIds', roleIds.join(','));
-        if (locs.length > 0) params.set('locations', locs.join(','));
+        if (areaIds.length > 0)
+          params.set("areaOfPracticeIds", areaIds.join(","));
+        if (langIds.length > 0) params.set("languageIds", langIds.join(","));
+        if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
+        if (locs.length > 0) params.set("locations", locs.join(","));
 
         const res = await backend.get(`/clinics/search?${params.toString()}`);
         const enrichedEvents = await enrichEvents(res.data, volunteerId);
@@ -194,7 +198,7 @@ export const EventCatalog = () => {
       if (!volunteerId) return;
 
       try {
-        const res = await backend.get('/clinics');
+        const res = await backend.get("/clinics");
         const enrichedEvents = await enrichEvents(res.data, volunteerId);
         setEvents(enrichedEvents);
       } catch (error) {
@@ -216,9 +220,7 @@ export const EventCatalog = () => {
         volunteerId,
       });
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: true } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: true } : e))
       );
       if (selectedEvent && selectedEvent.id === clinicId) {
         setSelectedEvent({ ...selectedEvent, isRegistered: true });
@@ -234,9 +236,7 @@ export const EventCatalog = () => {
     try {
       await backend.delete(`/clinics/${clinicId}/registrations/${volunteerId}`);
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: false } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: false } : e))
       );
       if (selectedEvent && selectedEvent.id === clinicId) {
         setSelectedEvent({ ...selectedEvent, isRegistered: false });
@@ -250,7 +250,11 @@ export const EventCatalog = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex direction="column" h="100%" overflow="hidden">
+    <Flex
+      direction="column"
+      h="100%"
+      overflow="hidden"
+    >
       <Flex
         flex="1"
         minH={0}

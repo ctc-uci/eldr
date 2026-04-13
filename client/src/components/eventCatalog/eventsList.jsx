@@ -3,7 +3,8 @@ import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 import { formatClinicLocationList } from "./clinicLocationFormat";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+  const getAreaLabel = (area) =>
+    area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   return (
     <VStack
@@ -100,7 +101,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               fontWeight={500}
               gap="10px"
             >
-              {event.languages.map((l, i) => (
+              {event.tags.map((t, i) => (
                 <Badge
                   key={i}
                   variant="solid"
@@ -110,20 +111,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                   px="10px"
                   py="4px"
                 >
-                  {l.language}
-                </Badge>
-              ))}
-              {event.areas.map((a, i) => (
-                <Badge
-                  key={i}
-                  variant="solid"
-                  borderColor="#D1D5DB"
-                  color="#27272A"
-                  bg="#F4F4F5"
-                  px="10px"
-                  py="4px"
-                >
-                  {getAreaLabel(a)}
+                  {t.tag}
                 </Badge>
               ))}
             </HStack>

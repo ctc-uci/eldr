@@ -240,7 +240,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     {statusLabel}
                   </Text>
                 </HStack>
-                {event.languages.map((l, i) => (
+                {event.tags.map((t, i) => (
                   <Badge
                     key={i}
                     variant="solid"
@@ -250,20 +250,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     px="10px"
                     py="4px"
                   >
-                    {l.language}
-                  </Badge>
-                ))}
-                {event.areas.map((a, i) => (
-                  <Badge
-                    key={i}
-                    variant="solid"
-                    borderColor="#D1D5DB"
-                    color="#27272A"
-                    bg="#F4F4F5"
-                    px="10px"
-                    py="4px"
-                  >
-                    {getAreaLabel(a)}
+                    {t.tag}
                   </Badge>
                 ))}
               </HStack>
