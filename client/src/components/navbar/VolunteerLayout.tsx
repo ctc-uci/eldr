@@ -8,9 +8,9 @@ import { Navbar } from "@/components/navbar/Navbar.tsx";
  */
 export const VolunteerLayout = () => {
   return (
-    <Flex direction="column" minH="100vh" bg="#FAFBFC">
+    <Flex direction="column" h="100vh" bg="#FAFBFC">
       <Navbar />
-      <Box flex="1" overflow="auto">
+      <Box flex="1" overflow="hidden">
         <Outlet />
       </Box>
     </Flex>

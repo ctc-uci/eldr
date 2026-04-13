@@ -250,7 +250,7 @@ export const EventCatalog = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex direction="column" flex="1" minH="100vh" overflow="hidden">
+    <Flex direction="column" h="100%" overflow="hidden">
       <Flex
         flex="1"
         minH={0}
