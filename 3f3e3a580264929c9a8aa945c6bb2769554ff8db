@@ -1,0 +1,25 @@
+client/src/utils/auth/authInterceptor.ts
+  5b6ecbcddd7ffa73 3-4,7,9-12,14-18,21-30,41-44,47,49-58,64-67
+server/src/middleware.ts
+  5b6ecbcddd7ffa73 16-18,20,24,50-52,54,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "3f3e3a580264929c9a8aa945c6bb2769554ff8db",
+  "prompts": {
+    "5b6ecbcddd7ffa73": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0ae7995e-f011-47e7-a4b4-c534a76a8933",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 12,
+      "accepted_lines": 52,
+      "overriden_lines": 0
+    }
+  }
+}
