@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Box,
@@ -16,9 +16,8 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
-import { LuChevronUp } from "react-icons/lu";
-
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { LuChevronUp } from "react-icons/lu";
 
 const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   return (
@@ -33,7 +32,11 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         borderTopWidth="1px"
         borderColor="#E5E7EB"
       >
-        <Text fontSize="16px" fontWeight={600} color="#111827">
+        <Text
+          fontSize="16px"
+          fontWeight={600}
+          color="#111827"
+        >
           {label}
         </Text>
         <Collapsible.Indicator
@@ -45,7 +48,12 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         </Collapsible.Indicator>
       </Collapsible.Trigger>
       <Collapsible.Content>
-        <VStack align="stretch" gap="10px" pl="8px" pb="12px">
+        <VStack
+          align="stretch"
+          gap="10px"
+          pl="8px"
+          pb="12px"
+        >
           {options.map((option) => (
             <Checkbox.Root
               key={option.id}
@@ -56,7 +64,11 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
               <Checkbox.HiddenInput />
               <Checkbox.Control />
               <Checkbox.Label>
-                <Text fontSize="14px" fontWeight={400} color="#374151">
+                <Text
+                  fontSize="14px"
+                  fontWeight={400}
+                  color="#374151"
+                >
                   {option.text}
                 </Text>
               </Checkbox.Label>
@@ -68,7 +80,15 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   );
 };
 
-export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedFilters, setSelectedFilters, filteredCount }) => {
+export const SortAndFilter = ({
+  open,
+  onOpenChange,
+  sortBy,
+  setSortBy,
+  selectedFilters,
+  setSelectedFilters,
+  filteredCount,
+}) => {
   const { backend } = useBackendContext();
 
   const [filterCategories, setFilterCategories] = useState([]);
@@ -77,21 +97,27 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
   const fetchFilterOptions = async () => {
     try {
       const [typesRes, languagesRes, occupationsRes] = await Promise.all([
-        backend.get('/areas-of-practice'),
-        backend.get('/languages/with-volunteers'),
-        backend.get('/roles'),
+        backend.get("/areas-of-practice"),
+        backend.get("/languages/with-volunteers"),
+        backend.get("/roles"),
       ]);
 
       const categories = [
         {
-          label: "Type",
+          label: "Categories",
           key: "areasOfPracticeIds",
-          options: typesRes.data.map((t) => ({ id: "areasOfPracticeId" + t.id, text: t.areasOfPractice })),
+          options: typesRes.data.map((t) => ({
+            id: "areasOfPracticeId" + t.id,
+            text: t.areasOfPractice,
+          })),
         },
         {
           label: "Language",
           key: "languageIds",
-          options: languagesRes.data.map((l) => ({ id: "languageId" + l.id, text: l.language })),
+          options: languagesRes.data.map((l) => ({
+            id: "languageId" + l.id,
+            text: l.language,
+          })),
         },
         {
           label: "Location",
@@ -104,9 +130,12 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
           ],
         },
         {
-          label: "Occupation",
+          label: "Role",
           key: "roleIds",
-          options: occupationsRes.data.map((o) => ({ id: "roleId" + o.id, text: o.roleName })),
+          options: occupationsRes.data.map((o) => ({
+            id: "roleId" + o.id,
+            text: o.roleName,
+          })),
         },
       ];
 
@@ -121,7 +150,6 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
   useEffect(() => {
     fetchFilterOptions();
   }, []);
-
 
   const toggleFilter = (option) => {
     setSelectedFilters((prev) =>
@@ -148,9 +176,21 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
         <Drawer.Positioner>
           <Drawer.Content>
             {/* Header */}
-            <Drawer.Header px="24px" pt="24px" pb="16px">
-              <Flex justify="space-between" align="center" w="100%">
-                <Text fontSize="20px" fontWeight={700} color="#111827">
+            <Drawer.Header
+              px="24px"
+              pt="24px"
+              pb="16px"
+            >
+              <Flex
+                justify="space-between"
+                align="center"
+                w="100%"
+              >
+                <Text
+                  fontSize="20px"
+                  fontWeight={700}
+                  color="#111827"
+                >
                   Sort and Filter
                 </Text>
                 <CloseButton
@@ -160,13 +200,25 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
               </Flex>
             </Drawer.Header>
 
-            <Separator borderColor="#111827" mx="24px" />
+            <Separator
+              borderColor="#111827"
+              mx="24px"
+            />
 
             {/* Body */}
-            <Drawer.Body px="24px" py="16px" overflowY="auto">
+            <Drawer.Body
+              px="24px"
+              py="16px"
+              overflowY="auto"
+            >
               {/* Sort By */}
               <Box mb="20px">
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="12px">
+                <Text
+                  fontSize="16px"
+                  fontWeight={600}
+                  color="#111827"
+                  mb="12px"
+                >
                   Sort By
                 </Text>
                 <HStack gap="8px">
@@ -211,7 +263,12 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
 
               {/* Selected Filters */}
               <Box mb="20px">
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="12px">
+                <Text
+                  fontSize="16px"
+                  fontWeight={600}
+                  color="#111827"
+                  mb="12px"
+                >
                   Selected Filters
                 </Text>
                 <Box
@@ -222,7 +279,10 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   px="12px"
                   py="8px"
                 >
-                  <HStack gap="6px" flexWrap="wrap">
+                  <HStack
+                    gap="6px"
+                    flexWrap="wrap"
+                  >
                     {selectedFilters.map((filter) => (
                       <Button
                         key={filter.id}
@@ -246,32 +306,52 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
 
               {/* Filter Categories */}
               <Box>
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="8px">
+                <Text
+                  fontSize="16px"
+                  fontWeight={600}
+                  color="#111827"
+                  mb="8px"
+                >
                   Filter Categories
                 </Text>
                 {isLoading ? (
-                  <Text fontSize="14px" color="#6B7280">
+                  <Text
+                    fontSize="14px"
+                    color="#6B7280"
+                  >
                     Loading filter options...
                   </Text>
                 ) : (
-                  <Stack gap="0" pl="8px">
+                  <Stack
+                    gap="0"
+                    pl="8px"
+                  >
                     {filterCategories.map((category) => (
                       <FilterCategory
                         key={category.label}
                         label={category.label}
-                      options={category.options}
-                      selectedFilters={selectedFilters}
-                      onToggle={toggleFilter}
-                    />
-                  ))}
-                </Stack>
+                        options={category.options}
+                        selectedFilters={selectedFilters}
+                        onToggle={toggleFilter}
+                      />
+                    ))}
+                  </Stack>
                 )}
               </Box>
             </Drawer.Body>
 
             {/* Footer */}
-            <Drawer.Footer px="24px" py="16px" borderTopWidth="1px" borderColor="#E5E7EB">
-              <Flex justify="space-between" align="center" w="100%">
+            <Drawer.Footer
+              px="24px"
+              py="16px"
+              borderTopWidth="1px"
+              borderColor="#E5E7EB"
+            >
+              <Flex
+                justify="space-between"
+                align="center"
+                w="100%"
+              >
                 <Button
                   variant="outline"
                   borderColor="#D1D5DB"
@@ -298,7 +378,9 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   onClick={() => onOpenChange(false)}
                   disabled={filteredCount === 0}
                 >
-                  {filteredCount > 0 ? `See ${filteredCount} Results` : "No Results"}
+                  {filteredCount > 0
+                    ? `See ${filteredCount} Results`
+                    : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>

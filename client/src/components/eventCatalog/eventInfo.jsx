@@ -231,17 +231,6 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         mt={3}
         mb={{ base: 5, md: 1 }}
       >
-        {!isPastEvent && (
-          <HStack
-            opacity={event.isRegistered ? 1 : 0}
-            transition="opacity 0.2s"
-            gap={1}
-            fontSize="12px"
-            mb={2}
-          >
-            <Check size={16} /> You are attending
-          </HStack>
-        )}
         {isPastEvent ? (
           <Button
             variant="surface"
@@ -267,10 +256,10 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             onOpenChange={(e) => setOpen(e.open)}
             placement="center"
             motionPreset="slide-in-bottom"
-            size="xs"
+            size="sm"
           >
             <Button
-              variant={event.isRegistered ? "surface" : "solid"}
+              variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
               px="18px"
               py="6px"
@@ -291,17 +280,18 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
               <Dialog.Positioner>
                 <Dialog.Content>
                   <Dialog.Header>
-                    <Dialog.Title>Unregister from this event</Dialog.Title>
+                    <Dialog.Title>Unregister from event?</Dialog.Title>
                   </Dialog.Header>
                   <Dialog.Body>
                     <p>
-                      something something guilt trip something something don’t
-                      do it pls
+                      At Community Counsel, your role is vital for providing
+                      justice for your neighbors. Are you sure you need to
+                      unregister?
                     </p>
                   </Dialog.Body>
                   <Dialog.Footer>
                     <Dialog.ActionTrigger asChild>
-                      <Button variant="outline">Cancel</Button>
+                      <Button variant="outline">Keep my spot</Button>
                     </Dialog.ActionTrigger>
                     <Button
                       colorPalette="red"
