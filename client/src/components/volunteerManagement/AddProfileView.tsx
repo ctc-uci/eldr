@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Box, Breadcrumb, Button, Flex, Heading, Icon, Input, NativeSelect, Tabs, Text } from "@chakra-ui/react";
 import { LuCircleUser, LuBriefcase } from "react-icons/lu";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { useRoleContext } from "@/contexts/hooks/useRoleContext";
 import { VolunteerProfileFormData } from "./VolunteerProfilePanel";
 
 interface LanguageOption { id: number; language: string; }
@@ -61,6 +62,7 @@ const TagInput = ({
 
 export const AddProfileView = () => {
   const { backend } = useBackendContext();
+  const { role: currentUserRole } = useRoleContext();
   const navigate = useNavigate();
   const { register, handleSubmit, watch, trigger } = useForm<VolunteerProfileFormData>();
   const roleValue = watch("role");
@@ -247,8 +249,9 @@ export const AddProfileView = () => {
                     color={!roleValue ? "#A1A1AA" : "inherit"}
                     {...register("role", { required: true })}
                   >
-                    <option value="staff">Staff</option>
-                    <option value="supervisor">Supervisor</option>
+                    <option value="volunteer">Volunteer</option>
+                    {currentUserRole === "supervisor" && <option value="staff">Staff</option>}
+                    {currentUserRole === "supervisor" && <option value="supervisor">Supervisor</option>}
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
@@ -285,10 +288,9 @@ export const AddProfileView = () => {
               <Box flex={1}>
                 <Text fontSize="sm" fontWeight="semibold" mb={1}>Affiliated Employer/Education <Box as="span" color="red.500">*</Box></Text>
                 <Flex align="center" borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" px={3} h="40px" gap={2}>
-                  <Icon as={FiSearch} color="#A1A1AA" boxSize={4} flexShrink={0} />
                   <Input
                     variant="unstyled"
-                    placeholder="Type to search here"
+                    placeholder="Enter employer or school name"
                     _placeholder={{ color: "#A1A1AA" }}
                     fontSize="sm"
                     value={affiliated}
