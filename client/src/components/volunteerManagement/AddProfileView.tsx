@@ -405,7 +405,7 @@ export const AddProfileView = () => {
                           value={entry.proficiency}
                           onChange={(e) => setLanguages((prev) => prev.map((l, idx) => idx === i ? { ...l, proficiency: e.target.value } : l))}
                         >
-                          {["Native", "Fluent", "Advanced", "Intermediate", "Elementary"].map((p) => (
+                          {["Proficient", "Professional", "Native/Fluent"].map((p) => (
                             <option key={p} value={p}>{p}</option>
                           ))}
                         </NativeSelect.Field>
