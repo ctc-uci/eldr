@@ -1,8 +1,5 @@
-import { Icon, Text, VStack } from "@chakra-ui/react";
-
-import { FaFolder } from "react-icons/fa";
-import { MailPlus } from "lucide-react";
-
+import { Button, Text, VStack } from "@chakra-ui/react";
+import { Mail, MailPlus } from "lucide-react";
 import { InputDialog } from "./InputPopover";
 
 export const EmptyFolderState = ({
@@ -10,41 +7,43 @@ export const EmptyFolderState = ({
   onPopoverOpenChange,
   onCreateTemplate,
 }) => (
-  <VStack
-    spacing={4}
-    py={16}
-    px={12}
-  >
-    <Icon
-      as={FaFolder}
-      boxSize={6}
-      color="gray.500"
-    />
-    <Text
-      fontSize="xl"
-      fontWeight="semibold"
-      textAlign="center"
-    >
-      You have no templates!
-    </Text>
-    <Text
-      fontSize="sm"
-      color="gray.500"
-      textAlign="center"
-    >
-      Create a new email template by clicking below
-    </Text>
+  <VStack gap="2rem" py={20} px={12}>
+    {/* Envelope icon */}
+    <Mail size={32} color="#71717A" strokeWidth={1.5} />
+
+    <VStack spacing={0}>
+      <Text
+        fontSize="xl"
+        fontWeight="600"
+        lineHeight="30px"
+        textAlign="center"
+        color="black"
+      >
+        You have no templates.
+      </Text>
+      <Text
+        fontSize="sm"
+        fontWeight="400"
+        lineHeight="20px"
+        color="#52525B"
+        textAlign="center"
+        mt={2}
+      >
+        Add a new template to get started
+      </Text>
+    </VStack>
+
     <InputDialog
       isOpen={isPopoverOpen}
       onOpenChange={onPopoverOpenChange}
       onSubmit={onCreateTemplate}
       triggerIcon={<MailPlus size={20} />}
-      triggerLabel="New Template"
+      triggerLabel="Create New Template"
       dialogTitle="Create New Template"
       inputLabel="Template Name"
       inputPlaceholder="Enter a template name"
       submitLabel="Create Template"
-      buttonProps={{ px: 8, py: 2, mt: 2 }}
+      buttonProps={{ px: "20px", h: "48px", fontSize: "md", fontWeight: "500" }}
     />
   </VStack>
 );
