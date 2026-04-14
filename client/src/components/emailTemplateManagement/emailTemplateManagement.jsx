@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import {
   Box,
@@ -686,7 +686,7 @@ export const EmailTemplateManagement = () => {
                     disabled={isDisabled}
                     _focus={{ boxShadow: "none" }}
                   />
-                  <FaPencilAlt size={20} cursor="pointer" onClick={() => setIsDisabled(!isDisabled)} />
+                  <Pencil size={20} cursor="pointer" onClick={() => setIsDisabled(!isDisabled)} />
                 </HStack>
                 
                 <HStack spacing={4} ml="auto">
@@ -703,7 +703,7 @@ export const EmailTemplateManagement = () => {
                     borderColor="#FECACA"
                     onClick={() => setShowDeleteModal(true)}
                   >
-                    <FaTrash size={20} />
+                    <Trash2 size={20} />
                     Delete
                   </Button>
                 </HStack>
