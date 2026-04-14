@@ -29,7 +29,8 @@ import { getClinicLocationDisplay } from "./clinicLocationFormat";
 
 export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+  const getAreaLabel = (area) =>
+    area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -51,15 +52,28 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
     const dateObj = event.date ? new Date(event.date) : null;
     if (dateObj && event.endTime) {
       const endObj = new Date(event.endTime);
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(),
-        endObj.getUTCHours(), endObj.getUTCMinutes(), endObj.getUTCSeconds()
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          endObj.getUTCHours(),
+          endObj.getUTCMinutes(),
+          endObj.getUTCSeconds()
+        )
+      );
     }
     if (dateObj) {
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 23, 59, 59
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          23,
+          59,
+          59
+        )
+      );
     }
     return null;
   };
@@ -181,7 +195,7 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         fontWeight={500}
         gap="10px"
       >
-        {event.languages.map((l, i) => (
+        {event.tags.map((t, i) => (
           <Badge
             key={i}
             variant="solid"
@@ -190,19 +204,7 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             px="10px"
             py="4px"
           >
-            {l.language}
-          </Badge>
-        ))}
-        {event.areas.map((a, i) => (
-          <Badge
-            key={i}
-            variant="solid"
-            bg="#F4F4F5"
-            color="#27272A"
-            px="10px"
-            py="4px"
-          >
-            {getAreaLabel(a)}
+            {t.tag}
           </Badge>
         ))}
       </HStack>
@@ -260,61 +262,61 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             )}
           </Button>
         ) : (
-        <Dialog.Root
-          open={open}
-          onOpenChange={(e) => setOpen(e.open)}
-          placement="center"
-          motionPreset="slide-in-bottom"
-          size="xs"
-        >
-          <Button
-            variant={event.isRegistered ? "surface" : "solid"}
-            colorPalette={event.isRegistered ? "red" : "blue"}
-            px="18px"
-            py="6px"
-            onClick={handleRegistration}
+          <Dialog.Root
+            open={open}
+            onOpenChange={(e) => setOpen(e.open)}
+            placement="center"
+            motionPreset="slide-in-bottom"
+            size="xs"
           >
-            {event.isRegistered ? (
-              <>
-                <CalendarX /> Unregister
-              </>
-            ) : (
-              <>
-                <CalendarPlus /> Register
-              </>
-            )}
-          </Button>
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Unregister from this event</Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  <p>
-                    something something guilt trip something something don’t do
-                    it pls
-                  </p>
-                </Dialog.Body>
-                <Dialog.Footer>
-                  <Dialog.ActionTrigger asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </Dialog.ActionTrigger>
-                  <Button
-                    colorPalette="red"
-                    onClick={confirmUnregister}
-                  >
-                    Unregister
-                  </Button>
-                </Dialog.Footer>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" />
-                </Dialog.CloseTrigger>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
+            <Button
+              variant={event.isRegistered ? "surface" : "solid"}
+              colorPalette={event.isRegistered ? "red" : "blue"}
+              px="18px"
+              py="6px"
+              onClick={handleRegistration}
+            >
+              {event.isRegistered ? (
+                <>
+                  <CalendarX /> Unregister
+                </>
+              ) : (
+                <>
+                  <CalendarPlus /> Register
+                </>
+              )}
+            </Button>
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Positioner>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Unregister from this event</Dialog.Title>
+                  </Dialog.Header>
+                  <Dialog.Body>
+                    <p>
+                      something something guilt trip something something don’t
+                      do it pls
+                    </p>
+                  </Dialog.Body>
+                  <Dialog.Footer>
+                    <Dialog.ActionTrigger asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </Dialog.ActionTrigger>
+                    <Button
+                      colorPalette="red"
+                      onClick={confirmUnregister}
+                    >
+                      Unregister
+                    </Button>
+                  </Dialog.Footer>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Dialog.CloseTrigger>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Portal>
+          </Dialog.Root>
         )}
       </Flex>
 

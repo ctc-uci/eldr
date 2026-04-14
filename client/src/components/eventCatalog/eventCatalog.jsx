@@ -110,7 +110,11 @@ export const EventCatalog = () => {
 
   // Filter and sort events
   const filteredEvents = useMemo(() => {
-    let result = [...events];
+    const now = new Date();
+    let result = events.filter((e) => {
+      if (!e.endTime) return true; // If no end time, assume it hasn't passed or is TBD
+      return new Date(e.endTime) > now;
+    });
 
     // Apply search
     if (searchQuery.trim()) {
