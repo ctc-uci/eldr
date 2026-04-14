@@ -10,9 +10,6 @@ import {
 
 import { formatClinicLocationList } from "./clinicLocationFormat";
 
-const getAreaLabel = (area) =>
-  area.areasOfPractice ?? area.areas_of_practice ?? "";
-
 export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
   const now = new Date();
 
@@ -240,7 +237,12 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     {statusLabel}
                   </Text>
                 </HStack>
-                {event.tags.map((t, i) => (
+                {[
+                  event.type,
+                  ...event.tags,
+                  event.locationType,
+                  ...event.languages,
+                ].map((item, i) => (
                   <Badge
                     key={i}
                     variant="solid"
@@ -250,7 +252,7 @@ const EventSection = ({ title, events, onSelect, selectedEvent }) => {
                     px="10px"
                     py="4px"
                   >
-                    {t.tag}
+                    {item}
                   </Badge>
                 ))}
               </HStack>

@@ -101,7 +101,12 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               fontWeight={500}
               gap="10px"
             >
-              {event.tags.map((t, i) => (
+              {[
+                event.type,
+                ...event.tags,
+                event.locationType,
+                ...event.languages,
+              ].map((item, i) => (
                 <Badge
                   key={i}
                   variant="solid"
@@ -111,7 +116,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                   px="10px"
                   py="4px"
                 >
-                  {t.tag}
+                  {item}
                 </Badge>
               ))}
             </HStack>

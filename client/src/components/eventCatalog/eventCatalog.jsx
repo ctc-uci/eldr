@@ -55,7 +55,7 @@ export const EventCatalog = () => {
 
     return Promise.all(
       baseEvents.map(async (event) => {
-        const [langRes, areaRes, regRes, clincTags] = await Promise.all([
+        const [langRes, areaRes, regRes, tagsRes] = await Promise.all([
           backend.get(`/clinics/${event.id}/languages`),
           backend.get(`/clinics/${event.id}/areas-of-practice`),
           backend.get(`/clinics/${event.id}/registrations`),
@@ -77,9 +77,9 @@ export const EventCatalog = () => {
 
         return {
           ...event,
-          languages: langRes.data,
-          areas: areaRes.data,
-          tags: clincTags.data,
+          languages: langRes.data.map((item) => item.language),
+          areas: areaRes.data.map((item) => item.areasOfPractice),
+          tags: tagsRes.data.map((item) => item.tag),
           displayDate,
           displayTime,
           isRegistered: !!myRegistration,
@@ -99,6 +99,7 @@ export const EventCatalog = () => {
 
         const res = await backend.get("/clinics");
         const fullEvents = await enrichEvents(res.data, volId);
+        console.log(fullEvents);
         setEvents(fullEvents);
       } catch (error) {
         console.error("Failed to fetch event details:", error);
