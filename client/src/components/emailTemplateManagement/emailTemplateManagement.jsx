@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
 import { Pencil, Trash2 } from "lucide-react";
@@ -41,7 +41,29 @@ export const EmailTemplateManagement = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const [itemsPerPage, setItemsPerPage] = useState(7);
+  const listContainerRef = useRef(null);
+
+  // card height: py=15*2 + lineHeight=24 + border=2 = 56px; gap between cards = 16px
+  const CARD_HEIGHT = 56;
+  const CARD_GAP = 16;
+
+  useEffect(() => {
+    const el = listContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const available = el.clientHeight;
+      if (available <= 0) return;
+      // n cards take: n*CARD_HEIGHT + (n-1)*CARD_GAP = n*(CARD_HEIGHT+CARD_GAP) - CARD_GAP
+      const n = Math.max(1, Math.floor((available + CARD_GAP) / (CARD_HEIGHT + CARD_GAP)));
+      setItemsPerPage(prev => {
+        if (prev !== n) setCurrentPage(1);
+        return n;
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [allTemplates, setAllTemplates] = useState([]);
@@ -734,7 +756,7 @@ export const EmailTemplateManagement = () => {
 
         {/* Folder List View */}
         {view === "folders" && (
-          <VStack align="stretch" spacing={4} mb={8} flex="1">
+          <VStack ref={listContainerRef} align="stretch" spacing={4} mb={8} flex="1" overflow="hidden">
             {isLoadingFolders ? (
               <Text>Loading folders...</Text>
             ) : folders.length === 0 ? (
