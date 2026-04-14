@@ -32,12 +32,29 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
+import { Spinner } from "@chakra-ui/react";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
+import { useRoleContext } from "@/contexts/hooks/useRoleContext";
+
+const DashboardLanding = () => {
+  const { currentUser } = useAuthContext();
+  const { role, loading } = useRoleContext();
+
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (loading) return <Spinner />;
+
+  if (role === "volunteer") return <Navigate to="/event-catalog" replace />;
+  if (role === "staff" || role === "supervisor")
+    return <Navigate to="/events" replace />;
+
+  return <Dashboard />;
+};
 
 const App = () => {
   return (
@@ -154,7 +171,7 @@ const App = () => {
                 />
                 <Route
                   path="/dashboard"
-                  element={<ProtectedRoute element={<Dashboard />} />}
+                  element={<ProtectedRoute element={<DashboardLanding />} />}
                 />
                 <Route
                   path="/"
