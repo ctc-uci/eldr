@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "8521e6353e991a5501fc63d748378a6b2a7202fa",
+  "prompts": {
+    "8fc0af4d5a8086ea": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c3b24638-e24e-4bab-be00-cf5e9ce82a73",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
