@@ -1,0 +1,49 @@
+client/src/components/volunteerManagement/AddProfileView.tsx
+  a1d94f209b0298b7 4,9,65,252-254,293
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "b78419f8b70cc1a8be151bae0fb4473c848f486e",
+  "prompts": {
+    "3e1e3a242eefe23c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cca58c77-b7f8-46d9-bdd4-c07c62611d82",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "a1d94f209b0298b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cc4296a5-503e-421e-9ece-76befbf42570",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 5,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    },
+    "f3f7366f03483ea7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "20132dcf-f4ff-464e-91c4-de5c75c0ac1c",
+        "model": "claude-4.6-sonnet-medium-thinking"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
