@@ -418,7 +418,22 @@ export const EmailTemplateManagement = () => {
     )
   : [];
 
+  // Highlight search term matches in result text
+  const HighlightMatch = ({ text, query }) => {
+    if (!query) return <>{text}</>;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return <>{text}</>;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <strong>{text.slice(idx, idx + query.length)}</strong>
+        {text.slice(idx + query.length)}
+      </>
+    );
+  };
+
   // Pagination
+
   const paginatedFolders = folders.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -442,6 +457,10 @@ export const EmailTemplateManagement = () => {
               const value = e.target.value;
               setSearchTerm(value);
               setShowSearchDropdown(value.length > 0);
+            }}
+            onClear={() => {
+              setSearchTerm("");
+              setShowSearchDropdown(false);
             }}
             onFocus={() => {
               if (searchTerm.length > 0) setShowSearchDropdown(true);
@@ -482,7 +501,7 @@ export const EmailTemplateManagement = () => {
                         handleFolderClick(folder);
                       }}
                     >
-                      {folder.name}
+                      <HighlightMatch text={folder.name} query={searchTerm} />
                     </Box>
                   ))}
                 </>
@@ -506,7 +525,7 @@ export const EmailTemplateManagement = () => {
                         handleTemplateClick(template);
                       }}
                     >
-                      {template.name}
+                      <HighlightMatch text={template.name} query={searchTerm} />
                     </Box>
                   ))}
                 </>
@@ -525,11 +544,12 @@ export const EmailTemplateManagement = () => {
         {/* Breadcrumbs - hidden on root folder page */}
         {view !== "folders" && (
           <>
-            <Box borderBottom="1px solid" borderColor="gray.200" mt={5} mb={6} />
             <BreadcrumbNav
               view={view}
               currentFolder={currentFolder}
               templateName={templateName}
+              mt={5}
+              mb={6}
             />
           </>
         )}

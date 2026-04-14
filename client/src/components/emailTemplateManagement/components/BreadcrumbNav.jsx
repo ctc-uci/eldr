@@ -6,10 +6,13 @@ export const BreadcrumbNav = ({
   view,
   currentFolder,
   templateName,
+  mt,
+  mb = 4,
 }) => {
   return (
     <Breadcrumb.Root
-      mb={4}
+      mt={mt}
+      mb={mb}
       fontSize="sm"
       color="gray.500"
     >
