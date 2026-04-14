@@ -20,7 +20,6 @@ import {
   CalendarDays,
   CalendarPlus,
   CalendarX,
-  Check,
   MapPin,
   Users,
 } from "lucide-react";
@@ -29,8 +28,6 @@ import { getClinicLocationDisplay } from "./clinicLocationFormat";
 
 export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
-  const getAreaLabel = (area) =>
-    area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -195,16 +192,22 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         fontWeight={500}
         gap="10px"
       >
-        {event.tags.map((t, i) => (
+        {[
+          event.type,
+          ...event.tags,
+          event.locationType,
+          ...event.languages,
+        ].map((item, i) => (
           <Badge
             key={i}
             variant="solid"
-            bg="#F4F4F5"
+            borderColor="#D1D5DB"
             color="#27272A"
+            bg="#F4F4F5"
             px="10px"
             py="4px"
           >
-            {t.tag}
+            {item}
           </Badge>
         ))}
       </HStack>

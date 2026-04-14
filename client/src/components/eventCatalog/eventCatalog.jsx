@@ -99,7 +99,6 @@ export const EventCatalog = () => {
 
         const res = await backend.get("/clinics");
         const fullEvents = await enrichEvents(res.data, volId);
-        console.log(fullEvents);
         setEvents(fullEvents);
       } catch (error) {
         console.error("Failed to fetch event details:", error);
