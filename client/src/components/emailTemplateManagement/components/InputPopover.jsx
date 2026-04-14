@@ -11,7 +11,6 @@ export const InputPopover = ({
   // Trigger button props
   triggerIcon,
   triggerLabel,
-  triggerWidth = "292px",
   buttonProps = {},
   // Popover content props
   popoverTitle,
@@ -49,9 +48,8 @@ export const InputPopover = ({
     >
       <Popover.Trigger asChild>
         <Button
-          backgroundColor="#5797BD"
+          backgroundColor="#487C9E"
           color="white"
-          w={triggerWidth}
           onClick={handleTriggerClick}
           {...buttonProps}
         >

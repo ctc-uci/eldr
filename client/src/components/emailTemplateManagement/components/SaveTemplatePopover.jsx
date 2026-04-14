@@ -1,4 +1,5 @@
 import { InputPopover } from "./InputPopover";
+import { FaSave } from "react-icons/fa";
 
 export const SaveTemplatePopover = ({
   isOpen,
@@ -11,7 +12,8 @@ export const SaveTemplatePopover = ({
     onOpenChange={onOpenChange}
     onSubmit={onAddFolder}
     onTriggerClick={onTriggerClick}
-    triggerLabel="Save Template"
+    triggerIcon={<FaSave />}
+    triggerLabel="Save"
     popoverTitle="Indicate a folder to store this template."
     inputPlaceholder="Enter a folder name"
     placement="bottom-end"

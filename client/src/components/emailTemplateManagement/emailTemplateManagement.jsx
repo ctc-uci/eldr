@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
+import { FaPencilAlt, FaTrash } from "react-icons/fa";
+
 import {
   Box,
   Button,
@@ -26,7 +28,6 @@ import {
   DeleteTemplateModal,
 } from "./components";
 
-// import { Sidebar } from "@/components/Sidebar";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
@@ -64,6 +65,7 @@ export const EmailTemplateManagement = () => {
   const [showFolderNotFoundModal, setShowFolderNotFoundModal] = useState(false);
   const [pendingFolderName, setPendingFolderName] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
 
   // derive currentFolder from URL params
   const activeFolderId = urlFolderId || folderIdFromQuery;
@@ -522,33 +524,43 @@ export const EmailTemplateManagement = () => {
             </>
           ) : (
             <>
-              <Input
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="Untitled Template"
-                variant="unstyled"
-                fontSize="3xl"
-                fontWeight="600"
-                bg="#FAFBFC"
-                px="0px"
-                _focus={{ boxShadow: "none" }}
-              />
-              <HStack spacing={4} ml="auto">
-                <SaveTemplatePopover
-                  isOpen={showFolderPrompt}
-                  onOpenChange={(open) => setShowFolderPrompt(open)}
-                  onTriggerClick={handleSaveButtonClick}
-                  onAddFolder={handleAddFolderOnSave}
-                />
+              <HStack spacing={10} w="100%" alignContent="space-between">
+                <HStack spacing={4}>
+                  <Input
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Untitled Template"
+                    variant="unstyled"
+                    fontSize="3xl"
+                    fontWeight="600"
+                    bg="#FAFBFC"
+                    px="0px"
+                    w={`${Math.max(templateName.length, 1)}ch`}
+                    minW="1ch"
+                    disabled={isDisabled}
+                    _focus={{ boxShadow: "none" }}
+                  />
+                  <FaPencilAlt size={20} cursor="pointer" onClick={() => setIsDisabled(!isDisabled)} />
+                </HStack>
+                
+                <HStack spacing={4} ml="auto">
+                  <SaveTemplatePopover
+                    isOpen={showFolderPrompt}
+                    onOpenChange={(open) => setShowFolderPrompt(open)}
+                    onTriggerClick={handleSaveButtonClick}
+                    onAddFolder={handleAddFolderOnSave}
+                  />
 
-                <Button
-                  backgroundColor="#5797BD"
-                  color="white"
-                  w="292px"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  Delete Template
-                </Button>
+                  <Button
+                    variant="outline"
+                    color="#991919"
+                    borderColor="#FECACA"
+                    onClick={() => setShowDeleteModal(true)}
+                  >
+                    <FaTrash size={20} />
+                    Delete
+                  </Button>
+                </HStack>
               </HStack>
             </>
           )}
