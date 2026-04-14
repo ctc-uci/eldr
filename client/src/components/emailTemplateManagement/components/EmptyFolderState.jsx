@@ -1,8 +1,9 @@
 import { Icon, Text, VStack } from "@chakra-ui/react";
 
-import { FaFolder, FaMailBulk } from "react-icons/fa";
+import { FaFolder } from "react-icons/fa";
+import { MailPlus } from "lucide-react";
 
-import { InputPopover } from "./InputPopover";
+import { InputDialog } from "./InputPopover";
 
 export const EmptyFolderState = ({
   isPopoverOpen,
@@ -33,16 +34,16 @@ export const EmptyFolderState = ({
     >
       Create a new email template by clicking below
     </Text>
-    <InputPopover
+    <InputDialog
       isOpen={isPopoverOpen}
       onOpenChange={onPopoverOpenChange}
       onSubmit={onCreateTemplate}
-      triggerIcon={<FaMailBulk />}
+      triggerIcon={<MailPlus size={20} />}
       triggerLabel="New Template"
-      popoverTitle="New Template Creation"
+      dialogTitle="Create New Template"
+      inputLabel="Template Name"
       inputPlaceholder="Enter a template name"
-      placement="bottom"
-      triggerWidth="auto"
+      submitLabel="Create Template"
       buttonProps={{ px: 8, py: 2, mt: 2 }}
     />
   </VStack>

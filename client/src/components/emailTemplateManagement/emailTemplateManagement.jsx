@@ -26,6 +26,7 @@ import {
   SaveTemplatePopover,
   FolderNotFoundModal,
   DeleteTemplateModal,
+  RenameFolderDialog,
 } from "./components";
 
 
@@ -167,6 +168,21 @@ export const EmailTemplateManagement = () => {
       console.error('Error creating folder:', error);
     }
   };
+
+  // rename the current folder
+  const handleRenameFolder = async (newName) => {
+    if (!currentFolder?.id) return;
+    try {
+      const response = await backend.put(`/folders/${currentFolder.id}`, { name: newName });
+      const updated = response.data;
+      setFolders((prev) =>
+        prev.map((f) => (f.id === updated.id ? { ...f, name: updated.name } : f))
+      );
+    } catch (error) {
+      console.error('Error renaming folder:', error);
+    }
+  };
+
 
   // navigate to folder view when clicking on a folder
   const handleFolderClick = (folder) => {
@@ -490,22 +506,33 @@ export const EmailTemplateManagement = () => {
           )}
         </Box>
 
-        <Box borderBottom="1px solid" borderColor="gray.200" mt={5} mb={6} />
-
-        {/* Breadcrumbs */}
-        <BreadcrumbNav
-          view={view}
-          currentFolder={currentFolder}
-          templateName={templateName}
-        />
+        {/* Breadcrumbs - hidden on root folder page */}
+        {view !== "folders" && (
+          <>
+            <Box borderBottom="1px solid" borderColor="gray.200" mt={5} mb={6} />
+            <BreadcrumbNav
+              view={view}
+              currentFolder={currentFolder}
+              templateName={templateName}
+            />
+          </>
+        )}
 
         {/* Title and Actions */}
-        <Flex align="center" justify="space-between" mb={8}>
+        <Flex align="center" justify="space-between" mb={8} pt={view === "folders" ? "40px" : 0}>
           {(view === "folders" || view === "folderView") ? (
             <>
-              <Text fontSize="2xl" fontWeight="bold">
-                {view === "folderView" ? "Manage your files" : "Manage your folders"}
-              </Text>
+              <Flex align="center" gap="6px">
+                <Text fontSize="2xl" fontWeight="bold">
+                  {view === "folderView" ? (currentFolder?.name ?? "Folder") : "Manage your folders"}
+                </Text>
+                {view === "folderView" && currentFolder && (
+                  <RenameFolderDialog
+                    folderName={currentFolder.name}
+                    onRename={handleRenameFolder}
+                  />
+                )}
+              </Flex>
 
               {(view === "folders" || (view === "folderView" && templates.length != 0)) && (
                 <HStack spacing={4}>
@@ -621,12 +648,14 @@ export const EmailTemplateManagement = () => {
           </Box>
         )}
 
-        {/* Pagination - TODO: implement real pagination */}
+        {/* Pagination */}
         {(view === "folders" || view === "folderView") && (
           <Pagination
             totalPages={view === "folders" ? totalFolderPages : totalTemplatePages}
             currentPage={currentPage}
             onPageChange={(page) => setCurrentPage(page)}
+            totalItems={view === "folders" ? folders.length : templates.length}
+            itemsPerPage={itemsPerPage}
           />
         )}
 

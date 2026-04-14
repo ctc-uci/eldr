@@ -1,66 +1,57 @@
 import { useState } from "react";
 import { Button, CloseButton, Dialog, Flex, Input, Portal, Text } from "@chakra-ui/react";
+import { Pencil } from "lucide-react";
 
 /**
- * A reusable modal dialog for creating new items (folders, templates, etc.).
- * Replaces the old InputPopover using a centered Dialog with backdrop.
+ * An inline edit (pencil) button that opens a "Rename Folder" modal.
+ * The trigger is just an icon — no labelled button — so it sits cleanly
+ * next to the folder title text (matching Figma 1519-83577).
  */
-export const InputDialog = ({
-  isOpen,
-  onOpenChange,
-  onSubmit,
-  onTriggerClick,
-  // Trigger button props
-  triggerIcon,
-  triggerLabel,
-  buttonProps = {},
-  // Dialog content props
-  dialogTitle,
-  inputLabel = "Folder Name",
-  inputPlaceholder = "Untitled Folder",
-  submitLabel = "Create Folder",
-}) => {
+export const RenameFolderDialog = ({ folderName = "", onRename }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  const handleTriggerClick = async (e) => {
-    if (onTriggerClick) {
-      e.preventDefault();
-      await onTriggerClick();
-    }
+  const handleOpen = () => {
+    setInputValue(folderName);
+    setIsOpen(true);
+  };
+
+  const handleOpenChange = ({ open }) => {
+    setIsOpen(open);
+    if (!open) setInputValue("");
   };
 
   const handleSubmit = () => {
     if (!inputValue.trim()) return;
-    onSubmit(inputValue.trim());
+    onRename(inputValue.trim());
+    setIsOpen(false);
     setInputValue("");
-  };
-
-  const handleOpenChange = (e) => {
-    onOpenChange(e.open);
-    if (!e.open) {
-      setInputValue("");
-    }
   };
 
   return (
     <Dialog.Root
-      lazyMount
       open={isOpen}
       onOpenChange={handleOpenChange}
       placement="center"
+      lazyMount
     >
+      {/* Pencil trigger — sits inline next to the folder name */}
       <Dialog.Trigger asChild>
         <Button
-          backgroundColor="#487C9E"
-          color="white"
-          _hover={{ bg: "#3D6B89" }}
-          onClick={handleTriggerClick}
-          {...buttonProps}
+          variant="ghost"
+          size="xs"
+          p="4px"
+          minW="unset"
+          h="unset"
+          color="#71717A"
+          _hover={{ color: "#3D6B89", bg: "transparent" }}
+          onClick={handleOpen}
+          aria-label="Rename folder"
         >
-          {triggerIcon}
-          {triggerLabel}
+          <Pencil size={16} strokeWidth={1.75} />
         </Button>
       </Dialog.Trigger>
+
       <Portal>
         <Dialog.Backdrop bg="blackAlpha.400" />
         <Dialog.Positioner>
@@ -73,37 +64,24 @@ export const InputDialog = ({
             overflow="hidden"
           >
             {/* Close button */}
-            <Dialog.CloseTrigger
-              position="absolute"
-              top="0"
-              right="0"
-              asChild
-            >
+            <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
               <CloseButton size="sm" />
             </Dialog.CloseTrigger>
 
             {/* Header */}
-            <Dialog.Header
-              pt="24px"
-              pb="16px"
-              px="24px"
-            >
+            <Dialog.Header pt="24px" pb="16px" px="24px">
               <Dialog.Title
                 fontSize="18px"
                 fontWeight="600"
                 lineHeight="28px"
                 color="black"
               >
-                {dialogTitle}
+                Rename Folder
               </Dialog.Title>
             </Dialog.Header>
 
             {/* Body */}
-            <Dialog.Body
-              pt="8px"
-              pb="16px"
-              px="24px"
-            >
+            <Dialog.Body pt="8px" pb="16px" px="24px">
               <Flex direction="column" gap="4px">
                 <Text
                   fontSize="14px"
@@ -111,11 +89,11 @@ export const InputDialog = ({
                   lineHeight="20px"
                   color="black"
                 >
-                  {inputLabel}
+                  New Folder Name
                 </Text>
                 <Input
                   autoFocus
-                  placeholder={inputPlaceholder}
+                  placeholder="Untitled Folder"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   h="40px"
@@ -170,7 +148,7 @@ export const InputDialog = ({
                 onClick={handleSubmit}
                 disabled={!inputValue.trim()}
               >
-                {submitLabel}
+                Rename
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
@@ -179,6 +157,3 @@ export const InputDialog = ({
     </Dialog.Root>
   );
 };
-
-// Keep backward compat alias
-export const InputPopover = InputDialog;

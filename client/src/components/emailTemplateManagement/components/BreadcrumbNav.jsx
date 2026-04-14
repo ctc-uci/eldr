@@ -21,14 +21,14 @@ export const BreadcrumbNav = ({
               to="/email"
               _hover={{ color: "gray.700" }}
             >
-              Management
+              Homepage
             </Breadcrumb.Link>
           ) : (
             <Breadcrumb.Link
               as={Link}
               to="/email"
             >
-              Management
+              Homepage
             </Breadcrumb.Link>
           )}
         </Breadcrumb.Item>

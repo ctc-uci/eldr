@@ -1,5 +1,4 @@
-import { Flex, Text, Icon } from "@chakra-ui/react";
-import { FaGripLines } from "react-icons/fa";
+import { Flex, Text } from "@chakra-ui/react";
 
 export const TemplateCard = ({ name, onClick }) => (
   <Flex
@@ -21,6 +20,5 @@ export const TemplateCard = ({ name, onClick }) => (
     >
       {name}
     </Text>
-    <Icon as={FaGripLines} boxSize={5} color="gray.500" />
   </Flex>
 );
