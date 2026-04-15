@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import {
   Button,
@@ -10,8 +10,9 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 
+import { ListFilter } from "lucide-react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
-import { LuCalendarDays, LuSettings2, LuUserCheck } from "react-icons/lu";
+import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
 
 import { SortAndFilter } from "./sortAndFilter";
 
@@ -121,7 +122,7 @@ export const TopBar = ({
         >
           {isMobile ? (
             <IconButton
-              aria-label="Sort and Filter"
+              aria-label="Filter"
               backgroundColor="#DBEAFE"
               color="#173DA6"
               borderRadius="8px"
@@ -133,24 +134,23 @@ export const TopBar = ({
               _hover={{ backgroundColor: "#BFDBFE" }}
               onClick={() => setFilterOpen(true)}
             >
-              <LuSettings2 />
+              <ListFilter />
             </IconButton>
           ) : (
             <Button
-              backgroundColor="#DBEAFE"
-              color="#173DA6"
+              backgroundColor="#F4F4F5"
+              color="black"
               borderRadius="8px"
-              border="1px solid #BFDBFE"
+              border="1px solid #E4E4E7"
               px="16px"
               h="40px"
               fontSize="14px"
               fontWeight={500}
               flexShrink={0}
-              _hover={{ backgroundColor: "#BFDBFE" }}
               onClick={() => setFilterOpen(true)}
             >
-              <LuSettings2 />
-              Sort and Filter
+              <ListFilter />
+              Filter
             </Button>
           )}
 
@@ -166,15 +166,20 @@ export const TopBar = ({
 
           <InputGroup
             flex="1"
-            startElement={<FaMagnifyingGlass color="#9CA3AF" />}
+            endElement={
+              <FaMagnifyingGlass
+                color="#9CA3AF"
+                size="20px"
+              />
+            }
           >
             <Input
-              placeholder="Search for an event..."
+              placeholder="Search for whatever floats your boat, matey"
               backgroundColor="white"
               borderColor="#D1D5DB"
               borderRadius="8px"
               h="44px"
-              fontSize="14px"
+              fontSize="16px"
               _placeholder={{ color: "#9CA3AF" }}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
