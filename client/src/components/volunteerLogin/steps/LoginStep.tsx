@@ -3,7 +3,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
   Image,
   Input,
   Link,
@@ -14,17 +13,16 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithCustomToken } from "firebase/auth";
 
-import { BsInstagram } from "react-icons/bs";
-import { FaGoogle } from "react-icons/fa";
-import { FiLinkedin } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import microsoft from "../../../assets/microsoft_logo.svg";
+
+
 import {
   LuArrowRight,
-  LuFacebook,
   LuMail,
   LuUser,
   LuExternalLink,
 } from "react-icons/lu";
-import { RiMicrosoftLine } from "react-icons/ri";
 import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -34,7 +32,6 @@ import {
   authenticateMicrosoftUser,
 } from "@/utils/auth/providers";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -184,7 +181,7 @@ const LoginStep = ({ onNext }: Props) => {
         >
           <Flex
             direction="column"
-            justify="space-between"
+            justify="center"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -233,11 +230,12 @@ const LoginStep = ({ onNext }: Props) => {
             <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
+                fontWeight="bold"
                 color="black"
                 mb="6px"
               >
                 First Name
+                <Box as="span" color="#991919"> *</Box>
               </Text>
               <Flex
                 align="center"
@@ -271,11 +269,12 @@ const LoginStep = ({ onNext }: Props) => {
             <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
+                fontWeight="bold"
                 color="black"
                 mb="6px"
               >
                 Last Name
+                <Box as="span" color="#991919"> *</Box>
               </Text>
               <Flex
                 align="center"
@@ -309,11 +308,12 @@ const LoginStep = ({ onNext }: Props) => {
             <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
+                fontWeight="bold"
                 color="black"
                 mb="6px"
               >
                 Email
+                <Box as="span" color="#991919"> *</Box>
               </Text>
               <Flex
                 align="center"
@@ -347,7 +347,7 @@ const LoginStep = ({ onNext }: Props) => {
 
             <Button
               bg="white"
-              borderColor="black"
+              borderColor="#E4E4E7"
               color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
@@ -356,7 +356,14 @@ const LoginStep = ({ onNext }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
               justifyContent="center"
               px="20px"
               mt="4px"
@@ -379,8 +386,9 @@ const LoginStep = ({ onNext }: Props) => {
                 borderColor="#E4E4E7"
               />
               <Text
-                fontSize={{ base: "14px", md: "17px" }}
-                color="gray.400"
+                fontSize={{ base: "12px", md: "14px" }}
+                color="black"
+                fontWeight="bold"
               >
                 or continue with
               </Text>
@@ -392,7 +400,7 @@ const LoginStep = ({ onNext }: Props) => {
 
             <Button
               bg="white"
-              borderColor="black"
+              borderColor="#E4E4E7"
               color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
@@ -401,21 +409,35 @@ const LoginStep = ({ onNext }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              position="relative"
               px="20px"
               onClick={handleGoogleLogin}
-            >
-              <HStack gap="10px">
-                <FaGoogle size={18} />
-                <span>Google</span>
-              </HStack>
-              <LuArrowRight size={16} />
+              >
+
+              <Box position="absolute" left="16px">
+                <FcGoogle size={18} />
+              </Box>
+
+              <Text textAlign="center" w="100%">
+                Google
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
 
             <Button
               bg="white"
-              borderColor="black"
+              borderColor="#E4E4E7"
               color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
@@ -424,16 +446,33 @@ const LoginStep = ({ onNext }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              position="relative"
               px="20px"
               onClick={handleMicrosoftLogin}
             >
-              <HStack gap="10px">
-                <RiMicrosoftLine size={18} />
-                <span>Microsoft</span>
-              </HStack>
-              <LuArrowRight size={16} />
+
+              <Box position="absolute" left="16px">
+                <Image src={microsoft} alt="Microsoft logo" boxSize="18px" />
+              </Box>
+
+              <Text textAlign="center" w="100%">
+                Microsoft
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
+
+
+
             </Button>
 
             <Text
@@ -447,9 +486,8 @@ const LoginStep = ({ onNext }: Props) => {
                 textDecoration="underline"
                 onClick={onNext}
               >
-                Create
-              </Link>{" "}
-              an Account
+                Create an account
+              </Link>
             </Text>
           </Flex>
         </Flex>

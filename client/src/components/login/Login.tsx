@@ -121,13 +121,20 @@ export const Login = () => {
 
               <Button
                 bg="white"
-                borderColor="black"
+                borderColor="#E0E0E0"
                 color="black"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
                 justifyContent="center"
                 position="relative"
                 px="20px"
@@ -154,13 +161,20 @@ export const Login = () => {
 
               <Button
                 bg="white"
-                borderColor="black"
+                borderColor="#E0E0E0"
                 color="black"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
                 justifyContent="center"
                 position="relative"
                 px="20px"
