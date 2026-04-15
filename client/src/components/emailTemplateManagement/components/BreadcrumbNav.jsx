@@ -41,7 +41,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 Folders
@@ -55,7 +55,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 {currentFolder?.name || "New Folder"}
@@ -84,7 +84,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 {templateName || "Untitled Template"}
