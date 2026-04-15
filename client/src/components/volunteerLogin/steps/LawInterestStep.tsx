@@ -425,12 +425,6 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -449,86 +443,21 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="350px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Community Counsel Account Manager
+                Volunteer Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Select any areas of law you have interest or experience working
-                in. It is recommended to only specify areas you're comfortable
-                advising in.
+                Select areas of law you have prior experience in or are interested in assisting cases for. 
               </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Box
-                  as="a"
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Box>
-              </HStack>
             </Box>
           </Flex>
 
@@ -568,12 +497,12 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             )}
 
             <LawMultiSelect
-              label="If any, select areas of law you are interested working in."
+              label="Select areas of law you're interested in working in"
               items={areaLabels}
               selected={selectedAreaLabels}
               onChange={setSelectedAreaLabels}
               disabled={isLoadingAreas}
-              placeholder={isLoadingAreas ? "Loading..." : "Search tags"}
+              placeholder={isLoadingAreas ? "Loading..." : "Search for interests"}
             />
 
             <HStack
@@ -582,31 +511,34 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
               flexWrap="wrap"
             >
               <Button
-                bg="#3182CE"
-                color="white"
+                bg="white"
+                borderColor="#E4E4E7"
+                color="black"
                 h={{ base: "40px", md: "48px" }}
                 flex={{ base: "1 1 100%", sm: "1 1 auto" }}
                 borderRadius="8px"
                 fontSize={{ base: "13px", md: "16px" }}
                 fontWeight={600}
-                _hover={{ bg: "#5797BD" }}
-                justifyContent="space-between"
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
+                position="relative"
+                w="100%"
                 px="20px"
                 onClick={handleContinue}
                 loading={isSubmitting}
               >
+                <Box w="100%" textAlign="center">
                 Continue
+                </Box>
                 <LuArrowRight size={16} />
               </Button>
 
-              <Button
-                variant="ghost"
-                h={{ base: "40px", md: "48px" }}
-                flex={{ base: "1 1 100%", sm: "0 0 auto" }}
-                onClick={onBack}
-              >
-                Back
-              </Button>
             </HStack>
           </Flex>
         </Flex>

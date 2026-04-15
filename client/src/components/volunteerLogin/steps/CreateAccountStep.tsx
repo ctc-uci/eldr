@@ -5,7 +5,6 @@ import {
   Button,
   Flex,
   Heading,
-  Image,
   Input,
   Link,
   Text,
@@ -16,13 +15,11 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import {
   LuArrowRight,
-  LuKeyRound,
   LuMail,
   LuUser,
   LuExternalLink
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -37,7 +34,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -62,17 +58,12 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setErrorMsg("Please enter a password with at least 6 characters.");
-      return;
-    }
-
     setIsSubmitting(true);
     let createdFirebaseUid: string | null = null;
     try {
       const userCredential = await signup({
         email: normalizedEmail,
-        password,
+        password: "placeholder",
       });
       createdFirebaseUid = userCredential.user.uid;
 
@@ -122,10 +113,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         setErrorMsg("Please enter a valid email address.");
         return;
       }
-      if (err.code === "auth/weak-password") {
-        setErrorMsg("Password is too weak. Please use at least 6 characters.");
-        return;
-      }
+
 
       const msg =
         (typeof err.response?.data === "object" ? err.response?.data?.message : undefined) ||
@@ -161,12 +149,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -175,7 +157,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         >
           <Flex
             direction="column"
-            justify="center"
+            justify="space-between"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -194,10 +176,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 Community Counsel's Event Portal
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "22px" }}
                 color="black"
               >
-                Need help? Visit our website{" "}
+                Fill out the following information to start
+                your account creation process {" "}
 
                 <Link
                 href="https://eldrcenter.org/"
@@ -242,18 +225,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="First Name"
-                icon={
-                  <LuUser
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    First Name <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Enter First Name"
+                  placeholder="Enter your first name"
                   border="none"
                   p="0"
                   h="100%"
@@ -267,18 +248,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="Last Name"
-                icon={
-                  <LuUser
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    Last Name <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Enter Last Name"
+                  placeholder="Enter your last name"
                   border="none"
                   p="0"
                   h="100%"
@@ -292,18 +271,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="Email"
-                icon={
-                  <LuMail
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    Email <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter Email"
+                  placeholder="Enter an email"
                   type="email"
                   border="none"
                   p="0"
@@ -316,35 +293,10 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Field>
             </Box>
 
-            <Box w="30vw" minW="320px" maxW="460px">
-              <Field
-                label="Password"
-                icon={
-                  <LuKeyRound
-                    size={16}
-                    color="#9CA3AF"
-                  />
-                }
-              >
-                <Input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter Password"
-                  type="password"
-                  border="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Field>
-            </Box>
-
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -352,8 +304,15 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               borderRadius="8px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={600}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              justifyContent="center"
               px="20px"
               mt="4px"
               onClick={handleContinue}
@@ -362,25 +321,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               Continue
               <LuArrowRight size={16} />
             </Button>
-
-            <Text
-              fontSize="13px"
-              color="gray.500"
-              textAlign="center"
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-            >
-              Didn&apos;t mean to come here?{" "}
-              <Link
-                href="#"
-                color="#3182CE"
-                textDecoration="underline"
-                onClick={onBack}
-              >
-                Go back
-              </Link>
-            </Text>
           </Flex>
         </Flex>
 
@@ -400,8 +340,8 @@ const Field = ({
   icon,
   children,
 }: {
-  label: string;
-  icon: React.ReactNode;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <Box>

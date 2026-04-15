@@ -6,26 +6,19 @@ import {
   Checkbox,
   Flex,
   Heading,
-  HStack,
-  Image,
   Input,
-  Link,
   Progress,
   Text,
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
+
 import {
   LuArrowRight,
   LuChevronDown,
-  LuFacebook,
-  LuMail,
   LuX,
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -439,12 +432,6 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -463,81 +450,23 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="350px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Community Council Account Manager
+                Volunteer Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
-              >
-                Select any languages you speak. Then indicate which of those you
-                are literate in (can read and write).
-              </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
+                color="black"
               >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
+                Select any languages you speak and your level of proficiency. 
+                <br /><br />
+                Be as accurate as possible. Volunteers may be asked to assist/dictate in languages they indicate.
+              </Text>
             </Box>
           </Flex>
 
@@ -577,7 +506,7 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             )}
 
             <LanguageMultiSelect
-              label="Select languages you speak"
+              label="Select any non-english languages you speak"
               items={allLanguageNames}
               selected={selectedLanguageNames}
               onChange={setSelectedLanguageNames}
@@ -586,7 +515,7 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             />
 
             <LanguageMultiSelect
-              label="Of the selected languages, which are you literate in?"
+              label="Indicate in which you are literate"
               items={selectedLanguageNames}
               selected={literateLanguageNames}
               onChange={setLiterateLanguageNames}
@@ -599,20 +528,34 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             />
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               borderRadius="8px"
               fontSize={{ base: "13px", md: "16px" }}
               fontWeight={600}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              position="relative"
+              w="100%"
               px="20px"
               onClick={handleContinue}
               loading={isSubmitting}
             >
-              Continue
-              <LuArrowRight size={16} />
+              <Box w="100%" textAlign="center">
+                Continue
+              </Box>
+
+              <Box position="absolute" right="12px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
           </Flex>
         </Flex>
