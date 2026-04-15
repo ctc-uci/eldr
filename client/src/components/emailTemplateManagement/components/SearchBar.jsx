@@ -3,7 +3,7 @@ import { CloseButton, Flex, Input } from "@chakra-ui/react";
 import { Search } from "lucide-react";
 
 export const SearchBar = ({
-  placeholder = "Search for a file or folder",
+  placeholder = "Search for whatever floats your boat, matey",
   maxW = "100%",
   mb = 1,
   value,

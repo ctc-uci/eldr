@@ -10,7 +10,7 @@ export const FolderCard = ({ name, onClick, onContextMenu }) => (
     px={6}
     py="15px"
     cursor="pointer"
-    _hover={{ bg: "gray.50" }}
+    _hover={{ bg: "#E4E4E7" }}
     onClick={onClick}
     onContextMenu={(e) => {
       e.preventDefault();

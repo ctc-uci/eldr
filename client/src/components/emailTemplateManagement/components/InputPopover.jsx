@@ -53,7 +53,7 @@ export const InputDialog = ({
         <Button
           backgroundColor="#487C9E"
           color="white"
-          _hover={{ bg: "#3D6B89" }}
+          _hover={{ bg: "#294A5F" }}
           onClick={handleTriggerClick}
           {...buttonProps}
         >

@@ -667,26 +667,46 @@ export const EmailTemplateManagement = () => {
                     buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500" }}
                   />
                 )}
-                {view === "folderView" && (
-                  <Button
-                    bg="white"
-                    color="#991919"
-                    h="40px"
-                    px="16px"
-                    fontSize="14px"
-                    fontWeight="500"
-                    borderRadius="4px"
-                    borderWidth="1px"
-                    borderColor="#FECACA"
-                    _hover={{ bg: "#FEE2E2" }}
-                    onClick={() => setShowDeleteFolderModal(true)}
-                    display="flex"
-                    gap="8px"
-                    alignItems="center"
-                  >
-                    <Trash2 size={16} />
-                    Delete Folder
-                  </Button>
+                {view === "folderView" && 
+                  (templates.length === 0 ?
+                    <Button
+                      bg="#DC2626"
+                      color="white"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      borderColor="#DC2626"
+                      onClick={() => setShowDeleteFolderModal(true)}
+                      display="flex"
+                      gap="8px"
+                      alignItems="center"
+                    >
+                      <Trash2 size={16} />
+                      Delete Folder
+                    </Button>
+                  :
+                    <Button
+                      bg="white"
+                      color="#991919"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      borderColor="#FECACA"
+                      _hover={{ bg: "#FEE2E2" }}
+                      onClick={() => setShowDeleteFolderModal(true)}
+                      display="flex"
+                      gap="8px"
+                      alignItems="center"
+                    >
+                      <Trash2 size={16} />
+                      Delete Folder
+                    </Button>
                 )}
               </HStack>
             </>

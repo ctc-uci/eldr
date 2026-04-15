@@ -20,7 +20,7 @@ export const Pagination = ({ totalPages, currentPage, onPageChange, totalItems, 
       {/* Showing text */}
       {totalItems !== undefined && (
         <Text fontSize="14px" fontWeight={400} lineHeight="20px" color="#52525B">
-          Showing {startItem} to {endItem} of {totalItems}
+          Showing {startItem} to {endItem} of {totalPages}
         </Text>
       )}
 
