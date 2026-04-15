@@ -23,10 +23,11 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
+import { LuCalendarDays } from "react-icons/lu";
 
 import { getClinicLocationDisplay } from "./clinicLocationFormat";
 
-export const EventInfo = ({ event, onRegister, onUnregister }) => {
+export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
 
   const handleRegistration = () => {
@@ -42,7 +43,57 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
     setOpen(false);
   };
 
-  if (!event) return <Box p={10}>Please select an event to view details!</Box>;
+  if (!event) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        w="full"
+        h="full"
+        p={10}
+        gap={6}
+        textAlign="center"
+      >
+        {activeTab === "all" ? (
+          <Text
+            fontSize="lg"
+            color="gray.500"
+            fontStyle="italic"
+          >
+            Please select an event to view details!
+          </Text>
+        ) : (
+          <>
+            <CalendarX
+              size={32}
+              color="#a1a1aa"
+              strokeWidth={1.5}
+            />
+            <Text
+              fontWeight={600}
+              fontSize="lg"
+            >
+              You aren't registered for any upcoming events yet.
+            </Text>
+            <Text
+              fontSize="sm"
+              color="#52525B"
+            >
+              Browse to find an offering that fits your schedule!
+            </Text>
+            <Button
+              bg="#487C9E"
+              p={6}
+            >
+              <LuCalendarDays />
+              View All Events
+            </Button>
+          </>
+        )}
+      </Flex>
+    );
+  }
 
   // Determine if this is a past event using the same logic as MyEventsList
   const getEventEndDateTime = () => {

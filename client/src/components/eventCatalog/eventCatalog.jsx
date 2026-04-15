@@ -111,9 +111,13 @@ export const EventCatalog = () => {
   // Filter and sort events
   const filteredEvents = useMemo(() => {
     const now = new Date();
+    // For 'all' tab, only show upcoming. For 'my' tab, show all so we can see past registrations too.
     let result = events.filter((e) => {
-      if (!e.endTime) return true; // If no end time, assume it hasn't passed or is TBD
-      return new Date(e.endTime) > now;
+      if (activeTab === "all") {
+        if (!e.endTime) return true;
+        return new Date(e.endTime) > now;
+      }
+      return true; // Show all for 'my' tab
     });
 
     // Apply search
@@ -144,14 +148,26 @@ export const EventCatalog = () => {
     }
 
     return result;
-  }, [searchQuery, sortBy, events]);
+  }, [searchQuery, sortBy, events, activeTab]);
 
+  // Adjust selection when tab changes, events update, or filters/search change
   useEffect(() => {
-    // Only auto-select if we have events and haven't selected one yet
-    if (filteredEvents.length > 0 && !selectedEvent) {
-      setSelectedEvent(filteredEvents[0]);
+    const currentList =
+      activeTab === "all"
+        ? filteredEvents
+        : filteredEvents.filter((e) => e.isRegistered);
+
+    if (currentList.length > 0) {
+      // If no selection, or selection is not in the current list, pick the first one
+      const isStillInList =
+        selectedEvent && currentList.some((e) => e.id === selectedEvent.id);
+      if (!isStillInList) {
+          setSelectedEvent(currentList[0]);
+      }
+    } else {
+      setSelectedEvent(null);
     }
-  }, [filteredEvents, selectedEvent]);
+  }, [activeTab, filteredEvents, selectedEvent?.id]);
 
   const showEventDetails = (event) => {
     setSelectedEvent(event);
@@ -339,6 +355,7 @@ export const EventCatalog = () => {
 
           <EventInfo
             event={selectedEvent}
+            activeTab={activeTab}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
           />
