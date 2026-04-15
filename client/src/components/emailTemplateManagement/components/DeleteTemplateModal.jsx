@@ -41,9 +41,10 @@ export const DeleteTemplateModal = ({
                   Cancel
                 </Button>
                 <Button
-                  backgroundColor="#5797BD"
+                  bg="#DC2626"
                   color="white"
                   size="sm"
+                  _hover={{ bg: "#B91C1C" }}
                   onClick={onDelete}
                 >
                   Delete

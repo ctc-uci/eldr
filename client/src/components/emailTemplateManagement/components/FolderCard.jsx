@@ -1,6 +1,6 @@
 import { Flex, Text } from "@chakra-ui/react";
 
-export const FolderCard = ({ name, onClick }) => (
+export const FolderCard = ({ name, onClick, onContextMenu }) => (
   <Flex
     align="center"
     bg="white"
@@ -12,6 +12,10 @@ export const FolderCard = ({ name, onClick }) => (
     cursor="pointer"
     _hover={{ bg: "gray.50" }}
     onClick={onClick}
+    onContextMenu={(e) => {
+      e.preventDefault();
+      onContextMenu?.(e);
+    }}
   >
     <Text
       fontWeight={600}

@@ -30,6 +30,8 @@ import {
   FolderNotFoundModal,
   DeleteTemplateModal,
   RenameFolderDialog,
+  ContextMenu,
+  RenameDialog,
 } from "./components";
 
 
@@ -43,7 +45,7 @@ export const EmailTemplateManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(7);
   const listContainerRef = useRef(null);
-
+  // dynamic listing based on browswer size
   // card height: py=15*2 + lineHeight=24 + border=2 = 56px; gap between cards = 16px
   const CARD_HEIGHT = 56;
   const CARD_GAP = 16;
@@ -93,6 +95,12 @@ export const EmailTemplateManagement = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, type: 'folder'|'template', item }
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null); // { type, item }
+  const [deleteTarget, setDeleteTarget] = useState(null); // folder item targeted from context menu
 
   // derive currentFolder from URL params
   const activeFolderId = urlFolderId || folderIdFromQuery;
@@ -399,7 +407,10 @@ export const EmailTemplateManagement = () => {
     try {
       await backend.delete(`/email-templates/${currentTemplateId}`);
 
-      // reset form
+      // optimistically remove from local state
+      setTemplates((prev) => prev.filter((t) => t.id !== currentTemplateId));
+      setAllTemplates((prev) => prev.filter((t) => t.id !== currentTemplateId));
+
       resetTemplateForm();
       setShowDeleteModal(false);
 
@@ -415,14 +426,52 @@ export const EmailTemplateManagement = () => {
     }
   };
 
-  // delete folder handler
-  const handleDeleteFolder = async () => {
-    if (!currentFolder?.id) return;
+  // rename template handler (from context menu)
+  const handleRenameTemplate = async (templateId, newName) => {
     try {
-      await backend.delete(`/folders/${currentFolder.id}`);
-      setFolders((prev) => prev.filter((f) => f.id !== currentFolder.id));
+      // The PUT endpoint requires name + template_text (and optionally subject).
+      // Pull the existing values from state so we only change the name.
+      const existing = templates.find((t) => t.id === templateId);
+      await backend.put(`/email-templates/${templateId}`, {
+        name: newName,
+        template_text: existing?.templateText ?? existing?.template_text ?? "",
+        subject: existing?.subject ?? null,
+      });
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
+      );
+    } catch (error) {
+      console.error('Error renaming template:', error);
+    }
+  };
+
+  // rename folder handler (from context menu — folders not in folderView)
+  const handleRenameFolderById = async (folderId, newName) => {
+    try {
+      const response = await backend.put(`/folders/${folderId}`, { name: newName });
+      const updated = response.data;
+      setFolders((prev) =>
+        prev.map((f) => (f.id === updated.id ? { ...f, name: updated.name } : f))
+      );
+    } catch (error) {
+      console.error('Error renaming folder:', error);
+    }
+  };
+
+  // delete folder handler — works for both the folderView header button and context menu on root
+  const handleDeleteFolder = async () => {
+    const targetId = deleteTarget?.id ?? currentFolder?.id;
+    if (!targetId) return;
+    try {
+      await backend.delete(`/folders/${targetId}`);
+      // optimistically remove from local state immediately
+      setFolders((prev) => prev.filter((f) => f.id !== targetId));
       setShowDeleteFolderModal(false);
-      navigate('/email');
+      setDeleteTarget(null);
+      // only navigate away if we're currently inside that folder
+      if (currentFolder?.id === targetId) {
+        navigate('/email');
+      }
     } catch (error) {
       console.error('Error deleting folder:', error);
     }
@@ -619,94 +668,25 @@ export const EmailTemplateManagement = () => {
                   />
                 )}
                 {view === "folderView" && (
-                  <>
-                    {/* Delete Folder button */}
-                    <Button
-                      bg="white"
-                      color="#991919"
-                      h="40px"
-                      px="16px"
-                      fontSize="14px"
-                      fontWeight="500"
-                      borderRadius="4px"
-                      borderWidth="1px"
-                      borderColor="#FECACA"
-                      _hover={{ bg: "#FEE2E2" }}
-                      onClick={() => setShowDeleteFolderModal(true)}
-                      display="flex"
-                      gap="8px"
-                      alignItems="center"
-                    >
-                      <Trash2 size={16} />
-                      Delete Folder
-                    </Button>
-
-                    {/* Confirm Delete Folder Dialog */}
-                    <Dialog.Root
-                      open={showDeleteFolderModal}
-                      onOpenChange={(e) => setShowDeleteFolderModal(e.open)}
-                      placement="center"
-                    >
-                      <Portal>
-                        <Dialog.Backdrop bg="blackAlpha.400" />
-                        <Dialog.Positioner>
-                          <Dialog.Content
-                            maxW="400px"
-                            w="400px"
-                            borderRadius="6px"
-                            boxShadow="0px 0px 1px 0px rgba(24,24,27,0.3), 0px 8px 16px 0px rgba(24,24,27,0.1)"
-                            bg="white"
-                            overflow="hidden"
-                          >
-                            <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
-                              <CloseButton size="sm" />
-                            </Dialog.CloseTrigger>
-                            <Dialog.Header pt="24px" pb="8px" px="24px">
-                              <Dialog.Title fontSize="18px" fontWeight="600" color="black">
-                                Delete Folder
-                              </Dialog.Title>
-                            </Dialog.Header>
-                            <Dialog.Body px="24px" pb="16px">
-                              <Text fontSize="14px" color="#52525B">
-                                Are you sure you want to delete <strong>{currentFolder?.name}</strong>? This action cannot be undone.
-                              </Text>
-                            </Dialog.Body>
-                            <Dialog.Footer px="24px" pb="16px" justifyContent="flex-end" gap="12px">
-                              <Dialog.ActionTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  h="40px"
-                                  px="16px"
-                                  fontSize="14px"
-                                  fontWeight="500"
-                                  borderWidth="1px"
-                                  borderColor="#E4E4E7"
-                                  borderRadius="4px"
-                                  color="#27272A"
-                                  bg="white"
-                                >
-                                  Cancel
-                                </Button>
-                              </Dialog.ActionTrigger>
-                              <Button
-                                h="40px"
-                                px="16px"
-                                fontSize="14px"
-                                fontWeight="500"
-                                borderRadius="4px"
-                                bg="#DC2626"
-                                color="white"
-                                _hover={{ bg: "#B91C1C" }}
-                                onClick={handleDeleteFolder}
-                              >
-                                Delete
-                              </Button>
-                            </Dialog.Footer>
-                          </Dialog.Content>
-                        </Dialog.Positioner>
-                      </Portal>
-                    </Dialog.Root>
-                  </>
+                  <Button
+                    bg="white"
+                    color="#991919"
+                    h="40px"
+                    px="16px"
+                    fontSize="14px"
+                    fontWeight="500"
+                    borderRadius="4px"
+                    borderWidth="1px"
+                    borderColor="#FECACA"
+                    _hover={{ bg: "#FEE2E2" }}
+                    onClick={() => setShowDeleteFolderModal(true)}
+                    display="flex"
+                    gap="8px"
+                    alignItems="center"
+                  >
+                    <Trash2 size={16} />
+                    Delete Folder
+                  </Button>
                 )}
               </HStack>
             </>
@@ -767,6 +747,9 @@ export const EmailTemplateManagement = () => {
                   key={folder.id}
                   name={folder.name}
                   onClick={() => handleFolderClick(folder)}
+                  onContextMenu={(e) =>
+                    setContextMenu({ x: e.clientX, y: e.clientY, type: "folder", item: folder })
+                  }
                 />
               ))
             )}
@@ -791,6 +774,9 @@ export const EmailTemplateManagement = () => {
                     key={template.id}
                     name={template.name}
                     onClick={() => handleTemplateClick(template)}
+                    onContextMenu={(e) =>
+                      setContextMenu({ x: e.clientX, y: e.clientY, type: "template", item: template })
+                    }
                   />
                 ))}
               </VStack>
@@ -819,6 +805,49 @@ export const EmailTemplateManagement = () => {
             itemsPerPage={itemsPerPage}
           />
         )}
+
+      {/* Right-click Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onView={() => {
+            if (contextMenu.type === "folder") handleFolderClick(contextMenu.item);
+            else handleTemplateClick(contextMenu.item);
+          }}
+          onRename={() => {
+            setRenameTarget({ type: contextMenu.type, item: contextMenu.item });
+            setShowRenameDialog(true);
+          }}
+          onDelete={() => {
+            if (contextMenu.type === "folder") {
+              // store the target folder and open the confirmation modal directly
+              // (no navigation needed — handleDeleteFolder now uses deleteTarget)
+              setDeleteTarget(contextMenu.item);
+              setShowDeleteFolderModal(true);
+            } else {
+              setCurrentTemplateId(contextMenu.item.id);
+              setShowDeleteModal(true);
+            }
+          }}
+        />
+      )}
+
+      {/* Rename Dialog (context menu trigger) */}
+      <RenameDialog
+        isOpen={showRenameDialog}
+        onClose={() => { setShowRenameDialog(false); setRenameTarget(null); }}
+        currentName={renameTarget?.item?.name ?? ""}
+        title={renameTarget?.type === "folder" ? "Rename Folder" : "Rename Template"}
+        onRename={(newName) => {
+          if (renameTarget?.type === "folder") {
+            handleRenameFolderById(renameTarget.item.id, newName);
+          } else {
+            handleRenameTemplate(renameTarget.item.id, newName);
+          }
+        }}
+      />
 
       {/* Folder Not Found Modal */}
       <FolderNotFoundModal
@@ -849,6 +878,75 @@ export const EmailTemplateManagement = () => {
         onClose={() => setShowDeleteModal(false)}
         onDelete={handleDeleteTemplate}
       />
+
+      {/* Confirm Delete Folder Dialog (top-level so it works from both header button and context menu) */}
+      <Dialog.Root
+        open={showDeleteFolderModal}
+        onOpenChange={(e) => {
+          setShowDeleteFolderModal(e.open);
+          if (!e.open) setDeleteTarget(null);
+        }}
+        placement="center"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              maxW="400px"
+              w="400px"
+              borderRadius="6px"
+              boxShadow="0px 0px 1px 0px rgba(24,24,27,0.3), 0px 8px 16px 0px rgba(24,24,27,0.1)"
+              bg="white"
+              overflow="hidden"
+            >
+              <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+              <Dialog.Header pt="24px" pb="8px" px="24px">
+                <Dialog.Title fontSize="18px" fontWeight="600" color="black">
+                  Delete Folder
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body px="24px" pb="16px">
+                <Text fontSize="14px" color="#52525B">
+                  Are you sure you want to delete <strong>{deleteTarget?.name ?? currentFolder?.name}</strong>? This action cannot be undone.
+                </Text>
+              </Dialog.Body>
+              <Dialog.Footer px="24px" pb="16px" justifyContent="flex-end" gap="12px">
+                <Dialog.ActionTrigger asChild>
+                  <Button
+                    variant="outline"
+                    h="40px"
+                    px="16px"
+                    fontSize="14px"
+                    fontWeight="500"
+                    borderWidth="1px"
+                    borderColor="#E4E4E7"
+                    borderRadius="4px"
+                    color="#27272A"
+                    bg="white"
+                  >
+                    Cancel
+                  </Button>
+                </Dialog.ActionTrigger>
+                <Button
+                  h="40px"
+                  px="16px"
+                  fontSize="14px"
+                  fontWeight="500"
+                  borderRadius="4px"
+                  bg="#DC2626"
+                  color="white"
+                  _hover={{ bg: "#B91C1C" }}
+                  onClick={handleDeleteFolder}
+                >
+                  Delete
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </Flex>
   );
 };

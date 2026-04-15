@@ -12,3 +12,5 @@ export { SaveTemplatePopover } from "./SaveTemplatePopover";
 export { FolderNotFoundModal } from "./FolderNotFoundModal";
 export { DeleteTemplateModal } from "./DeleteTemplateModal";
 export { RenameFolderDialog } from "./RenameFolderDialog";
+export { ContextMenu } from "./ContextMenu";
+export { RenameDialog } from "./RenameDialog";

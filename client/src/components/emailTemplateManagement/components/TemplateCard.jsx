@@ -1,6 +1,6 @@
 import { Flex, Text } from "@chakra-ui/react";
 
-export const TemplateCard = ({ name, onClick }) => (
+export const TemplateCard = ({ name, onClick, onContextMenu }) => (
   <Flex
     align="center"
     bg="white"
@@ -13,11 +13,12 @@ export const TemplateCard = ({ name, onClick }) => (
     cursor="pointer"
     _hover={{ bg: "gray.50" }}
     onClick={onClick}
+    onContextMenu={(e) => {
+      e.preventDefault();
+      onContextMenu?.(e);
+    }}
   >
-    <Text
-      fontWeight="medium"
-      fontSize="lg"
-    >
+    <Text fontWeight="medium" fontSize="lg">
       {name}
     </Text>
   </Flex>
