@@ -10,7 +10,7 @@ import {
   Dialog,
   Flex,
   HStack,
-  Input,
+  NativeSelect,
   Portal,
   Text,
   VStack,
@@ -94,7 +94,9 @@ export const EmailTemplateManagement = () => {
   const [pendingFolderName, setPendingFolderName] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(true);
+  const [showMoveTemplateModal, setShowMoveTemplateModal] = useState(false);
+  const [moveFolderId, setMoveFolderId] = useState("");
+  const [isMovingTemplate, setIsMovingTemplate] = useState(false);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState(null); // { x, y, type: 'folder'|'template', item }
@@ -428,6 +430,11 @@ export const EmailTemplateManagement = () => {
 
   // rename template handler (from context menu)
   const handleRenameTemplate = async (templateId, newName) => {
+    if (!templateId) {
+      setTemplateName(newName);
+      return;
+    }
+
     try {
       // The PUT endpoint requires name + template_text (and optionally subject).
       // Pull the existing values from state so we only change the name.
@@ -437,7 +444,12 @@ export const EmailTemplateManagement = () => {
         template_text: existing?.templateText ?? existing?.template_text ?? "",
         subject: existing?.subject ?? null,
       });
+
+      setTemplateName((prev) => (String(currentTemplateId) === String(templateId) ? newName : prev));
       setTemplates((prev) =>
+        prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
+      );
+      setAllTemplates((prev) =>
         prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
       );
     } catch (error) {
@@ -474,6 +486,49 @@ export const EmailTemplateManagement = () => {
       }
     } catch (error) {
       console.error('Error deleting folder:', error);
+    }
+  };
+
+  const handleMoveTemplate = async () => {
+    if (!currentTemplateId || !moveFolderId) return;
+
+    const destinationFolderId = String(moveFolderId);
+    const sourceFolderId = currentFolder?.id ? String(currentFolder.id) : null;
+    if (sourceFolderId && sourceFolderId === destinationFolderId) {
+      setShowMoveTemplateModal(false);
+      return;
+    }
+
+    try {
+      setIsMovingTemplate(true);
+
+      // check current template-folder links first to avoid duplicates
+      const linkedFoldersResponse = await backend.get(`/email-templates/${currentTemplateId}/folders`);
+      const isAlreadyLinked = (linkedFoldersResponse.data || []).some(
+        (folder) => String(folder.id) === destinationFolderId
+      );
+
+      if (!isAlreadyLinked) {
+        await backend.post(`/email-templates/${currentTemplateId}/folders`, {
+          folderId: Number(destinationFolderId),
+        });
+      }
+
+      if (sourceFolderId) {
+        try {
+          await backend.delete(`/email-templates/${currentTemplateId}/folders/${sourceFolderId}`);
+        } catch (error) {
+          if (error?.response?.status !== 404) throw error;
+        }
+      }
+
+      setShowMoveTemplateModal(false);
+      navigate(`/email/folder/${destinationFolderId}`);
+    } catch (error) {
+      console.error("Error moving template:", error);
+      alert("Failed to move template. Please try again.");
+    } finally {
+      setIsMovingTemplate(false);
     }
   };
 
@@ -519,7 +574,7 @@ export const EmailTemplateManagement = () => {
   const totalTemplatePages = Math.ceil(templates.length / itemsPerPage) || 1;
 
   return (
-    <Flex direction="column" flex="1" minH="100vh" bg="#FAFBFC" px={10} py={8}>
+    <Flex direction="column" flex="1" minH="100vh" bg="white" px={10} py={8}>
         {/* Search Bar */}
         <Box position="relative" width="100%">
           <SearchBar
@@ -714,29 +769,39 @@ export const EmailTemplateManagement = () => {
             <>
               <HStack spacing={10} w="100%" alignContent="space-between">
                 <HStack spacing={4}>
-                  <Input
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="Untitled Template"
-                    variant="unstyled"
+                  <Text
                     fontSize="3xl"
                     fontWeight="600"
                     bg="#FAFBFC"
-                    px="0px"
-                    w={`${Math.max(templateName.length, 1)}ch`}
-                    minW="1ch"
-                    disabled={isDisabled}
-                    _focus={{ boxShadow: "none" }}
+                    lineHeight="1.2"
+                  >
+                    {templateName}
+                  </Text>
+                  <Pencil
+                    size={20}
+                    cursor="pointer"
+                    onClick={() => {
+                      setRenameTarget({
+                        type: "template",
+                        item: { id: currentTemplateId, name: templateName },
+                      });
+                      setShowRenameDialog(true);
+                    }}
                   />
-                  <Pencil size={20} cursor="pointer" onClick={() => setIsDisabled(!isDisabled)} />
                 </HStack>
                 
                 <HStack spacing={4} ml="auto">
                   <SaveTemplatePopover
-                    isOpen={showFolderPrompt}
-                    onOpenChange={(open) => setShowFolderPrompt(open)}
-                    onTriggerClick={handleSaveButtonClick}
-                    onAddFolder={handleAddFolderOnSave}
+                    isOpen={false}
+                    onOpenChange={() => {}}
+                    onTriggerClick={async () => {
+                      const firstAvailableFolder = folders.find(
+                        (folder) => String(folder.id) !== String(currentFolder?.id ?? "")
+                      );
+                      setMoveFolderId(firstAvailableFolder ? String(firstAvailableFolder.id) : "");
+                      setShowMoveTemplateModal(true);
+                    }}
+                    onAddFolder={() => {}}
                   />
 
                   <Button
@@ -809,6 +874,8 @@ export const EmailTemplateManagement = () => {
           <Box flex="1" minH={0} display="flex" flexDirection="column">
             <NewTemplateSection
               key={currentTemplateId}
+              templateSubject={templateSubject}
+              setTemplateSubject={setTemplateSubject}
               templateContent={templateContent}
               setTemplateContent={setTemplateContent}
             />
@@ -864,10 +931,110 @@ export const EmailTemplateManagement = () => {
           if (renameTarget?.type === "folder") {
             handleRenameFolderById(renameTarget.item.id, newName);
           } else {
-            handleRenameTemplate(renameTarget.item.id, newName);
+            if (renameTarget?.item?.id) {
+              handleRenameTemplate(renameTarget.item.id, newName);
+            } else {
+              setTemplateName(newName);
+            }
           }
         }}
       />
+
+      <Dialog.Root
+        open={showMoveTemplateModal}
+        onOpenChange={(e) => {
+          setShowMoveTemplateModal(e.open);
+          if (!e.open) setMoveFolderId("");
+        }}
+        placement="center"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              maxW="448px"
+              w="448px"
+              borderRadius="6px"
+              boxShadow="0px 0px 1px 0px rgba(24,24,27,0.3), 0px 8px 16px 0px rgba(24,24,27,0.1)"
+              bg="white"
+              overflow="hidden"
+            >
+              <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+              <Dialog.Header pt="24px" pb="16px" px="24px">
+                <Dialog.Title fontSize="18px" fontWeight="600" lineHeight="28px" color="black">
+                  Move &quot;{templateName}&quot;
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body pt="8px" pb="16px" px="24px">
+                <Flex direction="column" gap="4px">
+                  <Text fontSize="14px" fontWeight="500" lineHeight="20px" color="black">
+                    Select Folder
+                  </Text>
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={moveFolderId}
+                      onChange={(e) => setMoveFolderId(e.target.value)}
+                      h="40px"
+                      px="12px"
+                      fontSize="14px"
+                      borderWidth="1px"
+                      borderColor="#E4E4E7"
+                      borderRadius="4px"
+                      bg="white"
+                    >
+                      <option value="" disabled>
+                        Select destination folder
+                      </option>
+                      {folders
+                        .filter((folder) => String(folder.id) !== String(currentFolder?.id ?? ""))
+                        .map((folder) => (
+                          <option key={folder.id} value={folder.id}>
+                            {folder.name}
+                          </option>
+                        ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Flex>
+              </Dialog.Body>
+              <Dialog.Footer pt="8px" pb="16px" px="24px" justifyContent="flex-end" gap="12px">
+                <Dialog.ActionTrigger asChild>
+                  <Button
+                    variant="outline"
+                    h="40px"
+                    px="16px"
+                    fontSize="14px"
+                    fontWeight="500"
+                    borderWidth="1px"
+                    borderColor="#E4E4E7"
+                    borderRadius="4px"
+                    color="#27272A"
+                    bg="white"
+                  >
+                    Cancel
+                  </Button>
+                </Dialog.ActionTrigger>
+                <Button
+                  h="40px"
+                  px="16px"
+                  fontSize="14px"
+                  fontWeight="500"
+                  borderRadius="4px"
+                  bg="#487C9E"
+                  color="white"
+                  _hover={{ bg: "#3D6B89" }}
+                  onClick={handleMoveTemplate}
+                  disabled={!moveFolderId || isMovingTemplate}
+                >
+                  {isMovingTemplate ? "Moving..." : "Move"}
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       {/* Folder Not Found Modal */}
       <FolderNotFoundModal
