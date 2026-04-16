@@ -2,8 +2,6 @@ import { Box, Button, Flex, Input } from "@chakra-ui/react";
 import { FiArrowRight, FiSearch } from "react-icons/fi";
 import { LuCircleUser, LuListFilter } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
-import { useRoleContext } from "@/contexts/hooks/useRoleContext";
-
 interface VolunteerToolbarProps {
   searchQuery: string;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -12,7 +10,6 @@ interface VolunteerToolbarProps {
 
 export const VolunteerToolbar = ({ searchQuery, onSearchChange, onFilterOpen }: VolunteerToolbarProps) => {
   const navigate = useNavigate();
-  const { role } = useRoleContext();
 
   return (
     <Flex gap={2} align="center" mb={4}>
@@ -47,22 +44,20 @@ export const VolunteerToolbar = ({ searchQuery, onSearchChange, onFilterOpen }: 
           <FiSearch />
         </Box>
       </Flex>
-      {role === "supervisor" && (
-        <Button
-          size="md"
-          bg="#5F80A0"
-          color="white"
-          borderRadius="md"
-          py={4}
-          gap={2}
-          _hover={{ bg: "#487C9E" }}
-          onClick={() => navigate("/volunteer-management/new")}
-        >
-          <LuCircleUser />
-          Add Profile
-          <FiArrowRight />
-        </Button>
-      )}
+      <Button
+        size="md"
+        bg="#5F80A0"
+        color="white"
+        borderRadius="md"
+        py={4}
+        gap={2}
+        _hover={{ bg: "#487C9E" }}
+        onClick={() => navigate("/volunteer-management/new")}
+      >
+        <LuCircleUser />
+        Add Profile
+        <FiArrowRight />
+      </Button>
     </Flex>
   );
 };

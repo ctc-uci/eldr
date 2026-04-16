@@ -105,7 +105,7 @@ const App = () => {
                     element={
                       <ProtectedRoute
                         element={<AddProfileView />}
-                        allowedRoles={["supervisor"]}
+                        allowedRoles={["supervisor", "staff"]}
                       />
                     }
                   />

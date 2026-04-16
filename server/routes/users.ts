@@ -36,6 +36,52 @@ usersRouter.post("/custom-token", async (req, res) => {
         .json({ message: "firebaseUid or email is required" });
     }
 
+    // If the UID is a temp placeholder (no real Firebase Auth account, or a
+    // shell account with no email created by a prior signInWithCustomToken),
+    // create a proper Firebase Auth account and update the DB.
+    let isTempUid = false;
+    let tempUidToDelete: string | null = null;
+
+    try {
+      const fbUser = await admin.auth().getUser(resolvedFirebaseUid);
+      if (!fbUser.email) {
+        // Shell account created by a previous signInWithCustomToken with the fake UUID
+        isTempUid = true;
+        tempUidToDelete = resolvedFirebaseUid;
+      }
+    } catch (e: unknown) {
+      const fbErr = e as { code?: string };
+      if (fbErr.code === "auth/user-not-found") {
+        isTempUid = true;
+      } else {
+        throw e;
+      }
+    }
+
+    if (isTempUid) {
+      const lookupEmail = email?.trim() ?? (
+        await db.query("SELECT email FROM users WHERE firebase_uid = $1 LIMIT 1", [resolvedFirebaseUid])
+      ).at(0)?.email;
+
+      if (!lookupEmail) {
+        return res.status(400).json({ message: "Cannot resolve email for UID" });
+      }
+
+      if (tempUidToDelete) {
+        await admin.auth().deleteUser(tempUidToDelete).catch(() => {});
+      }
+
+      const newFirebaseUser = await admin.auth().createUser({ email: lookupEmail });
+      const realUid = newFirebaseUser.uid;
+
+      await db.query(
+        "UPDATE users SET firebase_uid = $1 WHERE firebase_uid = $2",
+        [realUid, resolvedFirebaseUid]
+      );
+
+      resolvedFirebaseUid = realUid;
+    }
+
     const customToken = await admin.auth().createCustomToken(resolvedFirebaseUid);
     return res.status(200).json({ customToken });
   } catch (err) {

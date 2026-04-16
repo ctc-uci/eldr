@@ -336,6 +336,33 @@ volunteersRouter.put("/:id", async (req, res) => {
   }
 });
 
+// Delete a single volunteer via ID
+volunteersRouter.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userResult = await db.query(
+      `SELECT firebase_uid FROM users WHERE id = $1`,
+      [id]
+    );
+
+    if (!userResult.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
+
+    const { firebase_uid } = userResult[0];
+
+    // Deleting from users cascades to volunteers and all junction tables
+    await db.query(`DELETE FROM users WHERE id = $1`, [id]);
+
+    await admin.auth().deleteUser(firebase_uid);
+
+    res.status(200).send(`Volunteer ${id} deleted successfully`);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // -----------------------------
 // Volunteer Areas of Practice Routes
 // -----------------------------
