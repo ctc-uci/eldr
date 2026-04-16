@@ -6,14 +6,18 @@ export const SaveTemplatePopover = ({
   onOpenChange,
   onAddFolder,
   onTriggerClick,
+  triggerIcon = <FaSave />,
+  triggerLabel = "Save",
+  buttonProps = {},
 }) => (
   <InputDialog
     isOpen={isOpen}
     onOpenChange={onOpenChange}
     onSubmit={onAddFolder}
     onTriggerClick={onTriggerClick}
-    triggerIcon={<FaSave />}
-    triggerLabel="Save"
+    triggerIcon={triggerIcon}
+    triggerLabel={triggerLabel}
+    buttonProps={buttonProps}
     dialogTitle="Save Template"
     inputLabel="Folder Name"
     inputPlaceholder="Enter a folder name"

@@ -83,6 +83,11 @@ export const EmailTemplateManagement = () => {
   const [templateName, setTemplateName] = useState("Untitled Template");
   const [templateSubject, setTemplateSubject] = useState("");
   const [templateContent, setTemplateContent] = useState("");
+  const [initialTemplateSnapshot, setInitialTemplateSnapshot] = useState({
+    name: "Untitled Template",
+    subject: "",
+    content: "",
+  });
   const [currentTemplateId, setCurrentTemplateId] = useState(null);
   const [showFolderPrompt, setShowFolderPrompt] = useState(false);
   const [isNewTemplate, setIsNewTemplate] = useState(false);
@@ -161,7 +166,13 @@ export const EmailTemplateManagement = () => {
           setCurrentTemplateId(template.id);
           setTemplateName(template.name);
           setTemplateSubject(template.subject || '');
-          setTemplateContent(template.templateText || template.template_text || '');
+          const content = template.templateText || template.template_text || '';
+          setTemplateContent(content);
+          setInitialTemplateSnapshot({
+            name: template.name || "Untitled Template",
+            subject: template.subject || "",
+            content,
+          });
           setIsNewTemplate(false);
         } catch (error) {
           console.error('Error fetching template:', error);
@@ -227,9 +238,29 @@ export const EmailTemplateManagement = () => {
   };
 
   // handle clicking on a template to open it in editor
-  const handleTemplateClick = (template) => {
+  const handleTemplateClick = async (template) => {
     // navigate to template editor with folder context in query param
-    const folderParam = currentFolder?.id ? `?folderId=${currentFolder.id}` : '';
+    // always resolve from linked folders so search clicks can switch breadcrumb context
+    // when currentFolder is valid for this template, preserve it; otherwise use first linked folder
+    let folderIdForTemplate = null;
+
+    if (template?.id) {
+      try {
+        const linkedFoldersResponse = await backend.get(`/email-templates/${template.id}/folders`);
+        const linkedFolders = linkedFoldersResponse.data || [];
+
+        if (linkedFolders.length > 0) {
+          const matchedCurrentFolder = linkedFolders.find(
+            (folder) => String(folder.id) === String(currentFolder?.id ?? "")
+          );
+          folderIdForTemplate = matchedCurrentFolder ? matchedCurrentFolder.id : linkedFolders[0].id;
+        }
+      } catch (error) {
+        console.error("Error fetching linked folders for template:", error);
+      }
+    }
+
+    const folderParam = folderIdForTemplate ? `?folderId=${folderIdForTemplate}` : '';
     navigate(`/email/template/${template.id}${folderParam}`);
   };
 
@@ -254,9 +285,33 @@ export const EmailTemplateManagement = () => {
     setTemplateName("Untitled Template");
     setTemplateSubject("");
     setTemplateContent("");
+    setInitialTemplateSnapshot({
+      name: "Untitled Template",
+      subject: "",
+      content: "",
+    });
     setCurrentTemplateId(null);
     setIsNewTemplate(false);
   };
+
+  const normalizeEditorContent = useCallback((content = "") => {
+    const normalized = content.trim();
+    return normalized === "<p></p>" ? "" : normalized;
+  }, []);
+
+  const hasUnsavedChanges = useMemo(() => {
+    return (
+      templateName !== initialTemplateSnapshot.name ||
+      templateSubject !== initialTemplateSnapshot.subject ||
+      normalizeEditorContent(templateContent) !== normalizeEditorContent(initialTemplateSnapshot.content)
+    );
+  }, [
+    templateName,
+    templateSubject,
+    templateContent,
+    initialTemplateSnapshot,
+    normalizeEditorContent,
+  ]);
 
   // handle save button click - save to db (if existing) and show folder popover
   const handleSaveButtonClick = async () => {
@@ -291,7 +346,13 @@ export const EmailTemplateManagement = () => {
       setCurrentTemplateId(createdTemplate.id);
       setTemplateName(createdTemplate.name);
       setTemplateSubject('');
-      setTemplateContent(createdTemplate.templateText || '');
+      const content = createdTemplate.templateText || '';
+      setTemplateContent(content);
+      setInitialTemplateSnapshot({
+        name: createdTemplate.name || "Untitled Template",
+        subject: "",
+        content,
+      });
       setShowFolderViewTemplatePopover(false);
       navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
     } catch (error) {
@@ -319,6 +380,11 @@ export const EmailTemplateManagement = () => {
         setTemplateName(createdTemplate.name);
         setTemplateSubject('');
         setTemplateContent('');
+        setInitialTemplateSnapshot({
+          name: createdTemplate.name || "Untitled Template",
+          subject: "",
+          content: "",
+        });
         setIsNewTemplate(false);
         setShowNewTemplatePopover(false);
         navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
@@ -330,6 +396,11 @@ export const EmailTemplateManagement = () => {
         setTemplateName(name);
         setTemplateSubject('');
         setTemplateContent('');
+        setInitialTemplateSnapshot({
+          name,
+          subject: "",
+          content: "",
+        });
         setIsNewTemplate(true);
         setShowNewTemplatePopover(false);
         navigate(`/email/template/${tempId}`);
@@ -719,7 +790,19 @@ export const EmailTemplateManagement = () => {
                     isOpen={showNewTemplatePopover}
                     onOpenChange={setShowNewTemplatePopover}
                     onSubmit={handleCreateTemplateFromPopover}
-                    buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500" }}
+                    buttonProps={{
+                      h: "40px",
+                      fontSize: "14px",
+                      px: "16px",
+                      fontWeight: "500",
+                      ...(showDeleteFolderModal
+                        ? {
+                            backgroundColor: "#E4E4E7",
+                            color: "black",
+                            _hover: { bg: "#E4E4E7" },
+                          }
+                        : {}),
+                    }}
                   />
                 )}
                 {view === "folderView" && 
@@ -744,16 +827,16 @@ export const EmailTemplateManagement = () => {
                     </Button>
                   :
                     <Button
-                      bg="white"
-                      color="#991919"
+                      bg={showNewTemplatePopover ? "#E4E4E7" : "white"}
+                      color={showNewTemplatePopover ? "black" : "#991919"}
                       h="40px"
                       px="16px"
                       fontSize="14px"
                       fontWeight="500"
                       borderRadius="4px"
                       borderWidth="1px"
-                      borderColor="#FECACA"
-                      _hover={{ bg: "#FEE2E2" }}
+                      borderColor={showNewTemplatePopover ? "#E4E4E7" : "#FECACA"}
+                      _hover={showNewTemplatePopover ? { bg: "#E4E4E7" } : { bg: "#FEE2E2" }}
                       onClick={() => setShowDeleteFolderModal(true)}
                       display="flex"
                       gap="8px"
@@ -794,6 +877,29 @@ export const EmailTemplateManagement = () => {
                   <SaveTemplatePopover
                     isOpen={false}
                     onOpenChange={() => {}}
+                    triggerIcon={hasUnsavedChanges ? undefined : <Pencil size={16} />}
+                    triggerLabel={hasUnsavedChanges ? "Save" : "Edit"}
+                    buttonProps={
+                      showRenameDialog
+                        ? {
+                            backgroundColor: "#E4E4E7",
+                            color: "black",
+                            _hover: { bg: "#E4E4E7" },
+                          }
+                        : showMoveTemplateModal
+                        ? {
+                            backgroundColor: "#294A5F",
+                            color: "white",
+                            _hover: { bg: "#294A5F" },
+                          }
+                        : showDeleteModal
+                          ? {
+                              backgroundColor: "#E4E4E7",
+                              color: "black",
+                              _hover: { bg: "#E4E4E7" },
+                            }
+                          : {}
+                    }
                     onTriggerClick={async () => {
                       const firstAvailableFolder = folders.find(
                         (folder) => String(folder.id) !== String(currentFolder?.id ?? "")
@@ -806,11 +912,13 @@ export const EmailTemplateManagement = () => {
 
                   <Button
                     variant="outline"
-                    color="#991919"
-                    borderColor="#FECACA"
+                    color={showMoveTemplateModal || showRenameDialog ? "black" : "#991919"}
+                    borderColor={showMoveTemplateModal || showRenameDialog ? "#E4E4E7" : "#FECACA"}
+                    bg={showMoveTemplateModal || showRenameDialog ? "#E4E4E7" : "transparent"}
+                    _hover={showMoveTemplateModal || showRenameDialog ? { bg: "#E4E4E7" } : { bg: "#FEE2E2" }}
                     onClick={() => setShowDeleteModal(true)}
                   >
-                    <Trash2 size={20} />
+                    <Trash2 size={16} />
                     Delete
                   </Button>
                 </HStack>
@@ -883,7 +991,7 @@ export const EmailTemplateManagement = () => {
         )}
 
         {/* Pagination */}
-        {(view === "folders" || view === "folderView") && (
+        {(view === "folders" || (view === "folderView" && templates.length > 0)) && (
           <Pagination
             totalPages={view === "folders" ? totalFolderPages : totalTemplatePages}
             currentPage={currentPage}

@@ -11,7 +11,7 @@ export const TemplateCard = ({ name, onClick, onContextMenu }) => (
     py={4}
     justify="space-between"
     cursor="pointer"
-    _hover={{ bg: "gray.50" }}
+    _hover={{ bg: "#E4E4E7" }}
     onClick={onClick}
     onContextMenu={(e) => {
       e.preventDefault();

@@ -57,15 +57,16 @@ export const NewTemplateSection = ({
               placeholder="Enter subject line"
               h="40px"
               borderColor="#E4E4E7"
+              borderWidth="1px"
+              borderRadius="5px"
               _focusVisible={{ borderColor: "#487C9E", boxShadow: "0 0 0 1px #487C9E" }}
             />
           </VStack>
         <Box
           bg="white"
           border="1px solid"
-          borderColor="#EFEFF1"
-          borderRadius="5px"
-          boxShadow="sm"
+          borderColor="#E4E4E7"
+          borderRadius="8px"
           overflow="hidden"
           flex="1"
           display="flex"

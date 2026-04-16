@@ -57,11 +57,11 @@ export const RenameDialog = ({ isOpen, onClose, currentName = "", title = "Renam
             <Dialog.Body pt="8px" pb="16px" px="24px">
               <Flex direction="column" gap="4px">
                 <Text fontSize="14px" fontWeight="500" lineHeight="20px" color="black">
-                  New Name
+                  New {title === "Rename Folder" ? "Folder" : "Template"} Name
                 </Text>
                 <Input
                   autoFocus
-                  placeholder="Untitled"
+                  placeholder={title === "Rename Folder" ? "Untitled Folder" : "Untitled Template"}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   h="40px"
@@ -104,7 +104,7 @@ export const RenameDialog = ({ isOpen, onClose, currentName = "", title = "Renam
                 borderRadius="4px"
                 bg="#487C9E"
                 color="white"
-                _hover={{ bg: "#3D6B89" }}
+                _hover={{ bg: "#294A5F" }}
                 onClick={handleSubmit}
                 disabled={!inputValue.trim()}
               >
