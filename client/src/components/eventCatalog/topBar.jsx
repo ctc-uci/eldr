@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   Button,
@@ -29,14 +29,20 @@ export const TopBar = ({
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [filterOpen, setFilterOpen] = useState(false);
 
+  const hasAppliedFilters = useMemo(() => {
+    if (!selectedFilters) return false;
+
+    return Object.values(selectedFilters).some((value) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== null && value !== undefined && value !== "";
+    });
+  }, [selectedFilters]);
+
   // Hide search on mobile when showing details
   const showSearch = !isMobile || !showDetails;
 
   return (
-    <Flex
-      direction="column"
-      w="100%"
-    >
+    <Flex direction="column" w="100%">
       {/* Tabs - Segmented Control Style */}
       <Flex
         w="100%"
@@ -82,6 +88,7 @@ export const TopBar = ({
               <LuCalendarDays />
               All Events
             </Tabs.Trigger>
+
             <Tabs.Trigger
               value="my"
               flex="1"
@@ -121,30 +128,43 @@ export const TopBar = ({
           {isMobile ? (
             <IconButton
               aria-label="Filter"
-              backgroundColor="#DBEAFE"
-              color="#173DA6"
+              backgroundColor={hasAppliedFilters ? "#1E3A8A" : "#DBEAFE"}
+              color={hasAppliedFilters ? "white" : "#173DA6"}
               borderRadius="8px"
-              border="1px solid #BFDBFE"
+              border={
+                hasAppliedFilters
+                  ? "1px solid #1E3A8A"
+                  : "1px solid #BFDBFE"
+              }
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
-              _hover={{ backgroundColor: "#BFDBFE" }}
+              _hover={{
+                backgroundColor: hasAppliedFilters ? "#1E40AF" : "#BFDBFE",
+              }}
               onClick={() => setFilterOpen(true)}
             >
               <ListFilter />
             </IconButton>
           ) : (
             <Button
-              backgroundColor="#F4F4F5"
-              color="black"
+              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
-              border="1px solid #E4E4E7"
+              border={
+                hasAppliedFilters
+                  ? "1px solid #BFDBFE"
+                  : "1px solid #E4E4E7"
+              }
               px="16px"
               h="40px"
               fontSize="14px"
               fontWeight={500}
               flexShrink={0}
+              _hover={{
+                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+              }}
               onClick={() => setFilterOpen(true)}
             >
               <ListFilter />
