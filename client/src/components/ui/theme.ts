@@ -1,4 +1,4 @@
-import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react"
+import { createSystem, defaultConfig, defineConfig, defineRecipe } from "@chakra-ui/react"
 
 const config = defineConfig({
   theme: {
@@ -217,4 +217,149 @@ const config = defineConfig({
   },
 })
 
-export const eldr = createSystem(defaultConfig, config)
+const buttonRecipe = defineRecipe({
+  variants: {
+    variant: {
+      createCase: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        bg: "primary.300",
+        color: "gray.50",
+        alignItems: "center",
+        _hover: {
+          bg: "primary.400",
+        },
+        _disabled: {
+          opacity: 0.5,
+          cursor: "not-allowed",
+        }
+      },
+      filterInactive: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        bg: "gray.100",
+        color: "gray.700",
+        alignItems: "center",
+        borderWidth: "1px",
+        borderColor: "gray.300",
+        _hover: {
+          bg: "gray.200",
+          borderColor: "gray.200"
+        }
+      },
+      filterActive: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        bg: "blue.100",
+        color: "blue.700",
+        alignItems: "center",
+        borderWidth: "1px",
+        borderColor: "blue.300",
+        _hover: {
+          bg: "blue.200",
+          borderColor: "blue.200"
+        }
+      },
+      sortInactive: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        color: "gray.800",
+        bg: "gray.100",
+        alignItems: "center",
+        borderWidth: "1px",
+        borderColor: "gray.200",
+        _hover: {
+          bg: "gray.200"
+        }
+      },
+      sortActive: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        color: "gray.800",
+        bg: "blue.100",
+        alignItems: "center",
+        borderWidth: "1px",
+        borderColor: "blue.200",
+        _hover: {
+          bg: "blue.200"
+        }
+      },
+      cancelRegistrationActive: {
+        borderRadius: "4px",
+        size: "xl",
+        px: "5px",
+        bg: "red.600",
+        color: "gray.50",
+        alignItems: "center",
+        _hover: {
+          bg: "red.700",
+        }
+      },
+      cancelRegistrationDisabled: {
+        borderRadius: "4px",
+        size: "xl",
+        px: "5px",
+        bg: "red.600",
+        color: "gray.200",
+        alignItems: "center",
+        opacity: 0.5
+      },
+      cancelRegistrationNextToPrimary: {
+        borderRadius: "4px",
+        size: "xl",
+        height: "48px",
+        px: "5px",
+        color: "red.700",
+        bg: "gray.50",
+        alignItems: "center",
+        borderWidth: "1px",
+        borderColor: "red.200",
+        _hover: {
+          bg: "red.200",
+        }
+      },
+      deleteClinic: {
+        borderRadius: "4px",
+        px: "2px",
+        color: "gray.50",
+        bg: "red.600",
+        size: "xl",
+        height: "40px",
+        alignItems: "center",
+        justifyContent: "center",
+        _hover: {
+          bg: "red.500"
+        }
+      },
+      deleteTag: {
+        borderRadius: "4px",
+        px: "2px",
+        color: "gray.50",
+        bg: "primary.300",
+        size: "xl",
+        height: "40px",
+        alignItems: "center",
+        justifyContent: "center",
+        _hover: {
+          bg: "primary.400"
+        }
+      }
+    }
+  }
+})
+
+export const eldr = createSystem(defaultConfig, config, {
+  theme: {
+    recipes: { button: buttonRecipe },
+  },
+})
