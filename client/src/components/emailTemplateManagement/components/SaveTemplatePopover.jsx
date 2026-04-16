@@ -1,12 +1,12 @@
 import { InputDialog } from "./InputPopover";
-import { FaSave } from "react-icons/fa";
+import { Save } from "lucide-react";
 
 export const SaveTemplatePopover = ({
   isOpen,
   onOpenChange,
   onAddFolder,
   onTriggerClick,
-  triggerIcon = <FaSave />,
+  triggerIcon = <Save size={16} />,
   triggerLabel = "Save",
   buttonProps = {},
 }) => (

@@ -10,6 +10,7 @@ import {
   Dialog,
   Flex,
   HStack,
+  Input,
   NativeSelect,
   Portal,
   Text,
@@ -108,6 +109,11 @@ export const EmailTemplateManagement = () => {
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null); // { type, item }
   const [deleteTarget, setDeleteTarget] = useState(null); // folder item targeted from context menu
+
+  // inline title editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitleValue, setEditingTitleValue] = useState("");
+  const titleInputRef = useRef(null);
 
   // derive currentFolder from URL params
   const activeFolderId = urlFolderId || folderIdFromQuery;
@@ -852,14 +858,54 @@ export const EmailTemplateManagement = () => {
             <>
               <HStack spacing={10} w="100%" alignContent="space-between">
                 <HStack spacing={4}>
-                  <Text
-                    fontSize="3xl"
-                    fontWeight="600"
-                    bg="#FAFBFC"
-                    lineHeight="1.2"
-                  >
-                    {templateName}
-                  </Text>
+                  {isEditingTitle ? (
+                    <Input
+                      ref={titleInputRef}
+                      value={editingTitleValue}
+                      onChange={(e) => setEditingTitleValue(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingTitleValue.trim();
+                        if (trimmed && trimmed !== templateName) {
+                          handleRenameTemplate(currentTemplateId, trimmed);
+                        }
+                        setIsEditingTitle(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
+                        } else if (e.key === "Escape") {
+                          setIsEditingTitle(false);
+                        }
+                      }}
+                      fontSize="3xl"
+                      fontWeight="600"
+                      lineHeight="1.2"
+                      border="none"
+                      borderBottom="2px solid"
+                      borderColor="#487C9E"
+                      borderRadius="0"
+                      px="0"
+                      bg="transparent"
+                      _focus={{ boxShadow: "none", borderColor: "#294A5F" }}
+                      autoFocus
+                      h="auto"
+                      minW="200px"
+                    />
+                  ) : (
+                    <Text
+                      fontSize="3xl"
+                      fontWeight="600"
+                      lineHeight="1.2"
+                      cursor="text"
+                      onDoubleClick={() => {
+                        setEditingTitleValue(templateName);
+                        setIsEditingTitle(true);
+                      }}
+                      title="Double-click to rename"
+                    >
+                      {templateName}
+                    </Text>
+                  )}
                   <Pencil
                     size={20}
                     cursor="pointer"
