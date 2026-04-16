@@ -296,7 +296,7 @@ export const EventCatalog = () => {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            setSearchQuery={setSearchQuery}
             sortBy={sortBy}
             setSortBy={setSortBy}
             selectedFilters={selectedFilters}

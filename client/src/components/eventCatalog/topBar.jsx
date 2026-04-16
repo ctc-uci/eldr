@@ -19,7 +19,7 @@ export const TopBar = ({
   activeTab,
   onTabChange,
   searchQuery,
-  onSearchChange,
+  setSearchQuery,
   sortBy,
   setSortBy,
   selectedFilters,
@@ -164,7 +164,7 @@ export const TopBar = ({
 
           <SearchBar
             searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
+            setSearchQuery={setSearchQuery}
           />
         </Flex>
       )}

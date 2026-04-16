@@ -1,16 +1,32 @@
-import { Input, InputGroup } from "@chakra-ui/react";
+import { useRef } from "react";
+
+import { CloseButton, Input, InputGroup } from "@chakra-ui/react";
+
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
-const SearchBar = ({ searchQuery, onSearchChange }) => {
+const SearchBar = ({ searchQuery, setSearchQuery }) => {
+  const inputRef = (useRef < HTMLInputElement) | (null > null);
+
+  const clearButton = searchQuery ? (
+    <CloseButton
+      size="xs"
+      onClick={() => {
+        setSearchQuery("");
+        inputRef.current?.focus();
+      }}
+      me="-2"
+    />
+  ) : (
+    <FaMagnifyingGlass
+      color="#9CA3AF"
+      size="20px"
+    />
+  );
+
   return (
     <InputGroup
       flex="1"
-      endElement={
-        <FaMagnifyingGlass
-          color="#9CA3AF"
-          size="20px"
-        />
-      }
+      endElement={clearButton}
     >
       <Input
         placeholder="Search for whatever floats your boat, matey"
@@ -21,7 +37,7 @@ const SearchBar = ({ searchQuery, onSearchChange }) => {
         fontSize="16px"
         _placeholder={{ color: "#9CA3AF" }}
         value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={(e) => setSearchQuery(e.currentTarget.value)}
       />
     </InputGroup>
   );
