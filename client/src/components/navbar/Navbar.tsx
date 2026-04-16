@@ -5,7 +5,7 @@ Implement on all associated volunteer pages
 
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
-import { BriefcaseBusiness, ClipboardList } from "lucide-react";
+import {ClipboardList } from "lucide-react";
 
 export const Navbar = () => {
   return (
@@ -38,26 +38,13 @@ export const Navbar = () => {
           gap="8px"
           fontSize="14px"
           fontWeight={500}
-          color="#374151"
-          _hover={{ color: "#111827", textDecoration: "none" }}
+          color="#1E3A8A"
+          _hover={{ color: "#93C5FD", textDecoration: "none" }}
         >
           <ClipboardList size={18} />
-          <Text>Events</Text>
+          <Text>Event Catalog</Text>
         </Link>
 
-        <Link
-          href="/cases"
-          display="flex"
-          alignItems="center"
-          gap="8px"
-          fontSize="14px"
-          fontWeight={500}
-          color="#374151"
-          _hover={{ color: "#111827", textDecoration: "none" }}
-        >
-          <BriefcaseBusiness size={18} />
-          <Text>Cases</Text>
-        </Link>
         {/* PLACEHOLDER REPLACE WITH ACTUAL PFP*/}
         <Link href = "/volunteer-profile">
           <Avatar.Root size="sm">
