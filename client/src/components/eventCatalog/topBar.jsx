@@ -4,16 +4,14 @@ import {
   Button,
   Flex,
   IconButton,
-  Input,
-  InputGroup,
   Tabs,
   useBreakpointValue,
 } from "@chakra-ui/react";
 
 import { ListFilter } from "lucide-react";
-import { FaMagnifyingGlass } from "react-icons/fa6";
 import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
 
+import SearchBar from "./searchBar";
 import { SortAndFilter } from "./sortAndFilter";
 
 export const TopBar = ({
@@ -164,27 +162,10 @@ export const TopBar = ({
             filteredCount={filteredCount}
           />
 
-          <InputGroup
-            flex="1"
-            endElement={
-              <FaMagnifyingGlass
-                color="#9CA3AF"
-                size="20px"
-              />
-            }
-          >
-            <Input
-              placeholder="Search for whatever floats your boat, matey"
-              backgroundColor="white"
-              borderColor="#D1D5DB"
-              borderRadius="8px"
-              h="44px"
-              fontSize="16px"
-              _placeholder={{ color: "#9CA3AF" }}
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </InputGroup>
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
+          />
         </Flex>
       )}
     </Flex>

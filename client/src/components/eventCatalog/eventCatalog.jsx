@@ -128,8 +128,8 @@ export const EventCatalog = () => {
           e.name.toLowerCase().includes(q) ||
           getEventLocationSearchText(e).includes(q) ||
           (e.description && e.description.toLowerCase().includes(q)) ||
-          e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
-          e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
+          e.languages.some((l) => l.toLowerCase().includes(q)) ||
+          e.areas.some((a) => a.toLowerCase().includes(q))
       );
     }
 
@@ -162,7 +162,7 @@ export const EventCatalog = () => {
       const isStillInList =
         selectedEvent && currentList.some((e) => e.id === selectedEvent.id);
       if (!isStillInList) {
-          setSelectedEvent(currentList[0]);
+        setSelectedEvent(currentList[0]);
       }
     } else {
       setSelectedEvent(null);
