@@ -8,6 +8,7 @@ import {
   Dialog,
   Flex,
   HStack,
+  IconButton,
   Portal,
   Separator,
   Text,
@@ -21,6 +22,7 @@ import {
   CalendarPlus,
   CalendarX,
   MapPin,
+  Share,
   Users,
 } from "lucide-react";
 import { LuCalendarDays } from "react-icons/lu";
@@ -145,17 +147,28 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
       overflow="hidden"
     >
       {/* Event name */}
-      <Text
-        flexShrink={0}
-        fontSize="26px"
-        fontWeight="400"
-        lineHeight="44px"
-        letterSpacing="-2.5%"
-        color="#000000"
-        mb={{ base: "24px", md: 0 }}
+      <HStack
+        justify="space-between"
+        mb="20px"
       >
-        {event.name}
-      </Text>
+        <Text
+          flexShrink={0}
+          fontSize="26px"
+          fontWeight="400"
+          lineHeight="44px"
+          letterSpacing="-2.5%"
+          color="#000000"
+          mb={{ base: "24px", md: 0 }}
+        >
+          {event.name}
+        </Text>
+        <IconButton
+          variant="outline"
+          colorPalette="gray"
+        >
+          <Share />
+        </IconButton>
+      </HStack>
 
       {/* Event metadata */}
       <VStack
@@ -315,6 +328,7 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
             <Button
               variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
+              bg={!event.isRegistered && "#487C9E"}
               px="18px"
               py="6px"
               onClick={handleRegistration}
