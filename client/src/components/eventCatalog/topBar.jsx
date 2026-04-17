@@ -46,6 +46,7 @@ export const TopBar = ({
     <Flex
       direction="column"
       w="100%"
+      borderBottom="1px solid #E4E4E7"
     >
       {/* Tabs - Segmented Control Style */}
       <Flex
