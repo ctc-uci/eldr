@@ -25,6 +25,7 @@ export const TopBar = ({
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  events,
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [filterOpen, setFilterOpen] = useState(false);
@@ -185,6 +186,7 @@ export const TopBar = ({
           <SearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            events={events}
           />
         </Flex>
       )}

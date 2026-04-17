@@ -106,10 +106,9 @@ export const EventCatalog = () => {
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
 
-  // Filter and sort events
-  const filteredEvents = useMemo(() => {
+  // Events filtered by tab/time but NOT search, used for suggestions
+  const tabEvents = useMemo(() => {
     const now = new Date();
-    // For 'all' tab, only show upcoming. For 'my' tab, show all so we can see past registrations too.
     let result = events.filter((e) => {
       if (activeTab === "all") {
         if (!e.endTime) return true;
@@ -118,6 +117,17 @@ export const EventCatalog = () => {
       return true; // Show all for 'my' tab
     });
 
+    if (activeTab === "my") {
+      result = result.filter((e) => e.isRegistered);
+    }
+
+    return result;
+  }, [events, activeTab]);
+
+  // Filter and sort events for the list display
+  const filteredEvents = useMemo(() => {
+    let result = [...tabEvents];
+
     // Apply search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -125,14 +135,13 @@ export const EventCatalog = () => {
         (e) =>
           e.name.toLowerCase().includes(q) ||
           getEventLocationSearchText(e).includes(q) ||
-          (e.description && e.description.toLowerCase().includes(q)) ||
+          e.description.toLowerCase().includes(q) ||
+          e.type.toLowerCase().includes(q) ||
+          e.tags.some((l) => l.toLowerCase().includes(q)) ||
           e.languages.some((l) => l.toLowerCase().includes(q)) ||
           e.areas.some((a) => a.toLowerCase().includes(q))
       );
     }
-
-    // Category filters are applied server-side via /clinics/search when filters are selected;
-    // search + sort run here on the current `events` list.
 
     // Apply sort
     if (sortBy === "upcoming") {
@@ -146,26 +155,21 @@ export const EventCatalog = () => {
     }
 
     return result;
-  }, [searchQuery, sortBy, events, activeTab]);
+  }, [searchQuery, sortBy, tabEvents]);
 
   // Adjust selection when tab changes, events update, or filters/search change
   useEffect(() => {
-    const currentList =
-      activeTab === "all"
-        ? filteredEvents
-        : filteredEvents.filter((e) => e.isRegistered);
-
-    if (currentList.length > 0) {
+    if (filteredEvents.length > 0) {
       // If no selection, or selection is not in the current list, pick the first one
       const isStillInList =
-        selectedEvent && currentList.some((e) => e.id === selectedEvent.id);
+        selectedEvent && filteredEvents.some((e) => e.id === selectedEvent.id);
       if (!isStillInList) {
-        setSelectedEvent(currentList[0]);
+        setSelectedEvent(filteredEvents[0]);
       }
     } else {
       setSelectedEvent(null);
     }
-  }, [activeTab, filteredEvents, selectedEvent?.id]);
+  }, [filteredEvents, selectedEvent?.id]);
 
   const showEventDetails = (event) => {
     setSelectedEvent(event);
@@ -300,6 +304,7 @@ export const EventCatalog = () => {
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredEvents.length}
+            events={filteredEvents}
           />
 
           {/* Event catalog list */}
