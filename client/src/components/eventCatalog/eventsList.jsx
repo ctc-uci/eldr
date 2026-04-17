@@ -109,7 +109,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
                 <Badge
                   key={i}
                   variant="solid"
-                  borderColor="#D1D5DB"
+                  border="1px solid #E4E4E7"
                   color="#27272A"
                   bg="#F4F4F5"
                   px="10px"
