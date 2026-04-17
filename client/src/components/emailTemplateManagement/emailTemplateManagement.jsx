@@ -322,8 +322,16 @@ export const EmailTemplateManagement = () => {
     setShowMoveTemplateModal(true);
   };
 
+  const hasNoLinkedFolders = async (templateId) => {
+    if (!templateId) return true;
+    const linkedFoldersResponse = await backend.get(`/email-templates/${templateId}/folders`);
+    return (linkedFoldersResponse.data || []).length === 0;
+  };
+
   const handleSaveButtonClick = async () => {
     try {
+      let shouldOpenMoveModal = false;
+
       if (isNewTemplate) {
         const response = await backend.post("/email-templates", {
           name: templateName.trim(),
@@ -346,6 +354,14 @@ export const EmailTemplateManagement = () => {
         navigate(
           `/email/template/${created.id}${folderIdFromQuery ? `?folderId=${folderIdFromQuery}` : ""}`
         );
+
+        // Only prompt for move/link if the newly-created template has no folder links yet
+        try {
+          shouldOpenMoveModal = await hasNoLinkedFolders(created.id);
+        } catch (error) {
+          // If link lookup fails, preserve current behavior and avoid blocking save
+          shouldOpenMoveModal = false;
+        }
       } else if (currentTemplateId) {
         await updateTemplateInDb();
         setInitialTemplateSnapshot({
@@ -357,7 +373,10 @@ export const EmailTemplateManagement = () => {
         alert("No template to save.");
         return;
       }
-      openMoveTemplateModalWithDefaultFolder();
+
+      if (shouldOpenMoveModal) {
+        openMoveTemplateModalWithDefaultFolder();
+      }
     } catch (error) {
       alert("Failed to save template. Please try again.");
     }
@@ -535,7 +554,7 @@ export const EmailTemplateManagement = () => {
   };
 
   const handleMoveTemplate = async () => {
-    if (!currentTemplateId || !moveFolderId) return;
+    if (!moveFolderId) return;
 
     const destinationFolderId = String(moveFolderId);
     const sourceFolderId = currentFolder?.id ? String(currentFolder.id) : null;
@@ -546,28 +565,62 @@ export const EmailTemplateManagement = () => {
 
     try {
       setIsMovingTemplate(true);
+      let effectiveTemplateId =
+        currentTemplateId || (urlTemplateId && !urlTemplateId.startsWith("new-") ? urlTemplateId : null);
+
+      // If move is triggered before we have a persistent id, create/save first
+      if (!effectiveTemplateId && isNewTemplate) {
+        const response = await backend.post("/email-templates", {
+          name: templateName.trim(),
+          template_text: templateContent,
+          subject: templateSubject.trim() || null,
+        });
+        const created = response.data;
+        effectiveTemplateId = created.id;
+        setCurrentTemplateId(created.id);
+        setIsNewTemplate(false);
+        setInitialTemplateSnapshot({
+          name: templateName.trim() || "Untitled Template",
+          subject: templateSubject,
+          content: templateContent,
+        });
+        setAllTemplates((prev) => {
+          const exists = prev.some((t) => String(t.id) === String(created.id));
+          if (exists) return prev;
+          return [...prev, { ...created, name: created.name, templateText: created.templateText ?? templateContent }];
+        });
+      }
+
+      if (!effectiveTemplateId) {
+        alert("No saved template found to move.");
+        return;
+      }
 
       // check current template-folder links first to avoid duplicates
-      const linkedFoldersResponse = await backend.get(`/email-templates/${currentTemplateId}/folders`);
+      const linkedFoldersResponse = await backend.get(`/email-templates/${effectiveTemplateId}/folders`);
       const isAlreadyLinked = (linkedFoldersResponse.data || []).some(
         (folder) => String(folder.id) === destinationFolderId
       );
 
       if (!isAlreadyLinked) {
-        await backend.post(`/email-templates/${currentTemplateId}/folders`, {
-          folderId: Number(destinationFolderId),
+        const destinationFolder = folders.find(
+          (folder) => String(folder.id) === destinationFolderId
+        );
+        await backend.post(`/email-templates/${effectiveTemplateId}/folders`, {
+          folderId: destinationFolder?.id ?? destinationFolderId,
         });
       }
 
       if (sourceFolderId) {
         try {
-          await backend.delete(`/email-templates/${currentTemplateId}/folders/${sourceFolderId}`);
+          await backend.delete(`/email-templates/${effectiveTemplateId}/folders/${sourceFolderId}`);
         } catch (error) {
           if (error?.response?.status !== 404) throw error;
         }
       }
 
       setShowMoveTemplateModal(false);
+      setMoveFolderId("");
       navigate(`/email/folder/${destinationFolderId}`);
     } catch (error) {
       console.error("Error moving template:", error);
@@ -918,7 +971,17 @@ export const EmailTemplateManagement = () => {
                         await handleSaveButtonClick();
                         return;
                       }
-                      openMoveTemplateModalWithDefaultFolder();
+                      try {
+                        const templateIdToCheck =
+                          currentTemplateId ||
+                          (urlTemplateId && !urlTemplateId.startsWith("new-") ? urlTemplateId : null);
+                        const shouldOpenMoveModal = await hasNoLinkedFolders(templateIdToCheck);
+                        if (shouldOpenMoveModal) {
+                          openMoveTemplateModalWithDefaultFolder();
+                        }
+                      } catch (error) {
+                        // don't block user flow on lookup errors
+                      }
                     }}
                   >
                     {hasUnsavedChanges ? <Save size={16} /> : <Pencil size={16} />}
@@ -1151,7 +1214,7 @@ export const EmailTemplateManagement = () => {
                   onClick={handleMoveTemplate}
                   disabled={!moveFolderId || isMovingTemplate}
                 >
-                  {isMovingTemplate ? "Moving..." : "Move"}
+                  Move
                 </Button>
               </Dialog.Footer>
             </Dialog.Content>
