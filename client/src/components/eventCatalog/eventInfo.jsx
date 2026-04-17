@@ -179,12 +179,14 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
         >
           {event.name}
         </Text>
-        <IconButton
-          variant="outline"
-          colorPalette="gray"
-        >
-          <Share />
-        </IconButton>
+        {activeTab === "all" && (
+          <IconButton
+            variant="outline"
+            colorPalette="gray"
+          >
+            <Share />
+          </IconButton>
+        )}
       </HStack>
 
       {/* Event metadata */}
