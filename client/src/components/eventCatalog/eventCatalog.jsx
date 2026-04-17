@@ -131,16 +131,7 @@ export const EventCatalog = () => {
     // Apply search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          getEventLocationSearchText(e).includes(q) ||
-          e.description.toLowerCase().includes(q) ||
-          e.type.toLowerCase().includes(q) ||
-          e.tags.some((l) => l.toLowerCase().includes(q)) ||
-          e.languages.some((l) => l.toLowerCase().includes(q)) ||
-          e.areas.some((a) => a.toLowerCase().includes(q))
-      );
+      result = result.filter((e) => e.name.toLowerCase().includes(q));
     }
 
     // Apply sort
