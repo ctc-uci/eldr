@@ -25,6 +25,7 @@ import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
 import { CreateEvent } from "./components/eventManagement/createEvent";
 import { CreatedEvent } from "./components/eventManagement/CreatedEvent";
+import { CreateEmailNotification } from "./components/eventManagement/CreateEmailNotification";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
@@ -117,6 +118,10 @@ const App = () => {
                   <Route
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
+                  />
+                  <Route
+                    path="/events/:eventId/email-notification/new"
+                    element={<CreateEmailNotification />}
                   />
                   <Route path="/events/:eventId" element={<CreatedEvent />} />
                   <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />

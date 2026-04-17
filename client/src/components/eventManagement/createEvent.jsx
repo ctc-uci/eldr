@@ -19,6 +19,7 @@ import {
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
+import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 
 const parseTimeField = (ts) => {
   if (!ts) return { time: "", period: "AM" };
@@ -664,23 +665,30 @@ export const CreateEvent = () => {
       )}
 
       {activeTab !== "header" && (
-        <Flex
+        <Box
           w="100%"
           p={8}
           bg="white"
           border="1px solid #E2E8F0"
           borderRadius="lg"
-          align="center"
-          justify="center"
-          minH="200px"
         >
-          <Text
-            color="gray.400"
-            fontSize="sm"
-          >
-            {tabs.find((t) => t.key === activeTab)?.label}
-          </Text>
-        </Flex>
+          {activeTab === "email" ? (
+            <EmailNotificationTimeline eventId={isEditing ? eventId : undefined} />
+          ) : (
+            <Flex
+              align="center"
+              justify="center"
+              minH="200px"
+            >
+              <Text
+                color="gray.400"
+                fontSize="sm"
+              >
+                {tabs.find((t) => t.key === activeTab)?.label}
+              </Text>
+            </Flex>
+          )}
+        </Box>
       )}
 
       {/* Action buttons */}

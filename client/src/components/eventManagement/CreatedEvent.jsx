@@ -12,6 +12,7 @@ import {
 import { MdOutlineMailOutline } from "react-icons/md";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 
 export const CreatedEvent = () => {
   const { eventId } = useParams();
@@ -19,6 +20,7 @@ export const CreatedEvent = () => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
   const [eventData, setEventData] = useState(locationState?.eventData ?? null);
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     if (eventData) return;
@@ -97,8 +99,6 @@ export const CreatedEvent = () => {
     { key: "volunteers", label: "Volunteer List" },
     { key: "email", label: "Email Notification Timeline" },
   ];
-
-  const activeTab = "details";
 
   return (
     <VStack
@@ -298,6 +298,8 @@ export const CreatedEvent = () => {
               px={4}
               py={3}
               fontSize="sm"
+              gap={2}
+              onClick={() => setActiveTab(tab.key)}
               _hover={{ bg: "transparent", color: "gray.600" }}
             >
               <MdOutlineMailOutline />
@@ -306,69 +308,93 @@ export const CreatedEvent = () => {
           ))}
         </HStack>
 
-        {/* Event Details content */}
-        <Box
-          w="100%"
-          p={8}
-        >
-          <VStack
-            align="start"
-            gap={6}
+        {activeTab === "details" && (
+          <Box
+            w="100%"
+            p={8}
           >
             <VStack
               align="start"
-              gap={2}
+              gap={6}
             >
-              <Text
-                fontWeight="bold"
-                fontSize="md"
-                color="gray.800"
+              <VStack
+                align="start"
+                gap={2}
               >
-                Description
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-              </Text>
-            </VStack>
+                <Text
+                  fontWeight="bold"
+                  fontSize="md"
+                  color="gray.800"
+                >
+                  Description
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+              </VStack>
 
-            <VStack
-              align="start"
-              gap={2}
-            >
-              <Text
-                fontWeight="bold"
-                fontSize="md"
-                color="gray.800"
+              <VStack
+                align="start"
+                gap={2}
               >
-                Miscellaneous
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-              </Text>
+                <Text
+                  fontWeight="bold"
+                  fontSize="md"
+                  color="gray.800"
+                >
+                  Miscellaneous
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+              </VStack>
             </VStack>
-          </VStack>
-        </Box>
+          </Box>
+        )}
+
+        {activeTab === "volunteers" && (
+          <Box
+            w="100%"
+            p={8}
+          >
+            <Text
+              fontSize="sm"
+              color="gray.600"
+            >
+              Volunteer list will appear here.
+            </Text>
+          </Box>
+        )}
+
+        {activeTab === "email" && (
+          <Box
+            w="100%"
+            p={8}
+          >
+            <EmailNotificationTimeline eventId={eventId} />
+          </Box>
+        )}
       </Box>
     </VStack>
   );
