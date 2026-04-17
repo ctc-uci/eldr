@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, Button, Flex, HStack, NativeSelect, Table, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, HStack, Table, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -9,6 +9,12 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+
+import {
+  getEventEmailNotifications,
+  notifyEventEmailNotificationsChanged,
+  removeEventEmailNotification,
+} from "./eventEmailNotificationsStorage";
 
 const STATUS = {
   delivered: {
@@ -25,61 +31,13 @@ const STATUS = {
   },
 };
 
-/** Template key → label, send timing, and status badge */
-const EMAIL_TEMPLATE_OPTIONS = {
-  confirmation: {
-    label: "Confirmation Note",
-    timing: "Immediately (Upon Sign-up)",
-    statusKey: "delivered",
-  },
-  twoWeek: {
-    label: "2-Week Reminder",
-    timing: "2 Weeks Before Event",
-    statusKey: "scheduled",
-  },
-  oneWeek: {
-    label: "1-Week Reminder",
-    timing: "1 Week Before Event",
-    statusKey: "scheduled",
-  },
-  fiveDay: {
-    label: "5-Day Reminder",
-    timing: "5 Days Before Event",
-    statusKey: "scheduled",
-  },
+const SIGNUP_CONFIG = {
+  id: "signup",
+  statusKey: "delivered",
+  sendTiming: "Immediately (Upon Sign-up)",
+  templateLabel: "Confirmation Note",
+  actionsDisabled: true,
 };
-
-/** Sign-up row only: fixed confirmation email */
-const SIGNUP_TEMPLATE_KEYS = ["confirmation"];
-
-/** Reminder rows only — Confirmation Note is not available here */
-const REMINDER_TEMPLATE_KEYS = ["twoWeek", "oneWeek", "fiveDay"];
-
-const ROWS = [
-  { id: "signup", defaultTemplate: "confirmation", actionsDisabled: true },
-  { id: "2w", defaultTemplate: "twoWeek", actionsDisabled: false },
-  { id: "1w", defaultTemplate: "oneWeek", actionsDisabled: false },
-  { id: "5d", defaultTemplate: "fiveDay", actionsDisabled: false },
-];
-
-const baseSelectFieldStyle = {
-  border: "1px solid #E2E8F0",
-  borderRadius: "6px",
-  fontSize: "14px",
-  height: "40px",
-  paddingLeft: "12px",
-  paddingRight: "32px",
-  color: "#1A202C",
-  width: "100%",
-  maxWidth: "280px",
-};
-
-const getSelectFieldStyle = (readOnly) => ({
-  ...baseSelectFieldStyle,
-  background: readOnly ? "#F7FAFC" : "white",
-  cursor: readOnly ? "not-allowed" : "pointer",
-  opacity: readOnly ? 0.92 : 1,
-});
 
 const StatusBadge = ({ statusKey }) => {
   const s = STATUS[statusKey];
@@ -109,14 +67,43 @@ const StatusBadge = ({ statusKey }) => {
 
 export const EmailNotificationTimeline = ({ eventId }) => {
   const navigate = useNavigate();
-  const [templateByRow, setTemplateByRow] = useState(() =>
-    Object.fromEntries(ROWS.map((r) => [r.id, r.defaultTemplate]))
+  const [customNotifications, setCustomNotifications] = useState(() =>
+    getEventEmailNotifications(eventId)
   );
 
-  const setRowTemplate = (rowId, templateKey) => {
-    if (rowId === "signup") return;
-    if (templateKey === "confirmation") return;
-    setTemplateByRow((prev) => ({ ...prev, [rowId]: templateKey }));
+  const refresh = useCallback(() => {
+    setCustomNotifications(getEventEmailNotifications(eventId));
+  }, [eventId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const onChanged = (e) => {
+      if (e?.detail?.eventId != null && String(e.detail.eventId) === String(eventId)) {
+        refresh();
+      }
+    };
+    window.addEventListener("eldr-event-email-notifications-changed", onChanged);
+    return () => window.removeEventListener("eldr-event-email-notifications-changed", onChanged);
+  }, [eventId, refresh]);
+
+  const rows = useMemo(() => {
+    const signupRow = { kind: "signup", ...SIGNUP_CONFIG };
+    const added = customNotifications.map((n) => ({
+      kind: "custom",
+      ...n,
+      actionsDisabled: false,
+    }));
+    return [signupRow, ...added];
+  }, [customNotifications]);
+
+  const handleDelete = (row) => {
+    if (!eventId || row.kind !== "custom" || !row.id) return;
+    removeEventEmailNotification(eventId, row.id);
+    notifyEventEmailNotificationsChanged(eventId);
+    refresh();
   };
 
   return (
@@ -140,36 +127,30 @@ export const EmailNotificationTimeline = ({ eventId }) => {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {ROWS.map((row) => {
-              const isSignupRow = row.id === "signup";
-              const templateKey = templateByRow[row.id];
-              const config = EMAIL_TEMPLATE_OPTIONS[templateKey];
-              const optionKeys = isSignupRow ? SIGNUP_TEMPLATE_KEYS : REMINDER_TEMPLATE_KEYS;
+            {rows.map((row) => {
+              const statusKey = row.statusKey;
+              const sendTiming =
+                row.kind === "signup" ? row.sendTiming : row.sendTimingLabel;
+              const templateLabel =
+                row.kind === "signup" ? row.templateLabel : row.templateName;
+              const rowKey = row.kind === "signup" ? SIGNUP_CONFIG.id : row.id;
+
               return (
-                <Table.Row key={row.id} _hover={{ bg: "gray.50" }}>
+                <Table.Row key={rowKey} _hover={{ bg: "gray.50" }}>
                   <Table.Cell verticalAlign="middle" py={4}>
-                    <StatusBadge statusKey={config.statusKey} />
+                    <StatusBadge statusKey={statusKey} />
                   </Table.Cell>
                   <Table.Cell color="gray.700" fontSize="sm" verticalAlign="middle" py={4}>
-                    {config.timing}
+                    {sendTiming}
                   </Table.Cell>
                   <Table.Cell verticalAlign="middle" py={4}>
-                    <NativeSelect.Root size="md" w="100%" maxW="280px">
-                      <NativeSelect.Field
-                        value={templateKey}
-                        onChange={(e) => setRowTemplate(row.id, e.target.value)}
-                        style={getSelectFieldStyle(isSignupRow)}
-                        aria-label="Selected email template"
-                        disabled={isSignupRow}
-                      >
-                        {optionKeys.map((key) => (
-                          <option key={key} value={key}>
-                            {EMAIL_TEMPLATE_OPTIONS[key].label}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      {!isSignupRow ? <NativeSelect.Indicator /> : null}
-                    </NativeSelect.Root>
+                    <Text
+                      fontSize="sm"
+                      color="gray.700"
+                      maxW="280px"
+                    >
+                      {templateLabel}
+                    </Text>
                   </Table.Cell>
                   <Table.Cell verticalAlign="middle" py={4}>
                     <HStack justify="flex-start" gap={2} flexWrap="wrap">
@@ -194,6 +175,12 @@ export const EmailNotificationTimeline = ({ eventId }) => {
                             ? {}
                             : { bg: "gray.50" }
                         }
+                        onClick={() => {
+                          if (row.kind !== "custom" || !eventId || !row.id) return;
+                          navigate(
+                            `/events/${eventId}/email-notification/edit/${row.id}`
+                          );
+                        }}
                       >
                         <Pencil size={16} strokeWidth={2} aria-hidden />
                         <Text fontSize="sm">Edit</Text>
@@ -219,6 +206,7 @@ export const EmailNotificationTimeline = ({ eventId }) => {
                             ? {}
                             : { bg: "gray.50" }
                         }
+                        onClick={() => handleDelete(row)}
                       >
                         <Trash2 size={16} strokeWidth={2} aria-hidden />
                         <Text fontSize="sm">Delete</Text>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, HStack, Input, NativeSelect, Text, VStack } from "@chakra-ui/react";
 import { ChevronRight } from "lucide-react";
@@ -8,6 +8,13 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { ChooseEmailTemplateModal } from "./ChooseEmailTemplateModal";
 import { EmailNotificationRichBody } from "./EmailNotificationRichBody";
+import {
+  addEventEmailNotification,
+  buildSendTimingLabel,
+  getEventEmailNotificationById,
+  notifyEventEmailNotificationsChanged,
+  updateEventEmailNotification,
+} from "./eventEmailNotificationsStorage";
 
 const DEFAULT_EMAIL_SUBJECT = "Confirmation Email for Volunteer";
 
@@ -76,7 +83,8 @@ const templatePlaceholderInner = {
 };
 
 export const CreateEmailNotification = () => {
-  const { eventId } = useParams();
+  const { eventId, notificationId } = useParams();
+  const isEditing = Boolean(notificationId);
   const navigate = useNavigate();
   const { backend } = useBackendContext();
   const [amount, setAmount] = useState(1);
@@ -85,6 +93,32 @@ export const CreateEmailNotification = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [emailSubject, setEmailSubject] = useState(DEFAULT_EMAIL_SUBJECT);
   const [bodyHtml, setBodyHtml] = useState("<p></p>");
+
+  useEffect(() => {
+    if (!isEditing || !eventId || !notificationId) return;
+    const record = getEventEmailNotificationById(eventId, notificationId);
+    if (!record) {
+      navigate(`/events/${eventId}/edit/email`, { replace: true });
+      return;
+    }
+    const n = record.amount;
+    setAmount(typeof n === "number" && Number.isFinite(n) && n >= 1 ? n : 1);
+    const u = record.unit;
+    setUnit(typeof u === "string" && UNIT_VALUES.includes(u) ? u : "minute");
+    if (record.templateId != null && record.templateName) {
+      setSelectedTemplate({ id: record.templateId, name: record.templateName });
+    }
+    if (typeof record.emailSubject === "string" && record.emailSubject.trim() !== "") {
+      setEmailSubject(record.emailSubject);
+    } else {
+      setEmailSubject(DEFAULT_EMAIL_SUBJECT);
+    }
+    if (typeof record.bodyHtml === "string" && record.bodyHtml.trim() !== "") {
+      setBodyHtml(record.bodyHtml);
+    } else {
+      setBodyHtml("<p></p>");
+    }
+  }, [isEditing, eventId, notificationId, navigate]);
 
   const handleTemplateConfirm = useCallback(
     async (sel) => {
@@ -159,7 +193,7 @@ export const CreateEmailNotification = () => {
           color="blue.500"
           fontWeight="semibold"
         >
-          Create Email Notification
+          {isEditing ? "Edit Email Notification" : "Create Email Notification"}
         </Text>
       </HStack>
 
@@ -168,7 +202,7 @@ export const CreateEmailNotification = () => {
         fontWeight="semibold"
         color="gray.800"
       >
-        Create New Email Notification
+        {isEditing ? "Edit Email Notification" : "Create New Email Notification"}
       </Text>
 
       <Box
@@ -328,7 +362,7 @@ export const CreateEmailNotification = () => {
             </VStack>
 
             <EmailNotificationRichBody
-              key={selectedTemplate.id}
+              key={`${notificationId ?? "new"}-${selectedTemplate.id}`}
               initialHtml={bodyHtml}
               onHtmlChange={setBodyHtml}
             />
@@ -349,7 +383,11 @@ export const CreateEmailNotification = () => {
             fontSize="sm"
             border="1px solid #CBD5E0"
             color="gray.600"
-            onClick={() => navigate(`/events/${eventId}`)}
+            onClick={() =>
+              navigate(
+                isEditing ? `/events/${eventId}/edit/email` : `/events/${eventId}`
+              )
+            }
           >
             Cancel
           </Button>
@@ -364,7 +402,25 @@ export const CreateEmailNotification = () => {
             disabled={!selectedTemplate}
             opacity={selectedTemplate ? 1 : 0.5}
             cursor={selectedTemplate ? "pointer" : "not-allowed"}
-            onClick={() => navigate(`/events/${eventId}/edit/email`)}
+            onClick={() => {
+              if (!eventId || !selectedTemplate) return;
+              const snapshot = {
+                sendTimingLabel: buildSendTimingLabel(amount, unit),
+                templateName: selectedTemplate.name,
+                templateId: selectedTemplate.id,
+                amount,
+                unit,
+                emailSubject,
+                bodyHtml,
+              };
+              if (isEditing && notificationId) {
+                updateEventEmailNotification(eventId, notificationId, snapshot);
+              } else {
+                addEventEmailNotification(eventId, snapshot);
+              }
+              notifyEventEmailNotificationsChanged(eventId);
+              navigate(`/events/${eventId}/edit/email`);
+            }}
           >
             Save
           </Button>

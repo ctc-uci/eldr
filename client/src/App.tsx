@@ -123,6 +123,10 @@ const App = () => {
                     path="/events/:eventId/email-notification/new"
                     element={<CreateEmailNotification />}
                   />
+                  <Route
+                    path="/events/:eventId/email-notification/edit/:notificationId"
+                    element={<CreateEmailNotification />}
+                  />
                   <Route path="/events/:eventId" element={<CreatedEvent />} />
                   <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
                   <Route path="/events/create/:tab" element={<CreateEvent />} />
