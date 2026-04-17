@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Flex, HStack, Tag, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Flex, HStack, IconButton, Separator, Tag, Text, VStack } from "@chakra-ui/react";
 
 import {
+  LuArrowUpFromLine,
   LuArchive,
   LuCalendar,
   LuClock,
+  LuMail,
   LuMapPin,
   LuPencil,
   LuUsers,
 } from "react-icons/lu";
-import { MdOutlineMailOutline } from "react-icons/md";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
@@ -98,13 +99,13 @@ export const CreatedEvent = () => {
     { key: "email", label: "Email Notification Timeline" },
   ];
 
-  const activeTab = "details";
+  const [activeTab, setActiveTab] = useState("details");
 
   return (
     <VStack
       w="100%"
       minH="100vh"
-      bg="#F7F8FA"
+      bg="white"
       align="start"
       px={10}
       pt={10}
@@ -132,71 +133,87 @@ export const CreatedEvent = () => {
         </Text>
       </HStack>
 
-      {/* Title + action buttons row */}
+      {/* Header row */}
       <Flex
         w="100%"
         justify="space-between"
         align="start"
+        gap={8}
       >
         <VStack
           align="start"
-          gap={4}
+          gap={3}
+          flex={1}
         >
-          {/* Event name */}
           <Text
-            fontSize="2xl"
+            fontSize="4xl"
             fontWeight="bold"
-            color="gray.800"
+            color="#1A202C"
           >
             {name}
           </Text>
 
-          {/* Date + Time */}
-          <HStack gap={6}>
+          <HStack
+            gap={6}
+            color="gray.700"
+            fontSize="sm"
+          >
             <HStack
               gap={2}
-              color="gray.600"
-              fontSize="sm"
             >
               <LuCalendar />
               <Text>{formattedDate}</Text>
             </HStack>
             <HStack
               gap={2}
-              color="gray.600"
-              fontSize="sm"
             >
               <LuClock />
               <Text>{formattedTime}</Text>
             </HStack>
           </HStack>
+          <Separator />
 
-          {/* Location + Spots */}
-          <HStack gap={6}>
+          <HStack
+            gap={2}
+            color="gray.700"
+            fontSize="sm"
+            w="100%"
+          >
             <HStack
               gap={2}
-              color="gray.600"
-              fontSize="sm"
             >
               <LuMapPin />
               <Text>{locationStr}</Text>
             </HStack>
-            <HStack
-              gap={2}
-              color="gray.600"
-              fontSize="sm"
-            >
-              <LuUsers />
-              <Text>
-                {attendees}/{capacity} spots filled
-              </Text>
-            </HStack>
           </HStack>
+          <Separator />
 
-          {/* Tags */}
+          <HStack
+            gap={2}
+            color="gray.700"
+            fontSize="sm"
+          >
+            <Box
+              w="8px"
+              h="8px"
+              borderRadius="full"
+              bg="red.500"
+            />
+            <Text>
+              <Text as="span" fontWeight="semibold">{attendees}</Text>
+              {" Registered  /  "}
+              <Text as="span" fontWeight="semibold">50</Text>
+              {" Minimum  /  "}
+              <Text as="span" fontWeight="semibold">{capacity}</Text>
+              {" Maximum"}
+            </Text>
+          </HStack>
+          <Separator />
+
           <HStack
             gap={2}
             mt={1}
+            flexWrap="wrap"
           >
             {[type, capitalizeLocationType(locationType), ...languages.map((l) => (typeof l === "string" ? l : l.language))]
               .filter(Boolean)
@@ -212,7 +229,7 @@ export const CreatedEvent = () => {
                   py={1}
                 >
                   <Tag.Label
-                    fontSize="xs"
+                    fontSize="sm"
                     fontWeight="medium"
                   >
                     {tag}
@@ -222,37 +239,31 @@ export const CreatedEvent = () => {
           </HStack>
         </VStack>
 
-        {/* Edit / Archive buttons */}
-        <VStack
+        {/* Action buttons */}
+        <HStack
           gap={2}
-          align="stretch"
-          minW="180px"
+          align="start"
         >
-          <Button
+          <IconButton
+            aria-label="Share event"
             variant="outline"
-            border="1px solid #E2E8F0"
+            borderColor="#E2E8F0"
             bg="white"
-            color="gray.700"
-            borderRadius="md"
-            justifyContent="flex-start"
-            gap={3}
-            px={4}
-            _hover={{ bg: "gray.50" }}
-            onClick={() => navigate(`/events/${eventId}/edit/header`)}
+            color="gray.600"
+            size="md"
           >
-            <LuPencil />
-            Edit Event
-          </Button>
+            <LuArrowUpFromLine />
+          </IconButton>
           <Button
             variant="outline"
             border="1px solid #E2E8F0"
             bg="white"
-            color="gray.700"
+            color="#B83232"
             borderRadius="md"
             justifyContent="flex-start"
             gap={3}
             px={4}
-            _hover={{ bg: "red.50", borderColor: "red.200", color: "red.600" }}
+            _hover={{ bg: "red.50", borderColor: "red.200" }}
             onClick={async () => {
               try {
                 await backend.delete(`/clinics/${eventId}`);
@@ -263,54 +274,62 @@ export const CreatedEvent = () => {
             }}
           >
             <LuArchive />
-            Archive Event
+            Delete Event
           </Button>
-        </VStack>
+          <Button
+            bg="#4A7FA5"
+            color="white"
+            borderRadius="md"
+            justifyContent="flex-start"
+            gap={3}
+            px={4}
+            _hover={{ bg: "#2C5282" }}
+            onClick={() => navigate(`/events/${eventId}/edit/header`)}
+          >
+            <LuPencil />
+            Edit Event
+          </Button>
+        </HStack>
       </Flex>
 
-      {/* Tabbed content card */}
+      {/* Tabs */}
+      <HStack
+        gap={1}
+        borderBottom="1px solid #E2E8F0"
+        w="100%"
+        align="end"
+      >
+        {tabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant="ghost"
+            borderRadius="8px 8px 0 0"
+            borderTop={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderLeft={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderRight={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderBottom="1px solid transparent"
+            mb="-1px"
+            color={activeTab === tab.key ? "#2D3748" : "gray.600"}
+            bg={activeTab === tab.key ? "white" : "transparent"}
+            fontWeight={activeTab === tab.key ? "medium" : "normal"}
+            px={{ base: 3, md: 4 }}
+            py={{ base: 2, md: 2.5 }}
+            fontSize={{ base: "xs", md: "sm" }}
+            onClick={() => setActiveTab(tab.key)}
+            _hover={{ bg: activeTab === tab.key ? "white" : "gray.50" }}
+            _focusVisible={{ outline: "none", boxShadow: "none" }}
+          >
+            <LuMail size={16} />
+            {tab.label}
+          </Button>
+        ))}
+      </HStack>
+
       <Box
         w="100%"
-        bg="white"
-        border="1px solid #E2E8F0"
-        borderRadius="lg"
-        overflow="hidden"
+        pt={6}
       >
-        {/* Tabs */}
-        <HStack
-          gap={0}
-          borderBottom="2px solid #E2E8F0"
-          px={6}
-        >
-          {tabs.map((tab) => (
-            <Button
-              key={tab.key}
-              variant="ghost"
-              borderRadius={0}
-              borderBottom={
-                activeTab === tab.key
-                  ? "2px solid #2B6CB0"
-                  : "2px solid transparent"
-              }
-              mb="-2px"
-              color={activeTab === tab.key ? "blue.600" : "gray.400"}
-              fontWeight={activeTab === tab.key ? "semibold" : "normal"}
-              px={4}
-              py={3}
-              fontSize="sm"
-              _hover={{ bg: "transparent", color: "gray.600" }}
-            >
-              <MdOutlineMailOutline />
-              {tab.label}
-            </Button>
-          ))}
-        </HStack>
-
-        {/* Event Details content */}
-        <Box
-          w="100%"
-          p={8}
-        >
+        {activeTab === "details" && (
           <VStack
             align="start"
             gap={6}
@@ -329,20 +348,9 @@ export const CreatedEvent = () => {
               <Text
                 fontSize="sm"
                 color="gray.600"
+                whiteSpace="pre-line"
               >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-              >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                {eventData?.description || "No description provided."}
               </Text>
             </VStack>
 
@@ -355,20 +363,33 @@ export const CreatedEvent = () => {
                 fontSize="md"
                 color="gray.800"
               >
-                Miscellaneous
+                Images
               </Text>
               <Text
                 fontSize="sm"
                 color="gray.600"
               >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                *insert images here*
               </Text>
             </VStack>
           </VStack>
-        </Box>
+        )}
+
+        {activeTab !== "details" && (
+          <Flex
+            w="100%"
+            minH="180px"
+            align="center"
+            justify="center"
+          >
+            <Text
+              color="gray.400"
+              fontSize="sm"
+            >
+              {tabs.find((t) => t.key === activeTab)?.label}
+            </Text>
+          </Flex>
+        )}
       </Box>
     </VStack>
   );
