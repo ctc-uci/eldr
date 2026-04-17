@@ -30,7 +30,13 @@ import { LuCalendarDays } from "react-icons/lu";
 import { getClinicLocationDisplay } from "./clinicLocationFormat";
 import RegStatus from "./regStatus";
 
-export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
+export const EventInfo = ({
+  event,
+  activeTab,
+  onRegister,
+  onUnregister,
+  isMobile,
+}) => {
   const [open, setOpen] = useState(false);
 
   const handleRegistration = () => {
@@ -171,11 +177,10 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
         <Text
           flexShrink={0}
           fontSize="26px"
-          fontWeight="400"
+          fontWeight="bold"
           lineHeight="44px"
           letterSpacing="-2.5%"
           color="#000000"
-          mb={{ base: "24px", md: 0 }}
         >
           {event.name}
         </Text>
@@ -348,7 +353,7 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
             onOpenChange={(e) => setOpen(e.open)}
             placement="center"
             motionPreset="slide-in-bottom"
-            size="sm"
+            size={isMobile ? "xs" : "md"}
           >
             <Button
               variant="solid"

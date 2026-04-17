@@ -11,11 +11,14 @@ import {
 
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
-const SearchBar = ({ searchQuery, setSearchQuery, events = [] }) => {
+const SearchBar = ({ searchQuery, setSearchQuery, events = [], isMobile }) => {
   const [inputValue, setInputValue] = useState(searchQuery);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  const placeholder = isMobile
+    ? "Search"
+    : "Search for whatever floats your boat, matey";
 
   // Synchronize local input value if parent searchQuery changes externally (e.g. cleared)
   useEffect(() => {
@@ -87,7 +90,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, events = [] }) => {
       <InputGroup endElement={clearButton}>
         <Input
           ref={inputRef}
-          placeholder="Search for whatever floats your boat, matey"
+          placeholder={placeholder}
           backgroundColor="white"
           borderColor="#D1D5DB"
           borderRadius="8px"

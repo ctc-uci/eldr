@@ -43,7 +43,10 @@ export const TopBar = ({
   const showSearch = !isMobile || !showDetails;
 
   return (
-    <Flex direction="column" w="100%">
+    <Flex
+      direction="column"
+      w="100%"
+    >
       {/* Tabs - Segmented Control Style */}
       <Flex
         w="100%"
@@ -129,20 +132,18 @@ export const TopBar = ({
           {isMobile ? (
             <IconButton
               aria-label="Filter"
-              backgroundColor={hasAppliedFilters ? "#1E3A8A" : "#DBEAFE"}
-              color={hasAppliedFilters ? "white" : "#173DA6"}
+              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters
-                  ? "1px solid #1E3A8A"
-                  : "1px solid #BFDBFE"
+                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
               }
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
               _hover={{
-                backgroundColor: hasAppliedFilters ? "#1E40AF" : "#BFDBFE",
+                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
               }}
               onClick={() => setFilterOpen(true)}
             >
@@ -154,9 +155,7 @@ export const TopBar = ({
               color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters
-                  ? "1px solid #BFDBFE"
-                  : "1px solid #E4E4E7"
+                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
               }
               px="16px"
               h="40px"
@@ -187,6 +186,7 @@ export const TopBar = ({
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             events={events}
+            isMobile
           />
         </Flex>
       )}

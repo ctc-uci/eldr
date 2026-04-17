@@ -352,6 +352,7 @@ export const EventCatalog = () => {
             activeTab={activeTab}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
+            isMobile={isMobile}
           />
         </Flex>
       </Flex>
