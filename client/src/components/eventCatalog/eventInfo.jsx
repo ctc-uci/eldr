@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Badge,
@@ -38,6 +38,16 @@ export const EventInfo = ({
   isMobile,
 }) => {
   const [open, setOpen] = useState(false);
+  const [showCopyMessage, setShowCopyMessage] = useState(false);
+
+  useEffect(() => {
+    if (showCopyMessage) {
+      const timer = setTimeout(() => {
+        setShowCopyMessage(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showCopyMessage]);
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -50,6 +60,11 @@ export const EventInfo = ({
   const confirmUnregister = () => {
     onUnregister?.(event.id);
     setOpen(false);
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShowCopyMessage(true);
   };
 
   if (!event) {
@@ -161,7 +176,7 @@ export const EventInfo = ({
   return (
     <Flex
       direction="column"
-      py={{ base: 2, md: "50px" }}
+      py={{ base: 7, md: "50px" }}
       px={{ base: 4, md: 8 }}
       w="full"
       h="full"
@@ -169,7 +184,6 @@ export const EventInfo = ({
       flex="1"
       overflow="hidden"
     >
-      {/* Event name */}
       <HStack
         justify="space-between"
         mb="20px"
@@ -184,13 +198,39 @@ export const EventInfo = ({
         >
           {event.name}
         </Text>
+
         {activeTab === "all" && (
-          <IconButton
-            variant="outline"
-            colorPalette="gray"
-          >
-            <Share />
-          </IconButton>
+          <Box position="relative">
+            <Box
+              position="absolute"
+              bottom="100%"
+              right={0}
+              mb={2}
+              bg="#487C9E"
+              color="white"
+              rounded="md"
+              fontWeight={500}
+              fontSize="xs"
+              px={2}
+              py={0.5}
+              whiteSpace="nowrap"
+              zIndex={10}
+              transition="all 0.2s ease-out"
+              opacity={showCopyMessage ? 1 : 0}
+              transform={showCopyMessage ? "translateY(0)" : "translateY(5px)"}
+              pointerEvents="none"
+            >
+              Link copied!
+            </Box>
+
+            <IconButton
+              variant="outline"
+              colorPalette="gray"
+              onClick={handleShare}
+            >
+              <Share />
+            </IconButton>
+          </Box>
         )}
       </HStack>
 

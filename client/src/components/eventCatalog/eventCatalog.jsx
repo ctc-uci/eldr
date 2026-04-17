@@ -340,7 +340,7 @@ export const EventCatalog = () => {
               gap="2px"
               fontSize="md"
               fontWeight="normal"
-              my={2}
+              mt={2}
             >
               <MdChevronLeft />
               Back
