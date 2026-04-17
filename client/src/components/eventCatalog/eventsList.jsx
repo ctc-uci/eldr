@@ -3,9 +3,6 @@ import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 import { formatClinicLocationList } from "./clinicLocationFormat";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
-  const getAreaLabel = (area) =>
-    area.areasOfPractice ?? area.areas_of_practice ?? "";
-
   return (
     <VStack
       bg="#FAFAFA"

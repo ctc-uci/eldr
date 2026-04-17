@@ -22,8 +22,6 @@ export const EventCatalog = () => {
   const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
-  const getAreaLabel = (area) =>
-    area.areasOfPractice ?? area.areas_of_practice ?? "";
 
   /** Search blob for location-ish fields (street address omitted from public catalog) */
   const getEventLocationSearchText = (event) => {
