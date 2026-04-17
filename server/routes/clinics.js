@@ -52,7 +52,6 @@ clinicsRouter.post("/", async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -80,15 +79,14 @@ clinicsRouter.post("/", async (req, res) => {
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      `INSERT INTO clinics (name, description, start_time, end_time, date, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
@@ -197,7 +195,6 @@ clinicsRouter.put("/:id", async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -225,32 +222,30 @@ clinicsRouter.put("/:id", async (req, res) => {
     }
 
     const clinic = await db.query(
-      `UPDATE clinics SET 
-        name = $1, 
-        description = $2, 
-        start_time = $3, 
-        end_time = $4, 
-        date = $5, 
-        attendees = $6, 
-        min_attendees = $7, 
-        capacity = $8, 
-        max_target_roles = $9, 
-        parking = $10,
-        address = $11,
-        city = $12,
-        state = $13,
-        zip = $14,
-        meeting_link = $15,
-        location_type = $16, 
-        type = $17
-       WHERE id = $18 RETURNING *`,
+      `UPDATE clinics SET
+        name = $1,
+        description = $2,
+        start_time = $3,
+        end_time = $4,
+        date = $5,
+        min_attendees = $6,
+        capacity = $7,
+        max_target_roles = $8,
+        parking = $9,
+        address = $10,
+        city = $11,
+        state = $12,
+        zip = $13,
+        meeting_link = $14,
+        location_type = $15,
+        type = $16
+       WHERE id = $17 RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
