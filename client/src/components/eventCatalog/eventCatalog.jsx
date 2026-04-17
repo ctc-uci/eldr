@@ -23,18 +23,6 @@ export const EventCatalog = () => {
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
 
-  /** Search blob for location-ish fields (street address omitted from public catalog) */
-  const getEventLocationSearchText = (event) => {
-    const parts = [
-      event.locationType,
-      event.city,
-      event.state,
-      event.zip,
-      event.meetingLink,
-    ].filter(Boolean);
-    return parts.join(" ").toLowerCase();
-  };
-
   // Shared function to enrich events with languages, areas, registrations, and formatted dates
   const enrichEvents = async (baseEvents, volId) => {
     const dateFormatter = new Intl.DateTimeFormat("en-US", {
