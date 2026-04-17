@@ -26,13 +26,15 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             borderWidth="1px"
             borderStyle="solid"
             borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
-            outline={isSelected ? "1px solid #3B82F6" : "none"}
             borderRadius="8px"
             bg="white"
             textAlign="left"
             px={{ base: "16px", md: "20px" }}
             py="16px"
             _hover={{ bg: "#F9FAFB" }}
+            _focus={{ outline: "none" }}
+            _focusVisible={{ outline: "none" }}
+            boxShadow={isSelected ? "0 0 0 1px #3B82F6" : "none"}
             onClick={() => onSelect(event)}
             transition="all 0.15s ease"
           >
