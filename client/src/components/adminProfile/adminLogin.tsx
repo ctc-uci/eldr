@@ -77,6 +77,20 @@ export const AdminLogin: React.FC = () => {
   };
 
   const handleAdminLogin = async () => {
+    let valid = true;
+
+    if (!email.trim()) {
+      setEmailError("Please enter a valid email.");
+      valid = false;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Please enter a valid password.");
+      valid = false;
+    }
+
+    if (!valid) return;
+
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
@@ -192,7 +206,6 @@ export const AdminLogin: React.FC = () => {
           px="2%"
           py="1%"
         >
-
         </Flex>
         <Flex flex="1" w="100%" bg="white">
           <VStack align="left" width="50%" px="5%" gap={1}>
@@ -200,18 +213,16 @@ export const AdminLogin: React.FC = () => {
               Community Counsel's Event Portal
             </Text>
             <HStack>
-            <Text pt="3%">Need help? Visit our website </Text>
-            <Link
-              color="#3182CE"
-              bg="white"
-              href="https://eldrcenter.org/"
-              pt="2%"
-            >
-              <LuExternalLink />
+              <Text pt="3%">Need help? Visit our website </Text>
+              <Link
+                color="#3182CE"
+                bg="white"
+                href="https://eldrcenter.org/"
+                pt="2%"
+              >
+                <LuExternalLink />
               </Link>
-              </HStack>
-                       
-            
+            </HStack>
           </VStack>
           <Separator orientation="vertical" />
           <VStack
@@ -225,12 +236,12 @@ export const AdminLogin: React.FC = () => {
           >
             <VStack w="30vw" minW="320px" align="stretch" gap={3}>
               <Field.Root invalid={!!emailError} required>
-                <Field.Label fontWeight="bold">Email 
+                <Field.Label fontWeight="bold">Email
                   <Field.RequiredIndicator />
                 </Field.Label>
-                <InputGroup width="100%" startElement={<MdOutlineEmail />}>
+                <InputGroup width="100%">
                   <Input
-                    placeholder="example@hotmail.com"
+                    placeholder="Enter an email"
                     borderRadius="md"
                     _placeholder={{ color: "#A1A1AA", opacity: 1 }}
                     onChange={(e) => {
@@ -241,7 +252,9 @@ export const AdminLogin: React.FC = () => {
                     }}
                   />
                 </InputGroup>
-                <Field.ErrorText>{emailError}</Field.ErrorText>
+                <Field.ErrorText>
+                  {emailError || "Please enter a valid email."}
+                </Field.ErrorText>
               </Field.Root>
 
               <Field.Root invalid={!!passwordError} required>
@@ -250,7 +263,6 @@ export const AdminLogin: React.FC = () => {
                 </Field.Label>
                 <InputGroup
                   width="100%"
-                  startElement={<HiOutlineKey />}
                   endElement={
                     passFilled ? (
                       <IconButton
@@ -279,7 +291,9 @@ export const AdminLogin: React.FC = () => {
                     }}
                   />
                 </InputGroup>
-                <Field.ErrorText>{passwordError}</Field.ErrorText>
+                <Field.ErrorText>
+                  {passwordError || "Please enter a valid password."}
+                </Field.ErrorText>
               </Field.Root>
 
               <Link
@@ -296,12 +310,17 @@ export const AdminLogin: React.FC = () => {
                 position="relative"
                 variant="outline"
                 borderRadius="md"
-                background={(userFilled && passFilled) ? "white" : "white"}
+                bg="white"
                 w="100%"
                 h="3vw"
                 color="black"
                 _hover={{ bg: "#F4F4F5" }}
-                disabled={!(userFilled && passFilled)}
+                css={{
+                  "&:active": {
+                    background: "black !important",
+                    color: "white !important",
+                  },
+                }}
                 onClick={handleAdminLogin}
               >
                 Login
@@ -329,9 +348,23 @@ export const AdminLogin: React.FC = () => {
                 h="50px"
                 color="black"
                 _hover={{ bg: "#F4F4F5" }}
+                css={{
+                  "&:active": {
+                    background: "black !important",
+                    color: "white !important",
+                  },
+                }}
                 onClick={handleGoogleSso}
               >
-                <Icon as={FaGoogle} position="absolute" left="16px" top="50%" transform="translateY(-50%)" />
+                <Image 
+                  src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" 
+                  alt="Google" 
+                  boxSize="20px"
+                  position="absolute" 
+                  left="16px" 
+                  top="50%" 
+                  transform="translateY(-50%)" 
+                />
                 Google
                 <Icon as={FaArrowRight} position="absolute" right="16px" top="50%" transform="translateY(-50%)" />
               </Button>
@@ -345,9 +378,23 @@ export const AdminLogin: React.FC = () => {
                 h="50px"
                 color="black"
                 _hover={{ bg: "#F4F4F5" }}
+                css={{
+                  "&:active": {
+                    background: "black !important",
+                    color: "white !important",
+                  },
+                }}
                 onClick={handleMicrosoftSso}
               >
-                <Icon as={FaMicrosoft} position="absolute" left="16px" top="50%" transform="translateY(-50%)" />
+                <Image 
+                  src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" 
+                  alt="Microsoft" 
+                  boxSize="20px"
+                  position="absolute" 
+                  left="16px" 
+                  top="50%" 
+                  transform="translateY(-50%)" 
+                />
                 Microsoft
                 <Icon as={FaArrowRight} position="absolute" right="16px" top="50%" transform="translateY(-50%)" />
               </Button>
@@ -361,4 +408,4 @@ export const AdminLogin: React.FC = () => {
       </VStack>
     </Flex>
   );
-};
+}
