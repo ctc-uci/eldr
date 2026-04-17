@@ -1,4 +1,5 @@
 import { Box, Input, Text, VStack } from "@chakra-ui/react";
+import { useEffect } from "react";
 
 import { Control, RichTextEditor } from "@/components/ui/rich-text-editor";
 import Subscript from "@tiptap/extension-subscript";
@@ -30,6 +31,15 @@ export const NewTemplateSection = ({
     shouldRerenderOnTransaction: true,
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const nextContent = templateContent || "<p></p>";
+    if (editor.getHTML() !== nextContent) {
+      editor.commands.setContent(nextContent, false);
+    }
+  }, [editor, templateContent]);
 
   if (!editor) return null;
 
