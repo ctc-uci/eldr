@@ -12,19 +12,25 @@ import {
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
 const SearchBar = ({ searchQuery, setSearchQuery, events = [] }) => {
+  const [inputValue, setInputValue] = useState(searchQuery);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Synchronize local input value if parent searchQuery changes externally (e.g. cleared)
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
   const suggestions = useMemo(() => {
-    if (!searchQuery.trim() || !events.length) return [];
-    const q = searchQuery.toLowerCase();
+    if (!inputValue.trim() || !events.length) return [];
+    const q = inputValue.toLowerCase();
     // Get unique event names that match
     const matches = events
       .filter((e) => e.name && e.name.toLowerCase().includes(q))
       .map((e) => e.name);
     return Array.from(new Set(matches)).slice(0, 5);
-  }, [searchQuery, events]);
+  }, [inputValue, events]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -40,15 +46,25 @@ const SearchBar = ({ searchQuery, setSearchQuery, events = [] }) => {
   }, []);
 
   const handleSelect = (name) => {
+    setInputValue(name);
     setSearchQuery(name);
     setIsOpen(false);
     inputRef.current?.blur();
   };
 
-  const clearButton = searchQuery ? (
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      setSearchQuery(inputValue);
+      setIsOpen(false);
+      inputRef.current?.blur();
+    }
+  };
+
+  const clearButton = inputValue ? (
     <CloseButton
       size="xs"
       onClick={() => {
+        setInputValue("");
         setSearchQuery("");
         setIsOpen(false);
         inputRef.current?.focus();
@@ -78,17 +94,18 @@ const SearchBar = ({ searchQuery, setSearchQuery, events = [] }) => {
           h="44px"
           fontSize="16px"
           _placeholder={{ color: "#9CA3AF" }}
-          value={searchQuery}
+          value={inputValue}
           onChange={(e) => {
-            setSearchQuery(e.currentTarget.value);
+            setInputValue(e.currentTarget.value);
             setIsOpen(true);
           }}
+          onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
           autoComplete="off"
         />
       </InputGroup>
 
-      {isOpen && searchQuery.trim() && (
+      {isOpen && inputValue.trim() && (
         <Box
           position="absolute"
           top="100%"

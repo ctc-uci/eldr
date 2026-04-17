@@ -295,7 +295,7 @@ export const EventCatalog = () => {
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredEvents.length}
-            events={filteredEvents}
+            events={tabEvents}
           />
 
           {/* Event catalog list */}
