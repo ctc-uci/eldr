@@ -1,54 +1,10 @@
-import {
-  Badge,
-  Box,
-  Circle,
-  Flex,
-  HStack,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Badge, Box, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
 import { formatClinicLocationList } from "./clinicLocationFormat";
+import RegStatus from "./regStatus";
 
 export const MyEventsList = ({ myEvents, onSelect, selectedEvent }) => {
   const now = new Date();
-
-  // Helper: combine the calendar day from e.date with the time-of-day from e.endTime.
-  // This is necessary because startTime/endTime in the DB can have incorrect date portions.
-  const getEventEndDateTime = (e) => {
-    const dateObj = e.date ? new Date(e.date) : null;
-
-    if (dateObj && e.endTime) {
-      const endObj = new Date(e.endTime);
-      // Take year/month/day from e.date (UTC) and hours/minutes from e.endTime (UTC)
-      return new Date(
-        Date.UTC(
-          dateObj.getUTCFullYear(),
-          dateObj.getUTCMonth(),
-          dateObj.getUTCDate(),
-          endObj.getUTCHours(),
-          endObj.getUTCMinutes(),
-          endObj.getUTCSeconds()
-        )
-      );
-    }
-
-    if (dateObj) {
-      // No endTime — treat end-of-day as the cutoff
-      return new Date(
-        Date.UTC(
-          dateObj.getUTCFullYear(),
-          dateObj.getUTCMonth(),
-          dateObj.getUTCDate(),
-          23,
-          59,
-          59
-        )
-      );
-    }
-
-    return null;
-  };
 
   // Filter and sort Upcoming: chronological (closest to now first)
   const upcoming = myEvents
@@ -238,19 +194,10 @@ const EventSection = ({ isUpcoming, events, onSelect, selectedEvent }) => {
                   mt="4px"
                   flexWrap="wrap"
                 >
-                  <HStack gap="6px">
-                    <Circle
-                      size="8px"
-                      bg={statusColor}
-                    />
-                    <Text
-                      fontSize="14px"
-                      fontWeight={500}
-                      color="#111827"
-                    >
-                      {statusLabel}
-                    </Text>
-                  </HStack>
+                  <RegStatus
+                    statusColor={statusColor}
+                    statusLabel={statusLabel}
+                  />
                   {[
                     event.type,
                     ...event.tags,

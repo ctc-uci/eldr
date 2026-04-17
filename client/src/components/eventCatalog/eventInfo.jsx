@@ -28,6 +28,7 @@ import {
 import { LuCalendarDays } from "react-icons/lu";
 
 import { getClinicLocationDisplay } from "./clinicLocationFormat";
+import RegStatus from "./regStatus";
 
 export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
   const [open, setOpen] = useState(false);
@@ -134,6 +135,22 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
+
+  const isUpcoming = event.startTime
+    ? new Date(event.startTime) >= new Date()
+    : true;
+  let statusLabel = "Registered";
+  let statusColor = "#22C55E";
+
+  if (!isUpcoming) {
+    if (event.hasAttended) {
+      statusLabel = "Attended";
+      statusColor = "#22C55E";
+    } else {
+      statusLabel = "Missed";
+      statusColor = "#DC2626";
+    }
+  }
 
   return (
     <Flex
@@ -256,6 +273,12 @@ export const EventInfo = ({ event, activeTab, onRegister, onUnregister }) => {
         fontWeight={500}
         gap="10px"
       >
+        {activeTab === "my" && (
+          <RegStatus
+            statusColor={statusColor}
+            statusLabel={statusLabel}
+          />
+        )}
         {[
           event.type,
           ...event.tags,
