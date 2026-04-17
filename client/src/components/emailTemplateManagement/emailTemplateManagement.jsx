@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Save, Trash2 } from "lucide-react";
 
 import {
   Box,
@@ -27,8 +27,6 @@ import {
   NewFolderPopover,
   EmptyFolderState,
   NewTemplateSection,
-  SaveTemplatePopover,
-  FolderNotFoundModal,
   DeleteTemplateModal,
   RenameFolderDialog,
   ContextMenu,
@@ -90,14 +88,11 @@ export const EmailTemplateManagement = () => {
     content: "",
   });
   const [currentTemplateId, setCurrentTemplateId] = useState(null);
-  const [showFolderPrompt, setShowFolderPrompt] = useState(false);
   const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [folders, setFolders] = useState([]);
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
-  const [showFolderNotFoundModal, setShowFolderNotFoundModal] = useState(false);
-  const [pendingFolderName, setPendingFolderName] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [showMoveTemplateModal, setShowMoveTemplateModal] = useState(false);
@@ -319,16 +314,52 @@ export const EmailTemplateManagement = () => {
     normalizeEditorContent,
   ]);
 
-  // handle save button click - save to db (if existing) and show folder popover
+  const openMoveTemplateModalWithDefaultFolder = () => {
+    const firstAvailableFolder = folders.find(
+      (folder) => String(folder.id) !== String(currentFolder?.id ?? "")
+    );
+    setMoveFolderId(firstAvailableFolder ? String(firstAvailableFolder.id) : "");
+    setShowMoveTemplateModal(true);
+  };
+
   const handleSaveButtonClick = async () => {
     try {
-      // only update DB if this is an existing template
-      if (!isNewTemplate && currentTemplateId) {
+      if (isNewTemplate) {
+        const response = await backend.post("/email-templates", {
+          name: templateName.trim(),
+          template_text: templateContent,
+          subject: templateSubject.trim() || null,
+        });
+        const created = response.data;
+        setCurrentTemplateId(created.id);
+        setIsNewTemplate(false);
+        setInitialTemplateSnapshot({
+          name: templateName.trim() || "Untitled Template",
+          subject: templateSubject,
+          content: templateContent,
+        });
+        setAllTemplates((prev) => {
+          const exists = prev.some((t) => t.id === created.id);
+          if (exists) return prev;
+          return [...prev, { ...created, name: created.name, templateText: created.templateText ?? templateContent }];
+        });
+        navigate(
+          `/email/template/${created.id}${folderIdFromQuery ? `?folderId=${folderIdFromQuery}` : ""}`
+        );
+      } else if (currentTemplateId) {
         await updateTemplateInDb();
+        setInitialTemplateSnapshot({
+          name: templateName.trim() || "Untitled Template",
+          subject: templateSubject,
+          content: templateContent,
+        });
+      } else {
+        alert("No template to save.");
+        return;
       }
-      setShowFolderPrompt(true);
+      openMoveTemplateModalWithDefaultFolder();
     } catch (error) {
-      alert('Failed to save template. Please try again.');
+      alert("Failed to save template. Please try again.");
     }
   };
 
@@ -413,69 +444,6 @@ export const EmailTemplateManagement = () => {
       }
     } catch (error) {
       console.error('Error creating template:', error);
-    }
-  };
-
-  const handleSaveTemplate = async (folderToLink = null) => {
-    const targetFolder = folderToLink || currentFolder;
-
-    // validate folder - should be a folder object
-    if (!targetFolder || !targetFolder.id) {
-      alert("Please select a folder.");
-      return;
-    }
-
-    try {
-      let templateId = currentTemplateId;
-
-      if (isNewTemplate) {
-        // create the template in DB now
-        const response = await backend.post('/email-templates', {
-          name: templateName.trim(),
-          template_text: templateContent,
-          subject: templateSubject.trim() || null,
-        });
-        templateId = response.data.id;
-      } else if (templateId) {
-        // update existing template
-        await updateTemplateInDb();
-      } else {
-        alert("No template to save.");
-        return;
-      }
-
-      // link the template to the folder
-      await backend.post(`/email-templates/${templateId}/folders`, {
-        folderId: targetFolder.id,
-      });
-
-      // reset form
-      resetTemplateForm();
-      setShowFolderPrompt(false);
-
-      // go back to folder view
-      navigate(`/email/folder/${targetFolder.id}`);
-    } catch (error) {
-      console.error('Error saving template:', error);
-      alert("Failed to save template. Please try again.");
-    }
-  };
-
-  // handle searching/creating folder when saving template
-  const handleAddFolderOnSave = async (folderName) => {
-    if (!folderName?.trim()) return;
-
-    try {
-      const response = await backend.get(`/folders/search?name=${encodeURIComponent(folderName.trim())}`);
-      const existingFolder = response.data;
-      await handleSaveTemplate(existingFolder);
-    } catch (error) {
-      if (error.response?.status === 404) {
-        setPendingFolderName(folderName.trim());
-        setShowFolderNotFoundModal(true);
-      } else {
-        console.error('Error searching for folder:', error);
-      }
     }
   };
 
@@ -920,41 +888,42 @@ export const EmailTemplateManagement = () => {
                 </HStack>
                 
                 <HStack spacing={4} ml="auto">
-                  <SaveTemplatePopover
-                    isOpen={false}
-                    onOpenChange={() => {}}
-                    triggerIcon={hasUnsavedChanges ? undefined : <Pencil size={16} />}
-                    triggerLabel={hasUnsavedChanges ? "Save" : "Edit"}
-                    buttonProps={
-                      showRenameDialog
-                        ? {
-                            backgroundColor: "#E4E4E7",
-                            color: "black",
-                            _hover: { bg: "#E4E4E7" },
-                          }
+                  <Button
+                    h="40px"
+                    px="16px"
+                    fontSize="14px"
+                    fontWeight="500"
+                    borderRadius="4px"
+                    display="flex"
+                    gap="8px"
+                    alignItems="center"
+                    backgroundColor={
+                      showRenameDialog || showDeleteModal
+                        ? "#E4E4E7"
                         : showMoveTemplateModal
-                        ? {
-                            backgroundColor: "#294A5F",
-                            color: "white",
-                            _hover: { bg: "#294A5F" },
-                          }
-                        : showDeleteModal
-                          ? {
-                              backgroundColor: "#E4E4E7",
-                              color: "black",
-                              _hover: { bg: "#E4E4E7" },
-                            }
-                          : {}
+                          ? "#294A5F"
+                          : "#487C9E"
                     }
-                    onTriggerClick={async () => {
-                      const firstAvailableFolder = folders.find(
-                        (folder) => String(folder.id) !== String(currentFolder?.id ?? "")
-                      );
-                      setMoveFolderId(firstAvailableFolder ? String(firstAvailableFolder.id) : "");
-                      setShowMoveTemplateModal(true);
+                    color={showRenameDialog || showDeleteModal ? "black" : "white"}
+                    _hover={{
+                      bg:
+                        showRenameDialog || showDeleteModal
+                          ? "#E4E4E7"
+                          : showMoveTemplateModal
+                            ? "#294A5F"
+                            : "#294A5F",
                     }}
-                    onAddFolder={() => {}}
-                  />
+                    onClick={async () => {
+                      if (hasUnsavedChanges) {
+                        await handleSaveButtonClick();
+                        return;
+                      }
+                      openMoveTemplateModalWithDefaultFolder();
+                    }}
+                  >
+                    {hasUnsavedChanges ? <Save size={16} /> : <Pencil size={16} />}
+                    {hasUnsavedChanges ? "Save" : "Edit"}
+                  </Button>
 
                   <Button
                     variant="outline"
@@ -1189,29 +1158,6 @@ export const EmailTemplateManagement = () => {
           </Dialog.Positioner>
         </Portal>
       </Dialog.Root>
-
-      {/* Folder Not Found Modal */}
-      <FolderNotFoundModal
-        isOpen={showFolderNotFoundModal}
-        onClose={() => {
-          setShowFolderNotFoundModal(false);
-          setPendingFolderName("");
-        }}
-        folderName={pendingFolderName}
-        onCreateFolder={async () => {
-          try {
-            const response = await backend.post('/folders', { name: pendingFolderName });
-            const newFolder = response.data;
-            setFolders((prev) => [...prev, newFolder]);
-            setShowFolderNotFoundModal(false);
-            setPendingFolderName("");
-            // link the template to the newly created folder
-            await handleSaveTemplate(newFolder);
-          } catch (error) {
-            console.error('Error creating folder:', error);
-          }
-        }}
-      />
 
       {/* Delete Template Modal */}
       <DeleteTemplateModal
