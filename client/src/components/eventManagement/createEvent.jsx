@@ -237,7 +237,7 @@ export const CreateEvent = () => {
       minH="100vh"
       bg="#F7F8FA"
       align="start"
-      px={10}
+      px={{ base: 4, md: 10 }}
       pt={10}
       pb={10}
       gap={8}
@@ -310,7 +310,7 @@ export const CreateEvent = () => {
           bg="white"
           border="1px solid #E2E8F0"
           borderRadius="lg"
-          p={8}
+          p={{ base: 4, md: 8 }}
         >
           <VStack
             align="start"
@@ -318,15 +318,16 @@ export const CreateEvent = () => {
             w="100%"
           >
             {/* Row 1: Clinic Type + Event Name */}
-            <HStack
+            <Flex
               w="100%"
-              gap={8}
-              align="end"
+              gap={{ base: 4, lg: 8 }}
+              direction={{ base: "column", lg: "row" }}
+              align={{ base: "stretch", lg: "end" }}
             >
               <VStack
                 align="start"
                 gap={1}
-                w="260px"
+                w={{ base: "100%", lg: "260px" }}
                 flexShrink={0}
               >
                 <Label>Clinic Type</Label>
@@ -352,6 +353,7 @@ export const CreateEvent = () => {
                 align="start"
                 gap={1}
                 flex={1}
+                w="100%"
               >
                 <Label>Event Name</Label>
                 <Input
@@ -362,21 +364,23 @@ export const CreateEvent = () => {
                   w="100%"
                 />
               </VStack>
-            </HStack>
+            </Flex>
 
             {/* Row 2: Event Format + Location */}
-            <HStack
+            <Flex
               w="100%"
-              gap={8}
-              align="end"
+              gap={{ base: 4, lg: 8 }}
+              direction={{ base: "column", lg: "row" }}
+              align={{ base: "stretch", lg: "end" }}
             >
               <VStack
                 align="start"
                 gap={1}
                 flexShrink={0}
+                w={{ base: "100%", lg: "auto" }}
               >
                 <Label>Event Format</Label>
-                <NativeSelect.Root w="140px">
+                <NativeSelect.Root w={{ base: "100%", lg: "140px" }}>
                   <NativeSelect.Field
                     value={locationType}
                     onChange={(e) => setLocationType(e.target.value)}
@@ -393,11 +397,14 @@ export const CreateEvent = () => {
                 align="start"
                 gap={1}
                 flex={1}
+                w="100%"
               >
                 <Label>Location</Label>
                 <HStack
                   w="100%"
                   gap={2}
+                  flexWrap="wrap"
+                  align="start"
                 >
                   {(locationType === "in-person" ||
                     locationType === "hybrid") && (
@@ -407,21 +414,22 @@ export const CreateEvent = () => {
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         {...fieldStyle}
-                        flex={2}
+                        flex={{ base: "1 1 100%", lg: 2 }}
+                        minW={0}
                       />
                       <Input
                         placeholder="City"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         {...fieldStyle}
-                        w="110px"
+                        w={{ base: "calc(50% - 4px)", md: "140px", lg: "110px" }}
                       />
                       <Input
                         placeholder="State"
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         {...fieldStyle}
-                        w="95px"
+                        w={{ base: "calc(25% - 6px)", md: "95px" }}
                         maxLength={2}
                       />
                       <Input
@@ -429,7 +437,7 @@ export const CreateEvent = () => {
                         value={zip}
                         onChange={(e) => setZip(e.target.value)}
                         {...fieldStyle}
-                        w="95px"
+                        w={{ base: "calc(25% - 6px)", md: "95px" }}
                       />
                     </>
                   )}
@@ -439,23 +447,26 @@ export const CreateEvent = () => {
                       value={zoomLink}
                       onChange={(e) => setZoomLink(e.target.value)}
                       {...fieldStyle}
-                      flex={1}
+                      flex="1 1 220px"
                       minW="120px"
                     />
                   )}
                 </HStack>
               </VStack>
-            </HStack>
+            </Flex>
 
             {/* Row 3: Date + Event Time + Target Number + Maximum */}
-            <HStack
+            <Flex
               w="100%"
-              gap={8}
-              align="end"
+              gap={{ base: 4, lg: 8 }}
+              direction={{ base: "column", lg: "row" }}
+              align={{ base: "stretch", lg: "end" }}
+              flexWrap="wrap"
             >
               <VStack
                 align="start"
                 gap={1}
+                w={{ base: "100%", lg: "auto" }}
               >
                 <Label>Date</Label>
                 <Input
@@ -463,16 +474,20 @@ export const CreateEvent = () => {
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   {...fieldStyle}
-                  w="180px"
+                  w={{ base: "100%", lg: "180px" }}
                 />
               </VStack>
 
               <VStack
                 align="start"
                 gap={1}
+                w={{ base: "100%", lg: "auto" }}
               >
                 <Label>Event Time</Label>
-                <HStack gap={2}>
+                <HStack
+                  gap={2}
+                  flexWrap="wrap"
+                >
                   <Input
                     placeholder="9:00"
                     value={startTime}
@@ -524,6 +539,7 @@ export const CreateEvent = () => {
               <VStack
                 align="start"
                 gap={1}
+                w={{ base: "100%", md: "auto" }}
               >
                 <Label>Target Number</Label>
                 <Input
@@ -532,13 +548,14 @@ export const CreateEvent = () => {
                   value={targetNumber}
                   onChange={(e) => setTargetNumber(e.target.value)}
                   {...fieldStyle}
-                  w="150px"
+                  w={{ base: "100%", md: "150px" }}
                 />
               </VStack>
 
               <VStack
                 align="start"
                 gap={1}
+                w={{ base: "100%", md: "auto" }}
               >
                 <Label>Maximum</Label>
                 <Input
@@ -547,21 +564,22 @@ export const CreateEvent = () => {
                   value={maximum}
                   onChange={(e) => setMaximum(e.target.value)}
                   {...fieldStyle}
-                  w="150px"
+                  w={{ base: "100%", md: "150px" }}
                 />
               </VStack>
-            </HStack>
+            </Flex>
 
             {/* Row 4: Languages */}
             <VStack
               align="start"
               gap={1}
+              w="100%"
             >
               <Label>Languages</Label>
               <Combobox.Root
                 multiple
                 closeOnSelect
-                width="320px"
+                width={{ base: "100%", md: "320px" }}
                 value={languages}
                 collection={languageCollection}
                 onValueChange={(details) => setLanguages(details.value)}
