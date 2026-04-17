@@ -52,8 +52,6 @@ export const TopBar = ({
         w="100%"
         justify="center"
         align="center"
-        py="16px"
-        px="16px"
         bg="white"
       >
         <Tabs.Root
@@ -65,7 +63,6 @@ export const TopBar = ({
         >
           <Tabs.List
             bg="#F3F4F6"
-            borderRadius="8px"
             p="4px"
             gap="4px"
             h="auto"
@@ -89,7 +86,7 @@ export const TopBar = ({
                 borderBottom: "none",
               }}
             >
-              <LuCalendarDays />
+              <LuCalendarDays size={16} />
               All Events
             </Tabs.Trigger>
 
@@ -112,7 +109,7 @@ export const TopBar = ({
                 borderBottom: "none",
               }}
             >
-              <LuUserCheck />
+              <LuUserCheck size={16} />
               My Events
             </Tabs.Trigger>
           </Tabs.List>
@@ -124,7 +121,7 @@ export const TopBar = ({
         <Flex
           w="100%"
           px="16px"
-          py="12px"
+          py="16px"
           gap="12px"
           align="center"
           bg="white"
@@ -147,7 +144,7 @@ export const TopBar = ({
               }}
               onClick={() => setFilterOpen(true)}
             >
-              <ListFilter />
+              <ListFilter size={20} />
             </IconButton>
           ) : (
             <Button
@@ -167,7 +164,7 @@ export const TopBar = ({
               }}
               onClick={() => setFilterOpen(true)}
             >
-              <ListFilter />
+              <ListFilter size={20} />
               Filter
             </Button>
           )}

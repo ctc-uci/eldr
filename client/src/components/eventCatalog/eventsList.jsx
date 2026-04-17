@@ -7,7 +7,7 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
     <VStack
       bg="#FAFAFA"
       px="16px"
-      py="8px"
+      pb="8px"
       minH="100%"
       gap="12px"
       align="stretch"

@@ -77,7 +77,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, events = [], isMobile }) => {
   ) : (
     <FaMagnifyingGlass
       color="#9CA3AF"
-      size="20px"
+      size={20}
     />
   );
 
