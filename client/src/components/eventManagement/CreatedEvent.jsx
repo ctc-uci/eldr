@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Flex, HStack, IconButton, Separator, Tag, Text, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  IconButton,
+  Separator,
+  Tag,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 import {
   LuArrowUpFromLine,
@@ -9,10 +19,12 @@ import {
   LuMail,
   LuMapPin,
   LuPencil,
-  LuUsers,
 } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
+import { EventEmailNotificationTimeline } from "./EventEmailNotificationTimeline";
+import { EventVolunteerList } from "./EventVolunteerList";
 
 export const CreatedEvent = () => {
   const { eventId } = useParams();
@@ -43,6 +55,7 @@ export const CreatedEvent = () => {
     startTime,
     endTime,
     capacity = 50,
+    minAttendees = 0,
     attendees = 0,
     type,
     locationType,
@@ -202,7 +215,7 @@ export const CreatedEvent = () => {
             <Text>
               <Text as="span" fontWeight="semibold">{attendees}</Text>
               {" Registered  /  "}
-              <Text as="span" fontWeight="semibold">50</Text>
+              <Text as="span" fontWeight="semibold">{minAttendees}</Text>
               {" Minimum  /  "}
               <Text as="span" fontWeight="semibold">{capacity}</Text>
               {" Maximum"}
@@ -284,7 +297,7 @@ export const CreatedEvent = () => {
             gap={3}
             px={4}
             _hover={{ bg: "#2C5282" }}
-            onClick={() => navigate(`/events/${eventId}/edit/header`)}
+            onClick={() => navigate(`/events/${eventId}/edit/details`)}
           >
             <LuPencil />
             Edit Event
@@ -375,21 +388,11 @@ export const CreatedEvent = () => {
           </VStack>
         )}
 
-        {activeTab !== "details" && (
-          <Flex
-            w="100%"
-            minH="180px"
-            align="center"
-            justify="center"
-          >
-            <Text
-              color="gray.400"
-              fontSize="sm"
-            >
-              {tabs.find((t) => t.key === activeTab)?.label}
-            </Text>
-          </Flex>
+        {activeTab === "volunteers" && (
+          <EventVolunteerList eventId={eventId} />
         )}
+
+        {activeTab === "email" && <EventEmailNotificationTimeline />}
       </Box>
     </VStack>
   );
