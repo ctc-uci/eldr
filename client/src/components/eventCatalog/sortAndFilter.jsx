@@ -83,7 +83,6 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
 export const SortAndFilter = ({
   open,
   onOpenChange,
-  sortBy,
   setSortBy,
   selectedFilters,
   setSelectedFilters,
@@ -104,7 +103,7 @@ export const SortAndFilter = ({
 
       const categories = [
         {
-          label: "Categories",
+          label: "Category",
           key: "areasOfPracticeIds",
           options: typesRes.data.map((t) => ({
             id: "areasOfPracticeId" + t.id,
@@ -124,9 +123,9 @@ export const SortAndFilter = ({
           key: "locations",
           // ids must match clinics.location_type enum (API normalizes legacy labels)
           options: [
-            { id: "online", text: "Online (virtual)" },
-            { id: "in-person", text: "In-person" },
             { id: "hybrid", text: "Hybrid" },
+            { id: "in-person", text: "In-person" },
+            { id: "virtual", text: "Virtual" },
           ],
         },
         {
@@ -191,7 +190,7 @@ export const SortAndFilter = ({
                   fontWeight={700}
                   color="#111827"
                 >
-                  Sort and Filter
+                  Filter
                 </Text>
                 <CloseButton
                   size="sm"
@@ -211,56 +210,6 @@ export const SortAndFilter = ({
               py="16px"
               overflowY="auto"
             >
-              {/* Sort By */}
-              <Box mb="20px">
-                <Text
-                  fontSize="16px"
-                  fontWeight={600}
-                  color="#111827"
-                  mb="12px"
-                >
-                  Sort By
-                </Text>
-                <HStack gap="8px">
-                  <Button
-                    size="sm"
-                    variant={sortBy === "upcoming" ? "solid" : "outline"}
-                    bg={sortBy === "upcoming" ? "#111827" : "white"}
-                    color={sortBy === "upcoming" ? "white" : "#374151"}
-                    borderColor="#D1D5DB"
-                    borderRadius="6px"
-                    fontWeight={500}
-                    fontSize="14px"
-                    px="16px"
-                    h="36px"
-                    _hover={{
-                      bg: sortBy === "upcoming" ? "#1F2937" : "#F9FAFB",
-                    }}
-                    onClick={() => setSortBy("upcoming")}
-                  >
-                    Upcoming
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={sortBy === "urgency" ? "solid" : "outline"}
-                    bg={sortBy === "urgency" ? "#111827" : "white"}
-                    color={sortBy === "urgency" ? "white" : "#374151"}
-                    borderColor="#D1D5DB"
-                    borderRadius="6px"
-                    fontWeight={500}
-                    fontSize="14px"
-                    px="16px"
-                    h="36px"
-                    _hover={{
-                      bg: sortBy === "urgency" ? "#1F2937" : "#F9FAFB",
-                    }}
-                    onClick={() => setSortBy("urgency")}
-                  >
-                    Urgency
-                  </Button>
-                </HStack>
-              </Box>
-
               {/* Selected Filters */}
               <Box mb="20px">
                 <Text

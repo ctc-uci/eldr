@@ -16,7 +16,6 @@ export const EventCatalog = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("upcoming");
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [events, setEvents] = useState([]);
   const [volunteerId, setVolunteerId] = useState(null);
@@ -122,19 +121,8 @@ export const EventCatalog = () => {
       result = result.filter((e) => e.name.toLowerCase().includes(q));
     }
 
-    // Apply sort
-    if (sortBy === "upcoming") {
-      result.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA - dateB;
-      });
-    } else if (sortBy === "urgency") {
-      result.sort((a, b) => (b.urgency || 0) - (a.urgency || 0));
-    }
-
     return result;
-  }, [searchQuery, sortBy, tabEvents]);
+  }, [searchQuery, tabEvents]);
 
   // Adjust selection when tab changes, events update, or filters/search change
   useEffect(() => {
@@ -278,8 +266,6 @@ export const EventCatalog = () => {
             onTabChange={setActiveTab}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredEvents.length}
