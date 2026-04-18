@@ -20,8 +20,7 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuMail } from "react-icons/lu";
-import { LuImageUp } from "react-icons/lu";
+import { LuMail, LuImageUp, LuTriangleAlert } from "react-icons/lu";
 import { MdOutlineMailOutline } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -386,13 +385,34 @@ export const CreateEvent = () => {
       </HStack>
 
       {/* Title */}
-      <Text
-        fontSize="4xl"
-        fontWeight="semibold"
-        color="gray.800"
+      <HStack
+        align="center"
+        gap={3}
       >
-        {isEditing ? "Edit Event" : "Create New Event"}
-      </Text>
+        <Text
+          fontSize="4xl"
+          fontWeight="bold"
+          color="#1A202C"
+        >
+          {isEditing ? "Edit Event" : "Create New Event"}
+        </Text>
+        {isEditing && (
+          <Badge
+            variant="surface"
+            colorPalette="yellow"
+            fontSize="sm"
+            fontWeight="semibold"
+            px={3}
+            py={2}
+            borderRadius="md"
+            display="flex"
+            alignItems="center"
+            gap={1.5}
+          >
+            <LuTriangleAlert /> Edit Mode
+          </Badge>
+        )}
+      </HStack>
 
       {/* Tabs */}
       <HStack
