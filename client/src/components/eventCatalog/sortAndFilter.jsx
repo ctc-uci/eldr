@@ -10,18 +10,27 @@ import {
   Flex,
   HStack,
   Portal,
-  Separator,
   Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { ListFilter } from "lucide-react";
 import { LuChevronUp } from "react-icons/lu";
 
-const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
+const FilterCategory = ({
+  label,
+  options,
+  selectedFilters,
+  onToggle,
+  isFirst,
+}) => {
   return (
-    <Collapsible.Root defaultOpen>
+    <Collapsible.Root
+      defaultOpen
+      m={2}
+    >
       <Collapsible.Trigger
         w="100%"
         display="flex"
@@ -29,7 +38,7 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         justifyContent="space-between"
         py="12px"
         cursor="pointer"
-        borderTopWidth="1px"
+        borderTopWidth={isFirst ? "0" : "1px"}
         borderColor="#E5E7EB"
       >
         <Text
@@ -51,8 +60,8 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         <VStack
           align="stretch"
           gap="10px"
-          pl="8px"
-          pb="12px"
+          px="8px"
+          py="8px"
         >
           {options.map((option) => (
             <Checkbox.Root
@@ -179,6 +188,7 @@ export const SortAndFilter = ({
               px="24px"
               pt="24px"
               pb="16px"
+              borderBottom="1px solid #E4E4E7"
             >
               <Flex
                 justify="space-between"
@@ -198,11 +208,6 @@ export const SortAndFilter = ({
                 />
               </Flex>
             </Drawer.Header>
-
-            <Separator
-              borderColor="#111827"
-              mx="24px"
-            />
 
             {/* Body */}
             <Drawer.Body
@@ -225,8 +230,8 @@ export const SortAndFilter = ({
                   borderColor="#D1D5DB"
                   borderRadius="6px"
                   minH="40px"
-                  px="12px"
-                  py="8px"
+                  px="7px"
+                  py="5px"
                 >
                   <HStack
                     gap="6px"
@@ -235,6 +240,7 @@ export const SortAndFilter = ({
                     {selectedFilters.map((filter) => (
                       <Button
                         key={filter.id}
+                        bg="#F4F4F5"
                         size="xs"
                         variant="outline"
                         borderColor="#D1D5DB"
@@ -275,13 +281,14 @@ export const SortAndFilter = ({
                     gap="0"
                     pl="8px"
                   >
-                    {filterCategories.map((category) => (
+                    {filterCategories.map((category, index) => (
                       <FilterCategory
                         key={category.label}
                         label={category.label}
                         options={category.options}
                         selectedFilters={selectedFilters}
                         onToggle={toggleFilter}
+                        isFirst={index === 0}
                       />
                     ))}
                   </Stack>
@@ -305,28 +312,29 @@ export const SortAndFilter = ({
                   variant="outline"
                   borderColor="#D1D5DB"
                   color="#374151"
-                  borderRadius="8px"
                   fontSize="14px"
                   fontWeight={500}
-                  h="40px"
-                  px="24px"
+                  size="xl"
+                  px="20px"
+                  py="2px"
                   _hover={{ bg: "#F9FAFB" }}
                   onClick={clearAll}
                 >
                   Clear
                 </Button>
                 <Button
-                  bg="#111827"
+                  bg="#487C9E"
                   color="white"
-                  borderRadius="8px"
                   fontSize="14px"
                   fontWeight={500}
-                  h="40px"
-                  px="24px"
-                  _hover={{ bg: "#1F2937" }}
+                  size="xl"
+                  px="20px"
+                  py="2px"
+                  _hover={{ bg: "#5c86a3" }}
                   onClick={() => onOpenChange(false)}
                   disabled={filteredCount === 0}
                 >
+                  <ListFilter size={20} />
                   {filteredCount > 0
                     ? `See ${filteredCount} Results`
                     : "No Results"}
