@@ -463,7 +463,7 @@ export const CreateEvent = () => {
             <VStack
               align="start"
               gap={1}
-              w={{ base: "100%", lg: "260px" }}
+              w={{ base: "100%", lg: "30%" }}
               flexShrink={0}
             >
               <Label>Clinic Type</Label>
@@ -513,10 +513,10 @@ export const CreateEvent = () => {
               align="start"
               gap={1}
               flexShrink={0}
-              w={{ base: "100%", lg: "auto" }}
+              w={{ base: "100%", lg: "15%" }}
             >
               <Label>Event Format</Label>
-              <NativeSelect.Root w={{ base: "100%", lg: "140px" }}>
+              <NativeSelect.Root w={{ base: "100%", lg: "full" }}>
                 <NativeSelect.Field
                   value={locationType}
                   onChange={(e) => setLocationType(e.target.value)}
@@ -558,7 +558,7 @@ export const CreateEvent = () => {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       {...fieldStyle}
-                      w={{ base: "calc(50% - 4px)", md: "140px", lg: "110px" }}
+                      w={{ base: "calc(50% - 4px)", md: "20%"}}
                     />
                     <Input
                       placeholder="State"
@@ -573,7 +573,7 @@ export const CreateEvent = () => {
                       value={zip}
                       onChange={(e) => setZip(e.target.value)}
                       {...fieldStyle}
-                      w={{ base: "calc(25% - 6px)", md: "95px" }}
+                      w={{ base: "calc(25% - 6px)", md: "15%" }}
                     />
                   </>
                 )}
@@ -602,7 +602,8 @@ export const CreateEvent = () => {
             <VStack
               align="start"
               gap={1}
-              w={{ base: "100%", lg: "auto" }}
+              w={{ base: "100%", lg: "25%" }}
+              flexShrink={0}
             >
               <Label>Date</Label>
               <Input
@@ -610,14 +611,15 @@ export const CreateEvent = () => {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 {...fieldStyle}
-                w={{ base: "100%", lg: "180px" }}
+                w="100%"
               />
             </VStack>
 
             <VStack
               align="start"
               gap={1}
-              w={{ base: "100%", lg: "auto" }}
+              flex={1}
+              w="100%"
             >
               <Label>Event Time</Label>
               <HStack
@@ -675,7 +677,8 @@ export const CreateEvent = () => {
             <VStack
               align="start"
               gap={1}
-              w={{ base: "100%", md: "auto" }}
+              w={{ base: "100%", lg: "15%" }}
+              flexShrink={0}
             >
               <Label>Target Number</Label>
               <Input
@@ -684,14 +687,15 @@ export const CreateEvent = () => {
                 value={targetNumber}
                 onChange={(e) => setTargetNumber(e.target.value)}
                 {...fieldStyle}
-                w={{ base: "100%", md: "150px" }}
+                w="100%"
               />
             </VStack>
 
             <VStack
               align="start"
               gap={1}
-              w={{ base: "100%", md: "auto" }}
+              w={{ base: "100%", lg: "15%" }}
+              flexShrink={0}
             >
               <Label>Maximum</Label>
               <Input
@@ -700,7 +704,7 @@ export const CreateEvent = () => {
                 value={maximum}
                 onChange={(e) => setMaximum(e.target.value)}
                 {...fieldStyle}
-                w={{ base: "100%", md: "150px" }}
+                w="100%"
               />
             </VStack>
           </Flex>
@@ -715,7 +719,7 @@ export const CreateEvent = () => {
             <Combobox.Root
               multiple
               closeOnSelect
-              width={{ base: "100%", md: "320px" }}
+              width={{ base: "100%", md: "40%" }}
               value={languages}
               collection={languageCollection}
               onValueChange={(details) => setLanguages(details.value)}
