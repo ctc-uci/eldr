@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
+ 
 import {
   Box,
   Button,
@@ -10,27 +10,29 @@ import {
   Progress,
   Text,
 } from "@chakra-ui/react";
-
+ 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-
+ 
 import {
   LuArrowRight,
   LuChevronDown,
   LuX,
+  LuSearch,
 } from "react-icons/lu";
-
+ 
 import LoginLayout from "./BackgroundLayout";
-
+ 
 type Props = {
   onNext: () => void;
   volunteerId?: number;
+  onLanguagesSelected?: (languages: string[]) => void;
 };
-
+ 
 type LanguageRow = {
   id: number;
   language: string;
 };
-
+ 
 const LanguageMultiSelect = ({
   label,
   items,
@@ -39,7 +41,7 @@ const LanguageMultiSelect = ({
   disabled,
   placeholder,
 }: {
-  label: string;
+  label: React.ReactNode;
   items: string[];
   selected: string[];
   onChange: (val: string[]) => void;
@@ -51,11 +53,11 @@ const LanguageMultiSelect = ({
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
+ 
   const filtered = items.filter((l) =>
     l.toLowerCase().includes(search.toLowerCase())
   );
-
+ 
   const toggle = (lang: string) => {
     onChange(
       selected.includes(lang)
@@ -63,12 +65,12 @@ const LanguageMultiSelect = ({
         : [...selected, lang]
     );
   };
-
+ 
   const remove = (lang: string, e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(selected.filter((s) => s !== lang));
   };
-
+ 
   const updateDropdownPosition = () => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -80,13 +82,13 @@ const LanguageMultiSelect = ({
       zIndex: 9999,
     });
   };
-
+ 
   const handleOpen = () => {
     if (disabled) return;
     if (!open) updateDropdownPosition();
     setOpen((o) => !o);
   };
-
+ 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -101,7 +103,7 @@ const LanguageMultiSelect = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
+ 
   useEffect(() => {
     if (!open) return;
     const handleReposition = () => updateDropdownPosition();
@@ -112,7 +114,7 @@ const LanguageMultiSelect = ({
       window.removeEventListener("resize", handleReposition);
     };
   }, [open]);
-
+ 
   return (
     <Box position="relative">
       <Text
@@ -123,7 +125,7 @@ const LanguageMultiSelect = ({
       >
         {label}
       </Text>
-
+ 
       <Flex
         ref={triggerRef}
         align="center"
@@ -197,7 +199,7 @@ const LanguageMultiSelect = ({
           }}
         />
       </Flex>
-
+ 
       {open && (
         <Box
           ref={dropdownRef}
@@ -231,7 +233,7 @@ const LanguageMultiSelect = ({
               onClick={(e) => e.stopPropagation()}
             />
           </Box>
-
+ 
           {filtered.length === 0 ? (
             <Text
               px="12px"
@@ -239,7 +241,7 @@ const LanguageMultiSelect = ({
               fontSize="13px"
               color="gray.400"
             >
-              No results
+              No results (select languages above first)
             </Text>
           ) : (
             filtered.map((lang) => (
@@ -282,10 +284,10 @@ const LanguageMultiSelect = ({
     </Box>
   );
 };
-
-const LanguageStep = ({ onNext, volunteerId }: Props) => {
+ 
+const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
   const { backend } = useBackendContext();
-
+ 
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
   const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
     []
@@ -293,14 +295,14 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
   const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
     []
   );
-
+ 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
+ 
   const effectiveVolunteerId =
     volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
-
+ 
   useEffect(() => {
     const fetchLanguages = async () => {
       setErrorMsg(null);
@@ -308,16 +310,14 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
       try {
         const resp = await backend.get("/languages");
         const rows = (resp?.data ?? []) as any[];
-
-        // Expecting keysToCamel output from backend:
-        // [{ id, language }, ...]
+ 
         const parsed: LanguageRow[] = rows
           .map((r) => ({
             id: Number(r.id),
             language: String(r.language ?? "").trim(),
           }))
           .filter((r) => r.id && r.language);
-
+ 
         setAllLanguages(parsed);
       } catch (e: any) {
         const msg =
@@ -332,46 +332,44 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
         setIsLoading(false);
       }
     };
-
+ 
     fetchLanguages();
   }, [backend]);
-
-  // Name -> id map (for backend payload)
+ 
   const nameToId = useMemo(() => {
     const m = new Map<string, number>();
     for (const row of allLanguages) m.set(row.language, row.id);
     return m;
   }, [allLanguages]);
-
+ 
   const allLanguageNames = useMemo(() => {
     return [...new Set(allLanguages.map((l) => l.language))].sort((a, b) =>
       a.localeCompare(b)
     );
   }, [allLanguages]);
-
-  // keep literate subset valid when selected changes
+ 
   useEffect(() => {
     setLiterateLanguageNames((prev) =>
       prev.filter((x) => selectedLanguageNames.includes(x))
     );
   }, [selectedLanguageNames]);
-
+ 
   const handleContinue = async () => {
     setErrorMsg(null);
-
+ 
     if (!effectiveVolunteerId) {
       setErrorMsg(
         "Missing volunteer id. Please go back and create your account again."
       );
       return;
     }
-
-    // If nothing selected, just continue
+ 
     if (selectedLanguageNames.length === 0) {
+      onLanguagesSelected?.([]);
       onNext();
       return;
     }
-
+ 
     const payload = {
       languages: selectedLanguageNames
         .map((name) => {
@@ -384,18 +382,20 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
         })
         .filter(Boolean),
     };
-
+ 
     if (!payload.languages.length) {
+      onLanguagesSelected?.([]);
       onNext();
       return;
     }
-
+ 
     setIsSubmitting(true);
     try {
       await backend.post(
         `/volunteers/${effectiveVolunteerId}/languages`,
         payload
       );
+      onLanguagesSelected?.(selectedLanguageNames);
       onNext();
     } catch (e: any) {
       const msg =
@@ -408,7 +408,7 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
     <LoginLayout>
       <Flex
@@ -433,7 +433,7 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
           py="1%"
         >
         </Flex>
-
+ 
         <Flex
           flex="1"
           direction={{ base: "column", md: "row" }}
@@ -469,7 +469,7 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
               </Text>
             </Box>
           </Flex>
-
+ 
           {/* Right */}
           <Flex
             direction="column"
@@ -480,14 +480,14 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             gap={{ base: "16px", md: "18px" }}
           >
             <Progress.Root
-              value={15}
+              value={3}
               size="xs"
             >
               <Progress.Track>
                 <Progress.Range bg="#3182CE" />
               </Progress.Track>
             </Progress.Root>
-
+ 
             {errorMsg && (
               <Box
                 border="1px solid"
@@ -504,29 +504,55 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
                 </Text>
               </Box>
             )}
-
+ 
             <LanguageMultiSelect
-              label="Select any non-english languages you speak"
+              label={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>Select any non-english languages you speak</span>
+                  <span
+                    style={{
+                      backgroundColor: "#F4F4F5",
+                      color: "black",
+                      fontSize: 12,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    optional
+                  </span>
+                </span>
+              }
               items={allLanguageNames}
               selected={selectedLanguageNames}
               onChange={setSelectedLanguageNames}
               disabled={isLoading}
-              placeholder={isLoading ? "Loading..." : "Search tags"}
+              placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
-
+ 
             <LanguageMultiSelect
-              label="Indicate in which you are literate"
+              label={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>Indicate in which you are literate</span>
+                  <span
+                    style={{
+                      backgroundColor: "#F4F4F5",
+                      color: "black",
+                      fontSize: 12,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    optional
+                  </span>
+                </span>
+              }
               items={selectedLanguageNames}
               selected={literateLanguageNames}
               onChange={setLiterateLanguageNames}
-              disabled={selectedLanguageNames.length === 0}
-              placeholder={
-                selectedLanguageNames.length === 0
-                  ? "Select languages above first"
-                  : "Search tags"
-              }
+              disabled={isLoading}
+              placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
-
+ 
             <Button
               bg="white"
               borderColor="#E4E4E7"
@@ -552,14 +578,14 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
               <Box w="100%" textAlign="center">
                 Continue
               </Box>
-
+ 
               <Box position="absolute" right="12px">
                 <LuArrowRight size={16} />
               </Box>
             </Button>
           </Flex>
         </Flex>
-
+ 
         <Box
           w="100%"
           h="70px"
@@ -570,5 +596,5 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
     </LoginLayout>
   );
 };
-
+ 
 export default LanguageStep;
