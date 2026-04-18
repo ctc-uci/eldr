@@ -4,8 +4,10 @@ import {
   Badge,
   Box,
   Button,
+  CloseButton,
   Combobox,
   createListCollection,
+  Dialog,
   Flex,
   HStack,
   Input,
@@ -34,6 +36,37 @@ const parseTimeField = (ts) => {
   return { time: `${h}:${String(m).padStart(2, "0")}`, period };
 };
 
+const buildEditBaseline = (c, langNames) => {
+  const start = parseTimeField(c.startTime);
+  const end = parseTimeField(c.endTime);
+  const dateStr = c.date ? c.date.split("T")[0].split(" ")[0] : "";
+  return {
+    type: c.type ?? "",
+    eventName: c.name ?? "",
+    locationType: c.locationType ?? "in-person",
+    address: c.address ?? "",
+    city: c.city ?? "",
+    state: c.state ?? "",
+    zip: c.zip ?? "",
+    zoomLink: c.meetingLink ?? "",
+    date: dateStr,
+    startTime: start.time,
+    startPeriod: start.period,
+    endTime: end.time,
+    endPeriod: end.period,
+    targetNumber:
+      c.minAttendees !== null && c.minAttendees !== undefined
+        ? String(c.minAttendees)
+        : "",
+    maximum:
+      c.capacity !== null && c.capacity !== undefined
+        ? String(c.capacity)
+        : "",
+    description: c.description ?? "",
+    languagesKey: [...langNames].sort().join("|"),
+  };
+};
+
 export const CreateEvent = () => {
   const { backend } = useBackendContext();
   const { tab, eventId } = useParams();
@@ -59,13 +92,18 @@ export const CreateEvent = () => {
   const [languages, setLanguages] = useState([]);
   const [languageSearch, setLanguageSearch] = useState("");
   const [allLanguages, setAllLanguages] = useState([]);
+  const [initialForm, setInitialForm] = useState(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   useEffect(() => {
     backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
   }, [backend]);
 
   useEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing) {
+      setInitialForm(null);
+      return;
+    }
     const fetchExisting = async () => {
       try {
         const [clinicRes, langRes] = await Promise.all([
@@ -73,6 +111,7 @@ export const CreateEvent = () => {
           backend.get(`/clinics/${eventId}/languages`),
         ]);
         const c = clinicRes.data;
+        const langNames = langRes.data.map((l) => l.language);
         setType(c.type ?? "");
         setEventName(c.name ?? "");
         setLocationType(c.locationType ?? "in-person");
@@ -91,13 +130,80 @@ export const CreateEvent = () => {
         const end = parseTimeField(c.endTime);
         setEndTime(end.time);
         setEndPeriod(end.period);
-        setLanguages(langRes.data.map((l) => l.language));
+        setLanguages(langNames);
+        setInitialForm(buildEditBaseline(c, langNames));
       } catch (err) {
         console.error(err);
       }
     };
     fetchExisting();
   }, [isEditing, eventId, backend]);
+
+  const languagesKey = useMemo(
+    () => [...languages].sort().join("|"),
+    [languages]
+  );
+
+  const isDirty = useMemo(() => {
+    if (!isEditing || !initialForm) return false;
+    const b = initialForm;
+    return (
+      type !== b.type ||
+      eventName !== b.eventName ||
+      locationType !== b.locationType ||
+      address !== b.address ||
+      city !== b.city ||
+      state !== b.state ||
+      zip !== b.zip ||
+      zoomLink !== b.zoomLink ||
+      date !== b.date ||
+      startTime !== b.startTime ||
+      startPeriod !== b.startPeriod ||
+      endTime !== b.endTime ||
+      endPeriod !== b.endPeriod ||
+      targetNumber !== b.targetNumber ||
+      maximum !== b.maximum ||
+      description !== b.description ||
+      languagesKey !== b.languagesKey
+    );
+  }, [
+    isEditing,
+    initialForm,
+    type,
+    eventName,
+    locationType,
+    address,
+    city,
+    state,
+    zip,
+    zoomLink,
+    date,
+    startTime,
+    startPeriod,
+    endTime,
+    endPeriod,
+    targetNumber,
+    maximum,
+    description,
+    languagesKey,
+  ]);
+
+  const goBackFromForm = () => {
+    navigate(isEditing ? `/events/${eventId}` : "/events");
+  };
+
+  const handleCancelClick = () => {
+    if (isEditing && isDirty) {
+      setDiscardOpen(true);
+      return;
+    }
+    goBackFromForm();
+  };
+
+  const confirmDiscard = () => {
+    setDiscardOpen(false);
+    navigate(`/events/${eventId}`, { state: { editFeedback: "discarded" } });
+  };
 
   const filteredLanguages = useMemo(
     () =>
@@ -207,7 +313,10 @@ export const CreateEvent = () => {
       );
 
       navigate(`/events/${clinicId}`, {
-        state: { eventData: { ...clinicData, languages } },
+        state: {
+          eventData: { ...clinicData, languages },
+          ...(isEditing ? { editFeedback: "saved" } : {}),
+        },
       });
     } catch (err) {
       console.error(err);
@@ -258,13 +367,22 @@ export const CreateEvent = () => {
           Event Catalog
         </Text>
         <Text color="gray.400">›</Text>
-        <Text
-          color="blue.500"
-          cursor="pointer"
-          onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
-        >
-          View Event
-        </Text>
+        {isEditing ? (
+          <Text
+            fontWeight="semibold"
+            color="gray.700"
+          >
+            Edit Event
+          </Text>
+        ) : (
+          <Text
+            color="blue.500"
+            cursor="pointer"
+            onClick={() => navigate("/events")}
+          >
+            Create New Event
+          </Text>
+        )}
       </HStack>
 
       {/* Title */}
@@ -760,7 +878,7 @@ export const CreateEvent = () => {
           _hover={{ bg: "#2C5282" }}
           onClick={handleSubmit}
         >
-          Create &amp; Save Event
+          {isEditing ? "Save Event" : "Create & Save Event"}
         </Button>
         <Button
           variant="outline"
@@ -769,11 +887,56 @@ export const CreateEvent = () => {
           fontSize="sm"
           border="1px solid #CBD5E0"
           color="gray.600"
-          onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
+          onClick={handleCancelClick}
         >
           Cancel
         </Button>
       </HStack>
+
+      <Dialog.Root
+        open={discardOpen}
+        onOpenChange={(e) => setDiscardOpen(e.open)}
+        placement="center"
+        size="sm"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Discard Edits?</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Text
+                  fontSize="sm"
+                  color="gray.700"
+                >
+                  Are you sure? You can&apos;t undo this action afterwards.
+                </Text>
+              </Dialog.Body>
+              <Dialog.Footer gap={3}>
+                <Dialog.ActionTrigger asChild>
+                  <Button
+                    variant="outline"
+                    borderColor="#CBD5E0"
+                  >
+                    Cancel
+                  </Button>
+                </Dialog.ActionTrigger>
+                <Button
+                  colorPalette="red"
+                  onClick={confirmDiscard}
+                >
+                  Yes, Discard
+                </Button>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </VStack>
   );
 };

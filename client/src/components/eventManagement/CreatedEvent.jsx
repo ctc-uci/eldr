@@ -21,6 +21,7 @@ import {
   LuPencil,
 } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toaster } from "@/components/ui/toaster";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { EventEmailNotificationTimeline } from "./EventEmailNotificationTimeline";
@@ -28,10 +29,39 @@ import { EventVolunteerList } from "./EventVolunteerList";
 
 export const CreatedEvent = () => {
   const { eventId } = useParams();
-  const { state: locationState } = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
   const { backend } = useBackendContext();
-  const [eventData, setEventData] = useState(locationState?.eventData ?? null);
+  const [eventData, setEventData] = useState(
+    location.state?.eventData ?? null
+  );
+
+  useEffect(() => {
+    if (location.state?.eventData) {
+      setEventData(location.state.eventData);
+    }
+  }, [location.state?.eventData]);
+
+  useEffect(() => {
+    const feedback = location.state?.editFeedback;
+    if (!feedback) return;
+
+    if (feedback === "saved") {
+      toaster.success({
+        title: "Edits to this event have been saved successfully.",
+      });
+    } else if (feedback === "discarded") {
+      toaster.error({
+        title: "Edits to this event have been discarded.",
+      });
+    }
+
+    const { editFeedback: _removed, ...rest } = location.state ?? {};
+    navigate(location.pathname, {
+      replace: true,
+      state: Object.keys(rest).length > 0 ? rest : undefined,
+    });
+  }, [location.state?.editFeedback, location.pathname, navigate]);
 
   useEffect(() => {
     if (eventData) return;
