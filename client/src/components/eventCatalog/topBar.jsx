@@ -11,6 +11,7 @@ import {
 import { ListFilter } from "lucide-react";
 import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
 
+import AppliedFilters from "./appliedFilters";
 import SearchBar from "./searchBar";
 import { SortAndFilter } from "./sortAndFilter";
 
@@ -32,29 +33,18 @@ export const TopBar = ({
 
   const hasAppliedFilters = useMemo(() => {
     if (!selectedFilters) return false;
-
     return Object.values(selectedFilters).some((value) => {
       if (Array.isArray(value)) return value.length > 0;
       return value !== null && value !== undefined && value !== "";
     });
   }, [selectedFilters]);
 
-  // Hide search on mobile when showing details
   const showSearch = !isMobile || !showDetails;
 
   return (
-    <Flex
-      direction="column"
-      w="100%"
-      borderBottom="1px solid #E4E4E7"
-    >
+    <Flex direction="column" w="100%" borderBottom="1px solid #E4E4E7">
       {/* Tabs - Segmented Control Style */}
-      <Flex
-        w="100%"
-        justify="center"
-        align="center"
-        bg="white"
-      >
+      <Flex w="100%" justify="center" align="center" bg="white">
         <Tabs.Root
           value={activeTab}
           onValueChange={(e) => onTabChange(e.value)}
@@ -62,12 +52,7 @@ export const TopBar = ({
           fitted
           w="100%"
         >
-          <Tabs.List
-            bg="#F3F4F6"
-            p="4px"
-            gap="4px"
-            h="auto"
-          >
+          <Tabs.List bg="#F3F4F6" p="4px" gap="4px" h="auto">
             <Tabs.Trigger
               value="all"
               flex="1"
@@ -81,11 +66,7 @@ export const TopBar = ({
               px="12px"
               transition="all 0.2s"
               border="none"
-              _selected={{
-                bg: "white",
-                color: "#111827",
-                borderBottom: "none",
-              }}
+              _selected={{ bg: "white", color: "#111827", borderBottom: "none" }}
             >
               <LuCalendarDays size={16} />
               All Events
@@ -104,11 +85,7 @@ export const TopBar = ({
               px="12px"
               transition="all 0.2s"
               border="none"
-              _selected={{
-                bg: "white",
-                color: "#111827",
-                borderBottom: "none",
-              }}
+              _selected={{ bg: "white", color: "#111827", borderBottom: "none" }}
             >
               <LuUserCheck size={16} />
               My Events
@@ -119,30 +96,19 @@ export const TopBar = ({
 
       {/* Sort/Filter + Search */}
       {showSearch && (
-        <Flex
-          w="100%"
-          px="16px"
-          py="16px"
-          gap="12px"
-          align="center"
-          bg="white"
-        >
+        <Flex w="100%" px="16px" py="16px" gap="12px" align="center" bg="white">
           {isMobile ? (
             <IconButton
               aria-label="Filter"
               backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
               color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
-              border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
-              }
+              border={hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"}
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
-              _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
-              }}
+              _hover={{ backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7" }}
               onClick={() => setFilterOpen(true)}
             >
               <ListFilter size={20} />
@@ -152,17 +118,13 @@ export const TopBar = ({
               backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
               color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
-              border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
-              }
+              border={hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"}
               px="16px"
               h="40px"
               fontSize="14px"
               fontWeight={500}
               flexShrink={0}
-              _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
-              }}
+              _hover={{ backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7" }}
               onClick={() => setFilterOpen(true)}
             >
               <ListFilter size={20} />
@@ -187,6 +149,14 @@ export const TopBar = ({
             isMobile
           />
         </Flex>
+      )}
+
+      {/* Applied filter chips row - returns null when no filters active */}
+      {showSearch && (
+        <AppliedFilters
+          selectedFilters={selectedFilters}
+          setSelectedFilters={setSelectedFilters}
+        />
       )}
     </Flex>
   );
