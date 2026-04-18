@@ -172,6 +172,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 fontWeight={700}
                 color="black"
                 mb="12px"
+                lineHeight="1.2"
               >
                 Community Counsel's Event Portal
               </Heading>

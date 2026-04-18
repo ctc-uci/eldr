@@ -196,6 +196,7 @@ const LoginStep = ({ onNext }: Props) => {
                 fontWeight={700}
                 color="black"
                 mb="12px"
+                lineHeight="1.2"
               >
                 Community Counsel's Event Portal
               </Heading>
@@ -210,7 +211,7 @@ const LoginStep = ({ onNext }: Props) => {
                 display="inline-flex"
                 alignItems="center"
               >
-                <LuExternalLink size={16} color="#3182CE"/>
+                <LuExternalLink size={20} color="#2563EB"/>
               </Link>
               </Text>
             </Box>
@@ -246,12 +247,8 @@ const LoginStep = ({ onNext }: Props) => {
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter First Name"
+                  placeholder="Enter your first name"
                   border="none"
                   outline="none"
                   p="0"
@@ -285,12 +282,8 @@ const LoginStep = ({ onNext }: Props) => {
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter Last Name"
+                  placeholder="Enter your last name"
                   border="none"
                   outline="none"
                   p="0"
@@ -324,12 +317,8 @@ const LoginStep = ({ onNext }: Props) => {
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuMail
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter Email"
+                  placeholder="Enter an email"
                   type="email"
                   border="none"
                   outline="none"

@@ -15,17 +15,13 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
+
 import {
   LuArrowRight,
   LuChevronDown,
-  LuFacebook,
-  LuMail,
   LuX,
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -48,7 +44,7 @@ const LawMultiSelect = ({
   disabled,
   placeholder,
 }: {
-  label: string;
+  label: React.ReactNode;
   items: string[];
   selected: string[];
   onChange: (val: string[]) => void;
@@ -471,7 +467,7 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             justify="center"
           >
             <Progress.Root
-              value={50}
+              value={60}
               size="xs"
             >
               <Progress.Track>
@@ -497,7 +493,22 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             )}
 
             <LawMultiSelect
-              label="Select areas of law you're interested in working in"
+            label={
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>Select areas of law you're interested in working in</span>
+                <span
+                  style={{
+                    backgroundColor: "#F4F4F5",
+                    color: "black",
+                    fontSize: 12,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  optional
+                </span>
+              </span>
+            }
               items={areaLabels}
               selected={selectedAreaLabels}
               onChange={setSelectedAreaLabels}
