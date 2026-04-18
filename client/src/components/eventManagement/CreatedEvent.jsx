@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Button,
+  CloseButton,
+  Dialog,
   Flex,
   HStack,
   IconButton,
+  Portal,
   Separator,
   Tag,
   Text,
@@ -143,6 +146,28 @@ export const CreatedEvent = () => {
   ];
 
   const [activeTab, setActiveTab] = useState("details");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const confirmDeleteEvent = async () => {
+    setDeleteLoading(true);
+    try {
+      await backend.delete(`/clinics/${eventId}`);
+      setDeleteOpen(false);
+      navigate("/events");
+    } catch (err) {
+      console.error(err);
+      toaster.error({
+        title: "Could not delete this event",
+        description:
+          err?.response?.data?.message ??
+          err?.message ??
+          "Please try again.",
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <VStack
@@ -307,14 +332,7 @@ export const CreatedEvent = () => {
             gap={3}
             px={4}
             _hover={{ bg: "red.50", borderColor: "red.200" }}
-            onClick={async () => {
-              try {
-                await backend.delete(`/clinics/${eventId}`);
-                navigate("/events");
-              } catch (err) {
-                console.error(err);
-              }
-            }}
+            onClick={() => setDeleteOpen(true)}
           >
             <LuArchive />
             Delete Event
@@ -424,6 +442,56 @@ export const CreatedEvent = () => {
 
         {activeTab === "email" && <EventEmailNotificationTimeline />}
       </Box>
+
+      <Dialog.Root
+        open={deleteOpen}
+        onOpenChange={(e) => setDeleteOpen(e.open)}
+        placement="center"
+        size="sm"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Delete Clinic Event</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Text
+                  fontSize="sm"
+                  color="gray.700"
+                >
+                  Are you sure? You can&apos;t undo this action afterwards.
+                </Text>
+              </Dialog.Body>
+              <Dialog.Footer
+                gap={3}
+                justifyContent="flex-end"
+              >
+                <Dialog.ActionTrigger asChild>
+                  <Button
+                    variant="outline"
+                    borderColor="#CBD5E0"
+                    disabled={deleteLoading}
+                  >
+                    Cancel
+                  </Button>
+                </Dialog.ActionTrigger>
+                <Button
+                  colorPalette="red"
+                  loading={deleteLoading}
+                  onClick={confirmDeleteEvent}
+                >
+                  Yes, Delete
+                </Button>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </VStack>
   );
 };
