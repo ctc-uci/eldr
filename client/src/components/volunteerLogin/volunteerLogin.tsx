@@ -8,6 +8,7 @@ import LanguageProficiencyStep from "./steps/LanguageProficiencyStep";
 import LawInterestStep from "./steps/LawInterestStep";
 import LoginStep from "./steps/LoginStep";
 import NotaryStep from "./steps/NotaryStep";
+import RoleStep from "./steps/RoleStep";  
 import SuccessStep from "./steps/SuccessStep";
  
 export const VolunteerLogin = () => {
@@ -15,7 +16,7 @@ export const VolunteerLogin = () => {
   const [volunteerId, setVolunteerId] = useState<number | undefined>(undefined);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
  
-  const next = () => setStepIndex((prev) => Math.min(prev + 1, 7));
+  const next = () => setStepIndex((prev) => Math.min(prev + 1, 9));
   const back = () => setStepIndex((prev) => Math.max(prev - 1, 1));
  
   const handleCreateAccountNext = (id: number) => {
@@ -67,8 +68,9 @@ export const VolunteerLogin = () => {
           volunteerId={volunteerId}
         />
       )}
-      {stepIndex === 7 && <BackgroundStep onNext={next} />}
-      {stepIndex === 8 && <SuccessStep onNext={() => setStepIndex(1)} />}
+      {stepIndex === 7 && <RoleStep onNext={next} />}
+      {stepIndex === 8 && <BackgroundStep onNext={next} />}
+      {stepIndex === 9 && <SuccessStep onNext={() => setStepIndex(1)} />}
     </Flex>
   );
 };

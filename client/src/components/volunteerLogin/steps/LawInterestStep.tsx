@@ -254,7 +254,7 @@ const LawMultiSelect = ({
         >
           {filtered.length === 0 ? (
             <Text px="12px" py="10px" fontSize="13px" color="gray.400">
-              No results
+              Your entry has no matches. Check for spelling errors!
             </Text>
           ) : (
             filtered.map((area) => (
