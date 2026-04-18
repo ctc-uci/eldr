@@ -2,17 +2,15 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  CloseButton,
-  Dialog,
   Flex,
   HStack,
   IconButton,
-  Portal,
   Separator,
   Tag,
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 import {
   LuArrowUpFromLine,
@@ -64,7 +62,7 @@ export const CreatedEvent = () => {
       replace: true,
       state: Object.keys(rest).length > 0 ? rest : undefined,
     });
-  }, [location.state?.editFeedback, location.pathname, navigate]);
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     if (eventData) return;
@@ -471,55 +469,14 @@ export const CreatedEvent = () => {
         {activeTab === "email" && <EventEmailNotificationTimeline />}
       </Box>
 
-      <Dialog.Root
+      <ConfirmDialog
         open={deleteOpen}
         onOpenChange={(e) => setDeleteOpen(e.open)}
-        placement="center"
-        size="sm"
-      >
-        <Portal>
-          <Dialog.Backdrop bg="blackAlpha.400" />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title>Delete Clinic Event</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body>
-                <Text
-                  fontSize="sm"
-                  color="gray.700"
-                >
-                  Are you sure? You can&apos;t undo this action afterwards.
-                </Text>
-              </Dialog.Body>
-              <Dialog.Footer
-                gap={3}
-                justifyContent="flex-end"
-              >
-                <Dialog.ActionTrigger asChild>
-                  <Button
-                    variant="outline"
-                    borderColor="#CBD5E0"
-                    disabled={deleteLoading}
-                  >
-                    Cancel
-                  </Button>
-                </Dialog.ActionTrigger>
-                <Button
-                  colorPalette="red"
-                  loading={deleteLoading}
-                  onClick={confirmDeleteEvent}
-                >
-                  Yes, Delete
-                </Button>
-              </Dialog.Footer>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
+        title="Delete Clinic Event"
+        confirmLabel="Yes, Delete"
+        onConfirm={confirmDeleteEvent}
+        loading={deleteLoading}
+      />
     </VStack>
   );
 };

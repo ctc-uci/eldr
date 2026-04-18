@@ -4,10 +4,8 @@ import {
   Badge,
   Box,
   Button,
-  CloseButton,
   Combobox,
   createListCollection,
-  Dialog,
   Flex,
   HStack,
   Input,
@@ -21,8 +19,8 @@ import {
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuMail, LuImageUp, LuTriangleAlert } from "react-icons/lu";
-import { MdOutlineMailOutline } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 const parseTimeField = (ts) => {
   if (!ts) return { time: "", period: "AM" };
@@ -913,50 +911,13 @@ export const CreateEvent = () => {
         </Button>
       </HStack>
 
-      <Dialog.Root
+      <ConfirmDialog
         open={discardOpen}
         onOpenChange={(e) => setDiscardOpen(e.open)}
-        placement="center"
-        size="sm"
-      >
-        <Portal>
-          <Dialog.Backdrop bg="blackAlpha.400" />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title>Discard Edits?</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body>
-                <Text
-                  fontSize="sm"
-                  color="gray.700"
-                >
-                  Are you sure? You can&apos;t undo this action afterwards.
-                </Text>
-              </Dialog.Body>
-              <Dialog.Footer gap={3}>
-                <Dialog.ActionTrigger asChild>
-                  <Button
-                    variant="outline"
-                    borderColor="#CBD5E0"
-                  >
-                    Cancel
-                  </Button>
-                </Dialog.ActionTrigger>
-                <Button
-                  colorPalette="red"
-                  onClick={confirmDiscard}
-                >
-                  Yes, Discard
-                </Button>
-              </Dialog.Footer>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
+        title="Discard Edits?"
+        confirmLabel="Yes, Discard"
+        onConfirm={confirmDiscard}
+      />
     </VStack>
   );
 };

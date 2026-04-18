@@ -13,6 +13,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
@@ -78,14 +79,24 @@ export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const handleDelete = async (e, clinicId) => {
+  const handleDeleteClick = (e, clinicId) => {
     e.stopPropagation();
+    setDeleteTarget(clinicId);
+  };
+
+  const confirmDelete = async () => {
+    setDeleteLoading(true);
     try {
-      await backend.delete(`/clinics/${clinicId}`);
-      setClinics((prev) => prev.filter((c) => c.id !== clinicId));
+      await backend.delete(`/clinics/${deleteTarget}`);
+      setClinics((prev) => prev.filter((c) => c.id !== deleteTarget));
+      setDeleteTarget(null);
     } catch (error) {
       console.log(error);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -379,7 +390,7 @@ export const EventManagement = () => {
                             size="sm"
                             color="gray.500"
                             _hover={{ color: "red.500", bg: "red.50" }}
-                            onClick={(e) => handleDelete(e, clinic.id)}
+                            onClick={(e) => handleDeleteClick(e, clinic.id)}
                           >
                             <LuTrash2 />
                           </IconButton>
@@ -393,6 +404,14 @@ export const EventManagement = () => {
           </VStack>
         </VStack>
       </Box>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(e) => { if (!e.open) setDeleteTarget(null); }}
+        title="Delete Clinic Event"
+        confirmLabel="Yes, Delete"
+        onConfirm={confirmDelete}
+        loading={deleteLoading}
+      />
     </Flex>
   );
 };
