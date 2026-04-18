@@ -33,7 +33,9 @@ function newId() {
  *   amount?: number,
  *   unit?: string,
  *   emailSubject?: string,
- *   bodyHtml?: string
+ *   bodyHtml?: string,
+ *   scheduledEmailId?: number,
+ *   sendAtIso?: string
  * }>}
  */
 export function getEventEmailNotifications(eventId) {
@@ -69,6 +71,8 @@ export function getEventEmailNotificationById(eventId, notificationId) {
  * @param {string} [payload.unit]
  * @param {string} [payload.emailSubject]
  * @param {string} [payload.bodyHtml]
+ * @param {number} [payload.scheduledEmailId]
+ * @param {string} [payload.sendAtIso]
  */
 export function addEventEmailNotification(eventId, payload) {
   if (!eventId || !payload?.sendTimingLabel || !payload?.templateName) return;
@@ -83,6 +87,10 @@ export function addEventEmailNotification(eventId, payload) {
     ...(typeof payload.unit === "string" ? { unit: payload.unit } : {}),
     ...(typeof payload.emailSubject === "string" ? { emailSubject: payload.emailSubject } : {}),
     ...(typeof payload.bodyHtml === "string" ? { bodyHtml: payload.bodyHtml } : {}),
+    ...(typeof payload.scheduledEmailId === "number" ? { scheduledEmailId: payload.scheduledEmailId } : {}),
+    ...(typeof payload.sendAtIso === "string" && payload.sendAtIso.trim() !== ""
+      ? { sendAtIso: payload.sendAtIso.trim() }
+      : {}),
   };
   cur.push(row);
   localStorage.setItem(storageKey(eventId), JSON.stringify(cur));

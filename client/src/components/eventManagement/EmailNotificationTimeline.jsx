@@ -10,11 +10,14 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 import {
   getEventEmailNotifications,
   notifyEventEmailNotificationsChanged,
   removeEventEmailNotification,
 } from "./eventEmailNotificationsStorage";
+import { computeSendInstantMs } from "./eventEmailSchedule";
 
 const STATUS = {
   delivered: {
@@ -39,8 +42,37 @@ const SIGNUP_CONFIG = {
   actionsDisabled: true,
 };
 
+/**
+ * Custom rows: Delivered after the send instant. Uses `computeSendInstantMs` (event `date` +
+ * local wall time from `startTime`) so "N Minutes Before" matches your clock, not UTC-only parsing.
+ */
+function displayStatusKeyForCustomRow(row, nowMs, clinic) {
+  const amt = typeof row.amount === "number" ? row.amount : Number(row.amount);
+  if (
+    clinic &&
+    row.unit &&
+    typeof row.unit === "string" &&
+    Number.isFinite(amt) &&
+    amt >= 1
+  ) {
+    try {
+      const at = computeSendInstantMs(clinic, amt, row.unit);
+      if (!Number.isNaN(at)) {
+        return nowMs >= at ? "delivered" : "scheduled";
+      }
+    } catch {
+      /* use fallback below */
+    }
+  }
+  if (typeof row.sendAtIso === "string" && row.sendAtIso.trim() !== "") {
+    const at = new Date(row.sendAtIso).getTime();
+    if (!Number.isNaN(at) && nowMs >= at) return "delivered";
+  }
+  return "scheduled";
+}
+
 const StatusBadge = ({ statusKey }) => {
-  const s = STATUS[statusKey];
+  const s = STATUS[statusKey] ?? STATUS.scheduled;
   const Icon = s.icon;
   return (
     <HStack
@@ -67,9 +99,47 @@ const StatusBadge = ({ statusKey }) => {
 
 export const EmailNotificationTimeline = ({ eventId }) => {
   const navigate = useNavigate();
+  const { backend } = useBackendContext();
+  const [nowTick, setNowTick] = useState(0);
+  const [clinic, setClinic] = useState(null);
   const [customNotifications, setCustomNotifications] = useState(() =>
     getEventEmailNotifications(eventId)
   );
+
+  useEffect(() => {
+    if (!eventId) {
+      setClinic(null);
+      return;
+    }
+    let cancelled = false;
+    backend
+      .get(`/clinics/${eventId}`)
+      .then((res) => {
+        if (cancelled) return;
+        setClinic(res.data ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setClinic(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [backend, eventId]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNowTick((t) => t + 1);
+    }, 10000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible") setNowTick((t) => t + 1);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
 
   const refresh = useCallback(() => {
     setCustomNotifications(getEventEmailNotifications(eventId));
@@ -99,8 +169,18 @@ export const EmailNotificationTimeline = ({ eventId }) => {
     return [signupRow, ...added];
   }, [customNotifications]);
 
-  const handleDelete = (row) => {
+  const handleDelete = async (row) => {
     if (!eventId || row.kind !== "custom" || !row.id) return;
+    const sid = row.scheduledEmailId;
+    if (sid != null) {
+      try {
+        await backend.delete(`/emails/schedule/${sid}`);
+      } catch (err) {
+        if (err?.response?.status !== 404) {
+          console.warn("Could not remove scheduled email from queue:", err);
+        }
+      }
+    }
     removeEventEmailNotification(eventId, row.id);
     notifyEventEmailNotificationsChanged(eventId);
     refresh();
@@ -128,7 +208,10 @@ export const EmailNotificationTimeline = ({ eventId }) => {
           </Table.Header>
           <Table.Body>
             {rows.map((row) => {
-              const statusKey = row.statusKey;
+              const statusKey =
+                row.kind === "signup"
+                  ? row.statusKey
+                  : displayStatusKeyForCustomRow(row, Date.now(), clinic);
               const sendTiming =
                 row.kind === "signup" ? row.sendTiming : row.sendTimingLabel;
               const templateLabel =

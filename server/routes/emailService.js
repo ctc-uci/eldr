@@ -17,8 +17,13 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendEmail({ to, subject, html }) {
+  const from = process.env.EMAIL;
+  if (!from) {
+    throw new Error("EMAIL env is not set (required as SMTP user / From address)");
+  }
+
   const info = await transporter.sendMail({
-    from: process.env.EMAIL,
+    from,
     to,
     subject,
     html,

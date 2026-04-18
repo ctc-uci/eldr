@@ -15,6 +15,7 @@ import {
   notifyEventEmailNotificationsChanged,
   updateEventEmailNotification,
 } from "./eventEmailNotificationsStorage";
+import { computeSendInstantMs, embedScheduledEmailEventMarker } from "./eventEmailSchedule";
 
 const DEFAULT_EMAIL_SUBJECT = "Confirmation Email for Volunteer";
 
@@ -93,6 +94,7 @@ export const CreateEmailNotification = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [emailSubject, setEmailSubject] = useState(DEFAULT_EMAIL_SUBJECT);
   const [bodyHtml, setBodyHtml] = useState("<p></p>");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!isEditing || !eventId || !notificationId) return;
@@ -154,6 +156,95 @@ export const CreateEmailNotification = () => {
     if (Number.isNaN(n)) return;
     setAmount(Math.min(9999, Math.max(1, n)));
   };
+
+  const handleSave = useCallback(async () => {
+    if (!eventId || !selectedTemplate) return;
+    setSaving(true);
+    try {
+      const prior = isEditing
+        ? getEventEmailNotificationById(eventId, notificationId)
+        : null;
+      const previousScheduledId = prior?.scheduledEmailId;
+
+      if (previousScheduledId != null) {
+        try {
+          await backend.delete(`/emails/schedule/${previousScheduledId}`);
+        } catch (err) {
+          if (err?.response?.status !== 404) {
+            console.warn("Could not remove previous scheduled email:", err);
+          }
+        }
+      }
+
+      const { data: clinic } = await backend.get(`/clinics/${eventId}`);
+      let sendAtIso;
+      try {
+        const sendAtMs = computeSendInstantMs(clinic, amount, unit);
+        sendAtIso = new Date(sendAtMs).toISOString();
+      } catch (e) {
+        console.error(e);
+        window.alert(
+          "Could not compute send time from this event's date and start time. Check that the event has a valid date and start time."
+        );
+        return;
+      }
+
+      const bodyForQueue = embedScheduledEmailEventMarker(eventId, bodyHtml);
+
+      const scheduleRes = await backend.post("/emails/schedule", {
+        to_email: import.meta.env.VITE_SCHEDULED_EMAIL_TO || undefined,
+        subject: emailSubject,
+        body: bodyForQueue,
+        send_at: sendAtIso,
+      });
+
+      const rawScheduledId = scheduleRes.data?.queuedEmail?.id;
+      const scheduledEmailId =
+        rawScheduledId != null && Number.isFinite(Number(rawScheduledId))
+          ? Number(rawScheduledId)
+          : undefined;
+
+      const snapshot = {
+        sendTimingLabel: buildSendTimingLabel(amount, unit),
+        templateName: selectedTemplate.name,
+        templateId: selectedTemplate.id,
+        amount,
+        unit,
+        emailSubject,
+        bodyHtml,
+        ...(scheduledEmailId !== undefined ? { scheduledEmailId } : {}),
+        ...(sendAtIso ? { sendAtIso } : {}),
+      };
+
+      if (isEditing && notificationId) {
+        updateEventEmailNotification(eventId, notificationId, snapshot);
+      } else {
+        addEventEmailNotification(eventId, snapshot);
+      }
+      notifyEventEmailNotificationsChanged(eventId);
+      navigate(`/events/${eventId}/edit/email`);
+    } catch (err) {
+      console.error("Save / schedule failed:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Could not schedule the email. Check the server and your email settings.";
+      window.alert(typeof msg === "string" ? msg : "Could not schedule the email.");
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    amount,
+    backend,
+    bodyHtml,
+    emailSubject,
+    eventId,
+    isEditing,
+    navigate,
+    notificationId,
+    selectedTemplate,
+    unit,
+  ]);
 
   return (
     <VStack
@@ -397,32 +488,14 @@ export const CreateEmailNotification = () => {
             borderRadius="md"
             px={6}
             fontSize="sm"
-            _hover={selectedTemplate ? { bg: "#3a6685" } : {}}
+            _hover={selectedTemplate && !saving ? { bg: "#3a6685" } : {}}
             type="button"
-            disabled={!selectedTemplate}
-            opacity={selectedTemplate ? 1 : 0.5}
-            cursor={selectedTemplate ? "pointer" : "not-allowed"}
-            onClick={() => {
-              if (!eventId || !selectedTemplate) return;
-              const snapshot = {
-                sendTimingLabel: buildSendTimingLabel(amount, unit),
-                templateName: selectedTemplate.name,
-                templateId: selectedTemplate.id,
-                amount,
-                unit,
-                emailSubject,
-                bodyHtml,
-              };
-              if (isEditing && notificationId) {
-                updateEventEmailNotification(eventId, notificationId, snapshot);
-              } else {
-                addEventEmailNotification(eventId, snapshot);
-              }
-              notifyEventEmailNotificationsChanged(eventId);
-              navigate(`/events/${eventId}/edit/email`);
-            }}
+            disabled={!selectedTemplate || saving}
+            opacity={selectedTemplate && !saving ? 1 : 0.5}
+            cursor={selectedTemplate && !saving ? "pointer" : "not-allowed"}
+            onClick={handleSave}
           >
-            Save
+            {saving ? "Saving…" : "Save"}
           </Button>
         </HStack>
       </Box>
