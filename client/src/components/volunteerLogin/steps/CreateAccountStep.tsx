@@ -166,18 +166,18 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="450px">  
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
-                mb="12px"
+                mb="20px"
                 lineHeight="1.2"
               >
                 Community Counsel's Event Portal
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "22px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "24px" }}
                 color="black"
               >
                 Fill out the following information to start
@@ -188,7 +188,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 display="inline-flex"
                 alignItems="center"
               >
-                <LuExternalLink size={16} color="#3182CE"/>
+                <LuExternalLink size={20} color="#2563EB"/>
               </Link>
               </Text>
             </Box>

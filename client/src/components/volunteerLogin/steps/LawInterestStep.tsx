@@ -20,6 +20,7 @@ import {
   LuArrowRight,
   LuChevronDown,
   LuX,
+  LuSearch,
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
@@ -54,12 +55,14 @@ const LawMultiSelect = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = items.filter((l) =>
-    l.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = items
+    .filter((l) => !selected.includes(l))
+    .filter((l) => l.toLowerCase().includes(search.toLowerCase()));
 
   const toggle = (area: string) => {
     onChange(
@@ -74,6 +77,12 @@ const LawMultiSelect = ({
     onChange(selected.filter((s) => s !== area));
   };
 
+  const clearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+    setSearch("");
+  };
+
   const updateDropdownPosition = () => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -86,10 +95,10 @@ const LawMultiSelect = ({
     });
   };
 
-  const handleOpen = () => {
+  const openDropdown = () => {
     if (disabled) return;
-    if (!open) updateDropdownPosition();
-    setOpen((o) => !o);
+    updateDropdownPosition();
+    setOpen(true);
   };
 
   useEffect(() => {
@@ -97,12 +106,14 @@ const LawMultiSelect = ({
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setSearch("");
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -119,7 +130,7 @@ const LawMultiSelect = ({
   }, [open]);
 
   return (
-    <Box position="relative">
+    <Box position="relative" ref={containerRef}>
       <Text
         fontSize={{ base: "14px", md: "16px" }}
         fontWeight={600}
@@ -129,80 +140,106 @@ const LawMultiSelect = ({
         {label}
       </Text>
 
+      {/* Trigger */}
       <Flex
         ref={triggerRef}
         align="center"
-        justify="space-between"
         border="1px solid"
         borderColor={open ? "#3182CE" : "#E4E4E7"}
         borderRadius="6px"
         px="12px"
         minH={{ base: "40px", md: "44px" }}
         py="6px"
-        cursor={disabled ? "not-allowed" : "pointer"}
-        onClick={handleOpen}
         bg={disabled ? "gray.50" : "white"}
-        userSelect="none"
         flexWrap="wrap"
         gap="6px"
         opacity={disabled ? 0.6 : 1}
+        cursor={disabled ? "not-allowed" : "text"}
+        onClick={() => {
+          inputRef.current?.focus();
+          openDropdown();
+        }}
       >
-        {selected.length === 0 ? (
-          <Text
-            fontSize={{ base: "13px", md: "14px" }}
-            color="gray.400"
-            flex="1"
-          >
-            {placeholder ?? "Search tags"}
-          </Text>
-        ) : (
+        <Box color="gray.400" display="flex" alignItems="center">
+          <LuSearch size={15} />
+        </Box>
+
+        {/* Chips */}
+        {selected.map((area) => (
           <Flex
-            flex="1"
-            flexWrap="wrap"
-            gap="6px"
+            key={area}
             align="center"
+            gap="4px"
+            bg="#F4F4F5"
+            border="1px solid"
+            borderColor="#E4E4E7"
+            borderRadius="6px"
+            px="8px"
+            py="2px"
+            fontSize="13px"
+            color="black"
           >
-            {selected.map((area) => (
-              <Flex
-                key={area}
-                align="center"
-                gap="4px"
-                bg="white"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="full"
-                px="10px"
-                py="2px"
-                fontSize="13px"
-                color="black"
-              >
-                {area}
-                <Box
-                  as="span"
-                  onClick={(e: React.MouseEvent) => remove(area, e)}
-                  cursor="pointer"
-                  color="gray.400"
-                  _hover={{ color: "gray.600" }}
-                  display="flex"
-                  alignItems="center"
-                >
-                  <LuX size={11} />
-                </Box>
-              </Flex>
-            ))}
+            {area}
+            <Box
+              as="span"
+              onClick={(e: React.MouseEvent) => remove(area, e)}
+              cursor="pointer"
+              color="gray.400"
+              _hover={{ color: "gray.600" }}
+              display="flex"
+              alignItems="center"
+            >
+              <LuX size={11} />
+            </Box>
           </Flex>
-        )}
-        <LuChevronDown
-          size={16}
-          color="#9CA3AF"
-          style={{
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-            flexShrink: 0,
+        ))}
+
+        {/* Input (ONLY search input now) */}
+        <Input
+          ref={inputRef}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (!open) openDropdown();
           }}
+          onFocus={openDropdown}
+          placeholder={
+            selected.length === 0
+              ? (placeholder ?? "Search tags")
+              : open
+                ? "Add tag..."
+                : ""
+          }
+          border="none"
+          p="0"
+          h="auto"
+          minW="120px"
+          flex="1"
+          fontSize={{ base: "13px", md: "14px" }}
+          color="black"
+          bg="transparent"
+          focusRingColor="transparent"
+          _placeholder={{ color: "gray.400" }}
+          disabled={disabled}
         />
+
+        {/* Clear */}
+        {selected.length > 0 && (
+          <Box
+            as="span"
+            onClick={clearAll}
+            cursor="pointer"
+            color="gray.400"
+            _hover={{ color: "gray.600" }}
+            display="flex"
+            alignItems="center"
+          >
+            <LuX size={15} />
+          </Box>
+        )}
       </Flex>
 
+      {/* Dropdown */}
       {open && (
         <Box
           ref={dropdownRef}
@@ -215,35 +252,8 @@ const LawMultiSelect = ({
           maxH="220px"
           overflowY="auto"
         >
-          <Box
-            px="12px"
-            py="8px"
-            borderBottom="1px solid"
-            borderColor="#E4E4E7"
-            position="sticky"
-            top={0}
-            bg="white"
-            zIndex={1}
-          >
-            <Input
-              placeholder="Search tags"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              border="none"
-              p="0"
-              fontSize={{ base: "13px", md: "14px" }}
-              focusRingColor="transparent"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Box>
-
           {filtered.length === 0 ? (
-            <Text
-              px="12px"
-              py="10px"
-              fontSize="13px"
-              color="gray.400"
-            >
+            <Text px="12px" py="10px" fontSize="13px" color="gray.400">
               No results
             </Text>
           ) : (
@@ -273,10 +283,8 @@ const LawMultiSelect = ({
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                 </Checkbox.Root>
-                <Text
-                  fontSize={{ base: "13px", md: "14px" }}
-                  color="black"
-                >
+
+                <Text fontSize={{ base: "13px", md: "14px" }} color="black">
                   {area}
                 </Text>
               </Flex>
@@ -444,13 +452,13 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
-                mb="12px"
+                mb="25px"
               >
                 Volunteer Account Creation
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                color="gray.600"
+                color="black"
               >
                 Select areas of law you have prior experience in or are interested in assisting cases for. 
               </Text>
@@ -464,14 +472,15 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             px="5%"
             py="10%"
             gap={{ base: "16px", md: "18px" }}
-            justify="center"
+            justify="flex-start"
           >
             <Progress.Root
               value={60}
               size="xs"
+              mb="18px"
             >
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
 

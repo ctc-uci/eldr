@@ -196,7 +196,7 @@ const LanguageProficiencyStep = ({
           {/* Left */}
           <Flex
             direction="column"
-            justify="space-between"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -223,7 +223,7 @@ const LanguageProficiencyStep = ({
           {/* Right */}
             <Flex
             direction="column"
-            justify="center"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
@@ -231,7 +231,7 @@ const LanguageProficiencyStep = ({
             >
             <Progress.Root value={35} size="xs">
                 <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
                 </Progress.Track>
             </Progress.Root>
 

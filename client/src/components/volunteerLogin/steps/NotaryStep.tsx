@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuArrowRight } from "react-icons/lu";
+import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 
@@ -111,7 +111,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
           {/* Left side */}
           <Flex
             direction="column"
-            justify="space-between"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -181,11 +181,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               </Box>
             )}
 
-            <Box
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-            >
+            <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={600}
@@ -195,23 +191,53 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                 Notary Status
               </Text>
 
-              <select
-                style={{
-                  height: "44px",
-                  border: "1px solid #E4E4E7",
-                  borderRadius: "6px",
-                  background: "white",
-                  fontSize: "14px",
-                  padding: "0 12px",
-                  width: "100%",
-                }}
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
+              <Box position="relative">
+              <Select.Root
+                collection={collection}
+                value={selected ? [selected] : []}
+                onValueChange={(e) => setSelected(e.value[0] || "")}
               >
-                <option value="">Select status</option>
-                <option value="Active Notary">Active</option>
-                <option value="Non-Active (Not a Notary)">Inactive</option>
-              </select>
+
+                <Select.Trigger
+                  h="44px"
+                  border="1px solid"
+                  borderColor="#E4E4E7"
+                  borderRadius="6px"
+                  bg="white"
+                  fontSize="14px"
+                  _hover={{ borderColor: "#CBD5E1" }}
+                  _focus={{ borderColor: "#3182CE", boxShadow: "0 0 0 1px #3182CE" }}
+                >
+                  <Select.ValueText placeholder="Select status" />
+
+                  <Box ml="auto" display="flex" alignItems="center">
+                    <LuChevronDown size={16} color="#9CA3AF" />
+                  </Box>
+                </Select.Trigger>
+
+                <Select.Content
+                  bg="white"
+                  border="1px solid #E4E4E7"
+                  borderRadius="8px"
+                  boxShadow="lg"
+                  mt="6px"
+                >
+                  {collection.items.map((item) => (
+                    <Select.Item
+                      key={item}
+                      item={item}
+                      px="12px"
+                      py="10px"
+                      fontSize="14px"
+                      _hover={{ bg: "gray.50" }}
+                    >
+                      {item === "Active Notary" ? "Active" : "Inactive"}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+
+              </Select.Root>
+              </Box>
             </Box>
 
             <Button
