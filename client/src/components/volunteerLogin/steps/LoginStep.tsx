@@ -19,8 +19,6 @@ import microsoft from "../../../assets/microsoft_logo.svg";
 
 import {
   LuArrowRight,
-  LuMail,
-  LuUser,
   LuExternalLink,
 } from "react-icons/lu";
 import { toaster } from "@/components/ui/toaster";
@@ -56,6 +54,10 @@ const LoginStep = ({ onNext }: Props) => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
+  const [firstNameError, setFirstNameError] = useState(false);
+  const [lastNameError, setLastNameError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+
   const toastLoginError = useCallback((msg: string) => {
     toaster.error({
       title: "An error occurred while signing in",
@@ -65,77 +67,73 @@ const LoginStep = ({ onNext }: Props) => {
 
   const handleLogin = async () => {
     try {
+      // reset errors
+      setFirstNameError(false);
+      setLastNameError(false);
+      setEmailError(false);
+  
       if (!firstName.trim() || !lastName.trim() || !email.trim()) {
         toastLoginError("Please enter first name, last name, and email.");
         return;
       }
-
+  
       const response = await backend.get("/volunteers");
       const volunteers = (response.data ?? []) as VolunteerLookupRow[];
-
-      const normalizedInputFirst = firstName.trim().toLowerCase();
-      const normalizedInputLast = lastName.trim().toLowerCase();
-      const normalizedInputEmail = email.trim().toLowerCase();
-
-      const matchingVolunteer = volunteers.find((v) => {
-        const volunteerFirstName = (v.firstName ?? v.first_name ?? "").trim().toLowerCase();
-        const volunteerLastName = (v.lastName ?? v.last_name ?? "").trim().toLowerCase();
-        const volunteerEmail = (v.email ?? "").trim().toLowerCase();
-        return (
-          volunteerFirstName === normalizedInputFirst &&
-          volunteerLastName === normalizedInputLast &&
-          volunteerEmail === normalizedInputEmail
-        );
+  
+      const f = firstName.trim().toLowerCase();
+      const l = lastName.trim().toLowerCase();
+      const e = email.trim().toLowerCase();
+  
+      const match = volunteers.find((v) => {
+        const vf = (v.firstName ?? v.first_name ?? "").toLowerCase().trim();
+        const vl = (v.lastName ?? v.last_name ?? "").toLowerCase().trim();
+        const ve = (v.email ?? "").toLowerCase().trim();
+  
+        return vf === f && vl === l && ve === e;
       });
-
-      if (!matchingVolunteer) {
-        toastLoginError(
-          "No account found with this first name, last name, and email. Please check your information or create an account."
+  
+      if (!match) {
+        const firstExists = volunteers.some(
+          v => (v.firstName ?? v.first_name ?? "").toLowerCase().trim() === f
         );
+  
+        const lastExists = volunteers.some(
+          v => (v.lastName ?? v.last_name ?? "").toLowerCase().trim() === l
+        );
+  
+        const emailExists = volunteers.some(
+          v => (v.email ?? "").toLowerCase().trim() === e
+        );
+  
+        setFirstNameError(!firstExists);
+        setLastNameError(firstExists && !lastExists);
+        setEmailError(firstExists && lastExists && !emailExists);
+  
+
+        if (!firstExists) setFirstName("");
+        if (firstExists && !lastExists) setLastName("");
+        if (firstExists && lastExists && !emailExists) setEmail("");
+  
         return;
       }
-
-      const normalizedVolunteerEmail = matchingVolunteer.email!.trim().toLowerCase();
+  
       const tokenResponse = await backend.post("/users/custom-token", {
-        email: normalizedVolunteerEmail,
+        email: match.email!.toLowerCase().trim(),
       });
-
-      const customToken = tokenResponse.data?.customToken as string | undefined;
+  
+      const customToken = tokenResponse.data?.customToken;
+  
       if (!customToken) {
         throw new Error("Unable to generate authentication token.");
       }
-
+  
       await signInWithCustomToken(auth, customToken);
-
+  
       navigate("/dashboard");
     } catch (err: unknown) {
-      const authError = err as { code?: string; message?: string };
-      const errorCode = authError?.code;
-      const firebaseErrorMsg = authError?.message;
-
-      switch (errorCode) {
-        case "auth/invalid-credential":
-        case "auth/invalid-email":
-        case "auth/user-not-found":
-        case "auth/invalid-custom-token":
-        case "auth/custom-token-mismatch":
-          toastLoginError("First name, last name, or email does not match our records!");
-          break;
-        case "auth/unverified-email":
-          toastLoginError("Please verify your email address.");
-          break;
-        case "auth/user-disabled":
-          toastLoginError("This account has been disabled.");
-          break;
-        case "auth/too-many-requests":
-          toastLoginError("Too many attempts. Please try again later.");
-          break;
-        case "auth/user-signed-out":
-          toastLoginError("You have been signed out. Please sign in again.");
-          break;
-        default:
-          toastLoginError(firebaseErrorMsg ?? "Unable to sign in.");
-      }
+      const authError = err as { message?: string };
+  
+      toastLoginError(authError?.message ?? "Unable to sign in.");
     }
   };
 
@@ -241,7 +239,7 @@ const LoginStep = ({ onNext }: Props) => {
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={firstNameError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
@@ -261,6 +259,11 @@ const LoginStep = ({ onNext }: Props) => {
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </Flex>
+              {firstNameError && (
+                  <Text fontSize="10px" color="red.500" mt="4px">
+                    No matching first name found. Please try again.
+                  </Text>
+                )}
             </Box>
 
             <Box w="30vw" minW="320px" maxW="460px">
@@ -276,7 +279,7 @@ const LoginStep = ({ onNext }: Props) => {
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={lastNameError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
@@ -296,6 +299,11 @@ const LoginStep = ({ onNext }: Props) => {
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </Flex>
+              {lastNameError && (
+                  <Text fontSize="10px" color="red.500" mt="4px">
+                    No matching last name found. Please try again.
+                  </Text>
+                )}
             </Box>
 
             <Box w="30vw" minW="320px" maxW="460px">
@@ -311,7 +319,7 @@ const LoginStep = ({ onNext }: Props) => {
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={emailError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
@@ -332,6 +340,11 @@ const LoginStep = ({ onNext }: Props) => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </Flex>
+              {emailError && (
+                  <Text fontSize="12px" color="red.500" mt="4px">
+                    Email not found or does not match this account.
+                  </Text>
+                )}
             </Box>
 
             <Button
