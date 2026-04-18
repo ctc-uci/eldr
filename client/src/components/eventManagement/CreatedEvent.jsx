@@ -148,6 +148,7 @@ export const CreatedEvent = () => {
   const [activeTab, setActiveTab] = useState("details");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const confirmDeleteEvent = async () => {
     setDeleteLoading(true);
@@ -312,16 +313,43 @@ export const CreatedEvent = () => {
           gap={2}
           align="start"
         >
-          <IconButton
-            aria-label="Share event"
-            variant="outline"
-            borderColor="#E2E8F0"
-            bg="white"
-            color="gray.600"
-            size="md"
-          >
-            <LuArrowUpFromLine />
-          </IconButton>
+          <Box position="relative">
+            {linkCopied && (
+              <Box
+                position="absolute"
+                bottom="calc(100% + 8px)"
+                left="50%"
+                transform="translateX(-50%)"
+                bg="#4A7FA5"
+                color="white"
+                px={3}
+                py={1}
+                borderRadius="md"
+                fontSize="sm"
+                fontWeight="medium"
+                whiteSpace="nowrap"
+                boxShadow="md"
+                zIndex={10}
+              >
+                Link copied!
+              </Box>
+            )}
+            <IconButton
+              aria-label="Share event"
+              variant="outline"
+              borderColor="#E2E8F0"
+              bg="white"
+              color="gray.600"
+              size="md"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+            >
+              <LuArrowUpFromLine />
+            </IconButton>
+          </Box>
           <Button
             variant="outline"
             border="1px solid #E2E8F0"
