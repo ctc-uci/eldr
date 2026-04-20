@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   Box,
@@ -60,19 +60,27 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
     try {
       await backend.post(`/volunteers/${effectiveVolunteerId}/role`, selected);
       onNext();
-    } catch (e: any) {
-        // Backend route doesn't exist yet — just continue flow
-        if (e?.response?.status === 404) {
-          onNext();
-          return;
-        }
-      
-        const msg =
-          e?.response?.data?.message ||
-          e?.message ||
-          "Failed to save proficiency.";
-      
-        setErrorMsg(typeof msg === "string" ? msg : "Failed to save proficiency.");
+    } catch (e: unknown) {
+      const err = e as {
+        response?: { status?: number; data?: { message?: string } | string };
+        message?: string;
+      };
+
+      // Backend route doesn't exist yet — just continue flow
+      if (err?.response?.status === 404) {
+        onNext();
+        return;
+      }
+
+      const msg =
+        (typeof err?.response?.data === "object"
+          ? err.response?.data?.message
+          : undefined) ||
+        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
+        err?.message ||
+        "Failed to save role.";
+
+      setErrorMsg(typeof msg === "string" ? msg : "Failed to save role.");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,6 +189,7 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
             )}
 
             <Box w="30vw" minW="320px" maxW="460px">
+              <Box position="relative">
               <Select.Root
               collection={ collection }
               value={selected ? [selected] : []}
@@ -211,7 +220,11 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
                 border="1px solid #E4E4E7"
                 borderRadius="8px"
                 boxShadow="lg"
-                mt="6px"
+                position="absolute"
+                top="calc(100% + 6px)"
+                left={0}
+                w="100%"
+                mt="0"
               >
                 {collection.items.map((item) => (
                   <Select.Item
@@ -227,6 +240,7 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
                 ))}
               </Select.Content>
             </Select.Root>
+              </Box>
             </Box>
 
             <Button
@@ -234,6 +248,7 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
               borderColor="#E4E4E7"
               color="black"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
               minW="320px"
               maxW="460px"
               borderRadius="8px"
@@ -248,7 +263,6 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
                 },
               }}
               position="relative"
-              w="100%"
               px="20px"
               onClick={handleContinue}
               loading={isSubmitting}

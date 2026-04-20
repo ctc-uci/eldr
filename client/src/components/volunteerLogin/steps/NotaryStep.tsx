@@ -33,7 +33,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
   const effectiveVolunteerId =
     volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
-  const { collection, filter } = useListCollection({
+  const { collection } = useListCollection({
     initialItems: NOTARY_STATUSES,
     filter: (item, inputValue) =>
       item.toLowerCase().includes(inputValue.toLowerCase()),
@@ -65,15 +65,21 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
       });
 
       onNext();
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as {
+        response?: { data?: { message?: string } | string };
+        message?: string;
+      };
+
       const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
+        (typeof err?.response?.data === "object"
+          ? err.response?.data?.message
+          : undefined) ||
+        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
+        err?.message ||
         "Failed to save notary status.";
-      setErrorMsg(
-        typeof msg === "string" ? msg : "Failed to save notary status."
-      );
+
+      setErrorMsg(typeof msg === "string" ? msg : "Failed to save notary status.");
     } finally {
       setIsSubmitting(false);
     }
@@ -220,7 +226,11 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                   border="1px solid #E4E4E7"
                   borderRadius="8px"
                   boxShadow="lg"
-                  mt="6px"
+                  position="absolute"
+                  top="calc(100% + 6px)"
+                  left={0}
+                  w="100%"
+                  mt="0"
                 >
                   {collection.items.map((item) => (
                     <Select.Item
@@ -245,6 +255,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               borderColor="#E4E4E7"
               color="black"
               h={{ base: "40px", md: "48px" }}
+              w="30vw"
               minW="320px"
               maxW="460px"
               borderRadius="8px"
@@ -259,7 +270,6 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                 },
               }}
               position="relative"
-              w="100%"
               px="20px"
               onClick={handleContinue}
               loading={isSubmitting}
