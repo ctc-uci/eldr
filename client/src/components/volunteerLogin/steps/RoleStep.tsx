@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   Box,
@@ -8,7 +8,7 @@ import {
   Heading,
   Progress,
   Text,
-  useListCollection,
+  createListCollection,
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -21,9 +21,7 @@ type Props = {
   volunteerId?: number;
 };
 
-const NOTARY_STATUSES = ["Active Notary", "Non-Active (Not a Notary)"];
-
-const NotaryStep = ({ onNext, volunteerId }: Props) => {
+const RoleStep = ({ onNext, volunteerId }: Props) => {
   const { backend } = useBackendContext();
 
   const [selected, setSelected] = useState<string>("");
@@ -33,13 +31,14 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
   const effectiveVolunteerId =
     volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
-  const { collection } = useListCollection({
-    initialItems: NOTARY_STATUSES,
-    filter: (item, inputValue) =>
-      item.toLowerCase().includes(inputValue.toLowerCase()),
-  });
-
-  const isNotary = useMemo(() => selected === "Active Notary", [selected]);
+  const collection = createListCollection({
+      items: [
+        "Volunteer",
+        "Law Student",
+        "Paralegal",
+        "Attorney",
+      ],
+    })
 
   const handleContinue = async () => {
     setErrorMsg(null);
@@ -59,17 +58,19 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
 
     setIsSubmitting(true);
     try {
-      // Update volunteer record. (Your volunteersRouter uses PUT /volunteers/:id)
-      await backend.put(`/volunteers/${effectiveVolunteerId}`, {
-        is_notary: isNotary,
-      });
-
+      await backend.post(`/volunteers/${effectiveVolunteerId}/role`, selected);
       onNext();
     } catch (e: unknown) {
       const err = e as {
-        response?: { data?: { message?: string } | string };
+        response?: { status?: number; data?: { message?: string } | string };
         message?: string;
       };
+
+      // Backend route doesn't exist yet — just continue flow
+      if (err?.response?.status === 404) {
+        onNext();
+        return;
+      }
 
       const msg =
         (typeof err?.response?.data === "object"
@@ -77,9 +78,9 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
           : undefined) ||
         (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
         err?.message ||
-        "Failed to save notary status.";
+        "Failed to save role.";
 
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save notary status.");
+      setErrorMsg(typeof msg === "string" ? msg : "Failed to save role.");
     } finally {
       setIsSubmitting(false);
     }
@@ -139,7 +140,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Please indicate whether or not you are an active notary.
+                Please select your role from the choices provided.
               </Text>
             </Box>
           </Flex>
@@ -155,7 +156,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
             align="center"
           >
             <Progress.Root
-              value={65}
+              value={75}
               size="xs"
               w="30vw"
               minW="320px"
@@ -188,65 +189,57 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
             )}
 
             <Box w="30vw" minW="320px" maxW="460px">
-              <Text
-                fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={600}
-                color="black"
-                mb="6px"
-              >
-                Notary Status
-              </Text>
-
               <Box position="relative">
               <Select.Root
-                collection={collection}
-                value={selected ? [selected] : []}
-                onValueChange={(e) => setSelected(e.value[0] || "")}
+              collection={ collection }
+              value={selected ? [selected] : []}
+              onValueChange={(e) => setSelected(e.value[0] || "")}
+            >
+              <Select.Trigger
+                h="44px"
+                border="1px solid"
+                borderColor="#E4E4E7"
+                borderRadius="6px"
+                bg="white"
+                fontSize="14px"
+                _hover={{ borderColor: "#CBD5E1" }}
+                _focus={{
+                  borderColor: "#3182CE",
+                  boxShadow: "0 0 0 1px #3182CE",
+                }}
               >
+                <Select.ValueText placeholder="Select A Role" />
 
-                <Select.Trigger
-                  h="44px"
-                  border="1px solid"
-                  borderColor="#E4E4E7"
-                  borderRadius="6px"
-                  bg="white"
-                  fontSize="14px"
-                  _hover={{ borderColor: "#CBD5E1" }}
-                  _focus={{ borderColor: "#3182CE", boxShadow: "0 0 0 1px #3182CE" }}
-                >
-                  <Select.ValueText placeholder="Select status" />
+                <Box ml="auto" display="flex" alignItems="center">
+                  <LuChevronDown size={16} color="#9CA3AF" />
+                </Box>
+              </Select.Trigger>
 
-                  <Box ml="auto" display="flex" alignItems="center">
-                    <LuChevronDown size={16} color="#9CA3AF" />
-                  </Box>
-                </Select.Trigger>
-
-                <Select.Content
-                  bg="white"
-                  border="1px solid #E4E4E7"
-                  borderRadius="8px"
-                  boxShadow="lg"
-                  position="absolute"
-                  top="calc(100% + 6px)"
-                  left={0}
-                  w="100%"
-                  mt="0"
-                >
-                  {collection.items.map((item) => (
-                    <Select.Item
-                      key={item}
-                      item={item}
-                      px="12px"
-                      py="10px"
-                      fontSize="14px"
-                      _hover={{ bg: "gray.50" }}
-                    >
-                      {item === "Active Notary" ? "Active" : "Inactive"}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-
-              </Select.Root>
+              <Select.Content
+                bg="white"
+                border="1px solid #E4E4E7"
+                borderRadius="8px"
+                boxShadow="lg"
+                position="absolute"
+                top="calc(100% + 6px)"
+                left={0}
+                w="100%"
+                mt="0"
+              >
+                {collection.items.map((item) => (
+                  <Select.Item
+                    key={item}
+                    item={item}
+                    px="12px"
+                    py="10px"
+                    fontSize="14px"
+                    _hover={{ bg: "gray.50" }}
+                  >
+                    {item}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
               </Box>
             </Box>
 
@@ -295,4 +288,4 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
   );
 };
 
-export default NotaryStep;
+export default RoleStep;

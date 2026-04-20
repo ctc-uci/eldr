@@ -23,6 +23,9 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      // Re-enter loading state on every auth change so routes
+      // don't render with a stale/undefined role during fetch.
+      setLoading(true);
       try {
         if (user) {
           const response = await backend.get(`/users/${user.uid}`);

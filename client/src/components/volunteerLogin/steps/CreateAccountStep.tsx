@@ -5,8 +5,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
-  Image,
   Input,
   Link,
   Text,
@@ -14,17 +12,14 @@ import {
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
+
 import {
   LuArrowRight,
-  LuFacebook,
-  LuKeyRound,
   LuMail,
   LuUser,
+  LuExternalLink
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -39,7 +34,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -64,17 +58,12 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setErrorMsg("Please enter a password with at least 6 characters.");
-      return;
-    }
-
     setIsSubmitting(true);
     let createdFirebaseUid: string | null = null;
     try {
       const userCredential = await signup({
         email: normalizedEmail,
-        password,
+        password: "placeholder",
       });
       createdFirebaseUid = userCredential.user.uid;
 
@@ -124,10 +113,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         setErrorMsg("Please enter a valid email address.");
         return;
       }
-      if (err.code === "auth/weak-password") {
-        setErrorMsg("Password is too weak. Please use at least 6 characters.");
-        return;
-      }
+
 
       const msg =
         (typeof err.response?.data === "object" ? err.response?.data?.message : undefined) ||
@@ -163,19 +149,12 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
           flex="1"
           direction={{ base: "column", md: "row" }}
         >
-          {/* Left side */}
           <Flex
             direction="column"
             justify="space-between"
@@ -187,81 +166,31 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="450px">  
               <Heading
-                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
-                mb="12px"
+                mb="20px"
+                lineHeight="1.2"
               >
-                Community Counsel Account Manager
+                Community Counsel's Event Portal
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                fontSize={{ base: "14px", md: "16px", lg: "24px" }}
+                color="black"
               >
-                Begin creating your volunteer profile by entering the
-                information prompted.
-              </Text>
-            </Box>
+                Fill out the following information to start
+                your account creation process {" "}
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
+                <Link
                 href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
+                display="inline-flex"
+                alignItems="center"
               >
-                Community Counsel Website
+                <LuExternalLink size={20} color="#2563EB"/>
               </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
+              </Text>
             </Box>
           </Flex>
 
@@ -297,18 +226,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="First Name"
-                icon={
-                  <LuUser
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    First Name <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Enter First Name"
+                  placeholder="Enter your first name"
                   border="none"
                   p="0"
                   h="100%"
@@ -322,18 +249,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="Last Name"
-                icon={
-                  <LuUser
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    Last Name <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Enter Last Name"
+                  placeholder="Enter your last name"
                   border="none"
                   p="0"
                   h="100%"
@@ -347,18 +272,16 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Field
-                label="Email"
-                icon={
-                  <LuMail
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                label={
+                  <>
+                    Email <Box as="span" color="#991919"> *</Box>
+                  </>
                 }
               >
                 <Input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter Email"
+                  placeholder="Enter an email"
                   type="email"
                   border="none"
                   p="0"
@@ -371,35 +294,10 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Field>
             </Box>
 
-            <Box w="30vw" minW="320px" maxW="460px">
-              <Field
-                label="Password"
-                icon={
-                  <LuKeyRound
-                    size={16}
-                    color="#9CA3AF"
-                  />
-                }
-              >
-                <Input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter Password"
-                  type="password"
-                  border="none"
-                  p="0"
-                  h="100%"
-                  fontSize="14px"
-                  color="black"
-                  _placeholder={{ color: "gray.400" }}
-                  focusRingColor="transparent"
-                />
-              </Field>
-            </Box>
-
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -407,8 +305,15 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               borderRadius="8px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={600}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              justifyContent="center"
               px="20px"
               mt="4px"
               onClick={handleContinue}
@@ -417,25 +322,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               Continue
               <LuArrowRight size={16} />
             </Button>
-
-            <Text
-              fontSize="13px"
-              color="gray.500"
-              textAlign="center"
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-            >
-              Didn&apos;t mean to come here?{" "}
-              <Link
-                href="#"
-                color="#3182CE"
-                textDecoration="underline"
-                onClick={onBack}
-              >
-                Go back
-              </Link>
-            </Text>
           </Flex>
         </Flex>
 
@@ -455,8 +341,8 @@ const Field = ({
   icon,
   children,
 }: {
-  label: string;
-  icon: React.ReactNode;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <Box>
