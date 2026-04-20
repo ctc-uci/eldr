@@ -44,11 +44,11 @@ export const Navbar = () => {
           <Text>Event Catalog</Text>
         </Link>
 
-        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP*/}
+        {/* TODO: wire Avatar.Image to the volunteer's real profile photo */}
         <Link href="/volunteer-profile">
           <Avatar.Root size="md">
             <Avatar.Fallback name="User" />
-            <Avatar.Image src="/volunteer.jpg" />
+            <Avatar.Image src="" />
           </Avatar.Root>
         </Link>
       </HStack>
