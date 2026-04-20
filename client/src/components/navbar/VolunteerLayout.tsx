@@ -16,7 +16,8 @@ export const VolunteerLayout = () => {
       <Navbar />
       <Box
         flex="1"
-        overflow="hidden"
+        minH={0}
+        overflowY="auto"
       >
         <Outlet />
       </Box>
