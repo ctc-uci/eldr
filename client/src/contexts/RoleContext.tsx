@@ -1,7 +1,5 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 
-import { Spinner } from "@chakra-ui/react";
-
 import type { User as DbUser, User } from "../types/user";
 import { auth } from "../utils/auth/firebase";
 import { useBackendContext } from "./hooks/useBackendContext";
@@ -45,9 +43,11 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, [backend]);
 
+  // Always render children so <Router> stays mounted during role refetch after
+  // auth changes (e.g. volunteer signup). ProtectedRoute gates on `loading`.
   return (
     <RoleContext.Provider value={{ role, loading }}>
-      {loading ? <Spinner /> : children}
+      {children}
     </RoleContext.Provider>
   );
 };
