@@ -31,7 +31,7 @@ export const Navbar = () => {
       {/* Right side nav items */}
       <HStack gap="32px">
         <Link
-          href="/event-catalog"
+          href="/event-catalog/all-events"
           display={{ base: "none", md: "flex" }}
           alignItems="center"
           gap="8px"

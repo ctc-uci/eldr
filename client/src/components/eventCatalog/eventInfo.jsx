@@ -79,7 +79,7 @@ export const EventInfo = ({
         gap={6}
         textAlign="center"
       >
-        {activeTab === "all" ? (
+        {activeTab === "catalog" ? (
           <Text
             fontSize="lg"
             color="gray.500"
@@ -200,7 +200,7 @@ export const EventInfo = ({
           {event.name}
         </Text>
 
-        {activeTab === "all" && (
+        {activeTab === "catalog" && (
           <Box position="relative">
             <Box
               position="absolute"

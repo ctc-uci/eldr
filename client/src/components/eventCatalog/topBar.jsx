@@ -66,7 +66,7 @@ export const TopBar = ({
             h="auto"
           >
             <Tabs.Trigger
-              value="all"
+              value="catalog"
               flex="1"
               gap="8px"
               fontWeight={500}
