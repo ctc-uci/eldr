@@ -1,6 +1,6 @@
 import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
-import { formatClinicLocationList } from "./clinicLocationFormat";
+import { formatClinicLocationList, formatLocationTypeTag } from "./clinicLocationFormat";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
   return (
@@ -102,9 +102,11 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               {[
                 event.type,
                 ...event.tags,
-                event.locationType,
+                formatLocationTypeTag(event.locationType),
                 ...event.languages,
-              ].map((item, i) => (
+              ]
+                .filter(Boolean)
+                .map((item, i) => (
                 <Badge
                   key={i}
                   variant="solid"

@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { LuCalendarDays } from "react-icons/lu";
 
-import { getClinicLocationDisplay } from "./clinicLocationFormat";
+import { formatLocationTypeTag, getClinicLocationDisplay } from "./clinicLocationFormat";
 import RegStatus from "./regStatus";
 
 export const EventInfo = ({
@@ -156,6 +156,7 @@ export const EventInfo = ({
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
+  const locationTypeTag = formatLocationTypeTag(locationType);
 
   const isUpcoming = event.startTime
     ? new Date(event.startTime) >= new Date()
@@ -329,9 +330,11 @@ export const EventInfo = ({
         {[
           event.type,
           ...event.tags,
-          event.locationType,
+          locationTypeTag,
           ...event.languages,
-        ].map((item, i) => (
+        ]
+          .filter(Boolean)
+          .map((item, i) => (
           <Badge
             key={i}
             variant="solid"

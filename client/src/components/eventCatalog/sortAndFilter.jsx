@@ -134,7 +134,7 @@ export const SortAndFilter = ({
           options: [
             { id: "hybrid", text: "Hybrid" },
             { id: "in-person", text: "In-person" },
-            { id: "virtual", text: "Virtual" },
+            { id: "online", text: "Online" },
           ],
         },
         {
