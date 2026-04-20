@@ -369,6 +369,8 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
     }
  
     if (selectedLanguageNames.length === 0) {
+      localStorage.setItem("volunteerSelectedLanguages", JSON.stringify([]));
+      localStorage.setItem("volunteerLiterateLanguages", JSON.stringify([]));
       onLanguagesSelected?.([]);
       onNext();
       return;
@@ -393,6 +395,14 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
     setIsSubmitting(true);
     try {
       await backend.post(`/volunteers/${effectiveVolunteerId}/languages`, payload);
+      localStorage.setItem(
+        "volunteerSelectedLanguages",
+        JSON.stringify(selectedLanguageNames)
+      );
+      localStorage.setItem(
+        "volunteerLiterateLanguages",
+        JSON.stringify(literateLanguageNames)
+      );
       onLanguagesSelected?.(selectedLanguageNames);
       onNext();
     } catch (e: unknown) {

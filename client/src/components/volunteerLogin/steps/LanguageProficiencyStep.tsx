@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
  
 import {
   Box,
@@ -21,14 +21,27 @@ type Props = {
   selectedLanguages?: string[];
 };
  
-type Proficiency = "Professional" | "Fluent" | "Conversational";
+type Proficiency = "proficient" | "professional" | "native/fluent";
  
 const PROFICIENCY_OPTIONS: Proficiency[] = [
-  "Professional",
-  "Fluent",
-  "Conversational",
+  "proficient",
+  "professional",
+  "native/fluent",
 ];
  
+type LanguageRow = { id: number; language: string };
+
+const proficiencyLabel = (p: Proficiency) => {
+  switch (p) {
+    case "proficient":
+      return "Proficient";
+    case "professional":
+      return "Professional";
+    case "native/fluent":
+      return "Native/Fluent";
+  }
+};
+
 const ProficiencyDropdown = ({
   value,
   onChange,
@@ -81,7 +94,7 @@ const ProficiencyDropdown = ({
         tabIndex={0}
       >
         <Text fontSize="14px" color="black">
-          {value}
+          {proficiencyLabel(value)}
         </Text>
         <LuChevronDown
           size={16}
@@ -122,7 +135,7 @@ const ProficiencyDropdown = ({
               }}
             >
               <Text fontSize="14px" color="black">
-                {opt}
+                {proficiencyLabel(opt)}
               </Text>
             </Flex>
           ))}
@@ -139,20 +152,50 @@ const LanguageProficiencyStep = ({
 }: Props) => {
   const { backend } = useBackendContext();
  
+  const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
+
   const [proficiencies, setProficiencies] = useState<Record<string, Proficiency>>(
-    () => Object.fromEntries(selectedLanguages.map((lang) => [lang, "Professional"]))
+    () => Object.fromEntries(selectedLanguages.map((lang) => [lang, "proficient"]))
   );
  
   useEffect(() => {
     setProficiencies((prev) => {
       const next: Record<string, Proficiency> = {};
       for (const lang of selectedLanguages) {
-        next[lang] = prev[lang] ?? "Professional";
+        next[lang] = prev[lang] ?? "proficient";
       }
       return next;
     });
   }, [selectedLanguages]);
  
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const resp = await backend.get("/languages");
+        const rows: unknown[] = Array.isArray(resp?.data) ? resp.data : [];
+        const parsed: LanguageRow[] = rows
+          .map((r) => {
+            const row = r as { id?: unknown; language?: unknown };
+            return {
+              id: Number(row.id),
+              language: String(row.language ?? "").trim(),
+            };
+          })
+          .filter((r) => r.id && r.language);
+        setAllLanguages(parsed);
+      } finally {
+      }
+    };
+
+    run();
+  }, [backend]);
+
+  const nameToId = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const row of allLanguages) m.set(row.language, row.id);
+    return m;
+  }, [allLanguages]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
  
@@ -172,28 +215,44 @@ const LanguageProficiencyStep = ({
       return;
     }
  
+    const literateListRaw = localStorage.getItem("volunteerLiterateLanguages");
+    const literateNames: string[] = (() => {
+      try {
+        const parsed = JSON.parse(literateListRaw ?? "[]");
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        return [];
+      }
+    })();
+
     const payload = {
-      languages: selectedLanguages.map((lang) => ({
-        language: lang,
-        proficiency: proficiencies[lang] ?? "Professional",
-      })),
+      languages: selectedLanguages
+        .map((lang) => {
+          const languageId = nameToId.get(lang);
+          if (!languageId) return null;
+          return {
+            languageId,
+            proficiency: (proficiencies[lang] ?? "proficient") as Proficiency,
+            isLiterate: literateNames.includes(lang),
+          };
+        })
+        .filter(Boolean),
     };
+
+    if (!payload.languages.length) {
+      onNext();
+      return;
+    }
  
     setIsSubmitting(true);
     try {
-      await backend.post(`/volunteers/${effectiveVolunteerId}/language-proficiency`, payload);
+      await backend.post(`/volunteers/${effectiveVolunteerId}/languages`, payload);
       onNext();
     } catch (e: unknown) {
       const err = e as {
         response?: { status?: number; data?: { message?: string } | string };
         message?: string;
       };
-
-      // Backend route doesn't exist yet — just continue flow
-      if (err?.response?.status === 404) {
-        onNext();
-        return;
-      }
 
       const msg =
         (typeof err?.response?.data === "object"
@@ -314,7 +373,7 @@ const LanguageProficiencyStep = ({
                     {/* Proficiency dropdown (50%) */}
                     <Box w="50%">
                         <ProficiencyDropdown
-                        value={proficiencies[lang] ?? "Professional"}
+                        value={proficiencies[lang] ?? "proficient"}
                         onChange={(val) =>
                             setProficiencies((prev) => ({
                             ...prev,
