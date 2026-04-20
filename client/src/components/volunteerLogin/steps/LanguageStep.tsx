@@ -26,6 +26,18 @@ type LanguageRow = {
   language: string;
 };
  
+const getErrorMessage = (e: unknown, fallback: string) => {
+  const err = e as {
+    response?: { data?: { message?: string } | string };
+    message?: string;
+  };
+  const msg =
+    (typeof err?.response?.data === "object" ? err.response?.data?.message : undefined) ||
+    (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
+    err?.message;
+  return typeof msg === "string" && msg.trim() ? msg : fallback;
+};
+
 const LanguageMultiSelect = ({
   label,
   items,
@@ -48,8 +60,6 @@ const LanguageMultiSelect = ({
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
- 
-  const [isFocused, setIsFocused] = useState(false);
 
   const filtered = items.filter((l) =>
     l.toLowerCase().includes(search.toLowerCase())
@@ -189,10 +199,8 @@ const LanguageMultiSelect = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => {
-            setIsFocused(true);
             handleFocus();
           }}
-          onBlur={() => setIsFocused(false)}
           placeholder={
             selected.length === 0
               ? (placeholder ?? "Search for languages")
@@ -307,21 +315,19 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
       setIsLoading(true);
       try {
         const resp = await backend.get("/languages");
-        const rows = (resp?.data ?? []) as any[];
+        const rows: unknown[] = Array.isArray(resp?.data) ? resp.data : [];
         const parsed: LanguageRow[] = rows
-          .map((r) => ({
-            id: Number(r.id),
-            language: String(r.language ?? "").trim(),
-          }))
+          .map((r) => {
+            const row = r as { id?: unknown; language?: unknown };
+            return {
+              id: Number(row.id),
+              language: String(row.language ?? "").trim(),
+            };
+          })
           .filter((r) => r.id && r.language);
         setAllLanguages(parsed);
-      } catch (e: any) {
-        const msg =
-          e?.response?.data?.message ||
-          e?.response?.data ||
-          e?.message ||
-          "Failed to load languages.";
-        setErrorMsg(typeof msg === "string" ? msg : "Failed to load languages.");
+      } catch (e: unknown) {
+        setErrorMsg(getErrorMessage(e, "Failed to load languages."));
       } finally {
         setIsLoading(false);
       }
@@ -340,6 +346,19 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
       a.localeCompare(b)
     );
   }, [allLanguages]);
+
+  // "Literate in" must be a subset of the selected languages
+  const literateOptions = useMemo(
+    () => selectedLanguageNames,
+    [selectedLanguageNames]
+  );
+
+  // If selected languages change, keep literate selections valid.
+  useEffect(() => {
+    setLiterateLanguageNames((prev) =>
+      prev.filter((n) => selectedLanguageNames.includes(n))
+    );
+  }, [selectedLanguageNames]);
  
   const handleContinue = async () => {
     setErrorMsg(null);
@@ -376,13 +395,8 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
       await backend.post(`/volunteers/${effectiveVolunteerId}/languages`, payload);
       onLanguagesSelected?.(selectedLanguageNames);
       onNext();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
-        "Failed to save languages.";
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save languages.");
+    } catch (e: unknown) {
+      setErrorMsg(getErrorMessage(e, "Failed to save languages."));
     } finally {
       setIsSubmitting(false);
     }
@@ -479,7 +493,7 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
                   </span>
                 </span>
               }
-              items={allLanguageNames}
+              items={literateOptions}
               selected={literateLanguageNames}
               onChange={setLiterateLanguageNames}
               disabled={isLoading}

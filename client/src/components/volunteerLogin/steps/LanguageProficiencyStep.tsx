@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
  
 import {
   Box,
@@ -37,9 +37,30 @@ const ProficiencyDropdown = ({
   onChange: (val: Proficiency) => void;
 }) => {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e: MouseEvent | PointerEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
  
   return (
-    <Box position="relative">
+    <Box position="relative" ref={containerRef}>
       <Flex
         align="center"
         justify="space-between"
@@ -54,6 +75,10 @@ const ProficiencyDropdown = ({
         gap="10px"
         minW="180px"
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
+        tabIndex={0}
       >
         <Text fontSize="14px" color="black">
           {value}
@@ -158,19 +183,27 @@ const LanguageProficiencyStep = ({
     try {
       await backend.post(`/volunteers/${effectiveVolunteerId}/language-proficiency`, payload);
       onNext();
-    } catch (e: any) {
-        // Backend route doesn't exist yet — just continue flow
-        if (e?.response?.status === 404) {
-          onNext();
-          return;
-        }
-      
-        const msg =
-          e?.response?.data?.message ||
-          e?.message ||
-          "Failed to save proficiency.";
-      
-        setErrorMsg(typeof msg === "string" ? msg : "Failed to save proficiency.");
+    } catch (e: unknown) {
+      const err = e as {
+        response?: { status?: number; data?: { message?: string } | string };
+        message?: string;
+      };
+
+      // Backend route doesn't exist yet — just continue flow
+      if (err?.response?.status === 404) {
+        onNext();
+        return;
+      }
+
+      const msg =
+        (typeof err?.response?.data === "object"
+          ? err.response?.data?.message
+          : undefined) ||
+        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
+        err?.message ||
+        "Failed to save proficiency.";
+
+      setErrorMsg(typeof msg === "string" ? msg : "Failed to save proficiency.");
     } finally {
       setIsSubmitting(false);
     }
