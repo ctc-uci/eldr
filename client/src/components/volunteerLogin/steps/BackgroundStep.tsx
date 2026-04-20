@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 
 import { LuArrowRight } from "react-icons/lu";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import LoginLayout from "./BackgroundLayout";
 
@@ -19,10 +20,14 @@ type Props = {
 };
 
 const BackgroundStep = ({ onNext }: Props) => {
+  const { backend } = useBackendContext();
   const [gradYear, setGradYear] = useState("");
   const [gradError, setGradError] = useState(false);
+  const [employer, setEmployer] = useState("");
+  const [employerError, setEmployerError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const isValidYear = /^\d{4}$/.test(gradYear);
   
     if (!isValidYear) {
@@ -30,9 +35,32 @@ const BackgroundStep = ({ onNext }: Props) => {
       setGradYear("");
       return;
     }
+
+    if (!employer.trim()) {
+      setEmployerError(true);
+      return;
+    }
   
     setGradError(false);
-    onNext();
+    setEmployerError(false);
+
+    const effectiveVolunteerId = Number(localStorage.getItem("volunteerId") || 0);
+    if (!effectiveVolunteerId) {
+      // nothing to persist yet; keep flow moving
+      onNext();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await backend.put(`/volunteers/${effectiveVolunteerId}`, {
+        law_school_year: gradYear.trim(),
+        affiliated_employer: employer.trim(),
+      });
+      onNext();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -148,12 +176,22 @@ const BackgroundStep = ({ onNext }: Props) => {
               </Text>
               <Input
                 placeholder="Enter your company name"
-                borderColor="#E4E4E7"
+                value={employer}
+                onChange={(e) => {
+                  setEmployer(e.target.value);
+                  if (employerError) setEmployerError(false);
+                }}
+                borderColor={employerError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 fontSize="14px"
                 h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
+              {employerError && (
+                <Text fontSize="12px" color="red.500" mt="6px">
+                  Employer is required.
+                </Text>
+              )}
             </Box>
 
             <Button
@@ -176,6 +214,7 @@ const BackgroundStep = ({ onNext }: Props) => {
               w="100%"
               px="20px"
               onClick={handleSubmit}
+              loading={isSubmitting}
             >
               <Box w="100%" textAlign="center">
                 Create Account

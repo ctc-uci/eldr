@@ -18,6 +18,10 @@ volunteersRouter.post("/", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     if (!email) {
@@ -83,9 +87,13 @@ volunteersRouter.post("/", async (req, res) => {
           form_link,
           is_signed_confidentiality,
           is_attorney,
-          is_notary
+          is_notary,
+          affiliated_employer,
+          law_school_year,
+          state_bar_certificate,
+          state_bar_number
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING *;
       `,
       [
@@ -99,6 +107,10 @@ volunteersRouter.post("/", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer,
+        law_school_year,
+        state_bar_certificate,
+        state_bar_number,
       ]
     );
 
@@ -158,6 +170,10 @@ volunteersRouter.put("/:id", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     await db.query(
@@ -171,7 +187,11 @@ volunteersRouter.put("/:id", async (req, res) => {
             form_link = COALESCE($7, form_link),
             is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
             is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary)
+            is_notary = COALESCE($10, is_notary),
+            affiliated_employer = COALESCE($11, affiliated_employer),
+            law_school_year = COALESCE($12, law_school_year),
+            state_bar_certificate = COALESCE($13, state_bar_certificate),
+            state_bar_number = COALESCE($14, state_bar_number)
         WHERE id = $1;
       `,
       [
@@ -185,6 +205,10 @@ volunteersRouter.put("/:id", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer,
+        law_school_year,
+        state_bar_certificate,
+        state_bar_number,
       ]
     );
 
