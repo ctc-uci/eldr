@@ -5,31 +5,37 @@ import {
   Heading,
   Input,
   Progress,
-  Text
+  Text,
 } from "@chakra-ui/react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { LuArrowRight } from "react-icons/lu";
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
-  onNext: () => void;
+  onComplete: () => Promise<void>;
+  isSubmitting: boolean;
 };
 
-const BackgroundStep = ({ onNext }: Props) => {
-  const { backend } = useBackendContext();
+const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
   const [gradYear, setGradYear] = useState("");
   const [gradError, setGradError] = useState(false);
   const [employer, setEmployer] = useState("");
   const [employerError, setEmployerError] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    const d = loadDraft();
+    if (d) {
+      setGradYear(d.lawSchoolYear);
+      setEmployer(d.affiliatedEmployer);
+    }
+  }, []);
 
   const handleSubmit = async () => {
     const isValidYear = /^\d{4}$/.test(gradYear);
-  
+
     if (!isValidYear) {
       setGradError(true);
       setGradYear("");
@@ -40,27 +46,16 @@ const BackgroundStep = ({ onNext }: Props) => {
       setEmployerError(true);
       return;
     }
-  
+
     setGradError(false);
     setEmployerError(false);
 
-    const effectiveVolunteerId = Number(localStorage.getItem("volunteerId") || 0);
-    if (!effectiveVolunteerId) {
-      // nothing to persist yet; keep flow moving
-      onNext();
-      return;
-    }
+    saveDraft({
+      lawSchoolYear: gradYear.trim(),
+      affiliatedEmployer: employer.trim(),
+    });
 
-    setIsSubmitting(true);
-    try {
-      await backend.put(`/volunteers/${effectiveVolunteerId}`, {
-        law_school_year: gradYear.trim(),
-        affiliated_employer: employer.trim(),
-      });
-      onNext();
-    } finally {
-      setIsSubmitting(false);
-    }
+    await onComplete();
   };
 
   return (
@@ -84,8 +79,7 @@ const BackgroundStep = ({ onNext }: Props) => {
           align="center"
           px="2%"
           py="1%"
-        >
-        </Flex>
+        />
 
         <Flex
           flex="1"
@@ -119,7 +113,6 @@ const BackgroundStep = ({ onNext }: Props) => {
                 Fill out the following information.
               </Text>
             </Box>
-
           </Flex>
 
           <Flex
@@ -159,7 +152,11 @@ const BackgroundStep = ({ onNext }: Props) => {
                 focusRingColor="gray.200"
               />
               {gradError && (
-                <Text fontSize="12px" color="red.500" mt="6px">
+                <Text
+                  fontSize="12px"
+                  color="red.500"
+                  mt="6px"
+                >
                   Invalid Graduation Year. Please ensure it is in XXXX format.
                 </Text>
               )}
@@ -188,7 +185,11 @@ const BackgroundStep = ({ onNext }: Props) => {
                 focusRingColor="gray.200"
               />
               {employerError && (
-                <Text fontSize="12px" color="red.500" mt="6px">
+                <Text
+                  fontSize="12px"
+                  color="red.500"
+                  mt="6px"
+                >
                   Employer is required.
                 </Text>
               )}
@@ -204,9 +205,9 @@ const BackgroundStep = ({ onNext }: Props) => {
               fontWeight={500}
               _active={{ bg: "black", color: "white" }}
               _hover={{
-                bg: "#F4F4F5", 
+                bg: "#F4F4F5",
                 _active: {
-                  bg: "black", 
+                  bg: "black",
                   color: "white",
                 },
               }}
@@ -223,6 +224,7 @@ const BackgroundStep = ({ onNext }: Props) => {
                 <LuArrowRight size={16} />
               </Box>
             </Button>
+
           </Flex>
         </Flex>
 

@@ -11,25 +11,20 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
 };
 
-const RoleStep = ({ onNext, volunteerId }: Props) => {
-  const { backend } = useBackendContext();
-
-  const [selected, setSelected] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const RoleStep = ({ onNext }: Props) => {
+  const [selected, setSelected] = useState<string>(
+    () => loadDraft()?.roleLabel ?? ""
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
   const collection = createListCollection({
       items: [
@@ -40,50 +35,17 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
       ],
     })
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
     if (!selected) {
-      // If they skip selection, just move forward (or you can require it)
+      saveDraft({ roleLabel: "" });
       onNext();
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await backend.post(`/volunteers/${effectiveVolunteerId}/role`, selected);
-      onNext();
-    } catch (e: unknown) {
-      const err = e as {
-        response?: { status?: number; data?: { message?: string } | string };
-        message?: string;
-      };
-
-      // Backend route doesn't exist yet — just continue flow
-      if (err?.response?.status === 404) {
-        onNext();
-        return;
-      }
-
-      const msg =
-        (typeof err?.response?.data === "object"
-          ? err.response?.data?.message
-          : undefined) ||
-        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
-        err?.message ||
-        "Failed to save role.";
-
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save role.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({ roleLabel: selected });
+    onNext();
   };
 
   return (
@@ -265,7 +227,6 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
               position="relative"
               px="20px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
               <Box w="100%" textAlign="center">
                 Continue
@@ -274,6 +235,7 @@ const RoleStep = ({ onNext, volunteerId }: Props) => {
                 <LuArrowRight size={16} />
               </Box>
             </Button>
+
           </Flex>
         </Flex>
 

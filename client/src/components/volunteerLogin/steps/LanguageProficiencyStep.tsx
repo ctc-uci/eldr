@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
  
 import {
   Box,
@@ -9,16 +9,13 @@ import {
   Text,
 } from "@chakra-ui/react";
  
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
- 
 import { LuArrowRight, LuChevronDown } from "react-icons/lu";
  
 import LoginLayout from "./BackgroundLayout";
- 
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
-  selectedLanguages?: string[];
 };
  
 type Proficiency = "proficient" | "professional" | "native/fluent";
@@ -29,8 +26,6 @@ const PROFICIENCY_OPTIONS: Proficiency[] = [
   "native/fluent",
 ];
  
-type LanguageRow = { id: number; language: string };
-
 const proficiencyLabel = (p: Proficiency) => {
   switch (p) {
     case "proficient":
@@ -145,17 +140,30 @@ const ProficiencyDropdown = ({
   );
 };
  
-const LanguageProficiencyStep = ({
-  onNext,
-  volunteerId,
-  selectedLanguages = [],
-}: Props) => {
-  const { backend } = useBackendContext();
- 
-  const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
+const LanguageProficiencyStep = ({ onNext }: Props) => {
+  const selectedLanguages = loadDraft()?.selectedLanguageNames ?? [];
 
   const [proficiencies, setProficiencies] = useState<Record<string, Proficiency>>(
-    () => Object.fromEntries(selectedLanguages.map((lang) => [lang, "proficient"]))
+    () => {
+      const draft = loadDraft();
+      const fromDraft = draft?.languageProficiencies as
+        | Record<string, Proficiency>
+        | undefined;
+      if (fromDraft && Object.keys(fromDraft).length > 0) {
+        const next: Record<string, Proficiency> = {};
+        for (const lang of selectedLanguages) {
+          const p = fromDraft[lang];
+          next[lang] =
+            p && PROFICIENCY_OPTIONS.includes(p as Proficiency)
+              ? (p as Proficiency)
+              : "proficient";
+        }
+        return next;
+      }
+      return Object.fromEntries(
+        selectedLanguages.map((lang) => [lang, "proficient" as Proficiency])
+      );
+    }
   );
  
   useEffect(() => {
@@ -168,104 +176,29 @@ const LanguageProficiencyStep = ({
     });
   }, [selectedLanguages]);
  
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const resp = await backend.get("/languages");
-        const rows: unknown[] = Array.isArray(resp?.data) ? resp.data : [];
-        const parsed: LanguageRow[] = rows
-          .map((r) => {
-            const row = r as { id?: unknown; language?: unknown };
-            return {
-              id: Number(row.id),
-              language: String(row.language ?? "").trim(),
-            };
-          })
-          .filter((r) => r.id && r.language);
-        setAllLanguages(parsed);
-      } finally {
-      }
-    };
-
-    run();
-  }, [backend]);
-
-  const nameToId = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const row of allLanguages) m.set(row.language, row.id);
-    return m;
-  }, [allLanguages]);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
- 
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
- 
-  const handleContinue = async () => {
+
+  const handleContinue = () => {
     setErrorMsg(null);
- 
-    if (!effectiveVolunteerId) {
-      setErrorMsg("Missing volunteer id. Please go back and create your account again.");
-      return;
-    }
- 
+
     if (selectedLanguages.length === 0) {
       onNext();
       return;
     }
- 
-    const literateListRaw = localStorage.getItem("volunteerLiterateLanguages");
-    const literateNames: string[] = (() => {
-      try {
-        const parsed = JSON.parse(literateListRaw ?? "[]");
-        return Array.isArray(parsed) ? parsed.map(String) : [];
-      } catch {
-        return [];
-      }
-    })();
 
-    const payload = {
-      languages: selectedLanguages
-        .map((lang) => {
-          const languageId = nameToId.get(lang);
-          if (!languageId) return null;
-          return {
-            languageId,
-            proficiency: (proficiencies[lang] ?? "proficient") as Proficiency,
-            isLiterate: literateNames.includes(lang),
-          };
-        })
-        .filter(Boolean),
-    };
+    const draft = loadDraft();
+    const literateNames = draft?.literateLanguageNames ?? [];
 
-    if (!payload.languages.length) {
-      onNext();
-      return;
+    const profMap: Record<string, string> = {};
+    for (const lang of selectedLanguages) {
+      profMap[lang] = proficiencies[lang] ?? "proficient";
     }
- 
-    setIsSubmitting(true);
-    try {
-      await backend.post(`/volunteers/${effectiveVolunteerId}/languages`, payload);
-      onNext();
-    } catch (e: unknown) {
-      const err = e as {
-        response?: { status?: number; data?: { message?: string } | string };
-        message?: string;
-      };
 
-      const msg =
-        (typeof err?.response?.data === "object"
-          ? err.response?.data?.message
-          : undefined) ||
-        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
-        err?.message ||
-        "Failed to save proficiency.";
-
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save proficiency.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({
+      languageProficiencies: profMap,
+      literateLanguageNames: literateNames,
+    });
+    onNext();
   };
  
   return (
@@ -404,7 +337,6 @@ const LanguageProficiencyStep = ({
                 w="100%"
                 px="20px"
                 onClick={handleContinue}
-                loading={isSubmitting}
             >
                 <Box w="100%" textAlign="center">
                 Continue
@@ -413,6 +345,7 @@ const LanguageProficiencyStep = ({
                 <LuArrowRight size={16} />
                 </Box>
             </Button>
+
             </Flex>
         </Flex>
  

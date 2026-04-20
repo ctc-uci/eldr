@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
@@ -10,42 +10,42 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import { useAuthContext } from "@/contexts/hooks/useAuthContext";
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-
 import {
   LuArrowRight,
-  LuMail,
-  LuUser,
-  LuExternalLink
+  LuExternalLink,
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
-  onNext: (volunteerId: number) => void;
-  onBack: () => void;
+  onNext: () => void;
 };
 
-const CreateAccountStep = ({ onNext, onBack }: Props) => {
-  const { backend } = useBackendContext();
-  const { signup } = useAuthContext();
-
+const CreateAccountStep = ({ onNext }: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
 
+  useEffect(() => {
+    localStorage.removeItem("volunteerId");
+    const d = loadDraft();
+    if (d) {
+      setFirstName(d.firstName);
+      setLastName(d.lastName);
+      setEmail(d.email);
+    }
+  }, []);
+
   const isValidEmail = (value: string) => {
-    // simple check, good enough for UI validation
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
     if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
@@ -58,72 +58,12 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       return;
     }
 
-    setIsSubmitting(true);
-    let createdFirebaseUid: string | null = null;
-    try {
-      const userCredential = await signup({
-        email: normalizedEmail,
-        password: "placeholder",
-      });
-      createdFirebaseUid = userCredential.user.uid;
-
-      const resp = await backend.post("/volunteers", {
-        firebaseUid: createdFirebaseUid,
-
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email: normalizedEmail,
-
-        phone_number: null,
-        form_completed: false,
-        form_link: null,
-
-        is_signed_confidentiality: new Date().toISOString(),
-        is_attorney: false, // ignoring
-        is_notary: false, // updated later in NotaryStep
-      });
-
-      const volunteerId = resp?.data?.id;
-      if (!volunteerId) {
-        throw new Error("Volunteer created but no id returned.");
-      }
-
-      localStorage.setItem("volunteerId", String(volunteerId));
-      onNext(volunteerId);
-    } catch (e: unknown) {
-      if (createdFirebaseUid) {
-        try {
-          // Roll back just-created Firebase/DB user if volunteer creation fails.
-          await backend.delete(`/users/${createdFirebaseUid}`);
-        } catch {
-          // No-op: keep original error for user feedback.
-        }
-      }
-
-      const err = e as {
-        response?: { data?: { message?: string } | string };
-        code?: string;
-        message?: string;
-      };
-      if (err.code === "auth/email-already-in-use") {
-        setErrorMsg("An account with this email already exists. Please log in.");
-        return;
-      }
-      if (err.code === "auth/invalid-email") {
-        setErrorMsg("Please enter a valid email address.");
-        return;
-      }
-
-
-      const msg =
-        (typeof err.response?.data === "object" ? err.response?.data?.message : undefined) ||
-        err.response?.data ||
-        err.message ||
-        "Failed to create account.";
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to create account.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: normalizedEmail,
+    });
+    onNext();
   };
 
   return (
@@ -139,7 +79,6 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        {/* Top bar */}
         <Flex
           w="100%"
           h="70px"
@@ -148,8 +87,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           align="center"
           px="2%"
           py="1%"
-        >
-        </Flex>
+        />
 
         <Flex
           flex="1"
@@ -166,7 +104,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box maxW="450px">  
+            <Box maxW="450px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
@@ -180,21 +118,19 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 fontSize={{ base: "14px", md: "16px", lg: "24px" }}
                 color="black"
               >
-                Fill out the following information to start
-                your account creation process {" "}
-
+                Fill out the following information to start your account creation
+                process{" "}
                 <Link
-                href="https://eldrcenter.org/"
-                display="inline-flex"
-                alignItems="center"
-              >
-                <LuExternalLink size={20} color="#2563EB"/>
-              </Link>
+                  href="https://eldrcenter.org/"
+                  display="inline-flex"
+                  alignItems="center"
+                >
+                  <LuExternalLink size={20} color="#2563EB" />
+                </Link>
               </Text>
             </Box>
           </Flex>
 
-          {/* Right side */}
           <Flex
             direction="column"
             justify="center"
@@ -224,7 +160,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Box>
             )}
 
-            <Box w="30vw" minW="320px" maxW="460px">
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
               <Field
                 label={
                   <>
@@ -247,7 +187,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Field>
             </Box>
 
-            <Box w="30vw" minW="320px" maxW="460px">
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
               <Field
                 label={
                   <>
@@ -270,7 +214,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               </Field>
             </Box>
 
-            <Box w="30vw" minW="320px" maxW="460px">
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
               <Field
                 label={
                   <>
@@ -307,9 +255,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               fontWeight={600}
               _active={{ bg: "black", color: "white" }}
               _hover={{
-                bg: "#F4F4F5", 
+                bg: "#F4F4F5",
                 _active: {
-                  bg: "black", 
+                  bg: "black",
                   color: "white",
                 },
               }}
@@ -317,11 +265,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               px="20px"
               mt="4px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
               Continue
               <LuArrowRight size={16} />
             </Button>
+
           </Flex>
         </Flex>
 

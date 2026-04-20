@@ -33,8 +33,7 @@ import {
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
-  onNext: () => void;
-  onBack: () => void;
+  onNavigateToCreateAccount: () => void;
 };
 
 type VolunteerLookupRow = {
@@ -45,7 +44,7 @@ type VolunteerLookupRow = {
   email?: string;
 };
 
-const LoginStep = ({ onNext }: Props) => {
+const LoginStep = ({ onNavigateToCreateAccount }: Props) => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
   const { handleRedirectResult } = useAuthContext();
@@ -486,7 +485,10 @@ const LoginStep = ({ onNext }: Props) => {
                 href="#"
                 color="#3182CE"
                 textDecoration="underline"
-                onClick={onNext}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigateToCreateAccount();
+                }}
               >
                 Create an account
               </Link>

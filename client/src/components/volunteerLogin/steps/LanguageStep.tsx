@@ -14,11 +14,10 @@ import {
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuArrowRight, LuSearch, LuX } from "react-icons/lu";
 import LoginLayout from "./BackgroundLayout";
- 
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
-  onLanguagesSelected?: (languages: string[]) => void;
 };
  
 type LanguageRow = {
@@ -295,19 +294,19 @@ const LanguageMultiSelect = ({
   );
 };
  
-const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
+const LanguageStep = ({ onNext }: Props) => {
   const { backend } = useBackendContext();
- 
+
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
-  const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>([]);
-  const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>([]);
- 
+  const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
+    () => loadDraft()?.selectedLanguageNames ?? []
+  );
+  const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
+    () => loadDraft()?.literateLanguageNames ?? []
+  );
+
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
- 
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
  
   useEffect(() => {
     const fetchLanguages = async () => {
@@ -360,56 +359,40 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
     );
   }, [selectedLanguageNames]);
  
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
- 
-    if (!effectiveVolunteerId) {
-      setErrorMsg("Missing volunteer id. Please go back and create your account again.");
-      return;
-    }
- 
+
     if (selectedLanguageNames.length === 0) {
-      localStorage.setItem("volunteerSelectedLanguages", JSON.stringify([]));
-      localStorage.setItem("volunteerLiterateLanguages", JSON.stringify([]));
-      onLanguagesSelected?.([]);
+      saveDraft({
+        selectedLanguageNames: [],
+        literateLanguageNames: [],
+      });
       onNext();
       return;
     }
- 
-    const payload = {
-      languages: selectedLanguageNames
-        .map((name) => {
-          const languageId = nameToId.get(name);
-          if (!languageId) return null;
-          return { languageId, isLiterate: literateLanguageNames.includes(name) };
-        })
-        .filter(Boolean),
-    };
- 
-    if (!payload.languages.length) {
-      onLanguagesSelected?.([]);
+
+    const mapped = selectedLanguageNames
+      .map((name) => {
+        const languageId = nameToId.get(name);
+        if (!languageId) return null;
+        return { languageId, isLiterate: literateLanguageNames.includes(name) };
+      })
+      .filter(Boolean);
+
+    if (!mapped.length) {
+      saveDraft({
+        selectedLanguageNames: [],
+        literateLanguageNames: [],
+      });
       onNext();
       return;
     }
- 
-    setIsSubmitting(true);
-    try {
-      await backend.post(`/volunteers/${effectiveVolunteerId}/languages`, payload);
-      localStorage.setItem(
-        "volunteerSelectedLanguages",
-        JSON.stringify(selectedLanguageNames)
-      );
-      localStorage.setItem(
-        "volunteerLiterateLanguages",
-        JSON.stringify(literateLanguageNames)
-      );
-      onLanguagesSelected?.(selectedLanguageNames);
-      onNext();
-    } catch (e: unknown) {
-      setErrorMsg(getErrorMessage(e, "Failed to save languages."));
-    } finally {
-      setIsSubmitting(false);
-    }
+
+    saveDraft({
+      selectedLanguageNames,
+      literateLanguageNames,
+    });
+    onNext();
   };
  
   return (
@@ -524,13 +507,13 @@ const LanguageStep = ({ onNext, volunteerId, onLanguagesSelected }: Props) => {
               w="100%"
               px="20px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
               <Box w="100%" textAlign="center">Continue</Box>
               <Box position="absolute" right="12px">
                 <LuArrowRight size={16} />
               </Box>
             </Button>
+
           </Flex>
         </Flex>
  

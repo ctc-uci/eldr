@@ -162,6 +162,10 @@ const App = () => {
                   element={<VolunteerLogin />}
                 />
                 <Route
+                  path="/login/volunteer/*"
+                  element={<VolunteerLogin />}
+                />
+                <Route
                   path="/login/staff"
                   element={<AdminLogin />}
                 />

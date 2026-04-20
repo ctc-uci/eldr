@@ -24,11 +24,10 @@ import {
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  onBack: () => void;
-  volunteerId?: number; // pass from CreateAccountStep; fallback to localStorage if missing
 };
 
 type Area = {
@@ -296,18 +295,16 @@ const LawMultiSelect = ({
   );
 };
 
-const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
+const LawInterestStep = ({ onNext }: Props) => {
   const { backend } = useBackendContext();
 
   const [areas, setAreas] = useState<Area[]>([]);
-  const [selectedAreaLabels, setSelectedAreaLabels] = useState<string[]>([]);
+  const [selectedAreaLabels, setSelectedAreaLabels] = useState<string[]>(
+    () => loadDraft()?.selectedAreaLabels ?? []
+  );
 
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
   // Fetch dropdown options from GET /areas-of-practice
   useEffect(() => {
@@ -347,63 +344,11 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
 
   const areaLabels = useMemo(() => areaItems.map((x) => x.label), [areaItems]);
 
-  const labelToId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const item of areaItems) map.set(item.label, item.id);
-    return map;
-  }, [areaItems]);
-
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
-    const uniqueIds = Array.from(
-      new Set(
-        selectedAreaLabels
-          .map((label) => labelToId.get(label))
-          .filter((id): id is number => typeof id === "number" && id > 0)
-      )
-    );
-
-    // If they didn't select anything, just move on
-    if (uniqueIds.length === 0) {
-      onNext();
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // POST each selected area to volunteer areas-of-practice endpoint
-      await Promise.all(
-        uniqueIds.map((areaId) =>
-          backend.post(
-            `/volunteers/${effectiveVolunteerId}/areas-of-practice`,
-            {
-              areaOfPracticeId: areaId,
-            }
-          )
-        )
-      );
-
-      onNext();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
-        "Failed to save areas of practice.";
-      setErrorMsg(
-        typeof msg === "string" ? msg : "Failed to save areas of practice."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({ selectedAreaLabels });
+    onNext();
   };
 
   return (
@@ -551,7 +496,6 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
                 w="100%"
                 px="20px"
                 onClick={handleContinue}
-                loading={isSubmitting}
               >
                 <Box w="100%" textAlign="center">
                 Continue

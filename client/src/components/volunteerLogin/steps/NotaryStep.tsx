@@ -11,27 +11,25 @@ import {
   useListCollection,
 } from "@chakra-ui/react";
 
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
 };
 
 const NOTARY_STATUSES = ["Active Notary", "Non-Active (Not a Notary)"];
 
-const NotaryStep = ({ onNext, volunteerId }: Props) => {
-  const { backend } = useBackendContext();
-
-  const [selected, setSelected] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const NotaryStep = ({ onNext }: Props) => {
+  const [selected, setSelected] = useState<string>(() => {
+    const n = loadDraft()?.isNotary;
+    if (n === true) return "Active Notary";
+    if (n === false) return "Non-Active (Not a Notary)";
+    return "";
+  });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
   const { collection } = useListCollection({
     initialItems: NOTARY_STATUSES,
@@ -41,48 +39,17 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
 
   const isNotary = useMemo(() => selected === "Active Notary", [selected]);
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
     if (!selected) {
-      // If they skip selection, just move forward (or you can require it)
+      saveDraft({ isNotary: null });
       onNext();
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // Update volunteer record. (Your volunteersRouter uses PUT /volunteers/:id)
-      await backend.put(`/volunteers/${effectiveVolunteerId}`, {
-        is_notary: isNotary,
-      });
-
-      onNext();
-    } catch (e: unknown) {
-      const err = e as {
-        response?: { data?: { message?: string } | string };
-        message?: string;
-      };
-
-      const msg =
-        (typeof err?.response?.data === "object"
-          ? err.response?.data?.message
-          : undefined) ||
-        (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
-        err?.message ||
-        "Failed to save notary status.";
-
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save notary status.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({ isNotary: isNotary });
+    onNext();
   };
 
   return (
@@ -272,7 +239,6 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               position="relative"
               px="20px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
               <Box w="100%" textAlign="center">
                 Continue
@@ -281,6 +247,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
                 <LuArrowRight size={16} />
               </Box>
             </Button>
+
           </Flex>
         </Flex>
 
