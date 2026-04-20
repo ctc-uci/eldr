@@ -6,6 +6,7 @@ import { AxiosInstance } from "axios";
 import {
   createUserWithEmailAndPassword,
   getRedirectResult,
+  onIdTokenChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -14,6 +15,7 @@ import {
 } from "firebase/auth";
 import { NavigateFunction } from "react-router-dom";
 
+import { cookieKeys, setCookie } from "../utils/auth/cookie";
 import { auth } from "../utils/auth/firebase";
 import { useBackendContext } from "./hooks/useBackendContext";
 
@@ -111,7 +113,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const idToken = await user.getIdToken();
+          setCookie({ key: cookieKeys.ACCESS_TOKEN, value: idToken });
+        } catch (e) {
+          console.error("Could not sync Firebase ID token to cookie:", e);
+        }
+      } else {
+        document.cookie = `${cookieKeys.ACCESS_TOKEN}=; max-age=0; path=/`;
+      }
       setCurrentUser(user);
       setLoading(false);
     });

@@ -127,8 +127,10 @@ const LoginStep = ({ onNavigateToCreateAccount }: Props) => {
       }
   
       await signInWithCustomToken(auth, customToken);
-  
-      navigate("/dashboard");
+
+      // Volunteer portal home (not /dashboard — that hub is for staff/supervisor
+      // routing and falls through to a generic "Guest" dashboard when role is slow).
+      navigate("/event-catalog/all-events", { replace: true });
     } catch (err: unknown) {
       const authError = err as { message?: string };
   
