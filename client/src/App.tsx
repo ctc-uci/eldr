@@ -49,7 +49,8 @@ const DashboardLanding = () => {
   if (!currentUser) return <Navigate to="/login" replace />;
   if (loading) return <Spinner />;
 
-  if (role === "volunteer") return <Navigate to="/event-catalog" replace />;
+  if (role === "volunteer")
+    return <Navigate to="/event-catalog/all-events" replace />;
   if (role === "staff" || role === "supervisor")
     return <Navigate to="/events" replace />;
 
@@ -124,7 +125,10 @@ const App = () => {
 
                 {/* Volunteer shell: catalog + profile */}
                 <Route element={<VolunteerLayout />}>
-                  <Route path="/event-catalog" element={<EventCatalog />} />
+                  <Route
+                    path="/event-catalog/*"
+                    element={<EventCatalog />}
+                  />
                   <Route
                     path="/volunteer-profile"
                     element={

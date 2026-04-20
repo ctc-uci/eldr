@@ -1,5 +1,19 @@
 const safeTrim = (v) =>
-  v == null || v === "" ? "" : String(v).trim();
+  v === null || v === undefined || v === "" ? "" : String(v).trim();
+
+/**
+ * Human-friendly label for location type tags.
+ * @param {string | null | undefined} locationTypeRaw
+ * @returns {string}
+ */
+export function formatLocationTypeTag(locationTypeRaw) {
+  const t = safeTrim(locationTypeRaw).toLowerCase();
+  if (!t) return "";
+  if (t === "online") return "Online";
+  if (t === "hybrid") return "Hybrid";
+  if (t === "in-person" || t === "in person") return "In-Person";
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 
 /**
  * Builds "City, ST 12345" (and partial fallbacks) from clinic fields.

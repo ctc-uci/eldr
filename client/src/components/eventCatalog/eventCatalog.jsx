@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, useBreakpointValue } from "@chakra-ui/react";
 
+import { useLocation, useNavigate } from "react-router-dom";
+
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdChevronLeft } from "react-icons/md";
@@ -9,32 +11,37 @@ import { MdChevronLeft } from "react-icons/md";
 import { EventInfo } from "./eventInfo";
 import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
+import {
+  buildEventCatalogPath,
+  eventCatalogAllEventsPath,
+  getCanonicalEventCatalogPath,
+  parseEventCatalogPath,
+} from "./eventCatalogRoutes";
 import { TopBar } from "./topBar";
 
 export const EventCatalog = () => {
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [showDetails, setShowDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("upcoming");
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [events, setEvents] = useState([]);
   const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
-  /** Search blob for location-ish fields (street address omitted from public catalog) */
-  const getEventLocationSearchText = (event) => {
-    const parts = [
-      event.locationType,
-      event.city,
-      event.state,
-      event.zip,
-      event.meetingLink,
-    ].filter(Boolean);
-    return parts.join(" ").toLowerCase();
-  };
+  const { view: catalogView, eventId: parsedEventId } = parseEventCatalogPath(
+    location.pathname
+  );
+
+  // `/event-catalog` and `/event-catalog/:id` → canonical `/event-catalog/all-events/...`
+  useEffect(() => {
+    const canonical = getCanonicalEventCatalogPath(location.pathname);
+    if (canonical) {
+      navigate(canonical, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   // Shared function to enrich events with languages, areas, registrations, and formatted dates
   const enrichEvents = async (baseEvents, volId) => {
@@ -54,10 +61,11 @@ export const EventCatalog = () => {
 
     return Promise.all(
       baseEvents.map(async (event) => {
-        const [langRes, areaRes, regRes] = await Promise.all([
+        const [langRes, areaRes, regRes, tagsRes] = await Promise.all([
           backend.get(`/clinics/${event.id}/languages`),
           backend.get(`/clinics/${event.id}/areas-of-practice`),
           backend.get(`/clinics/${event.id}/registrations`),
+          backend.get(`/clinics/${event.id}/tags`),
         ]);
 
         const myRegistration = regRes.data.find((reg) => reg.id === volId);
@@ -75,8 +83,9 @@ export const EventCatalog = () => {
 
         return {
           ...event,
-          languages: langRes.data,
-          areas: areaRes.data,
+          languages: langRes.data.map((item) => item.language),
+          areas: areaRes.data.map((item) => item.areasOfPractice),
+          tags: tagsRes.data.map((item) => item.tag),
           displayDate,
           displayTime,
           isRegistered: !!myRegistration,
@@ -105,50 +114,98 @@ export const EventCatalog = () => {
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
 
-  // Filter and sort events
+  // Events filtered by tab/time but NOT search, used for suggestions
+  const tabEvents = useMemo(() => {
+    const now = new Date();
+    let result = events.filter((e) => {
+      if (catalogView === "catalog") {
+        if (!e.endTime) return true;
+        return new Date(e.endTime) > now;
+      }
+      return true; // Show all for 'my' tab
+    });
+
+    if (catalogView === "my") {
+      result = result.filter((e) => e.isRegistered);
+    }
+
+    return result;
+  }, [events, catalogView]);
+
+  // Filter and sort events for the list display
   const filteredEvents = useMemo(() => {
-    let result = [...events];
+    let result = [...tabEvents];
 
     // Apply search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          getEventLocationSearchText(e).includes(q) ||
-          (e.description && e.description.toLowerCase().includes(q)) ||
-          e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
-          e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
-      );
-    }
-
-    // Category filters are applied server-side via /clinics/search when filters are selected;
-    // search + sort run here on the current `events` list.
-
-    // Apply sort
-    if (sortBy === "upcoming") {
-      result.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA - dateB;
-      });
-    } else if (sortBy === "urgency") {
-      result.sort((a, b) => (b.urgency || 0) - (a.urgency || 0));
+      result = result.filter((e) => e.name.toLowerCase().includes(q));
     }
 
     return result;
-  }, [searchQuery, sortBy, events]);
+  }, [searchQuery, tabEvents]);
 
+  const selectedEvent = useMemo(() => {
+    if (!parsedEventId) return null;
+    return (
+      filteredEvents.find((e) => String(e.id) === parsedEventId) ?? null
+    );
+  }, [parsedEventId, filteredEvents]);
+
+  // Keep URL aligned with tab + searchable list (and fill in default event id when missing)
   useEffect(() => {
-    // Only auto-select if we have events and haven't selected one yet
-    if (filteredEvents.length > 0 && !selectedEvent) {
-      setSelectedEvent(filteredEvents[0]);
+    if (!volunteerId || events.length === 0) return;
+
+    const { view, eventId } = parseEventCatalogPath(location.pathname);
+
+    if (eventId) {
+      const existsInEvents = events.some((e) => String(e.id) === eventId);
+      if (!existsInEvents) {
+        const fallback = events[0];
+        navigate(buildEventCatalogPath(view, fallback?.id ?? null), {
+          replace: true,
+        });
+        return;
+      }
     }
-  }, [filteredEvents, selectedEvent]);
+
+    const inFiltered = filteredEvents.some((e) => String(e.id) === eventId);
+
+    if (eventId && !inFiltered) {
+      if (filteredEvents.length > 0) {
+        navigate(buildEventCatalogPath(view, filteredEvents[0].id), {
+          replace: true,
+        });
+      } else {
+        navigate(buildEventCatalogPath(view, null), { replace: true });
+      }
+      return;
+    }
+
+    if (!eventId && filteredEvents.length > 0) {
+      navigate(buildEventCatalogPath(view, filteredEvents[0].id), {
+        replace: true,
+      });
+    }
+  }, [
+    volunteerId,
+    events,
+    filteredEvents,
+    location.pathname,
+    navigate,
+  ]);
 
   const showEventDetails = (event) => {
-    setSelectedEvent(event);
+    navigate(buildEventCatalogPath(catalogView, event.id));
     setShowDetails(true);
+  };
+
+  const handleTabChange = (value) => {
+    if (value === "my") {
+      navigate("/event-catalog/my-events");
+    } else {
+      navigate(eventCatalogAllEventsPath());
+    }
   };
 
   // fetch filtered events when filters change
@@ -164,12 +221,12 @@ export const EventCatalog = () => {
         const locs = [];
 
         selectedFilters.forEach((filter) => {
-          if (filter.id.startsWith('areasOfPracticeId')) {
-            areaIds.push(filter.id.replace('areasOfPracticeId', ''));
-          } else if (filter.id.startsWith('languageId')) {
-            langIds.push(filter.id.replace('languageId', ''));
-          } else if (filter.id.startsWith('roleId')) {
-            roleIds.push(filter.id.replace('roleId', ''));
+          if (filter.id.startsWith("areasOfPracticeId")) {
+            areaIds.push(filter.id.replace("areasOfPracticeId", ""));
+          } else if (filter.id.startsWith("languageId")) {
+            langIds.push(filter.id.replace("languageId", ""));
+          } else if (filter.id.startsWith("roleId")) {
+            roleIds.push(filter.id.replace("roleId", ""));
           } else {
             locs.push(filter.id);
           }
@@ -177,10 +234,11 @@ export const EventCatalog = () => {
 
         // build query params with comma-separated values
         const params = new URLSearchParams();
-        if (areaIds.length > 0) params.set('areaOfPracticeIds', areaIds.join(','));
-        if (langIds.length > 0) params.set('languageIds', langIds.join(','));
-        if (roleIds.length > 0) params.set('roleIds', roleIds.join(','));
-        if (locs.length > 0) params.set('locations', locs.join(','));
+        if (areaIds.length > 0)
+          params.set("areaOfPracticeIds", areaIds.join(","));
+        if (langIds.length > 0) params.set("languageIds", langIds.join(","));
+        if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
+        if (locs.length > 0) params.set("locations", locs.join(","));
 
         const res = await backend.get(`/clinics/search?${params.toString()}`);
         const enrichedEvents = await enrichEvents(res.data, volunteerId);
@@ -194,7 +252,7 @@ export const EventCatalog = () => {
       if (!volunteerId) return;
 
       try {
-        const res = await backend.get('/clinics');
+        const res = await backend.get("/clinics");
         const enrichedEvents = await enrichEvents(res.data, volunteerId);
         setEvents(enrichedEvents);
       } catch (error) {
@@ -216,13 +274,8 @@ export const EventCatalog = () => {
         volunteerId,
       });
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: true } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: true } : e))
       );
-      if (selectedEvent && selectedEvent.id === clinicId) {
-        setSelectedEvent({ ...selectedEvent, isRegistered: true });
-      }
     } catch (error) {
       console.error("Failed to register for event:", error);
       console.error(error.response?.data || error);
@@ -234,13 +287,8 @@ export const EventCatalog = () => {
     try {
       await backend.delete(`/clinics/${clinicId}/registrations/${volunteerId}`);
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: false } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: false } : e))
       );
-      if (selectedEvent && selectedEvent.id === clinicId) {
-        setSelectedEvent({ ...selectedEvent, isRegistered: false });
-      }
     } catch (error) {
       console.error("Failed to unregister from event:", error);
       console.error(error.response?.data || error);
@@ -250,7 +298,11 @@ export const EventCatalog = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex direction="column" flex="1" minH="100vh" overflow="hidden">
+    <Flex
+      direction="column"
+      h="100%"
+      overflow="hidden"
+    >
       <Flex
         flex="1"
         minH={0}
@@ -269,15 +321,14 @@ export const EventCatalog = () => {
         >
           <TopBar
             showDetails={showDetails}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
+            activeTab={catalogView}
+            onTabChange={handleTabChange}
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
+            setSearchQuery={setSearchQuery}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredEvents.length}
+            events={tabEvents}
           />
 
           {/* Event catalog list */}
@@ -285,7 +336,7 @@ export const EventCatalog = () => {
             flex="1"
             overflowY="auto"
           >
-            {activeTab === "all" ? (
+            {catalogView === "catalog" ? (
               <EventsList
                 events={filteredEvents}
                 onSelect={showEventDetails}
@@ -322,7 +373,7 @@ export const EventCatalog = () => {
               gap="2px"
               fontSize="md"
               fontWeight="normal"
-              my={2}
+              mt={2}
             >
               <MdChevronLeft />
               Back
@@ -331,8 +382,10 @@ export const EventCatalog = () => {
 
           <EventInfo
             event={selectedEvent}
+            activeTab={catalogView}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
+            isMobile={isMobile}
           />
         </Flex>
       </Flex>

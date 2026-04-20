@@ -1,15 +1,12 @@
 import { Badge, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 
-import { formatClinicLocationList } from "./clinicLocationFormat";
+import { formatClinicLocationList, formatLocationTypeTag } from "./clinicLocationFormat";
 
 export const EventsList = ({ events, onSelect, selectedEvent }) => {
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
-
   return (
     <VStack
       bg="#FAFAFA"
-      px="16px"
-      py="8px"
+      p="20px"
       minH="100%"
       gap="12px"
       align="stretch"
@@ -25,13 +22,15 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             borderWidth="1px"
             borderStyle="solid"
             borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
-            outline={isSelected ? "1px solid #3B82F6" : "none"}
             borderRadius="8px"
             bg="white"
             textAlign="left"
             px={{ base: "16px", md: "20px" }}
             py="16px"
             _hover={{ bg: "#F9FAFB" }}
+            _focus={{ outline: "none" }}
+            _focusVisible={{ outline: "none" }}
+            boxShadow={isSelected ? "0 0 0 1px #3B82F6" : "none"}
             onClick={() => onSelect(event)}
             transition="all 0.15s ease"
           >
@@ -100,30 +99,24 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
               fontWeight={500}
               gap="10px"
             >
-              {event.languages.map((l, i) => (
+              {[
+                event.type,
+                ...event.tags,
+                formatLocationTypeTag(event.locationType),
+                ...event.languages,
+              ]
+                .filter(Boolean)
+                .map((item, i) => (
                 <Badge
                   key={i}
                   variant="solid"
-                  borderColor="#D1D5DB"
+                  border="1px solid #E4E4E7"
                   color="#27272A"
                   bg="#F4F4F5"
                   px="10px"
                   py="4px"
                 >
-                  {l.language}
-                </Badge>
-              ))}
-              {event.areas.map((a, i) => (
-                <Badge
-                  key={i}
-                  variant="solid"
-                  borderColor="#D1D5DB"
-                  color="#27272A"
-                  bg="#F4F4F5"
-                  px="10px"
-                  py="4px"
-                >
-                  {getAreaLabel(a)}
+                  {item}
                 </Badge>
               ))}
             </HStack>
