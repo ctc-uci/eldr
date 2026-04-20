@@ -1,20 +1,26 @@
-import { InputPopover } from "./InputPopover";
+import { InputDialog } from "./InputPopover";
+import { Save } from "lucide-react";
 
 export const SaveTemplatePopover = ({
   isOpen,
   onOpenChange,
   onAddFolder,
   onTriggerClick,
+  triggerIcon = <Save size={16} />,
+  triggerLabel = "Save",
+  buttonProps = {},
 }) => (
-  <InputPopover
+  <InputDialog
     isOpen={isOpen}
     onOpenChange={onOpenChange}
     onSubmit={onAddFolder}
     onTriggerClick={onTriggerClick}
-    triggerLabel="Save Template"
-    popoverTitle="Indicate a folder to store this template."
+    triggerIcon={triggerIcon}
+    triggerLabel={triggerLabel}
+    buttonProps={buttonProps}
+    dialogTitle="Save Template"
+    inputLabel="Folder Name"
     inputPlaceholder="Enter a folder name"
-    placement="bottom-end"
-    popoverWidth="292px"
+    submitLabel="Save"
   />
 );
