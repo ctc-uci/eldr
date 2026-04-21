@@ -9,6 +9,7 @@ import {
   IconButton,
   Input,
   InputGroup,
+  Spinner,
   Tag,
   Text,
   VStack,
@@ -129,6 +130,7 @@ export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
+  const [isLoadingClinics, setIsLoadingClinics] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -151,31 +153,26 @@ export const EventManagement = () => {
   };
 
   useEffect(() => {
+    let cancelled = false;
     const fetchEvents = async () => {
+      setIsLoadingClinics(true);
       try {
-        const response = await backend.get(`/clinics`);
-        const clinicsData = response.data;
-
-        const clinicsWithLanguages = await Promise.all(
-          clinicsData.map(async (clinic) => {
-            try {
-              const langRes = await backend.get(
-                `/clinics/${clinic.id}/languages`
-              );
-              return { ...clinic, languages: langRes.data };
-            } catch {
-              return { ...clinic, languages: [] };
-            }
-          })
-        );
-
-        setClinics(clinicsWithLanguages);
+        const response = await backend.get(`/clinics/with-languages`);
+        if (!cancelled) {
+          setClinics(Array.isArray(response.data) ? response.data : []);
+        }
       } catch (error) {
         console.log(error);
+        if (!cancelled) setClinics([]);
+      } finally {
+        if (!cancelled) setIsLoadingClinics(false);
       }
     };
 
     fetchEvents();
+    return () => {
+      cancelled = true;
+    };
   }, [backend]);
 
   const { upcomingClinics, pastClinics } = useMemo(() => {
@@ -465,57 +462,70 @@ export const EventManagement = () => {
             align="stretch"
             gap={10}
           >
-            {upcomingClinics.length > 0 && (
-              <VStack
-                align="stretch"
-                gap={4}
+            {isLoadingClinics ? (
+              <Flex
                 w="100%"
+                py={16}
+                justify="center"
+                align="center"
               >
-                <Text
-                  fontSize="lg"
-                  fontWeight="semibold"
-                  color="gray.800"
-                >
-                  Upcoming Events
-                </Text>
-                <VStack
-                  w="100%"
-                  gap={4}
-                >
-                  {upcomingClinics.map((clinic) => renderClinicCard(clinic))}
-                </VStack>
-              </VStack>
-            )}
+                <Spinner size="lg" color="blue.500" />
+              </Flex>
+            ) : (
+              <>
+                {upcomingClinics.length > 0 && (
+                  <VStack
+                    align="stretch"
+                    gap={4}
+                    w="100%"
+                  >
+                    <Text
+                      fontSize="lg"
+                      fontWeight="semibold"
+                      color="gray.800"
+                    >
+                      Upcoming Events
+                    </Text>
+                    <VStack
+                      w="100%"
+                      gap={4}
+                    >
+                      {upcomingClinics.map((clinic) => renderClinicCard(clinic))}
+                    </VStack>
+                  </VStack>
+                )}
 
-            {pastClinics.length > 0 && (
-              <VStack
-                align="stretch"
-                gap={4}
-                w="100%"
-              >
-                <Text
-                  fontSize="lg"
-                  fontWeight="semibold"
-                  color="gray.800"
-                >
-                  Past Events
-                </Text>
-                <VStack
-                  w="100%"
-                  gap={4}
-                >
-                  {pastClinics.map((clinic) => renderClinicCard(clinic))}
-                </VStack>
-              </VStack>
-            )}
+                {pastClinics.length > 0 && (
+                  <VStack
+                    align="stretch"
+                    gap={4}
+                    w="100%"
+                  >
+                    <Text
+                      fontSize="lg"
+                      fontWeight="semibold"
+                      color="gray.800"
+                    >
+                      Past Events
+                    </Text>
+                    <VStack
+                      w="100%"
+                      gap={4}
+                    >
+                      {pastClinics.map((clinic) => renderClinicCard(clinic))}
+                    </VStack>
+                  </VStack>
+                )}
 
-            {clinics.length === 0 && (
-              <Text
-                color="gray.500"
-                fontSize="sm"
-              >
-                No events yet. Create one to get started.
-              </Text>
+                {clinics.length === 0 && (
+                  <Text
+                    color="gray.500"
+                    fontSize="sm"
+                  >
+                    No events yet. Create one to get started.
+                  </Text>
+                )}
+              </>
             )}
           </VStack>
         </VStack>

@@ -154,6 +154,52 @@ clinicsRouter.get("/search", async (req, res) => {
   }
 });
 
+/**
+ * All clinics with nested languages in one round-trip (avoids N+1 GETs per clinic).
+ * Must be registered before `/:id` so "with-languages" is not parsed as an id.
+ */
+clinicsRouter.get("/with-languages", async (req, res) => {
+  try {
+    const rows = await db.query(
+      `SELECT
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', l.id,
+              'language', l.language,
+              'proficiency', wl.proficiency
+            )
+            ORDER BY l.language
+          ) FILTER (WHERE l.id IS NOT NULL),
+          '[]'::json
+        ) AS languages
+      FROM clinics c
+      LEFT JOIN clinic_languages wl ON wl.clinic_id = c.id
+      LEFT JOIN languages l ON l.id = wl.language_id
+      GROUP BY c.id
+      ORDER BY c.date ASC NULLS LAST, c.start_time ASC NULLS LAST`
+    );
+
+    const payload = rows.map((row) => {
+      const { languages, ...clinic } = row;
+      const langs =
+        languages === null || languages === undefined
+          ? []
+          : Array.isArray(languages)
+            ? languages
+            : typeof languages === "string"
+              ? JSON.parse(languages)
+              : languages;
+      return keysToCamel({ ...clinic, languages: langs });
+    });
+
+    res.status(200).json(payload);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // Get a single workshop
 clinicsRouter.get("/:id", async (req, res) => {
   try {
