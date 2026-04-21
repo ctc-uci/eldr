@@ -4,6 +4,21 @@ import { Router } from "express";
 
 export const clinicsRouter = Router();
 
+/**
+ * Keeps `clinics.attendees` equal to the number of rows in `clinic_registration`
+ * for this clinic (source of truth for registration count in the UI).
+ */
+async function syncClinicAttendeesFromRegistrations(clinicId) {
+  await db.query(
+    `UPDATE clinics
+     SET attendees = (
+       SELECT COUNT(*)::int FROM clinic_registration WHERE clinic_id = $1
+     )
+     WHERE id = $1`,
+    [clinicId]
+  );
+}
+
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
 const allowedClinicTypes = [
   "Estate Planning",
@@ -351,6 +366,8 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
       [volunteerId, clinicId]
     );
 
+    await syncClinicAttendeesFromRegistrations(clinicId);
+
     res.status(200).json(keysToCamel(data));
   } catch (err) {
     res.status(500).send(err.message);
@@ -374,6 +391,8 @@ clinicsRouter.delete(
       if (!data.length) {
         return res.status(404).send("Volunteer not found for this clinic");
       }
+
+      await syncClinicAttendeesFromRegistrations(clinicId);
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
