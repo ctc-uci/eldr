@@ -6,6 +6,7 @@ import {
   HStack,
   IconButton,
   Separator,
+  Spinner,
   Tag,
   Text,
   VStack,
@@ -36,6 +37,10 @@ export const CreatedEvent = () => {
   const [eventData, setEventData] = useState(
     location.state?.eventData ?? null
   );
+  const [isLoadingEvent, setIsLoadingEvent] = useState(
+    !location.state?.eventData
+  );
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     if (location.state?.eventData) {
@@ -67,6 +72,8 @@ export const CreatedEvent = () => {
   useEffect(() => {
     if (eventData) return;
     const fetch = async () => {
+      setIsLoadingEvent(true);
+      setLoadError(null);
       try {
         const [clinicRes, langRes] = await Promise.all([
           backend.get(`/clinics/${eventId}`),
@@ -75,22 +82,25 @@ export const CreatedEvent = () => {
         setEventData({ ...clinicRes.data, languages: langRes.data });
       } catch (err) {
         console.error(err);
+        setLoadError("Could not load this event. Please try again.");
+      } finally {
+        setIsLoadingEvent(false);
       }
     };
     fetch();
   }, [backend, eventId, eventData]);
 
   const {
-    name = "This is an upcoming Clinic Event",
+    name,
     date,
     startTime,
     endTime,
-    capacity = 50,
-    minAttendees = 0,
-    attendees = 0,
+    capacity,
+    minAttendees,
+    attendees,
     type,
     locationType,
-    languages = [],
+    languages,
     address,
     city,
     state,
@@ -200,8 +210,38 @@ export const CreatedEvent = () => {
         </Text>
       </HStack>
 
-      {/* Header row */}
-      <Flex
+      {isLoadingEvent && (
+        <Flex w="100%" py={20} justify="center" align="center">
+          <Spinner size="lg" color="blue.500" />
+        </Flex>
+      )}
+
+      {!isLoadingEvent && loadError && (
+        <VStack w="100%" py={16} gap={4} align="center">
+          <Text color="red.600" fontWeight="semibold">
+            {loadError}
+          </Text>
+          <Button onClick={() => navigate("/events")} variant="outline">
+            Back to events
+          </Button>
+        </VStack>
+      )}
+
+      {!isLoadingEvent && !loadError && !eventData && (
+        <VStack w="100%" py={16} gap={4} align="center">
+          <Text color="gray.600" fontWeight="semibold">
+            Event not found.
+          </Text>
+          <Button onClick={() => navigate("/events")} variant="outline">
+            Back to events
+          </Button>
+        </VStack>
+      )}
+
+      {!isLoadingEvent && !loadError && eventData && (
+        <>
+        {/* Header row */}
+        <Flex
         w="100%"
         justify="space-between"
         align="start"
@@ -217,7 +257,7 @@ export const CreatedEvent = () => {
             fontWeight="bold"
             color="#1A202C"
           >
-            {name}
+            {name || ""}
           </Text>
 
           <HStack
@@ -267,11 +307,11 @@ export const CreatedEvent = () => {
               bg="red.500"
             />
             <Text>
-              <Text as="span" fontWeight="semibold">{attendees}</Text>
+              <Text as="span" fontWeight="semibold">{attendees ?? 0}</Text>
               {" Registered  /  "}
-              <Text as="span" fontWeight="semibold">{minAttendees}</Text>
+              <Text as="span" fontWeight="semibold">{minAttendees ?? 0}</Text>
               {" Minimum  /  "}
-              <Text as="span" fontWeight="semibold">{capacity}</Text>
+              <Text as="span" fontWeight="semibold">{capacity ?? 0}</Text>
               {" Maximum"}
             </Text>
           </HStack>
@@ -282,7 +322,7 @@ export const CreatedEvent = () => {
             mt={1}
             flexWrap="wrap"
           >
-            {[type, capitalizeLocationType(locationType), ...languages.map((l) => (typeof l === "string" ? l : l.language))]
+            {[type, capitalizeLocationType(locationType), ...(languages ?? []).map((l) => (typeof l === "string" ? l : l.language))]
               .filter(Boolean)
               .map((tag) => (
                 <Tag.Root
@@ -468,6 +508,8 @@ export const CreatedEvent = () => {
 
         {activeTab === "email" && <EventEmailNotificationTimeline />}
       </Box>
+        </>
+      )}
 
       <ConfirmDialog
         open={deleteOpen}
