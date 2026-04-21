@@ -1,6 +1,7 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
+import { sendEmail } from "./emailService.js";
 
 export const clinicsRouter = Router();
 
@@ -18,6 +19,37 @@ async function syncClinicAttendeesFromRegistrations(clinicId) {
     [clinicId]
   );
 }
+
+const formatClinicDate = (rawDate) => {
+  if (!rawDate) return "TBD";
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(rawDate));
+};
+
+const formatClinicTime = (rawStartTime, rawEndTime) => {
+  if (!rawStartTime || !rawEndTime) return "TBD";
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  });
+  return `${formatter.format(new Date(rawStartTime))} - ${formatter.format(new Date(rawEndTime))} UTC`;
+};
+
+const escapeHtml = (s) =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const formatDescriptionHtml = (raw) => escapeHtml(raw).replace(/\r\n|\r|\n/g, "<br/>");
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
 const allowedClinicTypes = [
@@ -403,7 +435,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
-      const data = await db.query(
+    const data = await db.query(
       `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
@@ -413,6 +445,76 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
     );
 
     await syncClinicAttendeesFromRegistrations(clinicId);
+
+    // Confirmation email: registration should succeed even if email fails.
+    try {
+      const [volunteerRows, clinicRows] = await Promise.all([
+        db.query(
+          `
+            SELECT first_name, email
+            FROM volunteers
+            WHERE id = $1
+            LIMIT 1;
+          `,
+          [volunteerId]
+        ),
+        db.query(
+          `
+            SELECT name, description, date, start_time, end_time, city, state
+            FROM clinics
+            WHERE id = $1
+            LIMIT 1;
+          `,
+          [clinicId]
+        ),
+      ]);
+
+      const volunteer = volunteerRows?.[0];
+      const clinicInfo = clinicRows?.[0];
+
+      if (!volunteer) {
+        console.warn(
+          `[clinics] confirmation email skipped: volunteer not found clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else if (!volunteer.email) {
+        console.warn(
+          `[clinics] confirmation email skipped: missing volunteer email clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else if (!clinicInfo) {
+        console.warn(
+          `[clinics] confirmation email skipped: clinic not found clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else {
+        const safeName = volunteer.first_name ?? "there";
+        const clinicLocation =
+          [clinicInfo.city, clinicInfo.state].filter(Boolean).join(", ") || "TBD";
+        const descriptionBlock =
+          clinicInfo.description && String(clinicInfo.description).trim()
+            ? `<p>${formatDescriptionHtml(clinicInfo.description)}</p>`
+            : "";
+
+        await sendEmail({
+          to: volunteer.email,
+          subject: `Registration confirmed: ${clinicInfo.name}`,
+          html: `
+            <p>Hi ${safeName},</p>
+            <p>Your registration for <strong>${clinicInfo.name}</strong> is confirmed.</p>
+            <p>
+              <strong>Date:</strong> ${formatClinicDate(clinicInfo.date)}<br />
+              <strong>Time:</strong> ${formatClinicTime(clinicInfo.start_time, clinicInfo.end_time)}<br />
+              <strong>Location:</strong> ${clinicLocation}
+            </p>
+            ${descriptionBlock}
+            <p>Thanks for volunteering!</p>
+          `,
+        });
+      }
+    } catch (emailError) {
+      console.error(
+        `[clinics] registration succeeded but confirmation email failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+        emailError
+      );
+    }
 
     res.status(200).json(keysToCamel(data));
   } catch (err) {
