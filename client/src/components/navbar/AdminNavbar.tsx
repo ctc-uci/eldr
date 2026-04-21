@@ -30,7 +30,7 @@ export const AdminNavbar = () => {
       direction="column"
       w="clamp(180px, 18vw, 250px)"
       flexShrink={0}
-      h="100vh"
+      // h="100vh"
       borderRight="1px solid"
       borderColor="gray.200"
       bg="white"

@@ -23,7 +23,8 @@ import { EmailTemplateManagement } from "@/components/emailTemplateManagement/em
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
-import { EventsSubPagePlaceholder } from "@/components/eventManagement/EventsSubPagePlaceholder";
+import { CreateEvent } from "./components/eventManagement/createEvent";
+import { CreatedEvent } from "./components/eventManagement/CreatedEvent";
 // import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
 // import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
 // import { CaseManagement } from "./components/caseManagement/CaseManagement";
@@ -41,6 +42,7 @@ import {
 } from "react-router-dom";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useRoleContext } from "@/contexts/hooks/useRoleContext";
+import { EventsSubPagePlaceholder } from "./components/eventManagement/EventsSubPagePlaceholder";
 
 const DashboardLanding = () => {
   const { currentUser } = useAuthContext();
@@ -117,10 +119,10 @@ const App = () => {
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
                   />
-                  <Route
-                    path="/events/*"
-                    element={<EventsSubPagePlaceholder />}
-                  />
+                  <Route path="/events/:eventId" element={<CreatedEvent />} />
+                  <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
+                  <Route path="/events/create/:tab" element={<CreateEvent />} />
+                  <Route path="/events/:eventId/edit/:tab" element={<CreateEvent />} />
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}

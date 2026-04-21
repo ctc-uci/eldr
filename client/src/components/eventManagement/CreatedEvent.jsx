@@ -1,0 +1,524 @@
+import { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  IconButton,
+  Separator,
+  Spinner,
+  Tag,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+import { ConfirmDialog } from "./ConfirmDialog";
+
+import {
+  LuArrowUpFromLine,
+  LuArchive,
+  LuCalendar,
+  LuClock,
+  LuMail,
+  LuMapPin,
+  LuPencil,
+} from "react-icons/lu";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toaster } from "@/components/ui/toaster";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
+import { EventEmailNotificationTimeline } from "./EventEmailNotificationTimeline";
+import { EventVolunteerList } from "./EventVolunteerList";
+
+export const CreatedEvent = () => {
+  const { eventId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { backend } = useBackendContext();
+  const [eventData, setEventData] = useState(
+    location.state?.eventData ?? null
+  );
+  const [isLoadingEvent, setIsLoadingEvent] = useState(
+    !location.state?.eventData
+  );
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.eventData) {
+      setEventData(location.state.eventData);
+    }
+  }, [location.state?.eventData]);
+
+  useEffect(() => {
+    const feedback = location.state?.editFeedback;
+    if (!feedback) return;
+
+    if (feedback === "saved") {
+      toaster.success({
+        title: "Edits to this event have been saved successfully.",
+      });
+    } else if (feedback === "discarded") {
+      toaster.error({
+        title: "Edits to this event have been discarded.",
+      });
+    }
+
+    const { editFeedback: _removed, ...rest } = location.state ?? {};
+    navigate(location.pathname, {
+      replace: true,
+      state: Object.keys(rest).length > 0 ? rest : undefined,
+    });
+  }, [location.state, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (eventData) return;
+    const fetch = async () => {
+      setIsLoadingEvent(true);
+      setLoadError(null);
+      try {
+        const [clinicRes, langRes] = await Promise.all([
+          backend.get(`/clinics/${eventId}`),
+          backend.get(`/clinics/${eventId}/languages`),
+        ]);
+        setEventData({ ...clinicRes.data, languages: langRes.data });
+      } catch (err) {
+        console.error(err);
+        setLoadError("Could not load this event. Please try again.");
+      } finally {
+        setIsLoadingEvent(false);
+      }
+    };
+    fetch();
+  }, [backend, eventId, eventData]);
+
+  const {
+    name,
+    date,
+    startTime,
+    endTime,
+    capacity,
+    minAttendees,
+    attendees,
+    type,
+    locationType,
+    languages,
+    address,
+    city,
+    state,
+    zip,
+    meetingLink,
+  } = eventData || {};
+
+  const formatTime = (ts) => {
+    if (!ts) return "";
+    return new Date(ts).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+  };
+
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "2-digit",
+      })
+    : "";
+  const formattedTime =
+    startTime && endTime
+      ? `${formatTime(startTime)} - ${formatTime(endTime)}`
+      : "";
+
+  const capitalizeLocationType = (str) =>
+    str
+      ? str
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join("-")
+      : "";
+
+  const locationStr = (() => {
+    const mode = (locationType || "").toLowerCase();
+    const inPerson = [address, city, state, zip].filter(Boolean).join(", ");
+    if (mode === "online") return meetingLink || "";
+    if (mode === "hybrid")
+      return [inPerson, meetingLink].filter(Boolean).join(" | ");
+    return inPerson;
+  })();
+
+  const tabs = [
+    { key: "details", label: "Event Details" },
+    { key: "volunteers", label: "Volunteer List" },
+    { key: "email", label: "Email Notification Timeline" },
+  ];
+
+  const [activeTab, setActiveTab] = useState("details");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const confirmDeleteEvent = async () => {
+    setDeleteLoading(true);
+    try {
+      await backend.delete(`/clinics/${eventId}`);
+      setDeleteOpen(false);
+      navigate("/events");
+    } catch (err) {
+      console.error(err);
+      toaster.error({
+        title: "Could not delete this event",
+        description:
+          err?.response?.data?.message ??
+          err?.message ??
+          "Please try again.",
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  return (
+    <VStack
+      w="100%"
+      minH="100vh"
+      bg="white"
+      align="start"
+      px={10}
+      pt={10}
+      pb={10}
+      gap={6}
+    >
+      {/* Breadcrumb */}
+      <HStack
+        fontSize="lg"
+        gap={1}
+      >
+        <Text
+          fontWeight="semibold"
+          color="gray.700"
+        >
+          Event Catalog
+        </Text>
+        <Text color="gray.400">›</Text>
+        <Text
+          color="blue.500"
+          cursor="pointer"
+          onClick={() => navigate("/events")}
+        >
+          View Event
+        </Text>
+      </HStack>
+
+      {isLoadingEvent && (
+        <Flex w="100%" py={20} justify="center" align="center">
+          <Spinner size="lg" color="blue.500" />
+        </Flex>
+      )}
+
+      {!isLoadingEvent && loadError && (
+        <VStack w="100%" py={16} gap={4} align="center">
+          <Text color="red.600" fontWeight="semibold">
+            {loadError}
+          </Text>
+          <Button onClick={() => navigate("/events")} variant="outline">
+            Back to events
+          </Button>
+        </VStack>
+      )}
+
+      {!isLoadingEvent && !loadError && !eventData && (
+        <VStack w="100%" py={16} gap={4} align="center">
+          <Text color="gray.600" fontWeight="semibold">
+            Event not found.
+          </Text>
+          <Button onClick={() => navigate("/events")} variant="outline">
+            Back to events
+          </Button>
+        </VStack>
+      )}
+
+      {!isLoadingEvent && !loadError && eventData && (
+        <>
+        {/* Header row */}
+        <Flex
+        w="100%"
+        justify="space-between"
+        align="start"
+        gap={8}
+      >
+        <VStack
+          align="start"
+          gap={3}
+          flex={1}
+        >
+          <Text
+            fontSize="4xl"
+            fontWeight="bold"
+            color="#1A202C"
+          >
+            {name || ""}
+          </Text>
+
+          <HStack
+            gap={6}
+            color="gray.700"
+            fontSize="sm"
+          >
+            <HStack
+              gap={2}
+            >
+              <LuCalendar />
+              <Text>{formattedDate}</Text>
+            </HStack>
+            <HStack
+              gap={2}
+            >
+              <LuClock />
+              <Text>{formattedTime}</Text>
+            </HStack>
+          </HStack>
+          <Separator />
+
+          <HStack
+            gap={2}
+            color="gray.700"
+            fontSize="sm"
+            w="100%"
+          >
+            <HStack
+              gap={2}
+            >
+              <LuMapPin />
+              <Text>{locationStr}</Text>
+            </HStack>
+          </HStack>
+          <Separator />
+
+          <HStack
+            gap={2}
+            color="gray.700"
+            fontSize="sm"
+          >
+            <Box
+              w="8px"
+              h="8px"
+              borderRadius="full"
+              bg="red.500"
+            />
+            <Text>
+              <Text as="span" fontWeight="semibold">{attendees ?? 0}</Text>
+              {" Registered  /  "}
+              <Text as="span" fontWeight="semibold">{minAttendees ?? 0}</Text>
+              {" Minimum  /  "}
+              <Text as="span" fontWeight="semibold">{capacity ?? 0}</Text>
+              {" Maximum"}
+            </Text>
+          </HStack>
+          <Separator />
+
+          <HStack
+            gap={2}
+            mt={1}
+            flexWrap="wrap"
+          >
+            {[type, capitalizeLocationType(locationType), ...(languages ?? []).map((l) => (typeof l === "string" ? l : l.language))]
+              .filter(Boolean)
+              .map((tag) => (
+                <Tag.Root
+                  key={tag}
+                  size="md"
+                  borderRadius="md"
+                  border="0.5px solid"
+                  borderColor="gray.200"
+                  bg="gray.100"
+                  px={2}
+                  py={1}
+                >
+                  <Tag.Label
+                    fontSize="sm"
+                    fontWeight="medium"
+                  >
+                    {tag}
+                  </Tag.Label>
+                </Tag.Root>
+              ))}
+          </HStack>
+        </VStack>
+
+        {/* Action buttons */}
+        <HStack
+          gap={2}
+          align="start"
+        >
+          <Box position="relative">
+            {linkCopied && (
+              <Box
+                position="absolute"
+                bottom="calc(100% + 8px)"
+                left="50%"
+                transform="translateX(-50%)"
+                bg="#4A7FA5"
+                color="white"
+                px={3}
+                py={1}
+                borderRadius="md"
+                fontSize="sm"
+                fontWeight="medium"
+                whiteSpace="nowrap"
+                boxShadow="md"
+                zIndex={10}
+              >
+                Link copied!
+              </Box>
+            )}
+            <IconButton
+              aria-label="Share event"
+              variant="outline"
+              borderColor="#E2E8F0"
+              bg="white"
+              color="gray.600"
+              size="md"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+            >
+              <LuArrowUpFromLine />
+            </IconButton>
+          </Box>
+          <Button
+            variant="outline"
+            border="1px solid #E2E8F0"
+            bg="white"
+            color="#B83232"
+            borderRadius="md"
+            justifyContent="flex-start"
+            gap={3}
+            px={4}
+            _hover={{ bg: "red.50", borderColor: "red.200" }}
+            onClick={() => setDeleteOpen(true)}
+          >
+            <LuArchive />
+            Delete Event
+          </Button>
+          <Button
+            bg="#4A7FA5"
+            color="white"
+            borderRadius="md"
+            justifyContent="flex-start"
+            gap={3}
+            px={4}
+            _hover={{ bg: "#2C5282" }}
+            onClick={() => navigate(`/events/${eventId}/edit/details`)}
+          >
+            <LuPencil />
+            Edit Event
+          </Button>
+        </HStack>
+      </Flex>
+
+      {/* Tabs */}
+      <HStack
+        gap={1}
+        borderBottom="1px solid #E2E8F0"
+        w="100%"
+        align="end"
+      >
+        {tabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant="ghost"
+            borderRadius="8px 8px 0 0"
+            borderTop={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderLeft={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderRight={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderBottom="1px solid transparent"
+            mb="-1px"
+            color={activeTab === tab.key ? "#2D3748" : "gray.600"}
+            bg={activeTab === tab.key ? "white" : "transparent"}
+            fontWeight={activeTab === tab.key ? "medium" : "normal"}
+            px={{ base: 3, md: 4 }}
+            py={{ base: 2, md: 2.5 }}
+            fontSize={{ base: "xs", md: "sm" }}
+            onClick={() => setActiveTab(tab.key)}
+            _hover={{ bg: activeTab === tab.key ? "white" : "gray.50" }}
+            _focusVisible={{ outline: "none", boxShadow: "none" }}
+          >
+            <LuMail size={16} />
+            {tab.label}
+          </Button>
+        ))}
+      </HStack>
+
+      <Box
+        w="100%"
+        pt={6}
+      >
+        {activeTab === "details" && (
+          <VStack
+            align="start"
+            gap={6}
+          >
+            <VStack
+              align="start"
+              gap={2}
+            >
+              <Text
+                fontWeight="bold"
+                fontSize="md"
+                color="gray.800"
+              >
+                Description
+              </Text>
+              <Text
+                fontSize="sm"
+                color="gray.600"
+                whiteSpace="pre-line"
+              >
+                {eventData?.description || "No description provided."}
+              </Text>
+            </VStack>
+
+            <VStack
+              align="start"
+              gap={2}
+            >
+              <Text
+                fontWeight="bold"
+                fontSize="md"
+                color="gray.800"
+              >
+                Images
+              </Text>
+              <Text
+                fontSize="sm"
+                color="gray.600"
+              >
+                *insert images here*
+              </Text>
+            </VStack>
+          </VStack>
+        )}
+
+        {activeTab === "volunteers" && (
+          <EventVolunteerList eventId={eventId} />
+        )}
+
+        {activeTab === "email" && <EventEmailNotificationTimeline />}
+      </Box>
+        </>
+      )}
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={(e) => setDeleteOpen(e.open)}
+        title="Delete Clinic Event"
+        confirmLabel="Yes, Delete"
+        onConfirm={confirmDeleteEvent}
+        loading={deleteLoading}
+      />
+    </VStack>
+  );
+};
