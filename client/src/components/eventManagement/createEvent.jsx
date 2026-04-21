@@ -21,6 +21,8 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { LuMail, LuImageUp, LuTriangleAlert } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { MdOutlineMailOutline } from "react-icons/md";
+import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 
 const parseTimeField = (ts) => {
   if (!ts) return { time: "", period: "AM" };
@@ -136,6 +138,7 @@ export const CreateEvent = () => {
     fetchExisting();
   }, [isEditing, eventId, backend]);
 
+  // raf edit start
   const languagesKey = useMemo(
     () => [...languages].sort().join("|"),
     [languages]
@@ -202,6 +205,7 @@ export const CreateEvent = () => {
     navigate(`/events/${eventId}`, { state: { editFeedback: "discarded" } });
   };
 
+  // raf edit end
   const filteredLanguages = useMemo(
     () =>
       allLanguages
@@ -486,8 +490,8 @@ export const CreateEvent = () => {
             </VStack>
 
             <VStack
-              align="start"
-              gap={1}
+              align="start" // incoming was align="end"
+              gap={1} // incoming was gap={8}
               flex={1}
               w="100%"
             >
@@ -871,16 +875,23 @@ export const CreateEvent = () => {
           bg="white"
           border="1px solid #E2E8F0"
           borderRadius="lg"
-          align="center"
-          justify="center"
-          minH="200px"
         >
-          <Text
-            color="gray.400"
-            fontSize="sm"
-          >
-            {tabs.find((t) => t.key === activeTab)?.label}
-          </Text>
+          {activeTab === "email" ? (
+            <EmailNotificationTimeline eventId={isEditing ? eventId : undefined} />
+          ) : (
+            <Flex
+              align="center"
+              justify="center"
+              minH="200px"
+            >
+              <Text
+                color="gray.400"
+                fontSize="sm"
+              >
+                {tabs.find((t) => t.key === activeTab)?.label}
+              </Text>
+            </Flex>
+          )}
         </Flex>
       )}
 
@@ -889,7 +900,7 @@ export const CreateEvent = () => {
         w="100%"
         justify="flex-end"
         gap={3}
-        pt={0}
+        pt={0} // was pt={2} on incoming
       >
         <Button
           bg="#4A7FA5"
@@ -909,7 +920,7 @@ export const CreateEvent = () => {
           fontSize="sm"
           border="1px solid #CBD5E0"
           color="gray.600"
-          onClick={handleCancelClick}
+          onClick={handleCancelClick} // incoming was onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
         >
           Cancel
         </Button>

@@ -1,79 +1,31 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  HStack,
-  IconButton,
-  Separator,
-  Spinner,
-  Tag,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { Box, Button, Flex, HStack, Tag, Text, VStack } from "@chakra-ui/react";
 
 import {
-  LuArrowUpFromLine,
   LuArchive,
   LuCalendar,
   LuClock,
-  LuMail,
   LuMapPin,
   LuPencil,
+  LuUsers,
 } from "react-icons/lu";
+import { MdOutlineMailOutline } from "react-icons/md";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { toaster } from "@/components/ui/toaster";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-
-import { EventEmailNotificationTimeline } from "./EventEmailNotificationTimeline";
+import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 import { EventVolunteerList } from "./EventVolunteerList";
 
 export const CreatedEvent = () => {
   const { eventId } = useParams();
-  const location = useLocation();
+  const { state: locationState } = useLocation();
   const navigate = useNavigate();
   const { backend } = useBackendContext();
-  const [eventData, setEventData] = useState(
-    location.state?.eventData ?? null
-  );
-  const [isLoadingEvent, setIsLoadingEvent] = useState(
-    !location.state?.eventData
-  );
-  const [loadError, setLoadError] = useState(null);
-
-  useEffect(() => {
-    if (location.state?.eventData) {
-      setEventData(location.state.eventData);
-    }
-  }, [location.state?.eventData]);
-
-  useEffect(() => {
-    const feedback = location.state?.editFeedback;
-    if (!feedback) return;
-
-    if (feedback === "saved") {
-      toaster.success({
-        title: "Edits to this event have been saved successfully.",
-      });
-    } else if (feedback === "discarded") {
-      toaster.error({
-        title: "Edits to this event have been discarded.",
-      });
-    }
-
-    const { editFeedback: _removed, ...rest } = location.state ?? {};
-    navigate(location.pathname, {
-      replace: true,
-      state: Object.keys(rest).length > 0 ? rest : undefined,
-    });
-  }, [location.state, location.pathname, navigate]);
+  const [eventData, setEventData] = useState(locationState?.eventData ?? null);
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     if (eventData) return;
     const fetch = async () => {
-      setIsLoadingEvent(true);
-      setLoadError(null);
       try {
         const [clinicRes, langRes] = await Promise.all([
           backend.get(`/clinics/${eventId}`),
@@ -82,25 +34,21 @@ export const CreatedEvent = () => {
         setEventData({ ...clinicRes.data, languages: langRes.data });
       } catch (err) {
         console.error(err);
-        setLoadError("Could not load this event. Please try again.");
-      } finally {
-        setIsLoadingEvent(false);
       }
     };
     fetch();
   }, [backend, eventId, eventData]);
 
   const {
-    name,
+    name = "This is an upcoming Clinic Event",
     date,
     startTime,
     endTime,
-    capacity,
-    minAttendees,
-    attendees,
+    capacity = 50,
+    attendees = 0,
     type,
     locationType,
-    languages,
+    languages = [],
     address,
     city,
     state,
@@ -153,36 +101,11 @@ export const CreatedEvent = () => {
     { key: "email", label: "Email Notification Timeline" },
   ];
 
-  const [activeTab, setActiveTab] = useState("details");
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-
-  const confirmDeleteEvent = async () => {
-    setDeleteLoading(true);
-    try {
-      await backend.delete(`/clinics/${eventId}`);
-      setDeleteOpen(false);
-      navigate("/events");
-    } catch (err) {
-      console.error(err);
-      toaster.error({
-        title: "Could not delete this event",
-        description:
-          err?.response?.data?.message ??
-          err?.message ??
-          "Please try again.",
-      });
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
   return (
     <VStack
       w="100%"
       minH="100vh"
-      bg="white"
+      bg="#F7F8FA"
       align="start"
       px={10}
       pt={10}
@@ -210,119 +133,73 @@ export const CreatedEvent = () => {
         </Text>
       </HStack>
 
-      {isLoadingEvent && (
-        <Flex w="100%" py={20} justify="center" align="center">
-          <Spinner size="lg" color="blue.500" />
-        </Flex>
-      )}
-
-      {!isLoadingEvent && loadError && (
-        <VStack w="100%" py={16} gap={4} align="center">
-          <Text color="red.600" fontWeight="semibold">
-            {loadError}
-          </Text>
-          <Button onClick={() => navigate("/events")} variant="outline">
-            Back to events
-          </Button>
-        </VStack>
-      )}
-
-      {!isLoadingEvent && !loadError && !eventData && (
-        <VStack w="100%" py={16} gap={4} align="center">
-          <Text color="gray.600" fontWeight="semibold">
-            Event not found.
-          </Text>
-          <Button onClick={() => navigate("/events")} variant="outline">
-            Back to events
-          </Button>
-        </VStack>
-      )}
-
-      {!isLoadingEvent && !loadError && eventData && (
-        <>
-        {/* Header row */}
-        <Flex
+      {/* Title + action buttons row */}
+      <Flex
         w="100%"
         justify="space-between"
         align="start"
-        gap={8}
       >
         <VStack
           align="start"
-          gap={3}
-          flex={1}
+          gap={4}
         >
+          {/* Event name */}
           <Text
-            fontSize="4xl"
+            fontSize="2xl"
             fontWeight="bold"
-            color="#1A202C"
+            color="gray.800"
           >
-            {name || ""}
+            {name}
           </Text>
 
-          <HStack
-            gap={6}
-            color="gray.700"
-            fontSize="sm"
-          >
+          {/* Date + Time */}
+          <HStack gap={6}>
             <HStack
               gap={2}
+              color="gray.600"
+              fontSize="sm"
             >
               <LuCalendar />
               <Text>{formattedDate}</Text>
             </HStack>
             <HStack
               gap={2}
+              color="gray.600"
+              fontSize="sm"
             >
               <LuClock />
               <Text>{formattedTime}</Text>
             </HStack>
           </HStack>
-          <Separator />
 
-          <HStack
-            gap={2}
-            color="gray.700"
-            fontSize="sm"
-            w="100%"
-          >
+          {/* Location + Spots */}
+          <HStack gap={6}>
             <HStack
               gap={2}
+              color="gray.600"
+              fontSize="sm"
             >
               <LuMapPin />
               <Text>{locationStr}</Text>
             </HStack>
+            <HStack
+              gap={2}
+              color="gray.600"
+              fontSize="sm"
+            >
+              <LuUsers />
+              <Text>
+                {attendees}/{capacity} spots filled
+              </Text>
+            </HStack>
           </HStack>
-          <Separator />
 
-          <HStack
-            gap={2}
-            color="gray.700"
-            fontSize="sm"
-          >
-            <Box
-              w="8px"
-              h="8px"
-              borderRadius="full"
-              bg="red.500"
-            />
-            <Text>
-              <Text as="span" fontWeight="semibold">{attendees ?? 0}</Text>
-              {" Registered  /  "}
-              <Text as="span" fontWeight="semibold">{minAttendees ?? 0}</Text>
-              {" Minimum  /  "}
-              <Text as="span" fontWeight="semibold">{capacity ?? 0}</Text>
-              {" Maximum"}
-            </Text>
-          </HStack>
-          <Separator />
-
+          {/* Tags */}
           <HStack
             gap={2}
             mt={1}
-            flexWrap="wrap"
           >
-            {[type, capitalizeLocationType(locationType), ...(languages ?? []).map((l) => (typeof l === "string" ? l : l.language))]
+            {[type, capitalizeLocationType(locationType), ...languages.map((l) => (typeof l === "string" ? l : l.language))]
               .filter(Boolean)
               .map((tag) => (
                 <Tag.Root
@@ -336,7 +213,7 @@ export const CreatedEvent = () => {
                   py={1}
                 >
                   <Tag.Label
-                    fontSize="sm"
+                    fontSize="xs"
                     fontWeight="medium"
                   >
                     {tag}
@@ -346,179 +223,175 @@ export const CreatedEvent = () => {
           </HStack>
         </VStack>
 
-        {/* Action buttons */}
-        <HStack
+        {/* Edit / Archive buttons */}
+        <VStack
           gap={2}
-          align="start"
+          align="stretch"
+          minW="180px"
         >
-          <Box position="relative">
-            {linkCopied && (
-              <Box
-                position="absolute"
-                bottom="calc(100% + 8px)"
-                left="50%"
-                transform="translateX(-50%)"
-                bg="#4A7FA5"
-                color="white"
-                px={3}
-                py={1}
-                borderRadius="md"
-                fontSize="sm"
-                fontWeight="medium"
-                whiteSpace="nowrap"
-                boxShadow="md"
-                zIndex={10}
-              >
-                Link copied!
-              </Box>
-            )}
-            <IconButton
-              aria-label="Share event"
-              variant="outline"
-              borderColor="#E2E8F0"
-              bg="white"
-              color="gray.600"
-              size="md"
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                setLinkCopied(true);
-                setTimeout(() => setLinkCopied(false), 2000);
-              }}
-            >
-              <LuArrowUpFromLine />
-            </IconButton>
-          </Box>
           <Button
             variant="outline"
             border="1px solid #E2E8F0"
             bg="white"
-            color="#B83232"
+            color="gray.700"
             borderRadius="md"
             justifyContent="flex-start"
             gap={3}
             px={4}
-            _hover={{ bg: "red.50", borderColor: "red.200" }}
-            onClick={() => setDeleteOpen(true)}
-          >
-            <LuArchive />
-            Delete Event
-          </Button>
-          <Button
-            bg="#4A7FA5"
-            color="white"
-            borderRadius="md"
-            justifyContent="flex-start"
-            gap={3}
-            px={4}
-            _hover={{ bg: "#2C5282" }}
-            onClick={() => navigate(`/events/${eventId}/edit/details`)}
+            _hover={{ bg: "gray.50" }}
+            onClick={() => navigate(`/events/${eventId}/edit/header`)}
           >
             <LuPencil />
             Edit Event
           </Button>
-        </HStack>
+          <Button
+            variant="outline"
+            border="1px solid #E2E8F0"
+            bg="white"
+            color="gray.700"
+            borderRadius="md"
+            justifyContent="flex-start"
+            gap={3}
+            px={4}
+            _hover={{ bg: "red.50", borderColor: "red.200", color: "red.600" }}
+            onClick={async () => {
+              try {
+                await backend.delete(`/clinics/${eventId}`);
+                navigate("/events");
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+          >
+            <LuArchive />
+            Archive Event
+          </Button>
+        </VStack>
       </Flex>
 
-      {/* Tabs */}
-      <HStack
-        gap={1}
-        borderBottom="1px solid #E2E8F0"
-        w="100%"
-        align="end"
-      >
-        {tabs.map((tab) => (
-          <Button
-            key={tab.key}
-            variant="ghost"
-            borderRadius="8px 8px 0 0"
-            borderTop={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
-            borderLeft={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
-            borderRight={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
-            borderBottom="1px solid transparent"
-            mb="-1px"
-            color={activeTab === tab.key ? "#2D3748" : "gray.600"}
-            bg={activeTab === tab.key ? "white" : "transparent"}
-            fontWeight={activeTab === tab.key ? "medium" : "normal"}
-            px={{ base: 3, md: 4 }}
-            py={{ base: 2, md: 2.5 }}
-            fontSize={{ base: "xs", md: "sm" }}
-            onClick={() => setActiveTab(tab.key)}
-            _hover={{ bg: activeTab === tab.key ? "white" : "gray.50" }}
-            _focusVisible={{ outline: "none", boxShadow: "none" }}
-          >
-            <LuMail size={16} />
-            {tab.label}
-          </Button>
-        ))}
-      </HStack>
-
+      {/* Tabbed content card */}
       <Box
         w="100%"
-        pt={6}
+        bg="white"
+        border="1px solid #E2E8F0"
+        borderRadius="lg"
+        overflow="hidden"
       >
+        {/* Tabs */}
+        <HStack
+          gap={0}
+          borderBottom="2px solid #E2E8F0"
+          px={6}
+        >
+          {tabs.map((tab) => (
+            <Button
+              key={tab.key}
+              variant="ghost"
+              borderRadius={0}
+              borderBottom={
+                activeTab === tab.key
+                  ? "2px solid #2B6CB0"
+                  : "2px solid transparent"
+              }
+              mb="-2px"
+              color={activeTab === tab.key ? "blue.600" : "gray.400"}
+              fontWeight={activeTab === tab.key ? "semibold" : "normal"}
+              px={4}
+              py={3}
+              fontSize="sm"
+              gap={2}
+              onClick={() => setActiveTab(tab.key)}
+              _hover={{ bg: "transparent", color: "gray.600" }}
+            >
+              <MdOutlineMailOutline />
+              {tab.label}
+            </Button>
+          ))}
+        </HStack>
+
         {activeTab === "details" && (
-          <VStack
-            align="start"
-            gap={6}
+          <Box
+            w="100%"
+            p={8}
           >
             <VStack
               align="start"
-              gap={2}
+              gap={6}
             >
-              <Text
-                fontWeight="bold"
-                fontSize="md"
-                color="gray.800"
+              <VStack
+                align="start"
+                gap={2}
               >
-                Description
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-                whiteSpace="pre-line"
-              >
-                {eventData?.description || "No description provided."}
-              </Text>
-            </VStack>
+                <Text
+                  fontWeight="bold"
+                  fontSize="md"
+                  color="gray.800"
+                >
+                  Description
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+              </VStack>
 
-            <VStack
-              align="start"
-              gap={2}
-            >
-              <Text
-                fontWeight="bold"
-                fontSize="md"
-                color="gray.800"
+              <VStack
+                align="start"
+                gap={2}
               >
-                Images
-              </Text>
-              <Text
-                fontSize="sm"
-                color="gray.600"
-              >
-                *insert images here*
-              </Text>
+                <Text
+                  fontWeight="bold"
+                  fontSize="md"
+                  color="gray.800"
+                >
+                  Miscellaneous
+                </Text>
+                <Text
+                  fontSize="sm"
+                  color="gray.600"
+                >
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
+                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
+                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
+                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                </Text>
+              </VStack>
             </VStack>
-          </VStack>
+          </Box>
         )}
 
         {activeTab === "volunteers" && (
-          <EventVolunteerList eventId={eventId} />
+          <Box
+            w="100%"
+            p={8}
+          >
+            <EventVolunteerList eventId={eventId} />
+          </Box>
         )}
 
-        {activeTab === "email" && <EventEmailNotificationTimeline />}
+        {activeTab === "email" && (
+          <Box
+            w="100%"
+            p={8}
+          >
+            <EmailNotificationTimeline eventId={eventId} />
+          </Box>
+        )}
       </Box>
-        </>
-      )}
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={(e) => setDeleteOpen(e.open)}
-        title="Delete Clinic Event"
-        confirmLabel="Yes, Delete"
-        onConfirm={confirmDeleteEvent}
-        loading={deleteLoading}
-      />
     </VStack>
   );
 };
