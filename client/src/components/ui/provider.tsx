@@ -1,7 +1,7 @@
 "use client"
 
-import { ChakraProvider } from "@chakra-ui/react"
-import { eldr } from "./theme"
+import { ChakraProvider, defaultSystem } from "@chakra-ui/react"
+//import { eldr } from "./theme"
 import {
   ColorModeProvider,
   type ColorModeProviderProps,
@@ -9,7 +9,7 @@ import {
 
 export function Provider(props: ColorModeProviderProps) {
   return (
-    <ChakraProvider value={eldr}>
+    <ChakraProvider value={defaultSystem}>
       <ColorModeProvider
         // Match Chakra v2 default behavior: start in light mode
         defaultTheme="light"
