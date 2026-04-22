@@ -23,10 +23,9 @@ import { EmailTemplateManagement } from "@/components/emailTemplateManagement/em
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
-import { EventsSubPagePlaceholder } from "@/components/eventManagement/EventsSubPagePlaceholder";
-// import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
-// import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
-// import { CaseManagement } from "./components/caseManagement/CaseManagement";
+import { CreateEvent } from "./components/eventManagement/createEvent";
+import { CreatedEvent } from "./components/eventManagement/CreatedEvent";
+import { CreateEmailNotification } from "./components/eventManagement/CreateEmailNotification";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
@@ -49,7 +48,8 @@ const DashboardLanding = () => {
   if (!currentUser) return <Navigate to="/login" replace />;
   if (loading) return <Spinner />;
 
-  if (role === "volunteer") return <Navigate to="/event-catalog" replace />;
+  if (role === "volunteer")
+    return <Navigate to="/event-catalog/all-events" replace />;
   if (role === "staff" || role === "supervisor")
     return <Navigate to="/events" replace />;
 
@@ -117,14 +117,25 @@ const App = () => {
                     element={<VolunteerManagement />}
                   />
                   <Route
-                    path="/events/*"
-                    element={<EventsSubPagePlaceholder />}
+                    path="/events/:eventId/email-notification/new"
+                    element={<CreateEmailNotification />}
                   />
+                  <Route
+                    path="/events/:eventId/email-notification/edit/:notificationId"
+                    element={<CreateEmailNotification />}
+                  />
+                  <Route path="/events/:eventId" element={<CreatedEvent />} />
+                  <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
+                  <Route path="/events/create/:tab" element={<CreateEvent />} />
+                  <Route path="/events/:eventId/edit/:tab" element={<CreateEvent />} />
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}
                 <Route element={<VolunteerLayout />}>
-                  <Route path="/event-catalog" element={<EventCatalog />} />
+                  <Route
+                    path="/event-catalog/*"
+                    element={<EventCatalog />}
+                  />
                   <Route
                     path="/volunteer-profile"
                     element={
@@ -155,6 +166,10 @@ const App = () => {
                 />
                 <Route
                   path="/login/volunteer"
+                  element={<VolunteerLogin />}
+                />
+                <Route
+                  path="/login/volunteer/*"
                   element={<VolunteerLogin />}
                 />
                 <Route

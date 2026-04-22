@@ -1,8 +1,55 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
+import { sendEmail } from "./emailService.js";
 
 export const clinicsRouter = Router();
+
+/**
+ * Keeps `clinics.attendees` equal to the number of rows in `clinic_registration`
+ * for this clinic (source of truth for registration count in the UI).
+ */
+async function syncClinicAttendeesFromRegistrations(clinicId) {
+  await db.query(
+    `UPDATE clinics
+     SET attendees = (
+       SELECT COUNT(*)::int FROM clinic_registration WHERE clinic_id = $1
+     )
+     WHERE id = $1`,
+    [clinicId]
+  );
+}
+
+const formatClinicDate = (rawDate) => {
+  if (!rawDate) return "TBD";
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(rawDate));
+};
+
+const formatClinicTime = (rawStartTime, rawEndTime) => {
+  if (!rawStartTime || !rawEndTime) return "TBD";
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  });
+  return `${formatter.format(new Date(rawStartTime))} - ${formatter.format(new Date(rawEndTime))} UTC`;
+};
+
+const escapeHtml = (s) =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const formatDescriptionHtml = (raw) => escapeHtml(raw).replace(/\r\n|\r|\n/g, "<br/>");
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
 const allowedClinicTypes = [
@@ -20,7 +67,6 @@ clinicsRouter.post("/", async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -48,15 +94,14 @@ clinicsRouter.post("/", async (req, res) => {
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      `INSERT INTO clinics (name, description, start_time, end_time, date, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
@@ -141,6 +186,52 @@ clinicsRouter.get("/search", async (req, res) => {
   }
 });
 
+/**
+ * All clinics with nested languages in one round-trip (avoids N+1 GETs per clinic).
+ * Must be registered before `/:id` so "with-languages" is not parsed as an id.
+ */
+clinicsRouter.get("/with-languages", async (req, res) => {
+  try {
+    const rows = await db.query(
+      `SELECT
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', l.id,
+              'language', l.language,
+              'proficiency', wl.proficiency
+            )
+            ORDER BY l.language
+          ) FILTER (WHERE l.id IS NOT NULL),
+          '[]'::json
+        ) AS languages
+      FROM clinics c
+      LEFT JOIN clinic_languages wl ON wl.clinic_id = c.id
+      LEFT JOIN languages l ON l.id = wl.language_id
+      GROUP BY c.id
+      ORDER BY c.date ASC NULLS LAST, c.start_time ASC NULLS LAST`
+    );
+
+    const payload = rows.map((row) => {
+      const { languages, ...clinic } = row;
+      const langs =
+        languages === null || languages === undefined
+          ? []
+          : Array.isArray(languages)
+            ? languages
+            : typeof languages === "string"
+              ? JSON.parse(languages)
+              : languages;
+      return keysToCamel({ ...clinic, languages: langs });
+    });
+
+    res.status(200).json(payload);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // Get a single workshop
 clinicsRouter.get("/:id", async (req, res) => {
   try {
@@ -165,7 +256,6 @@ clinicsRouter.put("/:id", async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -193,32 +283,30 @@ clinicsRouter.put("/:id", async (req, res) => {
     }
 
     const clinic = await db.query(
-      `UPDATE clinics SET 
-        name = $1, 
-        description = $2, 
-        start_time = $3, 
-        end_time = $4, 
-        date = $5, 
-        attendees = $6, 
-        min_attendees = $7, 
-        capacity = $8, 
-        max_target_roles = $9, 
-        parking = $10,
-        address = $11,
-        city = $12,
-        state = $13,
-        zip = $14,
-        meeting_link = $15,
-        location_type = $16, 
-        type = $17
-       WHERE id = $18 RETURNING *`,
+      `UPDATE clinics SET
+        name = $1,
+        description = $2,
+        start_time = $3,
+        end_time = $4,
+        date = $5,
+        min_attendees = $6,
+        capacity = $7,
+        max_target_roles = $8,
+        parking = $9,
+        address = $10,
+        city = $11,
+        state = $12,
+        zip = $13,
+        meeting_link = $14,
+        location_type = $15,
+        type = $16
+       WHERE id = $17 RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
@@ -347,7 +435,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
   try {
     const { clinicId } = req.params;
     const { volunteerId } = req.body;
-      const data = await db.query(
+    const data = await db.query(
       `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
@@ -355,6 +443,78 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
         `,
       [volunteerId, clinicId]
     );
+
+    await syncClinicAttendeesFromRegistrations(clinicId);
+
+    // Confirmation email: registration should succeed even if email fails.
+    try {
+      const [volunteerRows, clinicRows] = await Promise.all([
+        db.query(
+          `
+            SELECT first_name, email
+            FROM volunteers
+            WHERE id = $1
+            LIMIT 1;
+          `,
+          [volunteerId]
+        ),
+        db.query(
+          `
+            SELECT name, description, date, start_time, end_time, city, state
+            FROM clinics
+            WHERE id = $1
+            LIMIT 1;
+          `,
+          [clinicId]
+        ),
+      ]);
+
+      const volunteer = volunteerRows?.[0];
+      const clinicInfo = clinicRows?.[0];
+
+      if (!volunteer) {
+        console.warn(
+          `[clinics] confirmation email skipped: volunteer not found clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else if (!volunteer.email) {
+        console.warn(
+          `[clinics] confirmation email skipped: missing volunteer email clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else if (!clinicInfo) {
+        console.warn(
+          `[clinics] confirmation email skipped: clinic not found clinicId=${clinicId} volunteerId=${volunteerId}`
+        );
+      } else {
+        const safeName = volunteer.first_name ?? "there";
+        const clinicLocation =
+          [clinicInfo.city, clinicInfo.state].filter(Boolean).join(", ") || "TBD";
+        const descriptionBlock =
+          clinicInfo.description && String(clinicInfo.description).trim()
+            ? `<p>${formatDescriptionHtml(clinicInfo.description)}</p>`
+            : "";
+
+        await sendEmail({
+          to: volunteer.email,
+          subject: `Registration confirmed: ${clinicInfo.name}`,
+          html: `
+            <p>Hi ${safeName},</p>
+            <p>Your registration for <strong>${clinicInfo.name}</strong> is confirmed.</p>
+            <p>
+              <strong>Date:</strong> ${formatClinicDate(clinicInfo.date)}<br />
+              <strong>Time:</strong> ${formatClinicTime(clinicInfo.start_time, clinicInfo.end_time)}<br />
+              <strong>Location:</strong> ${clinicLocation}
+            </p>
+            ${descriptionBlock}
+            <p>Thanks for volunteering!</p>
+          `,
+        });
+      }
+    } catch (emailError) {
+      console.error(
+        `[clinics] registration succeeded but confirmation email failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+        emailError
+      );
+    }
 
     res.status(200).json(keysToCamel(data));
   } catch (err) {
@@ -379,6 +539,8 @@ clinicsRouter.delete(
       if (!data.length) {
         return res.status(404).send("Volunteer not found for this clinic");
       }
+
+      await syncClinicAttendeesFromRegistrations(clinicId);
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {

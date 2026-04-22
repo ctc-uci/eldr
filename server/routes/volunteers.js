@@ -1,4 +1,5 @@
 import { keysToCamel } from "@/common/utils";
+import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 
@@ -18,6 +19,10 @@ volunteersRouter.post("/", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     if (!email) {
@@ -83,9 +88,13 @@ volunteersRouter.post("/", async (req, res) => {
           form_link,
           is_signed_confidentiality,
           is_attorney,
-          is_notary
+          is_notary,
+          affiliated_employer,
+          law_school_year,
+          state_bar_certificate,
+          state_bar_number
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING *;
       `,
       [
@@ -99,6 +108,10 @@ volunteersRouter.post("/", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer,
+        law_school_year,
+        state_bar_certificate,
+        state_bar_number,
       ]
     );
 
@@ -108,16 +121,124 @@ volunteersRouter.post("/", async (req, res) => {
   }
 });
 
-// Get all volunteers
+// Get all active (non-archived) volunteers
 volunteersRouter.get("/", async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
-        SELECT *
-        FROM volunteers;
+        SELECT v.*,
+          COALESCE(
+            array_agg(DISTINCT r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles,
+          COALESCE(
+            array_agg(DISTINCT aop.areas_of_practice) FILTER (WHERE aop.areas_of_practice IS NOT NULL),
+            '{}'::text[]
+          ) AS areas_of_practice,
+          COALESCE(
+            array_agg(DISTINCT l.language) FILTER (WHERE l.language IS NOT NULL),
+            '{}'::text[]
+          ) AS languages,
+          (
+            SELECT c.date
+            FROM clinic_registration cr
+            JOIN clinics c ON cr.clinic_id = c.id
+            WHERE cr.volunteer_id = v.id
+              AND cr.has_attended = TRUE
+            ORDER BY c.date DESC
+            LIMIT 1
+          ) AS most_recent_event
+        FROM volunteers v
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        LEFT JOIN volunteer_areas_of_practice vaop ON v.id = vaop.volunteer_id
+        LEFT JOIN areas_of_practice aop ON vaop.area_of_practice_id = aop.id
+        LEFT JOIN volunteer_language vl ON v.id = vl.volunteer_id
+        LEFT JOIN languages l ON vl.language_id = l.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
+        )
+        GROUP BY v.id;
       `
     );
     res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Get all archived volunteers
+volunteersRouter.get("/archived", async (req, res) => {
+  try {
+    const volunteersQuery = await db.query(
+      `
+        SELECT v.*,
+          av.archived_date,
+          av.reactivation,
+          av.archived_notes,
+          COALESCE(
+            array_agg(r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles
+        FROM volunteers v
+        JOIN volunteer_archived av ON av.volunteer_id = v.id
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        GROUP BY v.id, av.archived_date, av.reactivation, av.archived_notes;
+      `
+    );
+    res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Archive a volunteer
+volunteersRouter.patch("/:id/archive", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reactivation, notes } = req.body;
+
+    const result = await db.query(
+      `
+        INSERT INTO volunteer_archived (volunteer_id, reactivation, archived_notes)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (volunteer_id) DO UPDATE
+          SET archived_date  = NOW(),
+              reactivation   = EXCLUDED.reactivation,
+              archived_notes = EXCLUDED.archived_notes
+        RETURNING *;
+      `,
+      [id, reactivation ?? null, notes ?? null]
+    );
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Unarchive a volunteer
+volunteersRouter.patch("/:id/unarchive", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `
+        DELETE FROM volunteer_archived
+        WHERE volunteer_id = $1
+        RETURNING *;
+      `,
+      [id]
+    );
+
+    if (!result.length) {
+      return res
+        .status(404)
+        .json({ message: "Volunteer not found in archived list" });
+    }
+
+    res.status(200).json(keysToCamel(result[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -143,6 +264,37 @@ volunteersRouter.get("/:id", async (req, res) => {
   }
 });
 
+// Delete a volunteer via ID
+volunteersRouter.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userRow = await db.query(
+      `SELECT firebase_uid FROM users WHERE id = $1`,
+      [id]
+    );
+
+    await db.tx(async (t) => {
+      await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
+        id,
+      ]);
+      await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
+      await t.query(`DELETE FROM users WHERE id = $1`, [id]);
+    });
+
+    if (userRow.length && userRow[0].firebase_uid) {
+      await admin
+        .auth()
+        .deleteUser(userRow[0].firebase_uid)
+        .catch((err) => console.error("Failed to delete Firebase user:", err));
+    }
+
+    res.status(200).send(`Volunteer ${id} deleted successfully`);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // Update a volunteer's information via ID
 volunteersRouter.put("/:id", async (req, res) => {
   try {
@@ -158,6 +310,10 @@ volunteersRouter.put("/:id", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     await db.query(
@@ -171,7 +327,11 @@ volunteersRouter.put("/:id", async (req, res) => {
             form_link = COALESCE($7, form_link),
             is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
             is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary)
+            is_notary = COALESCE($10, is_notary),
+            affiliated_employer = COALESCE($11, affiliated_employer),
+            law_school_year = COALESCE($12, law_school_year),
+            state_bar_certificate = COALESCE($13, state_bar_certificate),
+            state_bar_number = COALESCE($14, state_bar_number)
         WHERE id = $1;
       `,
       [
@@ -185,6 +345,10 @@ volunteersRouter.put("/:id", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer ?? null,
+        law_school_year ?? null,
+        state_bar_certificate ?? null,
+        state_bar_number ?? null,
       ]
     );
 
@@ -199,14 +363,21 @@ volunteersRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    await db.query(
-      `
-        DELETE
-        FROM volunteers
-        WHERE id = $1;
-      `,
+    const userResult = await db.query(
+      `SELECT firebase_uid FROM users WHERE id = $1`,
       [id]
     );
+
+    if (!userResult.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
+
+    const { firebase_uid } = userResult[0];
+
+    // Deleting from users cascades to volunteers and all junction tables
+    await db.query(`DELETE FROM users WHERE id = $1`, [id]);
+
+    await admin.auth().deleteUser(firebase_uid);
 
     res.status(200).send(`Volunteer ${id} deleted successfully`);
   } catch (e) {
@@ -245,7 +416,9 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
     );
 
     if (!areaAssignment.length) {
-      return res.status(200).json({ message: "Area of practice already assigned" });
+      return res
+        .status(200)
+        .json({ message: "Area of practice already assigned" });
     }
 
     res.status(201).json(keysToCamel(areaAssignment[0]));
@@ -397,7 +570,9 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     }
 
     const valuesSql = languages
-      .map((_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`)
+      .map(
+        (_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`
+      )
       .join(", ");
 
     const params = [volunteerId];
@@ -405,9 +580,11 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
       const normalizedProficiency = String(entry?.proficiency ?? "")
         .trim()
         .toLowerCase();
-      const proficiency = ["proficient", "professional", "native/fluent"].includes(
-        normalizedProficiency
-      )
+      const proficiency = [
+        "proficient",
+        "professional",
+        "native/fluent",
+      ].includes(normalizedProficiency)
         ? normalizedProficiency
         : "proficient";
       const isLiterate =
@@ -527,7 +704,9 @@ volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
     );
 
     if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Role not assigned to this volunteer" });
+      return res
+        .status(404)
+        .json({ message: "Role not assigned to this volunteer" });
     }
 
     res.status(200).json(keysToCamel(deletedRelationship));
@@ -584,28 +763,33 @@ volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
   }
 });
 
-volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
-  try {
-    const { volunteerId, locationId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/locations/:locationId",
+  async (req, res) => {
+    try {
+      const { volunteerId, locationId } = req.params;
 
-    const deletedRelationship = await db.query(
-      `
+      const deletedRelationship = await db.query(
+        `
         DELETE FROM volunteer_locations
         WHERE volunteer_id = $1 AND location_id = $2
         RETURNING *;
       `,
-      [volunteerId, locationId]
-    );
+        [volunteerId, locationId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Location not assigned to this volunteer" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Location not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
 volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
   try {

@@ -1,8 +1,10 @@
 import dotenv from "dotenv";
 
+dotenv.config();
+
 import { app } from "./app";
 
-dotenv.config();
+import "../routes/scheduler.js";
 
 const SERVER_PORT =
   process.env.NODE_ENV === "development"

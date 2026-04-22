@@ -12,8 +12,7 @@ import * as React from "react"
 const proseMirrorBaseCss = defineStyle({
   display: "flex",
   flexDirection: "column",
-  borderWidth: "1px",
-  rounded: "l2",
+  rounded: "8px",
   lineHeight: "1.5",
 
   "--content-padding-x": "spacing.5",

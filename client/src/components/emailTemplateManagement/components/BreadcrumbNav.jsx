@@ -6,10 +6,13 @@ export const BreadcrumbNav = ({
   view,
   currentFolder,
   templateName,
+  mt,
+  mb = 4,
 }) => {
   return (
     <Breadcrumb.Root
-      mb={4}
+      mt={mt}
+      mb={mb}
       fontSize="sm"
       color="gray.500"
     >
@@ -21,14 +24,14 @@ export const BreadcrumbNav = ({
               to="/email"
               _hover={{ color: "gray.700" }}
             >
-              Management
+              Homepage
             </Breadcrumb.Link>
           ) : (
             <Breadcrumb.Link
               as={Link}
               to="/email"
             >
-              Management
+              Homepage
             </Breadcrumb.Link>
           )}
         </Breadcrumb.Item>
@@ -38,7 +41,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 Folders
@@ -52,7 +55,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 {currentFolder?.name || "New Folder"}
@@ -81,7 +84,7 @@ export const BreadcrumbNav = ({
             <Breadcrumb.Separator />
             <Breadcrumb.Item isCurrentPage>
               <Breadcrumb.Link
-                color="gray.800"
+                color="blue.600"
                 fontWeight="medium"
               >
                 {templateName || "Untitled Template"}

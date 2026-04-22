@@ -11,6 +11,7 @@ import { clinicsRouter } from "@/routes/clinics";
 import { locationsRouter } from "@/routes/locations";
 import { emailTemplatesRouter } from "@/routes/emailTemplates";
 import { foldersRouter } from "@/routes/folders";
+import { emailsRouter } from "@/routes/emails";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -53,6 +54,7 @@ app.use("/roles", rolesRouter);
 app.use("/locations", locationsRouter);
 app.use("/email-templates", emailTemplatesRouter);
 app.use("/folders", foldersRouter);
+app.use("/emails", emailsRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;

@@ -1,5 +1,6 @@
 import {
   Button,
+  CloseButton,
   Dialog,
   HStack,
   Portal,
@@ -23,7 +24,9 @@ export const DeleteTemplateModal = ({
           p={0}
           bg="white"
         >
-          <Dialog.CloseTrigger />
+          <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
+            <CloseButton size="sm" onClick={onClose} />
+          </Dialog.CloseTrigger>
           <Dialog.Body p={6}>
             <VStack align="stretch" gap={4}>
               <Text fontSize="md" fontWeight="bold">
@@ -41,12 +44,13 @@ export const DeleteTemplateModal = ({
                   Cancel
                 </Button>
                 <Button
-                  backgroundColor="#5797BD"
+                  bg="#DC2626"
                   color="white"
                   size="sm"
+                  _hover={{ bg: "#991919" }}
                   onClick={onDelete}
                 >
-                  Delete
+                  Yes, Delete
                 </Button>
               </HStack>
             </VStack>

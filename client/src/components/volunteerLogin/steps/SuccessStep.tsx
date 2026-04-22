@@ -3,18 +3,12 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
-  Image,
-  Link,
   Progress,
   Text,
 } from "@chakra-ui/react";
 
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
-import { LuArrowRight, LuFacebook, LuMail, LuUser } from "react-icons/lu";
+import { LuArrowRight, LuInfo } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -44,12 +38,6 @@ const SuccessStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -62,6 +50,7 @@ const SuccessStep = ({ onNext }: Props) => {
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
+            mt="3%"
             borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
             borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
             borderColor="#E4E4E7"
@@ -74,75 +63,16 @@ const SuccessStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Community Counsel Account Manager
+                Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
+                color="black"
               >
-                Your account has been created! Navigate to the login page and
-                sign-in with your new credentials.
+                Your account has been created.
               </Text>
             </Box>
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "32px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
-            </Box>
           </Flex>
 
           <Flex
@@ -158,7 +88,7 @@ const SuccessStep = ({ onNext }: Props) => {
               size="xs"
             >
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
 
@@ -167,40 +97,61 @@ const SuccessStep = ({ onNext }: Props) => {
               gap="8px"
               align="center"
             >
-              <Heading
-                fontSize={{ base: "18px", md: "22px" }}
-                fontWeight={700}
-                color="black"
+              <Box
+                w="100%"
+                p="12px"
+                border="1px solid"
+                borderColor="green.200"
+                bg="green.50"
+                borderRadius="6px"
               >
-                CC Volunteer Account Created
-              </Heading>
-              <Text
-                fontSize={{ base: "13px", md: "14px" }}
-                color="grey"
-                fontStyle="italic"
-              >
-                Navigate to the login page by clicking below.
-              </Text>
+                <Flex gap="10px" align="flex-start">
+                  
+                  <Box mt="2px">
+                    <LuInfo color="#116932" size={18} />
+                  </Box>
+
+                  <Box>
+                    <Text fontSize="14px" color="#116932" fontWeight="bold">
+                      Account created.
+                    </Text>
+
+                    <Text fontSize="14px" color="#116932" fontWeight="medium">
+                      Use your new credentials to log in to the portal.
+                    </Text>
+                  </Box>
+
+                </Flex>
+              </Box>
             </Flex>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
-              w="100%"
               borderRadius="6px"
               fontSize={{ base: "13px", md: "17px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              position="relative"
+              w="100%"
               px="20px"
               onClick={onNext}
             >
-              <HStack gap="10px">
-                <LuUser size={18} />
-                <span>Return to Login</span>
-              </HStack>
-              <LuArrowRight size={16} />
+              <Box w="100%" textAlign="center">
+                Return to Login
+              </Box>
+              <Box position="absolute" right="12px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
           </Flex>
         </Flex>
