@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Badge,
@@ -8,6 +8,7 @@ import {
   Dialog,
   Flex,
   HStack,
+  IconButton,
   Portal,
   Separator,
   Text,
@@ -20,16 +21,33 @@ import {
   CalendarDays,
   CalendarPlus,
   CalendarX,
-  Check,
   MapPin,
+  Share,
   Users,
 } from "lucide-react";
+import { LuCalendarDays } from "react-icons/lu";
 
-import { getClinicLocationDisplay } from "./clinicLocationFormat";
+import { formatLocationTypeTag, getClinicLocationDisplay } from "./clinicLocationFormat";
+import RegStatus from "./regStatus";
 
-export const EventInfo = ({ event, onRegister, onUnregister }) => {
+export const EventInfo = ({
+  event,
+  activeTab,
+  onRegister,
+  onUnregister,
+  isMobile,
+}) => {
   const [open, setOpen] = useState(false);
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
+  const [showCopyMessage, setShowCopyMessage] = useState(false);
+
+  useEffect(() => {
+    if (showCopyMessage) {
+      const timer = setTimeout(() => {
+        setShowCopyMessage(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showCopyMessage]);
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -44,22 +62,90 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
     setOpen(false);
   };
 
-  if (!event) return <Box p={10}>Please select an event to view details!</Box>;
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShowCopyMessage(true);
+  };
+
+  if (!event) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        w="full"
+        h="full"
+        p={10}
+        gap={6}
+        textAlign="center"
+      >
+        {activeTab === "catalog" ? (
+          <Text
+            fontSize="lg"
+            color="gray.500"
+            fontStyle="italic"
+          >
+            Please select an event to view details!
+          </Text>
+        ) : (
+          <>
+            <CalendarX
+              size={32}
+              color="#a1a1aa"
+              strokeWidth={1.5}
+            />
+            <Text
+              fontWeight={600}
+              fontSize="lg"
+            >
+              You aren't registered for any upcoming events yet.
+            </Text>
+            <Text
+              fontSize="sm"
+              color="#52525B"
+            >
+              Browse to find an offering that fits your schedule!
+            </Text>
+            <Button
+              bg="#487C9E"
+              p={6}
+            >
+              <LuCalendarDays />
+              View All Events
+            </Button>
+          </>
+        )}
+      </Flex>
+    );
+  }
 
   // Determine if this is a past event using the same logic as MyEventsList
   const getEventEndDateTime = () => {
     const dateObj = event.date ? new Date(event.date) : null;
     if (dateObj && event.endTime) {
       const endObj = new Date(event.endTime);
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(),
-        endObj.getUTCHours(), endObj.getUTCMinutes(), endObj.getUTCSeconds()
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          endObj.getUTCHours(),
+          endObj.getUTCMinutes(),
+          endObj.getUTCSeconds()
+        )
+      );
     }
     if (dateObj) {
-      return new Date(Date.UTC(
-        dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 23, 59, 59
-      ));
+      return new Date(
+        Date.UTC(
+          dateObj.getUTCFullYear(),
+          dateObj.getUTCMonth(),
+          dateObj.getUTCDate(),
+          23,
+          59,
+          59
+        )
+      );
     }
     return null;
   };
@@ -70,11 +156,28 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
+  const locationTypeTag = formatLocationTypeTag(locationType);
+
+  const isUpcoming = event.startTime
+    ? new Date(event.startTime) >= new Date()
+    : true;
+  let statusLabel = "Registered";
+  let statusColor = "#22C55E";
+
+  if (!isUpcoming) {
+    if (event.hasAttended) {
+      statusLabel = "Attended";
+      statusColor = "#22C55E";
+    } else {
+      statusLabel = "Missed";
+      statusColor = "#DC2626";
+    }
+  }
 
   return (
     <Flex
       direction="column"
-      py={{ base: 2, md: "50px" }}
+      py={{ base: 7, md: "50px" }}
       px={{ base: 4, md: 8 }}
       w="full"
       h="full"
@@ -82,18 +185,55 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
       flex="1"
       overflow="hidden"
     >
-      {/* Event name */}
-      <Text
-        flexShrink={0}
-        fontSize="26px"
-        fontWeight="400"
-        lineHeight="44px"
-        letterSpacing="-2.5%"
-        color="#000000"
-        mb={{ base: "24px", md: 0 }}
+      <HStack
+        justify="space-between"
+        mb="20px"
       >
-        {event.name}
-      </Text>
+        <Text
+          flexShrink={0}
+          fontSize="26px"
+          fontWeight="bold"
+          lineHeight="44px"
+          letterSpacing="-2.5%"
+          color="#000000"
+        >
+          {event.name}
+        </Text>
+
+        {activeTab === "catalog" && (
+          <Box position="relative">
+            <Box
+              position="absolute"
+              bottom="100%"
+              right={0}
+              mb={2}
+              bg="#487C9E"
+              color="white"
+              rounded="md"
+              fontWeight={500}
+              fontSize="xs"
+              px={2}
+              py={0.5}
+              whiteSpace="nowrap"
+              zIndex={10}
+              transition="all 0.2s ease-out"
+              opacity={showCopyMessage ? 1 : 0}
+              transform={showCopyMessage ? "translateY(0)" : "translateY(5px)"}
+              pointerEvents="none"
+            >
+              Link copied!
+            </Box>
+
+            <IconButton
+              variant="outline"
+              colorPalette="gray"
+              onClick={handleShare}
+            >
+              <Share />
+            </IconButton>
+          </Box>
+        )}
+      </HStack>
 
       {/* Event metadata */}
       <VStack
@@ -181,28 +321,30 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         fontWeight={500}
         gap="10px"
       >
-        {event.languages.map((l, i) => (
+        {activeTab === "my" && (
+          <RegStatus
+            statusColor={statusColor}
+            statusLabel={statusLabel}
+          />
+        )}
+        {[
+          event.type,
+          ...event.tags,
+          locationTypeTag,
+          ...event.languages,
+        ]
+          .filter(Boolean)
+          .map((item, i) => (
           <Badge
             key={i}
             variant="solid"
-            bg="#F4F4F5"
+            border="1px solid #E4E4E7"
             color="#27272A"
+            bg="#F4F4F5"
             px="10px"
             py="4px"
           >
-            {l.language}
-          </Badge>
-        ))}
-        {event.areas.map((a, i) => (
-          <Badge
-            key={i}
-            variant="solid"
-            bg="#F4F4F5"
-            color="#27272A"
-            px="10px"
-            py="4px"
-          >
-            {getAreaLabel(a)}
+            {item}
           </Badge>
         ))}
       </HStack>
@@ -229,17 +371,6 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
         mt={3}
         mb={{ base: 5, md: 1 }}
       >
-        {!isPastEvent && (
-          <HStack
-            opacity={event.isRegistered ? 1 : 0}
-            transition="opacity 0.2s"
-            gap={1}
-            fontSize="12px"
-            mb={2}
-          >
-            <Check size={16} /> You are attending
-          </HStack>
-        )}
         {isPastEvent ? (
           <Button
             variant="surface"
@@ -260,61 +391,63 @@ export const EventInfo = ({ event, onRegister, onUnregister }) => {
             )}
           </Button>
         ) : (
-        <Dialog.Root
-          open={open}
-          onOpenChange={(e) => setOpen(e.open)}
-          placement="center"
-          motionPreset="slide-in-bottom"
-          size="xs"
-        >
-          <Button
-            variant={event.isRegistered ? "surface" : "solid"}
-            colorPalette={event.isRegistered ? "red" : "blue"}
-            px="18px"
-            py="6px"
-            onClick={handleRegistration}
+          <Dialog.Root
+            open={open}
+            onOpenChange={(e) => setOpen(e.open)}
+            placement="center"
+            motionPreset="slide-in-bottom"
+            size={isMobile ? "xs" : "md"}
           >
-            {event.isRegistered ? (
-              <>
-                <CalendarX /> Unregister
-              </>
-            ) : (
-              <>
-                <CalendarPlus /> Register
-              </>
-            )}
-          </Button>
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Unregister from this event</Dialog.Title>
-                </Dialog.Header>
-                <Dialog.Body>
-                  <p>
-                    something something guilt trip something something don’t do
-                    it pls
-                  </p>
-                </Dialog.Body>
-                <Dialog.Footer>
-                  <Dialog.ActionTrigger asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </Dialog.ActionTrigger>
-                  <Button
-                    colorPalette="red"
-                    onClick={confirmUnregister}
-                  >
-                    Unregister
-                  </Button>
-                </Dialog.Footer>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" />
-                </Dialog.CloseTrigger>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
+            <Button
+              variant="solid"
+              colorPalette={event.isRegistered ? "red" : "blue"}
+              bg={!event.isRegistered && "#487C9E"}
+              px="18px"
+              py="6px"
+              onClick={handleRegistration}
+            >
+              {event.isRegistered ? (
+                <>
+                  <CalendarX /> Unregister
+                </>
+              ) : (
+                <>
+                  <CalendarPlus /> Register
+                </>
+              )}
+            </Button>
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Positioner>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Unregister from event?</Dialog.Title>
+                  </Dialog.Header>
+                  <Dialog.Body>
+                    <p>
+                      At Community Counsel, your role is vital for providing
+                      justice for your neighbors. Are you sure you need to
+                      unregister?
+                    </p>
+                  </Dialog.Body>
+                  <Dialog.Footer>
+                    <Dialog.ActionTrigger asChild>
+                      <Button variant="outline">Keep my spot</Button>
+                    </Dialog.ActionTrigger>
+                    <Button
+                      colorPalette="red"
+                      onClick={confirmUnregister}
+                    >
+                      Unregister
+                    </Button>
+                  </Dialog.Footer>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Dialog.CloseTrigger>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Portal>
+          </Dialog.Root>
         )}
       </Flex>
 

@@ -1,18 +1,18 @@
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   Button,
   Flex,
   IconButton,
-  Input,
-  InputGroup,
   Tabs,
   useBreakpointValue,
 } from "@chakra-ui/react";
 
-import { FaMagnifyingGlass } from "react-icons/fa6";
-import { LuCalendarDays, LuSettings2, LuUserCheck } from "react-icons/lu";
+import { ListFilter } from "lucide-react";
+import { LuCalendarDays, LuUserCheck } from "react-icons/lu";
 
+import AppliedFilters from "./appliedFilters";
+import SearchBar from "./searchBar";
 import { SortAndFilter } from "./sortAndFilter";
 
 export const TopBar = ({
@@ -20,31 +20,36 @@ export const TopBar = ({
   activeTab,
   onTabChange,
   searchQuery,
-  onSearchChange,
-  sortBy,
-  setSortBy,
+  setSearchQuery,
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  events,
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Hide search on mobile when showing details
+  const hasAppliedFilters = useMemo(() => {
+    if (!selectedFilters) return false;
+    return Object.values(selectedFilters).some((value) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== null && value !== undefined && value !== "";
+    });
+  }, [selectedFilters]);
+
   const showSearch = !isMobile || !showDetails;
 
   return (
     <Flex
       direction="column"
       w="100%"
+      borderBottom="1px solid #E4E4E7"
     >
       {/* Tabs - Segmented Control Style */}
       <Flex
         w="100%"
         justify="center"
         align="center"
-        py="16px"
-        px="16px"
         bg="white"
       >
         <Tabs.Root
@@ -56,13 +61,12 @@ export const TopBar = ({
         >
           <Tabs.List
             bg="#F3F4F6"
-            borderRadius="8px"
             p="4px"
             gap="4px"
             h="auto"
           >
             <Tabs.Trigger
-              value="all"
+              value="catalog"
               flex="1"
               gap="8px"
               fontWeight={500}
@@ -80,9 +84,10 @@ export const TopBar = ({
                 borderBottom: "none",
               }}
             >
-              <LuCalendarDays />
+              <LuCalendarDays size={16} />
               All Events
             </Tabs.Trigger>
+
             <Tabs.Trigger
               value="my"
               flex="1"
@@ -102,7 +107,7 @@ export const TopBar = ({
                 borderBottom: "none",
               }}
             >
-              <LuUserCheck />
+              <LuUserCheck size={16} />
               My Events
             </Tabs.Trigger>
           </Tabs.List>
@@ -114,73 +119,77 @@ export const TopBar = ({
         <Flex
           w="100%"
           px="16px"
-          py="12px"
+          py="16px"
           gap="12px"
           align="center"
           bg="white"
         >
           {isMobile ? (
             <IconButton
-              aria-label="Sort and Filter"
-              backgroundColor="#DBEAFE"
-              color="#173DA6"
+              aria-label="Filter"
+              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
-              border="1px solid #BFDBFE"
+              border={
+                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+              }
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
-              _hover={{ backgroundColor: "#BFDBFE" }}
+              _hover={{
+                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+              }}
               onClick={() => setFilterOpen(true)}
             >
-              <LuSettings2 />
+              <ListFilter size={20} />
             </IconButton>
           ) : (
             <Button
-              backgroundColor="#DBEAFE"
-              color="#173DA6"
+              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#173DA6" : "black"}
               borderRadius="8px"
-              border="1px solid #BFDBFE"
+              border={
+                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+              }
               px="16px"
               h="40px"
               fontSize="14px"
               fontWeight={500}
               flexShrink={0}
-              _hover={{ backgroundColor: "#BFDBFE" }}
+              _hover={{
+                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+              }}
               onClick={() => setFilterOpen(true)}
             >
-              <LuSettings2 />
-              Sort and Filter
+              <ListFilter size={20} />
+              Filter
             </Button>
           )}
 
           <SortAndFilter
             open={filterOpen}
             onOpenChange={setFilterOpen}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
           />
 
-          <InputGroup
-            flex="1"
-            startElement={<FaMagnifyingGlass color="#9CA3AF" />}
-          >
-            <Input
-              placeholder="Search for an event..."
-              backgroundColor="white"
-              borderColor="#D1D5DB"
-              borderRadius="8px"
-              h="44px"
-              fontSize="14px"
-              _placeholder={{ color: "#9CA3AF" }}
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </InputGroup>
+          <SearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            events={events}
+            isMobile
+          />
         </Flex>
+      )}
+
+      {/* Applied filter chips row - returns null when no filters active */}
+      {showSearch && (
+        <AppliedFilters
+          selectedFilters={selectedFilters}
+          setSelectedFilters={setSelectedFilters}
+        />
       )}
     </Flex>
   );

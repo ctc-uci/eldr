@@ -1,6 +1,6 @@
 import { keysToCamel } from "@/common/utils";
-import { db } from "@/db/db-pgp";
 import { admin } from "@/config/firebase";
+import { db } from "@/db/db-pgp";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
@@ -19,6 +19,10 @@ volunteersRouter.post("/", async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
     } = req.body;
 
     if (!email) {
@@ -84,9 +88,13 @@ volunteersRouter.post("/", async (req, res) => {
           form_link,
           is_signed_confidentiality,
           is_attorney,
-          is_notary
+          is_notary,
+          affiliated_employer,
+          law_school_year,
+          state_bar_certificate,
+          state_bar_number
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING *;
       `,
       [
@@ -100,6 +108,10 @@ volunteersRouter.post("/", async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer,
+        law_school_year,
+        state_bar_certificate,
+        state_bar_number,
       ]
     );
 
@@ -221,7 +233,9 @@ volunteersRouter.patch("/:id/unarchive", async (req, res) => {
     );
 
     if (!result.length) {
-      return res.status(404).json({ message: "Volunteer not found in archived list" });
+      return res
+        .status(404)
+        .json({ message: "Volunteer not found in archived list" });
     }
 
     res.status(200).json(keysToCamel(result[0]));
@@ -255,16 +269,24 @@ volunteersRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const userRow = await db.query(`SELECT firebase_uid FROM users WHERE id = $1`, [id]);
+    const userRow = await db.query(
+      `SELECT firebase_uid FROM users WHERE id = $1`,
+      [id]
+    );
 
     await db.tx(async (t) => {
-      await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [id]);
+      await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
+        id,
+      ]);
       await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
       await t.query(`DELETE FROM users WHERE id = $1`, [id]);
     });
 
     if (userRow.length && userRow[0].firebase_uid) {
-      await admin.auth().deleteUser(userRow[0].firebase_uid).catch((err) => console.error("Failed to delete Firebase user:", err));
+      await admin
+        .auth()
+        .deleteUser(userRow[0].firebase_uid)
+        .catch((err) => console.error("Failed to delete Firebase user:", err));
     }
 
     res.status(200).send(`Volunteer ${id} deleted successfully`);
@@ -394,7 +416,9 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
     );
 
     if (!areaAssignment.length) {
-      return res.status(200).json({ message: "Area of practice already assigned" });
+      return res
+        .status(200)
+        .json({ message: "Area of practice already assigned" });
     }
 
     res.status(201).json(keysToCamel(areaAssignment[0]));
@@ -546,7 +570,9 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
     }
 
     const valuesSql = languages
-      .map((_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`)
+      .map(
+        (_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`
+      )
       .join(", ");
 
     const params = [volunteerId];
@@ -554,9 +580,11 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
       const normalizedProficiency = String(entry?.proficiency ?? "")
         .trim()
         .toLowerCase();
-      const proficiency = ["proficient", "professional", "native/fluent"].includes(
-        normalizedProficiency
-      )
+      const proficiency = [
+        "proficient",
+        "professional",
+        "native/fluent",
+      ].includes(normalizedProficiency)
         ? normalizedProficiency
         : "proficient";
       const isLiterate =
@@ -676,7 +704,9 @@ volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
     );
 
     if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Role not assigned to this volunteer" });
+      return res
+        .status(404)
+        .json({ message: "Role not assigned to this volunteer" });
     }
 
     res.status(200).json(keysToCamel(deletedRelationship));
@@ -733,28 +763,33 @@ volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
   }
 });
 
-volunteersRouter.delete("/:volunteerId/locations/:locationId", async (req, res) => {
-  try {
-    const { volunteerId, locationId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/locations/:locationId",
+  async (req, res) => {
+    try {
+      const { volunteerId, locationId } = req.params;
 
-    const deletedRelationship = await db.query(
-      `
+      const deletedRelationship = await db.query(
+        `
         DELETE FROM volunteer_locations
         WHERE volunteer_id = $1 AND location_id = $2
         RETURNING *;
       `,
-      [volunteerId, locationId]
-    );
+        [volunteerId, locationId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Location not assigned to this volunteer" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Location not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
 volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
   try {

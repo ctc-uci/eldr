@@ -15,23 +15,19 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
+
 import {
   LuArrowRight,
   LuChevronDown,
-  LuFacebook,
-  LuMail,
   LuX,
+  LuSearch,
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  onBack: () => void;
-  volunteerId?: number; // pass from CreateAccountStep; fallback to localStorage if missing
 };
 
 type Area = {
@@ -48,7 +44,7 @@ const LawMultiSelect = ({
   disabled,
   placeholder,
 }: {
-  label: string;
+  label: React.ReactNode;
   items: string[];
   selected: string[];
   onChange: (val: string[]) => void;
@@ -58,12 +54,14 @@ const LawMultiSelect = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = items.filter((l) =>
-    l.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = items
+    .filter((l) => !selected.includes(l))
+    .filter((l) => l.toLowerCase().includes(search.toLowerCase()));
 
   const toggle = (area: string) => {
     onChange(
@@ -78,6 +76,12 @@ const LawMultiSelect = ({
     onChange(selected.filter((s) => s !== area));
   };
 
+  const clearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+    setSearch("");
+  };
+
   const updateDropdownPosition = () => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -90,10 +94,10 @@ const LawMultiSelect = ({
     });
   };
 
-  const handleOpen = () => {
+  const openDropdown = () => {
     if (disabled) return;
-    if (!open) updateDropdownPosition();
-    setOpen((o) => !o);
+    updateDropdownPosition();
+    setOpen(true);
   };
 
   useEffect(() => {
@@ -101,12 +105,14 @@ const LawMultiSelect = ({
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setSearch("");
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -123,7 +129,7 @@ const LawMultiSelect = ({
   }, [open]);
 
   return (
-    <Box position="relative">
+    <Box position="relative" ref={containerRef}>
       <Text
         fontSize={{ base: "14px", md: "16px" }}
         fontWeight={600}
@@ -133,80 +139,106 @@ const LawMultiSelect = ({
         {label}
       </Text>
 
+      {/* Trigger */}
       <Flex
         ref={triggerRef}
         align="center"
-        justify="space-between"
         border="1px solid"
         borderColor={open ? "#3182CE" : "#E4E4E7"}
         borderRadius="6px"
         px="12px"
         minH={{ base: "40px", md: "44px" }}
         py="6px"
-        cursor={disabled ? "not-allowed" : "pointer"}
-        onClick={handleOpen}
         bg={disabled ? "gray.50" : "white"}
-        userSelect="none"
         flexWrap="wrap"
         gap="6px"
         opacity={disabled ? 0.6 : 1}
+        cursor={disabled ? "not-allowed" : "text"}
+        onClick={() => {
+          inputRef.current?.focus();
+          openDropdown();
+        }}
       >
-        {selected.length === 0 ? (
-          <Text
-            fontSize={{ base: "13px", md: "14px" }}
-            color="gray.400"
-            flex="1"
-          >
-            {placeholder ?? "Search tags"}
-          </Text>
-        ) : (
+        <Box color="gray.400" display="flex" alignItems="center">
+          <LuSearch size={15} />
+        </Box>
+
+        {/* Chips */}
+        {selected.map((area) => (
           <Flex
-            flex="1"
-            flexWrap="wrap"
-            gap="6px"
+            key={area}
             align="center"
+            gap="4px"
+            bg="#F4F4F5"
+            border="1px solid"
+            borderColor="#E4E4E7"
+            borderRadius="6px"
+            px="8px"
+            py="2px"
+            fontSize="13px"
+            color="black"
           >
-            {selected.map((area) => (
-              <Flex
-                key={area}
-                align="center"
-                gap="4px"
-                bg="white"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="full"
-                px="10px"
-                py="2px"
-                fontSize="13px"
-                color="black"
-              >
-                {area}
-                <Box
-                  as="span"
-                  onClick={(e: React.MouseEvent) => remove(area, e)}
-                  cursor="pointer"
-                  color="gray.400"
-                  _hover={{ color: "gray.600" }}
-                  display="flex"
-                  alignItems="center"
-                >
-                  <LuX size={11} />
-                </Box>
-              </Flex>
-            ))}
+            {area}
+            <Box
+              as="span"
+              onClick={(e: React.MouseEvent) => remove(area, e)}
+              cursor="pointer"
+              color="gray.400"
+              _hover={{ color: "gray.600" }}
+              display="flex"
+              alignItems="center"
+            >
+              <LuX size={11} />
+            </Box>
           </Flex>
-        )}
-        <LuChevronDown
-          size={16}
-          color="#9CA3AF"
-          style={{
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-            flexShrink: 0,
+        ))}
+
+        {/* Input (ONLY search input now) */}
+        <Input
+          ref={inputRef}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (!open) openDropdown();
           }}
+          onFocus={openDropdown}
+          placeholder={
+            selected.length === 0
+              ? (placeholder ?? "Search tags")
+              : open
+                ? "Add tag..."
+                : ""
+          }
+          border="none"
+          p="0"
+          h="auto"
+          minW="120px"
+          flex="1"
+          fontSize={{ base: "13px", md: "14px" }}
+          color="black"
+          bg="transparent"
+          focusRingColor="transparent"
+          _placeholder={{ color: "gray.400" }}
+          disabled={disabled}
         />
+
+        {/* Clear */}
+        {selected.length > 0 && (
+          <Box
+            as="span"
+            onClick={clearAll}
+            cursor="pointer"
+            color="gray.400"
+            _hover={{ color: "gray.600" }}
+            display="flex"
+            alignItems="center"
+          >
+            <LuX size={15} />
+          </Box>
+        )}
       </Flex>
 
+      {/* Dropdown */}
       {open && (
         <Box
           ref={dropdownRef}
@@ -219,36 +251,9 @@ const LawMultiSelect = ({
           maxH="220px"
           overflowY="auto"
         >
-          <Box
-            px="12px"
-            py="8px"
-            borderBottom="1px solid"
-            borderColor="#E4E4E7"
-            position="sticky"
-            top={0}
-            bg="white"
-            zIndex={1}
-          >
-            <Input
-              placeholder="Search tags"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              border="none"
-              p="0"
-              fontSize={{ base: "13px", md: "14px" }}
-              focusRingColor="transparent"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Box>
-
           {filtered.length === 0 ? (
-            <Text
-              px="12px"
-              py="10px"
-              fontSize="13px"
-              color="gray.400"
-            >
-              No results
+            <Text px="12px" py="10px" fontSize="13px" color="gray.400">
+              Your entry has no matches. Check for spelling errors!
             </Text>
           ) : (
             filtered.map((area) => (
@@ -277,10 +282,8 @@ const LawMultiSelect = ({
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                 </Checkbox.Root>
-                <Text
-                  fontSize={{ base: "13px", md: "14px" }}
-                  color="black"
-                >
+
+                <Text fontSize={{ base: "13px", md: "14px" }} color="black">
                   {area}
                 </Text>
               </Flex>
@@ -292,18 +295,16 @@ const LawMultiSelect = ({
   );
 };
 
-const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
+const LawInterestStep = ({ onNext }: Props) => {
   const { backend } = useBackendContext();
 
   const [areas, setAreas] = useState<Area[]>([]);
-  const [selectedAreaLabels, setSelectedAreaLabels] = useState<string[]>([]);
+  const [selectedAreaLabels, setSelectedAreaLabels] = useState<string[]>(
+    () => loadDraft()?.selectedAreaLabels ?? []
+  );
 
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
 
   // Fetch dropdown options from GET /areas-of-practice
   useEffect(() => {
@@ -343,63 +344,11 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
 
   const areaLabels = useMemo(() => areaItems.map((x) => x.label), [areaItems]);
 
-  const labelToId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const item of areaItems) map.set(item.label, item.id);
-    return map;
-  }, [areaItems]);
-
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
-    const uniqueIds = Array.from(
-      new Set(
-        selectedAreaLabels
-          .map((label) => labelToId.get(label))
-          .filter((id): id is number => typeof id === "number" && id > 0)
-      )
-    );
-
-    // If they didn't select anything, just move on
-    if (uniqueIds.length === 0) {
-      onNext();
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // POST each selected area to volunteer areas-of-practice endpoint
-      await Promise.all(
-        uniqueIds.map((areaId) =>
-          backend.post(
-            `/volunteers/${effectiveVolunteerId}/areas-of-practice`,
-            {
-              areaOfPracticeId: areaId,
-            }
-          )
-        )
-      );
-
-      onNext();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
-        "Failed to save areas of practice.";
-      setErrorMsg(
-        typeof msg === "string" ? msg : "Failed to save areas of practice."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({ selectedAreaLabels });
+    onNext();
   };
 
   return (
@@ -425,12 +374,6 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -449,86 +392,21 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="350px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
-                mb="12px"
+                mb="25px"
               >
-                Community Counsel Account Manager
+                Volunteer Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
-              >
-                Select any areas of law you have interest or experience working
-                in. It is recommended to only specify areas you're comfortable
-                advising in.
-              </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
+                color="black"
               >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Box
-                  as="a"
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Box>
-                <Box
-                  as="a"
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Box>
-              </HStack>
+                Select areas of law you have prior experience in or are interested in assisting cases for. 
+              </Text>
             </Box>
           </Flex>
 
@@ -539,14 +417,15 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             px="5%"
             py="10%"
             gap={{ base: "16px", md: "18px" }}
-            justify="center"
+            justify="flex-start"
           >
             <Progress.Root
-              value={50}
+              value={60}
               size="xs"
+              mb="18px"
             >
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
 
@@ -568,12 +447,27 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
             )}
 
             <LawMultiSelect
-              label="If any, select areas of law you are interested working in."
+            label={
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>Select areas of law you're interested in working in</span>
+                <span
+                  style={{
+                    backgroundColor: "#F4F4F5",
+                    color: "black",
+                    fontSize: 12,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  optional
+                </span>
+              </span>
+            }
               items={areaLabels}
               selected={selectedAreaLabels}
               onChange={setSelectedAreaLabels}
               disabled={isLoadingAreas}
-              placeholder={isLoadingAreas ? "Loading..." : "Search tags"}
+              placeholder={isLoadingAreas ? "Loading..." : "Search for interests"}
             />
 
             <HStack
@@ -582,31 +476,33 @@ const LawInterestStep = ({ onNext, onBack, volunteerId }: Props) => {
               flexWrap="wrap"
             >
               <Button
-                bg="#3182CE"
-                color="white"
+                bg="white"
+                borderColor="#E4E4E7"
+                color="black"
                 h={{ base: "40px", md: "48px" }}
                 flex={{ base: "1 1 100%", sm: "1 1 auto" }}
                 borderRadius="8px"
                 fontSize={{ base: "13px", md: "16px" }}
                 fontWeight={600}
-                _hover={{ bg: "#5797BD" }}
-                justifyContent="space-between"
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
+                position="relative"
+                w="100%"
                 px="20px"
                 onClick={handleContinue}
-                loading={isSubmitting}
               >
+                <Box w="100%" textAlign="center">
                 Continue
+                </Box>
                 <LuArrowRight size={16} />
               </Button>
 
-              <Button
-                variant="ghost"
-                h={{ base: "40px", md: "48px" }}
-                flex={{ base: "1 1 100%", sm: "0 0 auto" }}
-                onClick={onBack}
-              >
-                Back
-              </Button>
             </HStack>
           </Flex>
         </Flex>

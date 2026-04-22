@@ -1,41 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
+ 
 import {
   Box,
   Button,
   Checkbox,
   Flex,
   Heading,
-  HStack,
-  Image,
   Input,
-  Link,
   Progress,
   Text,
 } from "@chakra-ui/react";
-
+ 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
-import {
-  LuArrowRight,
-  LuChevronDown,
-  LuFacebook,
-  LuMail,
-  LuX,
-} from "react-icons/lu";
-
-import logo from "../../../assets/EldrLogo.png";
+import { LuArrowRight, LuSearch, LuX } from "react-icons/lu";
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
 };
-
+ 
 type LanguageRow = {
   id: number;
   language: string;
+};
+ 
+const getErrorMessage = (e: unknown, fallback: string) => {
+  const err = e as {
+    response?: { data?: { message?: string } | string };
+    message?: string;
+  };
+  const msg =
+    (typeof err?.response?.data === "object" ? err.response?.data?.message : undefined) ||
+    (typeof err?.response?.data === "string" ? err.response.data : undefined) ||
+    err?.message;
+  return typeof msg === "string" && msg.trim() ? msg : fallback;
 };
 
 const LanguageMultiSelect = ({
@@ -46,7 +45,7 @@ const LanguageMultiSelect = ({
   disabled,
   placeholder,
 }: {
-  label: string;
+  label: React.ReactNode;
   items: string[];
   selected: string[];
   onChange: (val: string[]) => void;
@@ -56,13 +55,15 @@ const LanguageMultiSelect = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = items.filter((l) =>
     l.toLowerCase().includes(search.toLowerCase())
   );
-
+ 
   const toggle = (lang: string) => {
     onChange(
       selected.includes(lang)
@@ -70,12 +71,18 @@ const LanguageMultiSelect = ({
         : [...selected, lang]
     );
   };
-
+ 
   const remove = (lang: string, e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(selected.filter((s) => s !== lang));
   };
-
+ 
+  const clearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+    setSearch("");
+  };
+ 
   const updateDropdownPosition = () => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
@@ -87,28 +94,29 @@ const LanguageMultiSelect = ({
       zIndex: 9999,
     });
   };
-
-  const handleOpen = () => {
+ 
+  const handleFocus = () => {
     if (disabled) return;
-    if (!open) updateDropdownPosition();
-    setOpen((o) => !o);
+    updateDropdownPosition();
+    setOpen(true);
   };
-
+ 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setSearch("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
+ 
   useEffect(() => {
     if (!open) return;
     const handleReposition = () => updateDropdownPosition();
@@ -119,9 +127,9 @@ const LanguageMultiSelect = ({
       window.removeEventListener("resize", handleReposition);
     };
   }, [open]);
-
+ 
   return (
-    <Box position="relative">
+    <Box position="relative" ref={containerRef}>
       <Text
         fontSize={{ base: "14px", md: "16px" }}
         fontWeight={600}
@@ -130,81 +138,107 @@ const LanguageMultiSelect = ({
       >
         {label}
       </Text>
-
+ 
+      {/* Trigger bar — contains tags + live search input */}
       <Flex
         ref={triggerRef}
         align="center"
-        justify="space-between"
         border="1px solid"
         borderColor={open ? "#3182CE" : "#E4E4E7"}
         borderRadius="6px"
         px="12px"
         minH={{ base: "40px", md: "44px" }}
         py="6px"
-        cursor={disabled ? "not-allowed" : "pointer"}
-        onClick={handleOpen}
         bg={disabled ? "gray.50" : "white"}
-        userSelect="none"
         flexWrap="wrap"
         gap="6px"
         opacity={disabled ? 0.6 : 1}
+        onClick={() => inputRef.current?.focus()}
+        cursor={disabled ? "not-allowed" : "text"}
       >
-        {selected.length === 0 ? (
-          <Text
-            fontSize={{ base: "13px", md: "14px" }}
-            color="gray.400"
-            flex="1"
-          >
-            {placeholder ?? "Search tags"}
-          </Text>
-        ) : (
+        {/* Search icon */}
+        <Box color="gray.400" display="flex" alignItems="center" flexShrink={0}>
+          <LuSearch size={15} />
+        </Box>
+ 
+        {/* Selected tags */}
+        {selected.map((lang) => (
           <Flex
-            flex="1"
-            flexWrap="wrap"
-            gap="6px"
+            key={lang}
             align="center"
+            gap="4px"
+            bg="#F4F4F5"
+            border="1px solid"
+            borderColor="#E4E4E7"
+            borderRadius="2px"
+            px="8px"
+            py="2px"
+            fontSize="12px"
+            color="black"
+            flexShrink={0}
           >
-            {selected.map((lang) => (
-              <Flex
-                key={lang}
-                align="center"
-                gap="4px"
-                bg="white"
-                border="1px solid"
-                borderColor="#E4E4E7"
-                borderRadius="full"
-                px="10px"
-                py="2px"
-                fontSize="13px"
-                color="black"
-              >
-                {lang}
-                <Box
-                  as="span"
-                  onClick={(e: React.MouseEvent) => remove(lang, e)}
-                  cursor="pointer"
-                  color="gray.400"
-                  _hover={{ color: "gray.600" }}
-                  display="flex"
-                  alignItems="center"
-                >
-                  <LuX size={11} />
-                </Box>
-              </Flex>
-            ))}
+            {lang}
+            <Box
+              as="span"
+              onClick={(e: React.MouseEvent) => remove(lang, e)}
+              cursor="pointer"
+              color="gray.400"
+              _hover={{ color: "gray.600" }}
+              display="flex"
+              alignItems="center"
+            >
+              <LuX size={10} />
+            </Box>
           </Flex>
-        )}
-        <LuChevronDown
-          size={16}
-          color="#9CA3AF"
-          style={{
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-            flexShrink: 0,
+        ))}
+ 
+        {/* The actual search input */}
+        <Input
+          ref={inputRef}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onFocus={() => {
+            handleFocus();
           }}
+          placeholder={
+            selected.length === 0
+              ? (placeholder ?? "Search for languages")
+              : open
+                ? "Add tag..."
+                : ""
+          }
+          disabled={disabled}
+          border="none"
+          p="0"
+          h="auto"
+          minW="80px"
+          flex="1"
+          fontSize={{ base: "13px", md: "14px" }}
+          color="black"
+          focusRingColor="transparent"
+          bg="transparent"
+          _placeholder={{ color: "gray.400" }}
+          cursor={disabled ? "not-allowed" : "text"}
         />
+ 
+        {/* Clear all */}
+        {selected.length > 0 && (
+          <Box
+            as="span"
+            onClick={clearAll}
+            cursor="pointer"
+            color="gray.400"
+            _hover={{ color: "gray.600" }}
+            display="flex"
+            alignItems="center"
+            flexShrink={0}
+          >
+            <LuX size={15} />
+          </Box>
+        )}
       </Flex>
-
+ 
+      {/* Dropdown list */}
       {open && (
         <Box
           ref={dropdownRef}
@@ -214,39 +248,12 @@ const LanguageMultiSelect = ({
           borderColor="#E4E4E7"
           borderRadius="6px"
           boxShadow="lg"
-          maxH="220px"
+          maxH="240px"
           overflowY="auto"
         >
-          <Box
-            px="12px"
-            py="8px"
-            borderBottom="1px solid"
-            borderColor="#E4E4E7"
-            position="sticky"
-            top={0}
-            bg="white"
-            zIndex={1}
-          >
-            <Input
-              placeholder="Search tags"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              border="none"
-              p="0"
-              fontSize={{ base: "13px", md: "14px" }}
-              focusRingColor="transparent"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Box>
-
           {filtered.length === 0 ? (
-            <Text
-              px="12px"
-              py="10px"
-              fontSize="13px"
-              color="gray.400"
-            >
-              No results
+            <Text px="12px" py="10px" fontSize="13px" color="gray.400">
+              No results found
             </Text>
           ) : (
             filtered.map((lang) => (
@@ -275,10 +282,7 @@ const LanguageMultiSelect = ({
                     <Checkbox.Indicator />
                   </Checkbox.Control>
                 </Checkbox.Root>
-                <Text
-                  fontSize={{ base: "13px", md: "14px" }}
-                  color="black"
-                >
+                <Text fontSize={{ base: "13px", md: "14px" }} color="black">
                   {lang}
                 </Text>
               </Flex>
@@ -289,133 +293,108 @@ const LanguageMultiSelect = ({
     </Box>
   );
 };
-
-const LanguageStep = ({ onNext, volunteerId }: Props) => {
+ 
+const LanguageStep = ({ onNext }: Props) => {
   const { backend } = useBackendContext();
 
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
   const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
-    []
+    () => loadDraft()?.selectedLanguageNames ?? []
   );
   const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
-    []
+    () => loadDraft()?.literateLanguageNames ?? []
   );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
-
+ 
   useEffect(() => {
     const fetchLanguages = async () => {
       setErrorMsg(null);
       setIsLoading(true);
       try {
         const resp = await backend.get("/languages");
-        const rows = (resp?.data ?? []) as any[];
-
-        // Expecting keysToCamel output from backend:
-        // [{ id, language }, ...]
+        const rows: unknown[] = Array.isArray(resp?.data) ? resp.data : [];
         const parsed: LanguageRow[] = rows
-          .map((r) => ({
-            id: Number(r.id),
-            language: String(r.language ?? "").trim(),
-          }))
+          .map((r) => {
+            const row = r as { id?: unknown; language?: unknown };
+            return {
+              id: Number(row.id),
+              language: String(row.language ?? "").trim(),
+            };
+          })
           .filter((r) => r.id && r.language);
-
         setAllLanguages(parsed);
-      } catch (e: any) {
-        const msg =
-          e?.response?.data?.message ||
-          e?.response?.data ||
-          e?.message ||
-          "Failed to load languages.";
-        setErrorMsg(
-          typeof msg === "string" ? msg : "Failed to load languages."
-        );
+      } catch (e: unknown) {
+        setErrorMsg(getErrorMessage(e, "Failed to load languages."));
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchLanguages();
   }, [backend]);
-
-  // Name -> id map (for backend payload)
+ 
   const nameToId = useMemo(() => {
     const m = new Map<string, number>();
     for (const row of allLanguages) m.set(row.language, row.id);
     return m;
   }, [allLanguages]);
-
+ 
   const allLanguageNames = useMemo(() => {
     return [...new Set(allLanguages.map((l) => l.language))].sort((a, b) =>
       a.localeCompare(b)
     );
   }, [allLanguages]);
 
-  // keep literate subset valid when selected changes
+  // "Literate in" must be a subset of the selected languages
+  const literateOptions = useMemo(
+    () => selectedLanguageNames,
+    [selectedLanguageNames]
+  );
+
+  // If selected languages change, keep literate selections valid.
   useEffect(() => {
     setLiterateLanguageNames((prev) =>
-      prev.filter((x) => selectedLanguageNames.includes(x))
+      prev.filter((n) => selectedLanguageNames.includes(n))
     );
   }, [selectedLanguageNames]);
-
-  const handleContinue = async () => {
+ 
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
-    // If nothing selected, just continue
     if (selectedLanguageNames.length === 0) {
+      saveDraft({
+        selectedLanguageNames: [],
+        literateLanguageNames: [],
+      });
       onNext();
       return;
     }
 
-    const payload = {
-      languages: selectedLanguageNames
-        .map((name) => {
-          const languageId = nameToId.get(name);
-          if (!languageId) return null;
-          return {
-            languageId,
-            isLiterate: literateLanguageNames.includes(name),
-          };
-        })
-        .filter(Boolean),
-    };
+    const mapped = selectedLanguageNames
+      .map((name) => {
+        const languageId = nameToId.get(name);
+        if (!languageId) return null;
+        return { languageId, isLiterate: literateLanguageNames.includes(name) };
+      })
+      .filter(Boolean);
 
-    if (!payload.languages.length) {
+    if (!mapped.length) {
+      saveDraft({
+        selectedLanguageNames: [],
+        literateLanguageNames: [],
+      });
       onNext();
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await backend.post(
-        `/volunteers/${effectiveVolunteerId}/languages`,
-        payload
-      );
-      onNext();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
-        "Failed to save languages.";
-      setErrorMsg(typeof msg === "string" ? msg : "Failed to save languages.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({
+      selectedLanguageNames,
+      literateLanguageNames,
+    });
+    onNext();
   };
-
+ 
   return (
     <LoginLayout>
       <Flex
@@ -429,28 +408,9 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        {/* Top bar */}
-        <Flex
-          w="100%"
-          h="70px"
-          bg="#F6F6F6"
-          flexShrink={0}
-          align="center"
-          px="2%"
-          py="1%"
-        >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
-        </Flex>
-
-        <Flex
-          flex="1"
-          direction={{ base: "column", md: "row" }}
-        >
+        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+ 
+        <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
           <Flex
             direction="column"
@@ -463,169 +423,104 @@ const LanguageStep = ({ onNext, volunteerId }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="350px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
-                mb="12px"
+                mb="28px"
               >
-                Community Council Account Manager
+                Volunteer Account Creation
               </Heading>
-              <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
-              >
-                Select any languages you speak. Then indicate which of those you
-                are literate in (can read and write).
+              <Text fontSize={{ base: "14px", md: "16px", lg: "20px" }} color="black">
+                Select any languages you speak and your level of proficiency.
+                <br /><br />
+                Be as accurate as possible. Volunteers may be asked to assist/dictate in languages they indicate.
               </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
             </Box>
           </Flex>
-
+ 
           {/* Right */}
           <Flex
             direction="column"
-            justify="center"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
             gap={{ base: "16px", md: "18px" }}
           >
-            <Progress.Root
-              value={15}
-              size="xs"
-            >
+            <Progress.Root value={2} size="xs">
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
-
+ 
             {errorMsg && (
-              <Box
-                border="1px solid"
-                borderColor="red.200"
-                bg="red.50"
-                p="10px"
-                borderRadius="8px"
-              >
-                <Text
-                  color="red.700"
-                  fontSize="14px"
-                >
-                  {errorMsg}
-                </Text>
+              <Box border="1px solid" borderColor="red.200" bg="red.50" p="10px" borderRadius="8px">
+                <Text color="red.700" fontSize="14px">{errorMsg}</Text>
               </Box>
             )}
-
+ 
             <LanguageMultiSelect
-              label="Select languages you speak"
+              label={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>Select any non-english languages you speak</span>
+                  <span style={{ backgroundColor: "#F4F4F5", color: "black", fontSize: 12, padding: "2px 6px", borderRadius: 4 }}>
+                    optional
+                  </span>
+                </span>
+              }
               items={allLanguageNames}
               selected={selectedLanguageNames}
               onChange={setSelectedLanguageNames}
               disabled={isLoading}
-              placeholder={isLoading ? "Loading..." : "Search tags"}
+              placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
-
+ 
             <LanguageMultiSelect
-              label="Of the selected languages, which are you literate in?"
-              items={selectedLanguageNames}
+              label={
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>Indicate in which you are literate</span>
+                  <span style={{ backgroundColor: "#F4F4F5", color: "black", fontSize: 12, padding: "2px 6px", borderRadius: 4 }}>
+                    optional
+                  </span>
+                </span>
+              }
+              items={literateOptions}
               selected={literateLanguageNames}
               onChange={setLiterateLanguageNames}
-              disabled={selectedLanguageNames.length === 0}
-              placeholder={
-                selectedLanguageNames.length === 0
-                  ? "Select languages above first"
-                  : "Search tags"
-              }
+              disabled={isLoading}
+              placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
-
+ 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               borderRadius="8px"
               fontSize={{ base: "13px", md: "16px" }}
               fontWeight={600}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{ bg: "#F4F4F5", _active: { bg: "black", color: "white" } }}
+              position="relative"
+              w="100%"
               px="20px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
-              Continue
-              <LuArrowRight size={16} />
+              <Box w="100%" textAlign="center">Continue</Box>
+              <Box position="absolute" right="12px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
+
           </Flex>
         </Flex>
-
-        <Box
-          w="100%"
-          h="70px"
-          bg="#F6F6F6"
-          flexShrink={0}
-        />
+ 
+        <Box w="100%" h="70px" bg="#F6F6F6" flexShrink={0} />
       </Flex>
     </LoginLayout>
   );
 };
-
+ 
 export default LanguageStep;

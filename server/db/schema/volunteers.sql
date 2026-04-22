@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     last_name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone_number TEXT NOT NULL,
-    is_notary BOOLEAN,
-    is_attorney BOOLEAN,
     form_completed BOOLEAN,
     form_link TEXT,
     is_signed_confidentiality TIMESTAMP,
+    is_attorney BOOLEAN,
+    is_notary BOOLEAN,
     affiliated_employer TEXT,
     law_school_year TEXT,
     state_bar_certificate TEXT,
     state_bar_number TEXT,
-    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (id) REFERENCES users(id)
 );

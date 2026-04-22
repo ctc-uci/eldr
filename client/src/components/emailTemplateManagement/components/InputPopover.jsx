@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Button, HStack, Input, Popover, Text } from "@chakra-ui/react";
+import { Button, CloseButton, Dialog, Flex, Input, Portal, Text } from "@chakra-ui/react";
 
-import { FaPlus } from "react-icons/fa";
-
-export const InputPopover = ({
+/**
+ * A reusable modal dialog for creating new items (folders, templates, etc.).
+ * Replaces the old InputPopover using a centered Dialog with backdrop.
+ */
+export const InputDialog = ({
   isOpen,
   onOpenChange,
   onSubmit,
@@ -11,13 +13,12 @@ export const InputPopover = ({
   // Trigger button props
   triggerIcon,
   triggerLabel,
-  triggerWidth = "292px",
   buttonProps = {},
-  // Popover content props
-  popoverTitle,
-  inputPlaceholder,
-  popoverWidth = "292px",
-  placement = "bottom-start",
+  // Dialog content props
+  dialogTitle,
+  inputLabel = "Folder Name",
+  inputPlaceholder = "Untitled Folder",
+  submitLabel = "Create Folder",
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -42,61 +43,142 @@ export const InputPopover = ({
   };
 
   return (
-    <Popover.Root
+    <Dialog.Root
+      lazyMount
       open={isOpen}
       onOpenChange={handleOpenChange}
-      placement={placement}
+      placement="center"
     >
-      <Popover.Trigger asChild>
+      <Dialog.Trigger asChild>
         <Button
-          backgroundColor="#5797BD"
+          backgroundColor={isOpen ? "#294A5F" : "#487C9E"}
           color="white"
-          w={triggerWidth}
+          _hover={{ bg: "#294A5F" }}
           onClick={handleTriggerClick}
           {...buttonProps}
         >
           {triggerIcon}
           {triggerLabel}
         </Button>
-      </Popover.Trigger>
-    <Popover.Positioner zIndex={1000}>
-      <Popover.Content
-        w={popoverWidth}
-        boxShadow="lg"
-        borderRadius="md"
-        mt={2}
-        p={0}
-        bg="white"
-      >
-        <Popover.CloseTrigger />
-        <Popover.Body p={4}>
-          <Text fontSize="xs" fontWeight="bold" mb={2}>
-            {popoverTitle}
-          </Text>
-          <HStack gap="10px">
-            <Input
-              autoFocus
-              placeholder={inputPlaceholder}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              size="md"
-              fontSize="xs"
-              bg="white"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
-            />
-            <FaPlus
-              size={24}
-              cursor={inputValue.trim() ? "pointer" : "not-allowed"}
-              color={inputValue.trim() ? "black" : "#ccc"}
-              onClick={handleSubmit}
-              title={inputValue.trim() ? `Create ${triggerLabel?.toLowerCase() || "item"}` : "Enter a name first"}
-            />
-          </HStack>
-        </Popover.Body>
-      </Popover.Content>
-    </Popover.Positioner>
-  </Popover.Root>
+      </Dialog.Trigger>
+      <Portal>
+        <Dialog.Backdrop bg="blackAlpha.400" />
+        <Dialog.Positioner>
+          <Dialog.Content
+            maxW="448px"
+            w="448px"
+            borderRadius="6px"
+            boxShadow="0px 0px 1px 0px rgba(24,24,27,0.3), 0px 8px 16px 0px rgba(24,24,27,0.1)"
+            bg="white"
+            overflow="hidden"
+          >
+            {/* Close button */}
+            <Dialog.CloseTrigger
+              position="absolute"
+              top="0"
+              right="0"
+              asChild
+            >
+              <CloseButton size="sm" />
+            </Dialog.CloseTrigger>
+
+            {/* Header */}
+            <Dialog.Header
+              pt="24px"
+              pb="16px"
+              px="24px"
+            >
+              <Dialog.Title
+                fontSize="18px"
+                fontWeight="600"
+                lineHeight="28px"
+                color="black"
+              >
+                {dialogTitle}
+              </Dialog.Title>
+            </Dialog.Header>
+
+            {/* Body */}
+            <Dialog.Body
+              pt="8px"
+              pb="16px"
+              px="24px"
+            >
+              <Flex direction="column" gap="4px">
+                <Text
+                  fontSize="14px"
+                  fontWeight="500"
+                  lineHeight="20px"
+                  color="black"
+                >
+                  {inputLabel}
+                </Text>
+                <Input
+                  autoFocus
+                  placeholder={inputPlaceholder}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  h="40px"
+                  px="12px"
+                  py="10px"
+                  fontSize="14px"
+                  borderWidth="1px"
+                  borderColor="#E4E4E7"
+                  borderRadius="4px"
+                  bg="white"
+                  _placeholder={{ color: "#A1A1AA" }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSubmit();
+                  }}
+                />
+              </Flex>
+            </Dialog.Body>
+
+            {/* Footer */}
+            <Dialog.Footer
+              pt="8px"
+              pb="16px"
+              px="24px"
+              justifyContent="flex-end"
+              gap="12px"
+            >
+              <Dialog.ActionTrigger asChild>
+                <Button
+                  variant="outline"
+                  h="40px"
+                  px="16px"
+                  fontSize="14px"
+                  fontWeight="500"
+                  borderWidth="1px"
+                  borderColor="#E4E4E7"
+                  borderRadius="4px"
+                  color="#27272A"
+                  bg="white"
+                >
+                  Cancel
+                </Button>
+              </Dialog.ActionTrigger>
+              <Button
+                h="40px"
+                px="16px"
+                fontSize="14px"
+                fontWeight="500"
+                borderRadius="4px"
+                bg="#487C9E"
+                color="white"
+                _hover={{ bg: "#294A5F" }}
+                onClick={handleSubmit}
+                disabled={!inputValue.trim()}
+              >
+                {submitLabel}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   );
 };
+
+// Keep backward compat alias
+export const InputPopover = InputDialog;

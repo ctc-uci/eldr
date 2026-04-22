@@ -1,3 +1,4 @@
+import { Spinner } from "@chakra-ui/react";
 import { Navigate } from "react-router-dom";
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
@@ -13,14 +14,18 @@ export const ProtectedRoute = ({
   allowedRoles = [],
 }: ProtectedRouteProps) => {
   const { currentUser } = useAuthContext();
-  const { role } = useRoleContext();
+  const { role, loading } = useRoleContext();
+
+  if (currentUser && loading) {
+    return <Spinner />;
+  }
 
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   const isValidRole = getIsValidRole(roles, role);
   return currentUser && isValidRole ? (
     element
   ) : currentUser ? (
-    <Navigate to={"dashboard"} />
+    <Navigate to={"/dashboard"} />
   ) : (
     <Navigate to={"/"} />
   );

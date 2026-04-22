@@ -5,15 +5,14 @@ Implement on all associated volunteer pages
 
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
 
-import { BriefcaseBusiness, ClipboardList } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 
 export const Navbar = () => {
   return (
     <Flex
       as="nav"
       w="100%"
-      h="128px"
-      px="32px"
+      p={3}
       align="center"
       justify="space-between"
       bg="white"
@@ -25,42 +24,29 @@ export const Navbar = () => {
       <Image
         src="/eldr-logo.png"
         alt="Elder Law & Disability Rights Center"
-        h="44px"
+        h="60px"
         objectFit="contain"
       />
 
       {/* Right side nav items */}
       <HStack gap="32px">
         <Link
-          href="/event-catalog"
-          display="flex"
+          href="/event-catalog/all-events"
+          display={{ base: "none", md: "flex" }}
           alignItems="center"
           gap="8px"
           fontSize="14px"
           fontWeight={500}
-          color="#374151"
-          _hover={{ color: "#111827", textDecoration: "none" }}
+          color="#173DA6"
+          _hover={{ color: "#245eff", textDecoration: "none" }}
         >
-          <ClipboardList size={18} />
-          <Text>Events</Text>
+          <ClipboardList size={16} />
+          <Text>Event Catalog</Text>
         </Link>
 
-        <Link
-          href="/cases"
-          display="flex"
-          alignItems="center"
-          gap="8px"
-          fontSize="14px"
-          fontWeight={500}
-          color="#374151"
-          _hover={{ color: "#111827", textDecoration: "none" }}
-        >
-          <BriefcaseBusiness size={18} />
-          <Text>Cases</Text>
-        </Link>
-        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP*/}
-        <Link href = "/volunteer-profile">
-          <Avatar.Root size="sm">
+        {/* TODO: wire Avatar.Image to the volunteer's real profile photo */}
+        <Link href="/volunteer-profile">
+          <Avatar.Root size="md">
             <Avatar.Fallback name="User" />
             <Avatar.Image src="" />
           </Avatar.Root>
