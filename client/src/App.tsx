@@ -21,6 +21,7 @@ import { VolunteerManagement } from "./components/volunteerManagement/VolunteerM
 import { AddProfileView } from "./components/volunteerManagement/AddProfileView";
 import { StaffLayout } from "./components/staff/StaffLayout";
 // import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { VolunteerLayout } from "./components/navbar/VolunteerLayout";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
