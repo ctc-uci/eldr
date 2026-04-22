@@ -138,7 +138,8 @@ const config = defineConfig({
           "900": { value: "#3b1106" },
           "950": { value: "#220a04" },
         },
-        sizes: {
+        },
+      sizes: {
           "0": { value: "0" },
           "0.5": { value: "0.125rem" },
           "1": { value: "0.25rem" },
@@ -175,7 +176,7 @@ const config = defineConfig({
           "80": { value: "24rem" },
           "96": { value: "24rem" },
         },
-        spacing: {
+      spacing: {
           "0": { value: "0" },
           "0.5": { value: "0.125rem" },
           "1": { value: "0.25rem" },
@@ -212,7 +213,6 @@ const config = defineConfig({
           "80": { value: "24rem" },
           "96": { value: "24rem" },
         },
-      },
     },
   },
 })
