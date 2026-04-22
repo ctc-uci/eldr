@@ -10,18 +10,15 @@ import { Signup } from "@/components/signup/Signup";
 import { Playground } from "@/components/playground/Playground";
 
 // Dev-made Components!
-// import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
-// import { AdminLogin } from "@/components/adminProfile/adminLogin";
-// import { EventCatalog } from "@/components/eventCatalog/eventCatalog";
+import { AdminProfile } from "@/components/adminProfile/adminProfile";
 import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
-import { AdminPassReset} from "./components/adminProfile/adminPassReset";
+import { AdminPassReset } from "./components/adminProfile/adminPassReset";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
-import { AddProfileView } from "./components/volunteerManagement/AddProfileView";
-import { StaffLayout } from "./components/staff/StaffLayout";
-// import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
+import { StaffLayout } from "./components/navbar/StaffLayout";
 import { VolunteerLayout } from "./components/navbar/VolunteerLayout";
+import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
 import { EmailTemplateManagement } from "@/components/emailTemplateManagement/emailTemplateManagement";
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
@@ -67,53 +64,54 @@ const App = () => {
           <RoleProvider>
             <Router>
               <Routes>
-                {/* Dev-made Routes! */}
-                <Route
-                  path="/adminLogin"
-                  element={<AdminLogin/>}
-                />
-                <Route
-                  path = "/adminForgotPass"
-                  element = {<AdminForgotPass/>}
-                >
-                </Route>
-
-                <Route
-                  path = "/adminPassReset"
-                  element = {<AdminPassReset/>}
-                >
-                </Route>
-                
-                {/* <Route
-                  path="/volunteerProfile"
-                  element={<VolunteerProfile />}
-                /> */}
-                
-                <Route
-                  path="/email"
-                  element={<EmailTemplateManagement />}
-                />
-                <Route
-                  path="/email/folder/:folderId"
-                  element={<EmailTemplateManagement />}
-                />
-                <Route
-                  path="/email/template/:templateId"
-                  element={<EmailTemplateManagement />}
-                />
-                {/* <Route
-                  path="/catalog"
-                  element={<CaseCatalog />}
-                /> */}
-                
+                {/* DEV-MADE ROUTES! */}
+                {/* Staff: full AdminNavbar (email, events landing, tags, admin) */}
                 <Route
                   element={
                     <ProtectedRoute
-                      element={<StaffLayout />}
+                      element={<StaffLayout navbar="expanded" />}
                       allowedRoles={["staff", "supervisor"]}
                     />
                   }
                 >
+                  <Route
+                    path="/email"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route
+                    path="/email/folder/:folderId"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route
+                    path="/email/template/:templateId"
+                    element={<EmailTemplateManagement />}
+                  />
+                  <Route path="/events" element={<EventManagement />} />
+                  <Route path="/manage-tags/*" element={<TagManagement />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute
+                        element={<Admin />}
+                        allowedRoles={["staff", "supervisor"]}
+                      />
+                    }
+                  />
+                </Route>
+
+                {/* Staff: collapsed sidebar (volunteer management, events sub-pages) */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      element={<StaffLayout navbar="collapsed" />}
+                      allowedRoles={["staff", "supervisor"]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/admin-profile"
+                    element={<AdminProfile />}
+                  />
                   <Route
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
@@ -141,62 +139,25 @@ const App = () => {
                   <Route
                     path="/volunteer-profile"
                     element={
-                      <ProtectedRoute
-                        element={<AddProfileView />}
-                        allowedRoles={["supervisor", "staff"]}
+                      <Navigate
+                        to="/volunteer-profile/information"
+                        replace
                       />
                     }
                   />
                   <Route
-                    path="/admin"
+                    path="/volunteer-profile/:tab"
                     element={
                       <ProtectedRoute
-                        element={<Admin />}
-                        allowedRoles={["staff", "supervisor"]}
+                        element={<VolunteerProfile />}
+                        allowedRoles={["volunteer"]}
                       />
                     }
                   />
                 </Route>
-                {/* <Route
-                  path = "/events"
-                  element={
-                    <ProtectedRoute
-                      element={<EventManagement />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
-                /> */}
-                {/* <Route
-                  path = "/events/:id"
-                  element={
-                    <ProtectedRoute
-                      element={<EventDetail />}
-                      allowedRoles={["admin"]}
-                    />
-                  }
-                /> */}
-                <Route
-                  path="/volunteerLogin"
-                  element={<VolunteerLogin />}
-                />
-                <Route 
-                  path="/event-catalog"
-                  element={<EventCatalog />}
-                />
-                {/* <Route
-                  path="/admin-profile"
-                  element={<AdminProfile />}
-                /> */}
-                {/* <Route
-                  path="/caseManagement"
-                  element={<CaseManagement />}
-                /> */}
-                
+
                 {/* Playground Routes (Don't Touch!) */}
-                <Route
-                  path="/playground"
-                  element={<Playground />}
-                />
+                <Route path="/playground" element={<Playground />} />
 
                 {/* Core Routes (Don't Touch!) */}
                 <Route
@@ -215,6 +176,10 @@ const App = () => {
                   path="/login/staff"
                   element={<AdminLogin />}
                 />
+                <Route path="/adminLogin" element={<AdminLogin />} />
+                <Route path="/adminForgotPass" element={<AdminForgotPass />} />
+                <Route path="/adminPassReset" element={<AdminPassReset />} />
+
                 <Route
                   path="/signup"
                   element={<Signup />}
@@ -225,19 +190,13 @@ const App = () => {
                 />
                 <Route
                   path="/"
-                  element={
-                    <Navigate
-                      to="/login"
-                      replace
-                    />
-                  }
+                  element={<Navigate to="/login" replace />}
                 />
 
                 <Route
                   path="*"
                   element={<ProtectedRoute element={<CatchAll />} />}
                 />
-
               </Routes>
             </Router>
           </RoleProvider>
