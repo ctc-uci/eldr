@@ -1,41 +1,47 @@
-import { Box, Heading, Tabs } from "@chakra-ui/react";
+import { useRef, useState } from "react";
 
+import { Box, Heading } from "@chakra-ui/react";
+
+import { FilterDrawer, FilterState } from "./FilterDrawer";
 import { VolunteerManagementView } from "./VolunteerManagementView";
+import { VolunteerToolbar } from "./VolunteerToolbar";
+
+const EMPTY_FILTERS: FilterState = { roles: new Set(), interests: new Set(), languages: new Set() };
 
 export const VolunteerTopNav = () => {
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(val), 250);
+  };
+
   return (
     <Box p={6}>
-      <Heading
-        size="2xl"
-        m={4}
-      >
+      <Heading size="2xl" mb={10}>
         User Management
       </Heading>
 
-      <Tabs.Root
-        defaultValue="profiles"
-        fitted
-      >
-        <Tabs.List>
-          <Tabs.Trigger value="profiles">Profiles</Tabs.Trigger>
-          <Tabs.Trigger value="cases">Cases</Tabs.Trigger>
-          <Tabs.Trigger value="clinics">Clinics & Workshops</Tabs.Trigger>
-          <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
-        </Tabs.List>
+      <VolunteerToolbar
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onFilterOpen={() => setFilterDrawerOpen(true)}
+      />
 
-        <Tabs.Content value="profiles">
-          <VolunteerManagementView />
-        </Tabs.Content>
-        <Tabs.Content value="cases">
-          <p>two!</p>
-        </Tabs.Content>
-        <Tabs.Content value="clinics">
-          <p>three!</p>
-        </Tabs.Content>
-        <Tabs.Content value="settings">
-          <p>settings!</p>
-        </Tabs.Content>
-      </Tabs.Root>
+      <VolunteerManagementView debouncedQuery={debouncedQuery} filters={filters} />
+
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        totalCount={0}
+        onApply={(f) => setFilters(f)}
+      />
     </Box>
   );
 };
