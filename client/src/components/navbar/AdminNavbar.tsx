@@ -5,8 +5,7 @@ TODO: Implement on all associated admin pages
 
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
-import { ClipboardList, Mails } from "lucide-react";
-import { RxPeople } from "react-icons/rx";
+import { ClipboardList, Mails, Users } from "lucide-react";
 import { LuTags } from "react-icons/lu";
 
 export const AdminNavbar = () => {
@@ -16,7 +15,7 @@ export const AdminNavbar = () => {
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
     { name: "Email Templates", icon: Mails, path: "/email" },
-    { name: "Profiles", icon: RxPeople, path: "/volunteer-management" },
+    { name: "Profiles", icon: Users, path: "/volunteer-management" },
     { name: "Tags", icon: LuTags, path: "/tags" }
   ];
 
