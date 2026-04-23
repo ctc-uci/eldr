@@ -4,13 +4,10 @@ TODO: Implement on all associated admin pages
 */
 
 import { useLocation, Link as RouterLink } from "react-router-dom";
-import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";import {
-  BriefcaseBusiness,
-  CircleUser,
-  ClipboardList,
-  Mails,
-  //Tag,
-} from "lucide-react";
+import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
+import { ClipboardList, Mails } from "lucide-react";
+import { RxPeople } from "react-icons/rx";
+import { LuTags } from "react-icons/lu";
 
 export const AdminNavbar = () => {
   const location = useLocation();
@@ -18,11 +15,9 @@ export const AdminNavbar = () => {
   // Array of mapping icons
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
-    { name: "Case Catalog", icon: BriefcaseBusiness, path: "/cases" },
-    { name: "Email Template", icon: Mails, path: "/email" },
-    { name: "Manage Profiles", icon: CircleUser, path: "/volunteer-management" },
-    //{ name: "Tags", icon: Tag, path: "/tags" }
-    // TODO: Tags not implemented yet ? Just need to uncomment and put path when done
+    { name: "Email Templates", icon: Mails, path: "/email" },
+    { name: "Profiles", icon: RxPeople, path: "/volunteer-management" },
+    { name: "Tags", icon: LuTags, path: "/tags" }
   ];
 
   return (

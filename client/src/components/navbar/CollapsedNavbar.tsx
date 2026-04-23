@@ -5,9 +5,9 @@ Implement on event creation ONLY (potentially case creation too??)
 
 import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/react";
 import { LuClipboardList } from "react-icons/lu";
-import { IoBriefcaseOutline } from "react-icons/io5";
 import { MdOutlineMailOutline } from "react-icons/md";
-import { RxPerson } from "react-icons/rx";
+import { RxPeople } from "react-icons/rx";
+import { LuTags } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 export const CollapsedNavbar = () => {
@@ -46,16 +46,7 @@ export const CollapsedNavbar = () => {
           />
 
           <IconButton
-            title="Case Catalog"
-            boxSize="30px"
-            variant="ghost"
-            as={IoBriefcaseOutline}
-            onClick={() => navigate("/cases")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
-
-          <IconButton
-            title="Email Template"
+            title="Email Templates"
             boxSize="30px"
             variant="ghost"
             as={MdOutlineMailOutline}
@@ -64,11 +55,20 @@ export const CollapsedNavbar = () => {
           />
 
           <IconButton
-            title="Manage Profiles"
+            title="Profiles"
             boxSize="30px"
             variant="ghost"
-            as={RxPerson}
+            as={RxPeople}
             onClick={() => navigate("/volunteer-management")}
+            _hover={{ bg: "#D8F1FF" }}
+          />
+
+          <IconButton
+            title="Tags"
+            boxSize="30px"
+            variant="ghost"
+            as={LuTags}
+            onClick={() => navigate("/tags")}
             _hover={{ bg: "#D8F1FF" }}
           />
         </VStack>
