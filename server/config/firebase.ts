@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import firebaseAdmin, { type ServiceAccount } from "firebase-admin";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments
 // Use FIREBASE_SERVICE_ACCOUNT_JSON (full JSON string) from .env when set; otherwise use firebase-adminsdk.json
@@ -10,7 +13,7 @@ function getServiceAccount(): ServiceAccount {
   if (fromEnv) {
     return JSON.parse(fromEnv) as ServiceAccount;
   }
-  const jsonPath = path.resolve(__dirname, "firebase-adminsdk.json");
+  const jsonPath = path.resolve(__dirname, "eldr-firebase-sdk.json");
   const raw = fs.readFileSync(jsonPath, "utf-8");
   return JSON.parse(raw) as ServiceAccount;
 }

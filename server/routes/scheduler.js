@@ -1,5 +1,5 @@
 import { db } from "@/db/db-pgp";
-import cron from "node-cron";
+import schedule from "node-schedule";
 
 import { sendEmail } from "./emailService.js";
 import { parseAndStripScheduledEmailEventMarker } from "./scheduledEmailEventMarker.js";
@@ -34,7 +34,7 @@ async function distinctRegistrantEmails(clinicId) {
  * Deletes each row before sending so no extra columns are required.
  * Optional `<!--eldr-event:ID-->` prefix in body fans the same HTML out to registered volunteers.
  */
-cron.schedule("* * * * *", async () => {
+schedule.scheduleJob("* * * * *", async () => {
   try {
     // Process one row per iteration to avoid long locks; loop until none due.
     // eslint-disable-next-line no-constant-condition
