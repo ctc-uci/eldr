@@ -29,6 +29,7 @@ export const AdminNavbar = () => {
       borderRight="1px solid"
       borderColor="gray.200"
       bg="white"
+      px={2}
       py={8}
       justify="space-between"
     >
@@ -44,7 +45,7 @@ export const AdminNavbar = () => {
         </Box>
 
         {/* Nav Links */}
-        <VStack gap={4} w="full" px={4} align="stretch">
+        <VStack gap={8} w="full" px={4} align="stretch">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const IconComponent = item.icon;
@@ -63,8 +64,8 @@ export const AdminNavbar = () => {
                   borderRadius="md"
                   cursor="pointer"
                   gap={3}
-                  bg={isActive ? "#D8F1FF" : "transparent"}
-                  color={isActive ? "#5797BD" : "#294A5F"}
+                  bg={isActive ? "blue.50" : "transparent"}
+                  color={isActive ? "blue.700" : "#294A5F"}
                   _hover={{
                     bg: isActive ? "#D8F1FF" : "gray.100",
                   }}
