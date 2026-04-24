@@ -3,11 +3,12 @@ import cron from "node-cron";
 
 import { sendEmail } from "./emailService.js";
 import { parseAndStripScheduledEmailEventMarker } from "./scheduledEmailEventMarker.js";
+import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
 
 async function distinctRegistrantEmails(clinicId) {
   const rows = await db.query(
     `
-    SELECT v.email
+    SELECT v.first_name, v.last_name, v.email
     FROM clinic_registration cr
     JOIN volunteers v ON v.id = cr.volunteer_id
     WHERE cr.clinic_id = $1
@@ -24,14 +25,31 @@ async function distinctRegistrantEmails(clinicId) {
     const key = raw.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(raw);
+    const first = String(r.first_name ?? "").trim();
+    const last = String(r.last_name ?? "").trim();
+    const fullName = [first, last].filter(Boolean).join(" ");
+    out.push({
+      email: raw,
+      name: fullName || first || "",
+    });
   }
   return out;
 }
 
+async function getClinicEmailContext(clinicId) {
+  const rows = await db.query(
+    `SELECT name, description, start_time, end_time, date, parking, address, city, state, zip, meeting_link
+     FROM clinics
+     WHERE id = $1
+     LIMIT 1`,
+    [clinicId]
+  );
+  return rows?.[0] ?? null;
+}
+
 /**
  * Sends due rows from scheduled_emails (id, to_email, subject, body, send_at).
- * Deletes each row before sending so no extra columns are required.
+ * Deletes each row before sending.
  * Optional `<!--eldr-event:ID-->` prefix in body fans the same HTML out to registered volunteers.
  */
 cron.schedule("* * * * *", async () => {
@@ -55,13 +73,26 @@ cron.schedule("* * * * *", async () => {
       }
 
       const email = batch[0];
-      const { clinicId, html: bodyHtml } = parseAndStripScheduledEmailEventMarker(email.body);
+      const parsed = parseAndStripScheduledEmailEventMarker(email.body);
+      const clinicId = email.clinic_id ?? parsed.clinicId;
+      const bodyHtml = parsed.html;
+      const clinic = clinicId != null ? await getClinicEmailContext(clinicId) : null;
+      const registrants = clinicId != null ? await distinctRegistrantEmails(clinicId) : [];
+      const primaryRegistrant = registrants.find(
+        (r) => r.email.toLowerCase() === String(email.to_email ?? "").trim().toLowerCase()
+      );
+      const renderedSubject = clinic
+        ? renderClinicEmailTemplate(email.subject, clinic, { name: primaryRegistrant?.name })
+        : email.subject;
+      const renderedBody = clinic
+        ? renderClinicEmailTemplate(bodyHtml, clinic, { name: primaryRegistrant?.name })
+        : bodyHtml;
 
       try {
         const primaryInfo = await sendEmail({
           to: email.to_email,
-          subject: email.subject,
-          html: bodyHtml,
+          subject: renderedSubject,
+          html: renderedBody,
         });
         console.log(
           `✅ Sent scheduled email ID: ${email.id} → to=${email.to_email}${
@@ -70,34 +101,39 @@ cron.schedule("* * * * *", async () => {
         );
 
         if (clinicId != null) {
-          const recipients = await distinctRegistrantEmails(clinicId);
           let ok = 0;
-          for (const to of recipients) {
+          for (const recipient of registrants) {
+            const perRecipientSubject = clinic
+              ? renderClinicEmailTemplate(email.subject, clinic, { name: recipient.name })
+              : email.subject;
+            const perRecipientBody = clinic
+              ? renderClinicEmailTemplate(bodyHtml, clinic, { name: recipient.name })
+              : bodyHtml;
             try {
               await sendEmail({
-                to,
-                subject: email.subject,
-                html: bodyHtml,
+                to: recipient.email,
+                subject: perRecipientSubject,
+                html: perRecipientBody,
               });
               ok += 1;
             } catch (regErr) {
               console.error(
-                `❌ Scheduled email ID ${email.id}: failed send to registrant ${to}`,
+                `❌ Scheduled email ID ${email.id}: failed send to registrant ${recipient.email}`,
                 regErr
               );
             }
           }
           console.log(
-            `📧 Scheduled email ID ${email.id}: fan-out to ${ok}/${recipients.length} registrants (clinic ${clinicId})`
+            `📧 Scheduled email ID ${email.id}: fan-out to ${ok}/${registrants.length} registrants (clinic ${clinicId})`
           );
         }
       } catch (sendError) {
         console.error(`❌ Failed to send scheduled email ID: ${email.id}`, sendError);
         try {
           await db.query(
-            `INSERT INTO scheduled_emails (to_email, subject, body, send_at)
-             VALUES ($1, $2, $3, $4)`,
-            [email.to_email, email.subject, email.body, email.send_at]
+            `INSERT INTO scheduled_emails (clinic_id, to_email, subject, body, send_at)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [email.clinic_id ?? null, email.to_email, email.subject, email.body, email.send_at]
           );
           console.log(`↩ Re-queued failed email (was ID ${email.id})`);
         } catch (requeueErr) {

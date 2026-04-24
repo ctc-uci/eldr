@@ -2,6 +2,7 @@ import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 import { sendEmail } from "./emailService.js";
+import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
 
 export const clinicsRouter = Router();
 
@@ -19,37 +20,6 @@ async function syncClinicAttendeesFromRegistrations(clinicId) {
     [clinicId]
   );
 }
-
-const formatClinicDate = (rawDate) => {
-  if (!rawDate) return "TBD";
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(rawDate));
-};
-
-const formatClinicTime = (rawStartTime, rawEndTime) => {
-  if (!rawStartTime || !rawEndTime) return "TBD";
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  });
-  return `${formatter.format(new Date(rawStartTime))} - ${formatter.format(new Date(rawEndTime))} UTC`;
-};
-
-const escapeHtml = (s) =>
-  String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-const formatDescriptionHtml = (raw) => escapeHtml(raw).replace(/\r\n|\r|\n/g, "<br/>");
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
 const allowedClinicTypes = [
@@ -460,7 +430,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
         ),
         db.query(
           `
-            SELECT name, description, date, start_time, end_time, city, state
+            SELECT name, description, date, start_time, end_time, parking, address, city, state, zip, meeting_link
             FROM clinics
             WHERE id = $1
             LIMIT 1;
@@ -486,27 +456,27 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
         );
       } else {
         const safeName = volunteer.first_name ?? "there";
-        const clinicLocation =
-          [clinicInfo.city, clinicInfo.state].filter(Boolean).join(", ") || "TBD";
-        const descriptionBlock =
-          clinicInfo.description && String(clinicInfo.description).trim()
-            ? `<p>${formatDescriptionHtml(clinicInfo.description)}</p>`
-            : "";
 
         await sendEmail({
           to: volunteer.email,
           subject: `Registration confirmed: ${clinicInfo.name}`,
-          html: `
+          html: renderClinicEmailTemplate(
+            `
             <p>Hi ${safeName},</p>
-            <p>Your registration for <strong>${clinicInfo.name}</strong> is confirmed.</p>
+            <p>Your registration for <strong>{{clinic name}}</strong> is confirmed.</p>
             <p>
-              <strong>Date:</strong> ${formatClinicDate(clinicInfo.date)}<br />
-              <strong>Time:</strong> ${formatClinicTime(clinicInfo.start_time, clinicInfo.end_time)}<br />
-              <strong>Location:</strong> ${clinicLocation}
+              <strong>Date:</strong> {{date}}<br />
+              <strong>Time:</strong> {{time}}<br />
+              <strong>Location:</strong> {{location}}<br />
+              <strong>Parking:</strong> {{parking}}<br />
+              <strong>Meeting Link:</strong> {{meeting_link}}
             </p>
-            ${descriptionBlock}
+            {{description}}
             <p>Thanks for volunteering!</p>
           `,
+            clinicInfo,
+            { name: safeName }
+          ),
         });
       }
     } catch (emailError) {

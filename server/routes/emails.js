@@ -41,6 +41,8 @@ emailsRouter.post("/send", async (req, res) => {
 emailsRouter.post("/schedule", async (req, res) => {
   try {
     const { to_email, subject, body, send_at } = req.body;
+    const rawClinicId = req.body.clinic_id ?? req.body.clinicId;
+    const clinicId = rawClinicId == null ? null : Number(rawClinicId);
 
     const recipient = (to_email && String(to_email).trim()) || defaultScheduleRecipient();
     if (!recipient) {
@@ -54,13 +56,16 @@ emailsRouter.post("/schedule", async (req, res) => {
         message: "subject, body, and send_at are required",
       });
     }
+    if (clinicId != null && Number.isNaN(clinicId)) {
+      return res.status(400).json({ message: "clinicId (or clinic_id) must be numeric" });
+    }
 
     const query = `
-      INSERT INTO scheduled_emails (to_email, subject, body, send_at)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO scheduled_emails (clinic_id, to_email, subject, body, send_at)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `;
-    const values = [recipient, subject, body, send_at];
+    const values = [clinicId, recipient, subject, body, send_at];
 
     const newEmail = await db.query(query, values);
 
@@ -122,10 +127,10 @@ emailsRouter.post("/schedule-from-clinic", async (req, res) => {
     const bodyForQueue = embedScheduledEmailEventMarker(clinicId, body);
 
     const newEmail = await db.query(
-      `INSERT INTO scheduled_emails (to_email, subject, body, send_at)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO scheduled_emails (clinic_id, to_email, subject, body, send_at)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [recipient, subject, bodyForQueue, sendAtIso]
+      [clinicId, recipient, subject, bodyForQueue, sendAtIso]
     );
 
     res.status(200).json({
