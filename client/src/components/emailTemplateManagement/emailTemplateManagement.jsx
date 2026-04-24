@@ -579,7 +579,32 @@ export const EmailTemplateManagement = () => {
     const targetId = deleteTarget?.id ?? currentFolder?.id;
     if (!targetId) return;
     try {
+      let templatesInFolder = [];
+      try {
+        const response = await backend.get(`/folders/${targetId}/templates`);
+        templatesInFolder = Array.isArray(response.data) ? response.data : [];
+      } catch (error) {
+        console.error('Error fetching templates before folder delete:', error);
+      }
+
       await backend.delete(`/folders/${targetId}`);
+
+      const deletedTemplateIds = new Set(
+        templatesInFolder
+          .map((template) => template?.id)
+          .filter((id) => id != null)
+          .map((id) => String(id))
+      );
+
+      if (deletedTemplateIds.size > 0) {
+        setAllTemplates((prev) =>
+          prev.filter((template) => !deletedTemplateIds.has(String(template.id)))
+        );
+        setTemplates((prev) =>
+          prev.filter((template) => !deletedTemplateIds.has(String(template.id)))
+        );
+      }
+
       // optimistically remove from local state immediately
       setFolders((prev) => prev.filter((f) => f.id !== targetId));
       setShowDeleteFolderModal(false);
