@@ -135,23 +135,32 @@ export const EmailTemplateManagement = () => {
     fetchFolders();
   }, [fetchFolders]);
 
+  // Reset pagination when switching views/folders so we don't land on an empty stale page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [view, urlFolderId]);
+
+  const fetchTemplatesForFolder = useCallback(
+    async (folderId) => {
+      if (!folderId) return;
+      try {
+        setIsLoadingTemplates(true);
+        const response = await backend.get(`/folders/${folderId}/templates`);
+        setTemplates(response.data);
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    },
+    [backend]
+  );
+
   // fetch templates when viewing a folder
   useEffect(() => {
-    if (urlFolderId && currentFolder) {
-      const fetchTemplates = async () => {
-        try {
-          setIsLoadingTemplates(true);
-          const response = await backend.get(`/folders/${currentFolder.id}/templates`);
-          setTemplates(response.data);
-        } catch (error) {
-          console.error('Error fetching templates:', error);
-        } finally {
-          setIsLoadingTemplates(false);
-        }
-      };
-      fetchTemplates();
-    }
-  }, [urlFolderId, currentFolder, backend]);
+    if (!urlFolderId) return;
+    fetchTemplatesForFolder(urlFolderId);
+  }, [urlFolderId, fetchTemplatesForFolder]);
 
   // fetch template data when navigating to template editor
   useEffect(() => {
@@ -234,6 +243,7 @@ export const EmailTemplateManagement = () => {
 
   // navigate to folder view when clicking on a folder
   const handleFolderClick = (folder) => {
+    setCurrentPage(1);
     setTemplates([]);
     navigate(`/email/folder/${folder.id}`);
   };
@@ -398,6 +408,21 @@ export const EmailTemplateManagement = () => {
         folderId: currentFolder.id,
       });
 
+      setTemplates((prev) => [
+        ...prev,
+        {
+          id: createdTemplate.id,
+          name: createdTemplate.name,
+          templateText: createdTemplate.templateText || "",
+          subject: createdTemplate.subject || null,
+        },
+      ]);
+      setAllTemplates((prev) => {
+        const exists = prev.some((t) => String(t.id) === String(createdTemplate.id));
+        if (exists) return prev;
+        return [...prev, createdTemplate];
+      });
+
       // set up template view for editing
       setCurrentTemplateId(createdTemplate.id);
       setTemplateName(createdTemplate.name);
@@ -430,6 +455,21 @@ export const EmailTemplateManagement = () => {
 
         await backend.post(`/email-templates/${createdTemplate.id}/folders`, {
           folderId: currentFolder.id,
+        });
+
+        setTemplates((prev) => [
+          ...prev,
+          {
+            id: createdTemplate.id,
+            name: createdTemplate.name,
+            templateText: createdTemplate.templateText || "",
+            subject: createdTemplate.subject || null,
+          },
+        ]);
+        setAllTemplates((prev) => {
+          const exists = prev.some((t) => String(t.id) === String(createdTemplate.id));
+          if (exists) return prev;
+          return [...prev, createdTemplate];
         });
 
         setCurrentTemplateId(createdTemplate.id);
