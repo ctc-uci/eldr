@@ -134,6 +134,7 @@ export const EventManagement = () => {
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [hoveredClinicId, setHoveredClinicId] = useState(null);
 
   const handleDeleteClick = (e, clinicId) => {
     e.stopPropagation();
@@ -204,6 +205,8 @@ export const EventManagement = () => {
         shadow="none"
         cursor="pointer"
         _hover={{ shadow: "sm" }}
+        onMouseEnter={() => setHoveredClinicId(clinic.id)}
+        onMouseLeave={() => setHoveredClinicId((prev) => (prev === clinic.id ? null : prev))}
         onClick={() => navigate(`/events/${clinic.id}`)}
       >
         <Card.Body
@@ -361,7 +364,12 @@ export const EventManagement = () => {
                 ))}
               </HStack>
 
-              <HStack gap={1}>
+              <HStack
+                gap={1}
+                opacity={hoveredClinicId === clinic.id ? 1 : 0}
+                pointerEvents={hoveredClinicId === clinic.id ? "auto" : "none"}
+                transition="opacity 0.2s ease"
+              >
                 <IconButton
                   aria-label="Edit event"
                   variant="ghost"
