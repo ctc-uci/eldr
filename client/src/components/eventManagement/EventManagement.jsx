@@ -126,7 +126,7 @@ const renderLocation = (clinic) => {
     return [inPersonAddress, link].filter(Boolean).join(" | ");
   return inPersonAddress;
 };
-
+ 
 export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
