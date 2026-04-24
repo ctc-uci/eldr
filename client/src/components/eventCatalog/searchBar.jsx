@@ -18,7 +18,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, events = [], isMobile }) => {
   const inputRef = useRef(null);
   const placeholder = isMobile
     ? "Search"
-    : "Search for whatever floats your boat, matey";
+    : "Search for clinics...";
 
   // Synchronize local input value if parent searchQuery changes externally (e.g. cleared)
   useEffect(() => {

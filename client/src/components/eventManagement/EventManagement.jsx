@@ -18,7 +18,8 @@ import { ConfirmDialog } from "./ConfirmDialog";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuCalendar, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
+import { LuArrowRight, LuCalendar, LuPencil, LuTrash2 } from "react-icons/lu";
+import { IoFilterOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 const parseTimestamp = (str) => {
@@ -414,14 +415,16 @@ export const EventManagement = () => {
             gap={4}
           >
             <Button
-              bg="#2D3748"
-              color="white"
+              bg="gray.100"
+              color="black"
+              border="1px solid"
+              borderColor="gray.200"
               borderRadius="md"
-              px={5}
-              _hover={{ bg: "#1A202C" }}
+              px={4}
+              // _hover={{ bg: "#1A202C" }}
             >
-              <LuSlidersHorizontal />
-              Filter &amp; Sort
+              <IoFilterOutline />
+              Filter
             </Button>
 
             <InputGroup
@@ -443,7 +446,7 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#2B6CB0"
+              bg="#547b9b"
               color="white"
               borderRadius="md"
               px={5}
@@ -481,7 +484,6 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      fontWeight="semibold"
                       color="gray.800"
                     >
                       Upcoming Events
@@ -503,7 +505,6 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      fontWeight="semibold"
                       color="gray.800"
                     >
                       Past Events
