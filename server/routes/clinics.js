@@ -447,77 +447,59 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
 
     await syncClinicAttendeesFromRegistrations(clinicId);
 
-    // Confirmation email: registration should succeed even if email fails.
-    try {
-      const [volunteerRows, clinicRows] = await Promise.all([
-        db.query(
-          `
-            SELECT first_name, email
-            FROM volunteers
-            WHERE id = $1
-            LIMIT 1;
-          `,
-          [volunteerId]
-        ),
-        db.query(
-          `
-            SELECT name, description, date, start_time, end_time, city, state
-            FROM clinics
-            WHERE id = $1
-            LIMIT 1;
-          `,
-          [clinicId]
-        ),
-      ]);
-
-      const volunteer = volunteerRows?.[0];
-      const clinicInfo = clinicRows?.[0];
-
-      if (!volunteer) {
-        console.warn(
-          `[clinics] confirmation email skipped: volunteer not found clinicId=${clinicId} volunteerId=${volunteerId}`
-        );
-      } else if (!volunteer.email) {
-        console.warn(
-          `[clinics] confirmation email skipped: missing volunteer email clinicId=${clinicId} volunteerId=${volunteerId}`
-        );
-      } else if (!clinicInfo) {
-        console.warn(
-          `[clinics] confirmation email skipped: clinic not found clinicId=${clinicId} volunteerId=${volunteerId}`
-        );
-      } else {
-        const safeName = volunteer.first_name ?? "there";
-        const clinicLocation =
-          [clinicInfo.city, clinicInfo.state].filter(Boolean).join(", ") || "TBD";
-        const descriptionBlock =
-          clinicInfo.description && String(clinicInfo.description).trim()
-            ? `<p>${formatDescriptionHtml(clinicInfo.description)}</p>`
-            : "";
-
-        await sendEmail({
-          to: volunteer.email,
-          subject: `Registration confirmed: ${clinicInfo.name}`,
-          html: `
-            <p>Hi ${safeName},</p>
-            <p>Your registration for <strong>${clinicInfo.name}</strong> is confirmed.</p>
-            <p>
-              <strong>Date:</strong> ${formatClinicDate(clinicInfo.date)}<br />
-              <strong>Time:</strong> ${formatClinicTime(clinicInfo.start_time, clinicInfo.end_time)}<br />
-              <strong>Location:</strong> ${clinicLocation}
-            </p>
-            ${descriptionBlock}
-            <p>Thanks for volunteering!</p>
-          `,
-        });
-      }
-    } catch (emailError) {
-      console.error(
-        `[clinics] registration succeeded but confirmation email failed clinicId=${clinicId} volunteerId=${volunteerId}`,
-        emailError
-      );
-    }
-
     res.status(200).json(keysToCamel(data));
+
+    // Fire confirmation email in the background — don't block the response.
+    if (data.length > 0) {
+      (async () => {
+        try {
+          const [volunteerRows, clinicRows] = await Promise.all([
+            db.query(
+              `SELECT first_name, email FROM volunteers WHERE id = $1 LIMIT 1`,
+              [volunteerId]
+            ),
+            db.query(
+              `SELECT name, description, date, start_time, end_time, city, state FROM clinics WHERE id = $1 LIMIT 1`,
+              [clinicId]
+            ),
+          ]);
+
+          const volunteer = volunteerRows?.[0];
+          const clinicInfo = clinicRows?.[0];
+
+          if (!volunteer?.email || !clinicInfo) return;
+
+          const safeName = volunteer.first_name ?? "there";
+          const clinicLocation =
+            [clinicInfo.city, clinicInfo.state].filter(Boolean).join(", ") || "TBD";
+          const descriptionBlock =
+            clinicInfo.description && String(clinicInfo.description).trim()
+              ? `<p>${formatDescriptionHtml(clinicInfo.description)}</p>`
+              : "";
+
+          await sendEmail({
+            to: volunteer.email,
+            subject: `Registration confirmed: ${clinicInfo.name}`,
+            html: `
+              <p>Hi ${safeName},</p>
+              <p>Your registration for <strong>${clinicInfo.name}</strong> is confirmed.</p>
+              <p>
+                <strong>Date:</strong> ${formatClinicDate(clinicInfo.date)}<br />
+                <strong>Time:</strong> ${formatClinicTime(clinicInfo.start_time, clinicInfo.end_time)}<br />
+                <strong>Location:</strong> ${clinicLocation}
+              </p>
+              ${descriptionBlock}
+              <p>Thanks for volunteering!</p>
+            `,
+          });
+        } catch (emailError) {
+          console.error(
+            `[clinics] confirmation email failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+            emailError
+          );
+        }
+      })();
+    }
   } catch (err) {
     res.status(500).send(err.message);
   }
