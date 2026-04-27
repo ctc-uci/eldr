@@ -1,0 +1,27 @@
+server/routes/clinics.js
+  6bcccfc43434ea46 442
+client/src/components/eventCatalog/eventCatalog.jsx
+  6bcccfc43434ea46 270-271,273-274,285-286,291-292,301-302,397
+client/src/components/eventCatalog/eventInfo.jsx
+  6bcccfc43434ea46 39,409-410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "64b8b034dc31274906f451c5ad556d700d10dbcd",
+  "prompts": {
+    "6bcccfc43434ea46": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f9a8a46-b1da-443c-a6d5-3566f0274d9e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Brendan Lieu",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 41,
+      "accepted_lines": 17,
+      "overriden_lines": 22
+    }
+  }
+}
