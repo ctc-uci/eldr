@@ -439,6 +439,7 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
       `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
+        ON CONFLICT (volunteer_id, clinic_id) DO NOTHING
         RETURNING *;
         `,
       [volunteerId, clinicId]

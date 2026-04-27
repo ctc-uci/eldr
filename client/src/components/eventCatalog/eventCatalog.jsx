@@ -267,8 +267,11 @@ export const EventCatalog = () => {
     }
   }, [selectedFilters, volunteerId, backend]);
 
+  const [registrationPending, setRegistrationPending] = useState(null);
+
   const handleRegister = async (clinicId) => {
-    if (!volunteerId) return;
+    if (!volunteerId || registrationPending) return;
+    setRegistrationPending(clinicId);
     try {
       await backend.post(`/clinics/${clinicId}/registrations`, {
         volunteerId,
@@ -279,11 +282,14 @@ export const EventCatalog = () => {
     } catch (error) {
       console.error("Failed to register for event:", error);
       console.error(error.response?.data || error);
+    } finally {
+      setRegistrationPending(null);
     }
   };
 
   const handleUnregister = async (clinicId) => {
-    if (!volunteerId) return;
+    if (!volunteerId || registrationPending) return;
+    setRegistrationPending(clinicId);
     try {
       await backend.delete(`/clinics/${clinicId}/registrations/${volunteerId}`);
       setEvents((prev) =>
@@ -292,6 +298,8 @@ export const EventCatalog = () => {
     } catch (error) {
       console.error("Failed to unregister from event:", error);
       console.error(error.response?.data || error);
+    } finally {
+      setRegistrationPending(null);
     }
   };
 
@@ -386,6 +394,7 @@ export const EventCatalog = () => {
             onRegister={handleRegister}
             onUnregister={handleUnregister}
             isMobile={isMobile}
+            registrationPending={registrationPending === selectedEvent?.id}
           />
         </Flex>
       </Flex>

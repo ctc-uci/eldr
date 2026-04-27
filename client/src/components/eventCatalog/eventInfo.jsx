@@ -36,6 +36,7 @@ export const EventInfo = ({
   onRegister,
   onUnregister,
   isMobile,
+  registrationPending,
 }) => {
   const [open, setOpen] = useState(false);
   const [showCopyMessage, setShowCopyMessage] = useState(false);
@@ -405,6 +406,8 @@ export const EventInfo = ({
               px="18px"
               py="6px"
               onClick={handleRegistration}
+              disabled={registrationPending}
+              loading={registrationPending}
             >
               {event.isRegistered ? (
                 <>
