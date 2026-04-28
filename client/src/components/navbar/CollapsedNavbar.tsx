@@ -46,15 +46,6 @@ export const CollapsedNavbar = () => {
           />
 
           <IconButton
-            title="Case Catalog"
-            boxSize="30px"
-            variant="ghost"
-            as={IoBriefcaseOutline}
-            onClick={() => navigate("/cases")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
-
-          <IconButton
             title="Email Template"
             boxSize="30px"
             variant="ghost"

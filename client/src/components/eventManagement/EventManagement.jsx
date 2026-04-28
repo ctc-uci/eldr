@@ -15,10 +15,12 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { EventFilterDrawer } from "./FilterDrawer";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuCalendar, LuCopy, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
+import { LuArrowRight, LuClipboardPlus, LuCopy, LuPencil, LuTrash2 } from "react-icons/lu";
+import { MdFilterList } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 const parseTimestamp = (str) => {
@@ -133,6 +135,9 @@ export const EventManagement = () => {
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({ clinicTypes: new Set(), eventFormats: new Set(), languages: new Set() });
 
   const handleDeleteClick = (e, clinicId) => {
     e.stopPropagation();
@@ -177,8 +182,17 @@ export const EventManagement = () => {
 
   const { upcomingClinics, pastClinics } = useMemo(() => {
     const now = new Date();
-    const upcoming = clinics.filter((c) => !isClinicPast(c, now));
-    const past = clinics.filter((c) => isClinicPast(c, now));
+    const q = search.trim().toLowerCase();
+    const { clinicTypes, eventFormats, languages } = activeFilters;
+    const filtered = clinics.filter((c) => {
+      if (q && !(c.name || "").toLowerCase().includes(q)) return false;
+      if (clinicTypes.size > 0 && !clinicTypes.has(c.type)) return false;
+      if (eventFormats.size > 0 && !eventFormats.has(c.locationType)) return false;
+      if (languages.size > 0 && !(c.languages ?? []).some((l) => languages.has(l.language))) return false;
+      return true;
+    });
+    const upcoming = filtered.filter((c) => !isClinicPast(c, now));
+    const past = filtered.filter((c) => isClinicPast(c, now));
     upcoming.sort(
       (a, b) => getClinicStartForSort(a) - getClinicStartForSort(b)
     );
@@ -188,7 +202,7 @@ export const EventManagement = () => {
       return tb - ta;
     });
     return { upcomingClinics: upcoming, pastClinics: past };
-  }, [clinics]);
+  }, [clinics, search, activeFilters]);
 
   const renderClinicCard = (clinic) => {
     const locationStr = renderLocation(clinic);
@@ -197,12 +211,20 @@ export const EventManagement = () => {
       <Card.Root
         key={clinic.id}
         w="100%"
-        borderRadius="lg"
+        borderRadius="md"
         border="1px solid #E2E8F0"
         bg="white"
         shadow="none"
         cursor="pointer"
         _hover={{ shadow: "sm" }}
+        onMouseEnter={(e) => {
+          const btns = e.currentTarget.querySelector("[data-action-btns]");
+          if (btns) btns.style.opacity = "1";
+        }}
+        onMouseLeave={(e) => {
+          const btns = e.currentTarget.querySelector("[data-action-btns]");
+          if (btns) btns.style.opacity = "0";
+        }}
         onClick={() => navigate(`/events/${clinic.id}`)}
       >
         <Card.Body
@@ -304,7 +326,7 @@ export const EventManagement = () => {
                 {clinic.type && (
                   <Tag.Root
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -323,7 +345,7 @@ export const EventManagement = () => {
                 {clinic.locationType && (
                   <Tag.Root
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -343,7 +365,7 @@ export const EventManagement = () => {
                   <Tag.Root
                     key={l.id}
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -360,7 +382,7 @@ export const EventManagement = () => {
                 ))}
               </HStack>
 
-              <HStack gap={1}>
+              <HStack gap={0} data-action-btns style={{ opacity: 0, transition: "opacity 0.15s" }}>
                 <IconButton
                   aria-label="Edit event"
                   variant="ghost"
@@ -427,20 +449,23 @@ export const EventManagement = () => {
             gap={4}
           >
             <Button
-              bg="#2D3748"
-              color="white"
+              bg="#F4F4F5"
+              color="black"
               borderRadius="md"
               px={5}
-              _hover={{ bg: "#1A202C" }}
+              border="1px solid #E4E4E7"
+              borderRadius="4px"
+              _hover={{ bg: "#E4E4E7" }}
+              onClick={() => setFilterOpen(true)}
             >
-              <LuSlidersHorizontal />
-              Filter &amp; Sort
+              <MdFilterList />
+              Filter
             </Button>
 
             <InputGroup
               flex={1}
               bg="white"
-              borderRadius="md"
+              borderRadius="4px"
               startElement={
                 <CiSearch
                   color="gray"
@@ -451,18 +476,20 @@ export const EventManagement = () => {
               <Input
                 placeholder="Search for an event..."
                 border="1px solid #E2E8F0"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </InputGroup>
 
             <Button
-              bg="#2B6CB0"
+              bg="#487C9E"
               color="white"
-              borderRadius="md"
+              borderRadius="4px"
               px={5}
-              _hover={{ bg: "#2C5282" }}
+              _hover={{ bg: "#294A5F" }}
               onClick={() => navigate("/events/create/header")}
             >
-              <LuCalendar />
+              <LuClipboardPlus />
               Create New Event
               <LuArrowRight />
             </Button>
@@ -542,6 +569,12 @@ export const EventManagement = () => {
           </VStack>
         </VStack>
       </Box>
+      <EventFilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        onApply={setActiveFilters}
+        clinics={clinics}
+      />
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(e) => { if (!e.open) setDeleteTarget(null); }}
