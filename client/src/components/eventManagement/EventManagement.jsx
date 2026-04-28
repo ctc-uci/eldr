@@ -133,6 +133,7 @@ export const EventManagement = () => {
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const handleDeleteClick = (e, clinicId) => {
     e.stopPropagation();
@@ -177,8 +178,10 @@ export const EventManagement = () => {
 
   const { upcomingClinics, pastClinics } = useMemo(() => {
     const now = new Date();
-    const upcoming = clinics.filter((c) => !isClinicPast(c, now));
-    const past = clinics.filter((c) => isClinicPast(c, now));
+    const q = search.trim().toLowerCase();
+    const filtered = q ? clinics.filter((c) => (c.name || "").toLowerCase().includes(q)) : clinics;
+    const upcoming = filtered.filter((c) => !isClinicPast(c, now));
+    const past = filtered.filter((c) => isClinicPast(c, now));
     upcoming.sort(
       (a, b) => getClinicStartForSort(a) - getClinicStartForSort(b)
     );
@@ -188,7 +191,7 @@ export const EventManagement = () => {
       return tb - ta;
     });
     return { upcomingClinics: upcoming, pastClinics: past };
-  }, [clinics]);
+  }, [clinics, search]);
 
   const renderClinicCard = (clinic) => {
     const locationStr = renderLocation(clinic);
@@ -447,6 +450,8 @@ export const EventManagement = () => {
                 placeholder="Search for an event..."
                 borderRadius="md"
                 border="1px solid #E2E8F0"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </InputGroup>
 
