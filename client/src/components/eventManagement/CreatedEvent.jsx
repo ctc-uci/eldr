@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { Box, Button, Flex, HStack, Tag, Text, VStack } from "@chakra-ui/react";
 
 import {
-  LuCalendar,
-  LuClock,
+  LuCalendarDays,
+  LuCalendarClock,
   LuMail,
   LuMapPin,
   LuPencil,
   LuShare,
   LuFolderInput,
-  LuUsers,
 } from "react-icons/lu";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
@@ -83,6 +82,7 @@ export const CreatedEvent = () => {
     startTime,
     endTime,
     capacity = 50,
+    minAttendees = 0,
     attendees = 0,
     type,
     locationType,
@@ -177,89 +177,9 @@ export const CreatedEvent = () => {
         justify="space-between"
         align="start"
       >
-        <VStack
-          align="start"
-          gap={4}
-        >
-          {/* Event name */}
-          <Text
-            fontSize="2xl"
-            fontWeight="bold"
-            color="gray.800"
-          >
-            {name}
-          </Text>
-
-          {/* Date + Time */}
-          <HStack gap={6}>
-            <HStack
-              gap={2}
-              color="gray.600"
-              fontSize="sm"
-            >
-              <LuCalendar />
-              <Text>{formattedDate}</Text>
-            </HStack>
-            <HStack
-              gap={2}
-              color="gray.600"
-              fontSize="sm"
-            >
-              <LuClock />
-              <Text>{formattedTime}</Text>
-            </HStack>
-          </HStack>
-
-          {/* Location + Spots */}
-          <HStack gap={6}>
-            <HStack
-              gap={2}
-              color="gray.600"
-              fontSize="sm"
-            >
-              <LuMapPin />
-              <Text>{locationStr}</Text>
-            </HStack>
-            <HStack
-              gap={2}
-              color="gray.600"
-              fontSize="sm"
-            >
-              <LuUsers />
-              <Text>
-                {attendees}/{capacity} spots filled
-              </Text>
-            </HStack>
-          </HStack>
-
-          {/* Tags */}
-          <HStack
-            gap={2}
-            mt={1}
-          >
-            {[type, capitalizeLocationType(locationType), ...languages.map((l) => (typeof l === "string" ? l : l.language))]
-              .filter(Boolean)
-              .map((tag) => (
-                <Tag.Root
-                  key={tag}
-                  size="md"
-                  borderRadius="4px"
-                  border="0.5px solid"
-                  borderColor="gray.200"
-                  bg="gray.100"
-                  px={2}
-                  py={1}
-                >
-                  <Tag.Label
-                    fontSize="xs"
-                    fontWeight="medium"
-                  >
-                    {tag}
-                  </Tag.Label>
-                </Tag.Root>
-              ))}
-          </HStack>
-        </VStack>
+        <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+          {name}
+        </Text>
 
         {/* Copy link / Delete / Edit buttons */}
         <HStack gap={2} align="center">
@@ -327,6 +247,76 @@ export const CreatedEvent = () => {
           </Button>
         </HStack>
       </Flex>
+
+      {/* Info section */}
+      {(() => {
+        const inRange = attendees >= minAttendees && attendees <= capacity;
+        const dotColor = inRange ? "green.400" : "red.400";
+        const tags = [
+          type,
+          capitalizeLocationType(locationType),
+          ...languages.map((l) => (typeof l === "string" ? l : l.language)),
+        ].filter(Boolean);
+        const divider = <Box w="100%" h="1px" bg="gray.200" />;
+        return (
+          <VStack w="33%" align="stretch" gap={0}>
+            {/* Date + Time */}
+            <HStack py={4} gap={8} color="gray.600" fontSize="sm">
+              <HStack gap={2}>
+                <LuCalendarDays size={16} />
+                <Text>{formattedDate}</Text>
+              </HStack>
+              <HStack gap={2}>
+                <LuCalendarClock size={16} />
+                <Text>{formattedTime}</Text>
+              </HStack>
+            </HStack>
+
+            {divider}
+
+            {/* Location */}
+            <HStack py={4} gap={2} color="gray.600" fontSize="sm">
+              <LuMapPin size={16} flexShrink={0} />
+              <Text>{locationStr || "—"}</Text>
+            </HStack>
+
+            {divider}
+
+            {/* Registered / Min / Max */}
+            <HStack py={4} gap={2} fontSize="sm" color="gray.600">
+              <Box w="10px" h="10px" borderRadius="full" bg={dotColor} flexShrink={0} />
+              <Text>
+                <Text as="span" fontWeight="bold">{attendees}</Text>
+                {" Registered / "}
+                <Text as="span" fontWeight="bold">{minAttendees}</Text>
+                {" Minimum / "}
+                <Text as="span" fontWeight="bold">{capacity}</Text>
+                {" Maximum"}
+              </Text>
+            </HStack>
+
+            {divider}
+
+            {/* Tags */}
+            <HStack py={4} gap={2} flexWrap="wrap">
+              {tags.map((tag) => (
+                <Tag.Root
+                  key={tag}
+                  size="md"
+                  borderRadius="4px"
+                  border="0.5px solid"
+                  borderColor="gray.200"
+                  bg="gray.100"
+                  px={3}
+                  py={1.5}
+                >
+                  <Tag.Label fontSize="sm" fontWeight="medium">{tag}</Tag.Label>
+                </Tag.Root>
+              ))}
+            </HStack>
+          </VStack>
+        );
+      })()}
 
       {/* Tabs */}
       <VStack w="100%" gap={0}>

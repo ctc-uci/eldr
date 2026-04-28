@@ -19,7 +19,8 @@ import { EventFilterDrawer } from "./FilterDrawer";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuCalendar, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
+import { LuArrowRight, LuClipboardPlus, LuPencil, LuTrash2 } from "react-icons/lu";
+import { MdFilterList } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 const parseTimestamp = (str) => {
@@ -444,7 +445,7 @@ export const EventManagement = () => {
               _hover={{ bg: "#E4E4E7" }}
               onClick={() => setFilterOpen(true)}
             >
-              <LuSlidersHorizontal />
+              <MdFilterList />
               Filter
             </Button>
 
@@ -476,7 +477,7 @@ export const EventManagement = () => {
               _hover={{ bg: "#294A5F" }}
               onClick={() => navigate("/events/create/header")}
             >
-              <LuCalendar />
+              <LuClipboardPlus />
               Create New Event
               <LuArrowRight />
             </Button>
