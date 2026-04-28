@@ -401,7 +401,7 @@ export const CreateEvent = () => {
             fontWeight="semibold"
             px={3}
             py={2}
-            borderRadius="md"
+            borderRadius="4px"
             display="flex"
             alignItems="center"
             gap={1.5}
@@ -834,7 +834,7 @@ export const CreateEvent = () => {
                 border="1px solid #E2E8F0"
                 bg="white"
                 color="gray.600"
-                borderRadius="md"
+                borderRadius="4px"
                 size="sm"
                 px={3}
                 _hover={{ bg: "gray.50" }}
@@ -850,7 +850,7 @@ export const CreateEvent = () => {
               minH={{ base: "140px", md: "160px" }}
               resize="none"
               border="1px solid #CBD5E0"
-              borderRadius="md"
+              borderRadius="4px"
               bg="white"
               fontSize="sm"
               p={3}
@@ -868,7 +868,7 @@ export const CreateEvent = () => {
           p={8}
           bg="white"
           border="1px solid #E2E8F0"
-          borderRadius="md"
+          borderRadius="4px"
         >
           {activeTab === "email" ? (
             <EmailNotificationTimeline eventId={isEditing ? eventId : undefined} />
@@ -899,7 +899,7 @@ export const CreateEvent = () => {
         <Button
           bg="#4A7FA5"
           color="white"
-          borderRadius="md"
+          borderRadius="4px"
           px={6}
           fontSize="sm"
           _hover={{ bg: "#2C5282" }}
@@ -909,7 +909,7 @@ export const CreateEvent = () => {
         </Button>
         <Button
           variant="outline"
-          borderRadius="md"
+          borderRadius="4px"
           px={6}
           fontSize="sm"
           border="1px solid #CBD5E0"

@@ -325,7 +325,7 @@ export const EventManagement = () => {
                 {clinic.type && (
                   <Tag.Root
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -344,7 +344,7 @@ export const EventManagement = () => {
                 {clinic.locationType && (
                   <Tag.Root
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -364,7 +364,7 @@ export const EventManagement = () => {
                   <Tag.Root
                     key={l.id}
                     size="md"
-                    borderRadius="md"
+                    borderRadius="4px"
                     border="0.5px solid"
                     borderColor="gray.200"
                     bg="gray.100"
@@ -440,6 +440,7 @@ export const EventManagement = () => {
               borderRadius="md"
               px={5}
               border="1px solid #E4E4E7"
+              borderRadius="4px"
               _hover={{ bg: "#E4E4E7" }}
               onClick={() => setFilterOpen(true)}
             >
@@ -450,7 +451,7 @@ export const EventManagement = () => {
             <InputGroup
               flex={1}
               bg="white"
-              borderRadius="md"
+              borderRadius="4px"
               startElement={
                 <CiSearch
                   color="gray"
@@ -460,7 +461,7 @@ export const EventManagement = () => {
             >
               <Input
                 placeholder="Search for an event..."
-                borderRadius="md"
+                borderRadius="4px"
                 border="1px solid #E2E8F0"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -470,7 +471,7 @@ export const EventManagement = () => {
             <Button
               bg="#487C9E"
               color="white"
-              borderRadius="md"
+              borderRadius="4px"
               px={5}
               _hover={{ bg: "#294A5F" }}
               onClick={() => navigate("/events/create/header")}

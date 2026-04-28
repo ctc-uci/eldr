@@ -133,7 +133,7 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
 
           <Drawer.Body flex="1" overflowY="auto" px={4} py={4}>
             <Text fontWeight="bold" fontSize="md" mb={2}>Selected Filters</Text>
-            <Box borderWidth="1px" borderColor="gray.200" borderRadius="md" minH="40px" p={2} mb={5}>
+            <Box borderWidth="1px" borderColor="gray.200" borderRadius="4px" minH="40px" p={2} mb={5}>
               <Flex gap={2} wrap="wrap">
                 {allSelected.map(({ key, label, remove }) => (
                   <Flex key={key} align="center" gap={1} px={2} py={0.5} bg="gray.100" borderRadius="sm" fontSize="xs">

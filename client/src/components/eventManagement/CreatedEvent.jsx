@@ -243,7 +243,7 @@ export const CreatedEvent = () => {
                 <Tag.Root
                   key={tag}
                   size="md"
-                  borderRadius="md"
+                  borderRadius="4px"
                   border="0.5px solid"
                   borderColor="gray.200"
                   bg="gray.100"
@@ -269,7 +269,7 @@ export const CreatedEvent = () => {
             border="1px solid #E2E8F0"
               bg="white"
               color="gray.700"
-              borderRadius="md"
+              borderRadius="4px"
               px={3}
               _hover={{ bg: "gray.50" }}
               onClick={handleCopyLink}
@@ -288,7 +288,7 @@ export const CreatedEvent = () => {
                 fontWeight="medium"
                 px={3}
                 py={1}
-                borderRadius="md"
+                borderRadius="4px"
                 whiteSpace="nowrap"
                 pointerEvents="none"
               >
@@ -303,7 +303,7 @@ export const CreatedEvent = () => {
             borderColor="red.200"
             bg="white"
             color="red.700"
-            borderRadius="md"
+            borderRadius="4px"
             gap={2}
             px={4}
             _hover={{ bg: "red.600", borderColor: "red.600", color: "white" }}
@@ -316,7 +316,7 @@ export const CreatedEvent = () => {
           <Button
             bg="#487C9E"
             color="white"
-            borderRadius="md"
+            borderRadius="4px"
             gap={2}
             px={4}
             _hover={{ bg: "#294A5F" }}
