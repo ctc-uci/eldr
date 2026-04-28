@@ -14,6 +14,7 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { toaster } from "@/components/ui/toaster";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 import { EventVolunteerList } from "./EventVolunteerList";
 
@@ -25,6 +26,20 @@ export const CreatedEvent = () => {
   const [eventData, setEventData] = useState(locationState?.eventData ?? null);
   const [activeTab, setActiveTab] = useState("details");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const confirmDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      await backend.delete(`/clinics/${eventId}`);
+      navigate("/events");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -36,6 +51,11 @@ export const CreatedEvent = () => {
     if (locationState?.editFeedback === "saved") {
       toaster.success({
         title: "Edits to this event have been saved successfully.",
+      });
+      window.history.replaceState({}, "");
+    } else if (locationState?.editFeedback === "discarded") {
+      toaster.error({
+        title: "Edits to this event have been discarded.",
       });
       window.history.replaceState({}, "");
     }
@@ -287,14 +307,7 @@ export const CreatedEvent = () => {
             gap={2}
             px={4}
             _hover={{ bg: "red.600", borderColor: "red.600", color: "white" }}
-            onClick={async () => {
-              try {
-                await backend.delete(`/clinics/${eventId}`);
-                navigate("/events");
-              } catch (err) {
-                console.error(err);
-              }
-            }}
+            onClick={() => setDeleteOpen(true)}
           >
             <LuFolderInput />
             Delete Event
@@ -400,6 +413,14 @@ export const CreatedEvent = () => {
           </Box>
         )}
       </VStack>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={(e) => { if (!e.open) setDeleteOpen(false); }}
+        title="Delete Clinic Event"
+        confirmLabel="Yes, Delete"
+        onConfirm={confirmDelete}
+        loading={deleteLoading}
+      />
     </VStack>
   );
 };
