@@ -18,7 +18,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuCalendar, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
+import { LuArrowRight, LuCalendar, LuCopy, LuPencil, LuSlidersHorizontal, LuTrash2 } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 const parseTimestamp = (str) => {
@@ -375,6 +375,19 @@ export const EventManagement = () => {
                   <LuPencil />
                 </IconButton>
                 <IconButton
+                  aria-label="Duplicate event"
+                  variant="ghost"
+                  size="sm"
+                  color="gray.500"
+                  _hover={{ color: "green.500", bg: "green.50" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/events/${clinic.id}/duplicate/header`);
+                  }}
+                >
+                  <LuCopy />
+                </IconButton>
+                <IconButton
                   aria-label="Delete event"
                   variant="ghost"
                   size="sm"
@@ -437,7 +450,6 @@ export const EventManagement = () => {
             >
               <Input
                 placeholder="Search for an event..."
-                borderRadius="md"
                 border="1px solid #E2E8F0"
               />
             </InputGroup>

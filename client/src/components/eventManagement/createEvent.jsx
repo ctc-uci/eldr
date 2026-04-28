@@ -68,9 +68,10 @@ const buildEditBaseline = (c, langNames) => {
 
 export const CreateEvent = () => {
   const { backend } = useBackendContext();
-  const { tab, eventId } = useParams();
+  const { tab, eventId, sourceId } = useParams();
   const navigate = useNavigate();
   const isEditing = !!eventId;
+  const isDuplicating = !!sourceId;
   const activeTab = tab === "header" ? "details" : (tab ?? "details");
   const [type, setType] = useState("");
   const [eventName, setEventName] = useState("");
@@ -138,6 +139,42 @@ export const CreateEvent = () => {
     fetchExisting();
   }, [isEditing, eventId, backend]);
 
+  useEffect(() => {
+    if (!isDuplicating) return;
+    const fetchSource = async () => {
+      try {
+        const [clinicRes, langRes] = await Promise.all([
+          backend.get(`/clinics/${sourceId}`),
+          backend.get(`/clinics/${sourceId}/languages`),
+        ]);
+        const c = clinicRes.data;
+        const langNames = langRes.data.map((l) => l.language);
+        setType(c.type ?? "");
+        setEventName(c.name ?? "");
+        setLocationType(c.locationType ?? "in-person");
+        setAddress(c.address ?? "");
+        setCity(c.city ?? "");
+        setState(c.state ?? "");
+        setZip(c.zip ?? "");
+        setZoomLink(c.meetingLink ?? "");
+        setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
+        setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
+        setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
+        setDescription(c.description ?? "");
+        const start = parseTimeField(c.startTime);
+        setStartTime(start.time);
+        setStartPeriod(start.period);
+        const end = parseTimeField(c.endTime);
+        setEndTime(end.time);
+        setEndPeriod(end.period);
+        setLanguages(langNames);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSource();
+  }, [isDuplicating, sourceId, backend]);
+
   // raf edit start
   const languagesKey = useMemo(
     () => [...languages].sort().join("|"),
@@ -190,6 +227,12 @@ export const CreateEvent = () => {
 
   const goBackFromForm = () => {
     navigate(isEditing ? `/events/${eventId}` : "/events");
+  };
+
+  const getTabPath = (tabKey) => {
+    if (isEditing) return `/events/${eventId}/edit/${tabKey}`;
+    if (isDuplicating) return `/events/${sourceId}/duplicate/${tabKey}`;
+    return `/events/create/${tabKey}`;
   };
 
   const handleCancelClick = () => {
@@ -375,6 +418,14 @@ export const CreateEvent = () => {
           >
             Edit Event
           </Text>
+        ) : isDuplicating ? (
+          <Text
+            color="blue.500"
+            cursor="pointer"
+            onClick={() => navigate("/events")}
+          >
+            Duplicate Event
+          </Text>
         ) : (
           <Text
             color="blue.500"
@@ -396,7 +447,7 @@ export const CreateEvent = () => {
           fontWeight="bold"
           color="#1A202C"
         >
-          {isEditing ? "Edit Event" : "Create New Event"}
+          {isEditing ? "Edit Event" : isDuplicating ? "Duplicate Event" : "Create New Event"}
         </Text>
         {isEditing && (
           <Badge
@@ -439,7 +490,7 @@ export const CreateEvent = () => {
             px={{ base: 3, md: 4 }}
             py={{ base: 2, md: 2.5 }}
             fontSize={{ base: "xs", md: "sm" }}
-            onClick={() => navigate(isEditing ? `/events/${eventId}/edit/${tab.key}` : `/events/create/${tab.key}`)}
+            onClick={() => navigate(getTabPath(tab.key))}
             _hover={{ bg: activeTab === tab.key ? "white" : "gray.50" }}
             _focusVisible={{ outline: "none", boxShadow: "none" }}
           >
