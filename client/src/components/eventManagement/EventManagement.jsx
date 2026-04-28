@@ -197,12 +197,20 @@ export const EventManagement = () => {
       <Card.Root
         key={clinic.id}
         w="100%"
-        borderRadius="lg"
+        borderRadius="md"
         border="1px solid #E2E8F0"
         bg="white"
         shadow="none"
         cursor="pointer"
         _hover={{ shadow: "sm" }}
+        onMouseEnter={(e) => {
+          const btns = e.currentTarget.querySelector("[data-action-btns]");
+          if (btns) btns.style.opacity = "1";
+        }}
+        onMouseLeave={(e) => {
+          const btns = e.currentTarget.querySelector("[data-action-btns]");
+          if (btns) btns.style.opacity = "0";
+        }}
         onClick={() => navigate(`/events/${clinic.id}`)}
       >
         <Card.Body
@@ -360,7 +368,7 @@ export const EventManagement = () => {
                 ))}
               </HStack>
 
-              <HStack gap={1}>
+              <HStack gap={0} data-action-btns style={{ opacity: 0, transition: "opacity 0.15s" }}>
                 <IconButton
                   aria-label="Edit event"
                   variant="ghost"
@@ -414,11 +422,11 @@ export const EventManagement = () => {
             gap={4}
           >
             <Button
-              bg="#2D3748"
-              color="white"
+              bg="#F4F4F5"
+              color="black"
               borderRadius="md"
               px={5}
-              _hover={{ bg: "#1A202C" }}
+              _hover={{ bg: "#E4E4E7" }}
             >
               <LuSlidersHorizontal />
               Filter &amp; Sort
@@ -443,11 +451,11 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#2B6CB0"
+              bg="#487C9E"
               color="white"
               borderRadius="md"
               px={5}
-              _hover={{ bg: "#2C5282" }}
+              _hover={{ bg: "#294A5F" }}
               onClick={() => navigate("/events/create/header")}
             >
               <LuCalendar />

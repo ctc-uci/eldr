@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 import { Box, Button, Flex, HStack, Tag, Text, VStack } from "@chakra-ui/react";
 
 import {
-  LuArchive,
   LuCalendar,
   LuClock,
+  LuMail,
   LuMapPin,
   LuPencil,
+  LuShare,
+  LuFolderInput,
   LuUsers,
 } from "react-icons/lu";
-import { MdOutlineMailOutline } from "react-icons/md";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { toaster } from "@/components/ui/toaster";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 import { EventVolunteerList } from "./EventVolunteerList";
 
@@ -22,6 +24,22 @@ export const CreatedEvent = () => {
   const { backend } = useBackendContext();
   const [eventData, setEventData] = useState(locationState?.eventData ?? null);
   const [activeTab, setActiveTab] = useState("details");
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  useEffect(() => {
+    if (locationState?.editFeedback === "saved") {
+      toaster.success({
+        title: "Edits to this event have been saved successfully.",
+      });
+      window.history.replaceState({}, "");
+    }
+  }, [locationState?.editFeedback]);
 
   useEffect(() => {
     if (eventData) return;
@@ -105,7 +123,7 @@ export const CreatedEvent = () => {
     <VStack
       w="100%"
       minH="100vh"
-      bg="#F7F8FA"
+      bg="white"
       align="start"
       px={10}
       pt={10}
@@ -119,15 +137,15 @@ export const CreatedEvent = () => {
       >
         <Text
           fontWeight="semibold"
-          color="gray.700"
+          color="gray.800"
+          cursor="pointer"
+          onClick={() => navigate("/events")}
         >
           Event Catalog
         </Text>
         <Text color="gray.400">›</Text>
         <Text
-          color="blue.500"
-          cursor="pointer"
-          onClick={() => navigate("/events")}
+          color="blue.600"
         >
           View Event
         </Text>
@@ -223,37 +241,52 @@ export const CreatedEvent = () => {
           </HStack>
         </VStack>
 
-        {/* Edit / Archive buttons */}
-        <VStack
-          gap={2}
-          align="stretch"
-          minW="180px"
-        >
+        {/* Copy link / Delete / Edit buttons */}
+        <HStack gap={2} align="center">
+          <Box position="relative">
+            <Button
+              variant="outline"
+            border="1px solid #E2E8F0"
+              bg="white"
+              color="gray.700"
+              borderRadius="md"
+              px={3}
+              _hover={{ bg: "gray.50" }}
+              onClick={handleCopyLink}
+            >
+              <LuShare />
+            </Button>
+            {linkCopied && (
+              <Box
+                position="absolute"
+                bottom="calc(100% + 6px)"
+                left="50%"
+                transform="translateX(-50%)"
+                bg="#487C9E"
+                color="white"
+                fontSize="xs"
+                fontWeight="medium"
+                px={3}
+                py={1}
+                borderRadius="md"
+                whiteSpace="nowrap"
+                pointerEvents="none"
+              >
+                Link copied!
+              </Box>
+            )}
+          </Box>
+
           <Button
             variant="outline"
-            border="1px solid #E2E8F0"
+            border="1px solid"
+            borderColor="red.200"
             bg="white"
-            color="gray.700"
+            color="red.700"
             borderRadius="md"
-            justifyContent="flex-start"
-            gap={3}
+            gap={2}
             px={4}
-            _hover={{ bg: "gray.50" }}
-            onClick={() => navigate(`/events/${eventId}/edit/header`)}
-          >
-            <LuPencil />
-            Edit Event
-          </Button>
-          <Button
-            variant="outline"
-            border="1px solid #E2E8F0"
-            bg="white"
-            color="gray.700"
-            borderRadius="md"
-            justifyContent="flex-start"
-            gap={3}
-            px={4}
-            _hover={{ bg: "red.50", borderColor: "red.200", color: "red.600" }}
+            _hover={{ bg: "red.600", borderColor: "red.600", color: "white" }}
             onClick={async () => {
               try {
                 await backend.delete(`/clinics/${eventId}`);
@@ -263,107 +296,88 @@ export const CreatedEvent = () => {
               }
             }}
           >
-            <LuArchive />
-            Archive Event
+            <LuFolderInput />
+            Delete Event
           </Button>
-        </VStack>
+
+          <Button
+            bg="#487C9E"
+            color="white"
+            borderRadius="md"
+            gap={2}
+            px={4}
+            _hover={{ bg: "#294A5F" }}
+            onClick={() => navigate(`/events/${eventId}/edit/header`)}
+          >
+            <LuPencil />
+            Edit Event
+          </Button>
+        </HStack>
       </Flex>
 
-      {/* Tabbed content card */}
-      <Box
-        w="100%"
-        bg="white"
-        border="1px solid #E2E8F0"
-        borderRadius="lg"
-        overflow="hidden"
-      >
-        {/* Tabs */}
+      {/* Tabs */}
+      <VStack w="100%" gap={0}>
+        {/* Tab strip */}
         <HStack
-          gap={0}
-          borderBottom="2px solid #E2E8F0"
-          px={6}
+          gap={1}
+          borderBottom="1px solid"
+          borderColor="gray.200"
+          w="100%"
+          align="end"
         >
-          {tabs.map((tab) => (
-            <Button
-              key={tab.key}
-              variant="ghost"
-              borderRadius={0}
-              borderBottom={
-                activeTab === tab.key
-                  ? "2px solid #2B6CB0"
-                  : "2px solid transparent"
-              }
-              mb="-2px"
-              color={activeTab === tab.key ? "blue.600" : "gray.400"}
-              fontWeight={activeTab === tab.key ? "semibold" : "normal"}
-              px={4}
-              py={3}
-              fontSize="sm"
-              gap={2}
-              onClick={() => setActiveTab(tab.key)}
-              _hover={{ bg: "transparent", color: "gray.600" }}
-            >
-              <MdOutlineMailOutline />
-              {tab.label}
-            </Button>
-          ))}
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <Button
+                key={tab.key}
+                variant="unstyled"
+                borderRadius="6px 6px 0 0"
+                border={isActive ? "1px solid" : "none"}
+                borderColor="gray.200"
+                borderBottomColor={isActive ? "white" : undefined}
+                mb="-1px"
+                color={isActive ? "gray.800" : "gray.600"}
+                bg={isActive ? "white" : "transparent"}
+                fontWeight={isActive ? "medium" : "normal"}
+                px={4}
+                py={2.5}
+                fontSize="sm"
+                display="flex"
+                alignItems="center"
+                gap={2}
+                onClick={() => setActiveTab(tab.key)}
+                _hover={{ bg: isActive ? "white" : "gray.50", color: isActive ? "gray.800" : "gray.700" }}
+                _focusVisible={{ outline: "none", boxShadow: "none" }}
+              >
+                <LuMail size={16} />
+                {tab.label}
+              </Button>
+            );
+          })}
         </HStack>
 
+        {/* Tab content — no top border/radius so it merges with the strip */}
         {activeTab === "details" && (
-          <Box
-            w="100%"
-            p={8}
-          >
-            <VStack
-              align="start"
-              gap={6}
-            >
-              <VStack
-                align="start"
-                gap={2}
-              >
-                <Text
-                  fontWeight="bold"
-                  fontSize="md"
-                  color="gray.800"
-                >
-                  Description
-                </Text>
-                <Text
-                  fontSize="sm"
-                  color="gray.600"
-                >
+          <Box w="100%" bg="white" borderLeft="1px solid" borderRight="1px solid" borderBottom="1px solid" borderColor="gray.200" borderRadius="0 0 6px 6px" p={8}>
+            <VStack align="start" gap={6}>
+              <VStack align="start" gap={2}>
+                <Text fontWeight="bold" fontSize="md" color="gray.800">Description</Text>
+                <Text fontSize="sm" color="gray.600">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
                   massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
                   sapien fringilla, mattis ligula consectetur, ultrices mauris.
                   Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
                 </Text>
-                <Text
-                  fontSize="sm"
-                  color="gray.600"
-                >
+                <Text fontSize="sm" color="gray.600">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
                   massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
                   sapien fringilla, mattis ligula consectetur, ultrices mauris.
                   Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
                 </Text>
               </VStack>
-
-              <VStack
-                align="start"
-                gap={2}
-              >
-                <Text
-                  fontWeight="bold"
-                  fontSize="md"
-                  color="gray.800"
-                >
-                  Miscellaneous
-                </Text>
-                <Text
-                  fontSize="sm"
-                  color="gray.600"
-                >
+              <VStack align="start" gap={2}>
+                <Text fontWeight="bold" fontSize="md" color="gray.800">Miscellaneous</Text>
+                <Text fontSize="sm" color="gray.600">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
                   massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
                   sapien fringilla, mattis ligula consectetur, ultrices mauris.
@@ -375,23 +389,17 @@ export const CreatedEvent = () => {
         )}
 
         {activeTab === "volunteers" && (
-          <Box
-            w="100%"
-            p={8}
-          >
+          <Box w="100%" bg="white" borderLeft="1px solid" borderRight="1px solid" borderBottom="1px solid" borderColor="gray.200" borderRadius="0 0 6px 6px" p={8}>
             <EventVolunteerList eventId={eventId} />
           </Box>
         )}
 
         {activeTab === "email" && (
-          <Box
-            w="100%"
-            p={8}
-          >
+          <Box w="100%" bg="white" borderLeft="1px solid" borderRight="1px solid" borderBottom="1px solid" borderColor="gray.200" borderRadius="0 0 6px 6px" p={8}>
             <EmailNotificationTimeline eventId={eventId} />
           </Box>
         )}
-      </Box>
+      </VStack>
     </VStack>
   );
 };

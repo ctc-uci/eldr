@@ -363,24 +363,19 @@ export const CreateEvent = () => {
       >
         <Text
           fontWeight="semibold"
-          color="gray.700"
+          color="gray.800"
+          cursor="pointer"
+          onClick={() => navigate("/events")}
         >
           Event Catalog
         </Text>
         <Text color="gray.400">›</Text>
         {isEditing ? (
-          <Text
-            fontWeight="semibold"
-            color="gray.700"
-          >
+          <Text color="blue.600">
             Edit Event
           </Text>
         ) : (
-          <Text
-            color="blue.500"
-            cursor="pointer"
-            onClick={() => navigate("/events")}
-          >
+          <Text color="blue.600">
             Create New Event
           </Text>
         )}
@@ -427,12 +422,11 @@ export const CreateEvent = () => {
           <Button
             key={tab.key}
             variant="ghost"
-            borderRadius="8px 8px 0 0"
+            borderRadius="6px 6px 0 0"
             borderTop={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
             borderLeft={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
             borderRight={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
             borderBottom={activeTab === tab.key ? "1px solid transparent" : "1px solid transparent"}
-            mb="-1px"
             color={activeTab === tab.key ? "#2D3748" : "gray.600"}
             bg={activeTab === tab.key ? "white" : "transparent"}
             fontWeight={activeTab === tab.key ? "medium" : "normal"}
@@ -856,7 +850,7 @@ export const CreateEvent = () => {
               minH={{ base: "140px", md: "160px" }}
               resize="none"
               border="1px solid #CBD5E0"
-              borderRadius="6px"
+              borderRadius="md"
               bg="white"
               fontSize="sm"
               p={3}
@@ -874,7 +868,7 @@ export const CreateEvent = () => {
           p={8}
           bg="white"
           border="1px solid #E2E8F0"
-          borderRadius="lg"
+          borderRadius="md"
         >
           {activeTab === "email" ? (
             <EmailNotificationTimeline eventId={isEditing ? eventId : undefined} />
