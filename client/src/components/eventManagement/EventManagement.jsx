@@ -14,12 +14,11 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { ConfirmDialog } from "./ConfirmDialog";
 import { EventFilterDrawer } from "./FilterDrawer";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuClipboardPlus, LuCopy, LuPencil, LuTrash2 } from "react-icons/lu";
+import { LuArrowRight, LuClipboardPlus, LuFiles, LuPencil } from "react-icons/lu";
 import { MdFilterList } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
@@ -133,29 +132,9 @@ export const EventManagement = () => {
   const navigate = useNavigate();
   const [clinics, setClinics] = useState([]);
   const [isLoadingClinics, setIsLoadingClinics] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({ clinicTypes: new Set(), eventFormats: new Set(), languages: new Set() });
-
-  const handleDeleteClick = (e, clinicId) => {
-    e.stopPropagation();
-    setDeleteTarget(clinicId);
-  };
-
-  const confirmDelete = async () => {
-    setDeleteLoading(true);
-    try {
-      await backend.delete(`/clinics/${deleteTarget}`);
-      setClinics((prev) => prev.filter((c) => c.id !== deleteTarget));
-      setDeleteTarget(null);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -388,7 +367,7 @@ export const EventManagement = () => {
                   variant="ghost"
                   size="sm"
                   color="gray.500"
-                  _hover={{ color: "blue.500", bg: "blue.50" }}
+                  _hover={{ bg: "transparent" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/events/${clinic.id}/edit/header`);
@@ -401,23 +380,13 @@ export const EventManagement = () => {
                   variant="ghost"
                   size="sm"
                   color="gray.500"
-                  _hover={{ color: "green.500", bg: "green.50" }}
+                  _hover={{ bg: "transparent" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/events/${clinic.id}/duplicate/header`);
                   }}
                 >
-                  <LuCopy />
-                </IconButton>
-                <IconButton
-                  aria-label="Delete event"
-                  variant="ghost"
-                  size="sm"
-                  color="gray.500"
-                  _hover={{ color: "red.500", bg: "red.50" }}
-                  onClick={(e) => handleDeleteClick(e, clinic.id)}
-                >
-                  <LuTrash2 />
+                  <LuFiles />
                 </IconButton>
               </HStack>
             </Flex>
@@ -574,14 +543,6 @@ export const EventManagement = () => {
         onClose={() => setFilterOpen(false)}
         onApply={setActiveFilters}
         clinics={clinics}
-      />
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(e) => { if (!e.open) setDeleteTarget(null); }}
-        title="Delete Clinic Event"
-        confirmLabel="Yes, Delete"
-        onConfirm={confirmDelete}
-        loading={deleteLoading}
       />
     </Flex>
   );
