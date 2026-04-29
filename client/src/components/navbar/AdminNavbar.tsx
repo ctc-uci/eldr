@@ -3,14 +3,23 @@ Admin Navbar
 TODO: Implement on all associated admin pages
 */
 
-import { useLocation, Link as RouterLink } from "react-router-dom";
-import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";import {
-  BriefcaseBusiness,
+import {
+  Avatar,
+  Box,
+  Flex,
+  HStack,
+  Image,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+
+import {
   CircleUser,
   ClipboardList,
   Mails,
   //Tag,
 } from "lucide-react";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 
 export const AdminNavbar = () => {
   const location = useLocation();
@@ -18,9 +27,12 @@ export const AdminNavbar = () => {
   // Array of mapping icons
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
-    { name: "Case Catalog", icon: BriefcaseBusiness, path: "/cases" },
     { name: "Email Template", icon: Mails, path: "/email" },
-    { name: "Manage Profiles", icon: CircleUser, path: "/volunteer-management" },
+    {
+      name: "Manage Profiles",
+      icon: CircleUser,
+      path: "/volunteer-management",
+    },
     //{ name: "Tags", icon: Tag, path: "/tags" }
     // TODO: Tags not implemented yet ? Just need to uncomment and put path when done
   ];
@@ -37,7 +49,11 @@ export const AdminNavbar = () => {
       py={8}
       justify="space-between"
     >
-      <VStack gap={8} w="full" align="stretch">
+      <VStack
+        gap={8}
+        w="full"
+        align="stretch"
+      >
         {/* ELDR Logo */}
         <Box px={6}>
           <Image
@@ -49,7 +65,12 @@ export const AdminNavbar = () => {
         </Box>
 
         {/* Nav Links */}
-        <VStack gap={4} w="full" px={4} align="stretch">
+        <VStack
+          gap={4}
+          w="full"
+          px={4}
+          align="stretch"
+        >
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const IconComponent = item.icon;
@@ -59,7 +80,7 @@ export const AdminNavbar = () => {
               <RouterLink
                 to={item.path}
                 key={item.name}
-                style={{ textDecoration: 'none', display: 'block' }}
+                style={{ textDecoration: "none", display: "block" }}
               >
                 <HStack
                   w="full"
@@ -92,7 +113,10 @@ export const AdminNavbar = () => {
       </VStack>
 
       {/* Profile Picture */}
-      <RouterLink to="/admin-profile" style={{ textDecoration: 'none', display: 'block' }}>
+      <RouterLink
+        to="/admin-profile"
+        style={{ textDecoration: "none", display: "block" }}
+      >
         <Box
           px="clamp(16px, 2vw, 20px)"
           cursor="pointer"
