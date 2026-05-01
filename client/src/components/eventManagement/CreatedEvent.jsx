@@ -97,6 +97,7 @@ export const CreatedEvent = () => {
     state,
     zip,
     meetingLink,
+    description,
   } = eventData || {};
 
   const formatTime = (ts) => {
@@ -370,26 +371,8 @@ export const CreatedEvent = () => {
             <VStack align="start" gap={6}>
               <VStack align="start" gap={2}>
                 <Text fontWeight="bold" fontSize="md" color="gray.800">Description</Text>
-                <Text fontSize="sm" color="gray.600">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-                </Text>
-                <Text fontSize="sm" color="gray.600">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
-                </Text>
-              </VStack>
-              <VStack align="start" gap={2}>
-                <Text fontWeight="bold" fontSize="md" color="gray.800">Miscellaneous</Text>
-                <Text fontSize="sm" color="gray.600">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et
-                  massa mi. Aliquam in hendrerit urna. Pellentesque sit amet
-                  sapien fringilla, mattis ligula consectetur, ultrices mauris.
-                  Maecenas vitae mattis tellus. Nullam quis imperdiet augue.
+                <Text fontSize="sm" color="gray.600" whiteSpace="pre-wrap">
+                  {description || "No description provided."}
                 </Text>
               </VStack>
             </VStack>
