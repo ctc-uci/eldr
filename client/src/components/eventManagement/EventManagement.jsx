@@ -420,7 +420,6 @@ export const EventManagement = () => {
             <Button
               bg="#F4F4F5"
               color="black"
-              borderRadius="md"
               px={5}
               border="1px solid #E4E4E7"
               borderRadius="4px"
