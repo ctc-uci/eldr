@@ -4,11 +4,22 @@ Implement on event creation ONLY (potentially case creation too??)
 */
 
 import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/react";
-import { LuClipboardList } from "react-icons/lu";
-import { MdOutlineMailOutline } from "react-icons/md";
-import { RxPeople } from "react-icons/rx";
-import { LuTags } from "react-icons/lu";
+import { LuTags, LuMails } from "react-icons/lu";
+import { ClipboardList, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const navIconButtonProps = {
+  variant: "ghost" as const,
+  boxSize: "40px",
+  minW: "40px",
+  p: 2,
+  borderRadius: "md",
+  color: "#294A5F",
+  _hover: {
+    bg: "blue.50",
+    color: "blue.700",
+  },
+};
 
 export const CollapsedNavbar = () => {
   const navigate = useNavigate();
@@ -35,42 +46,42 @@ export const CollapsedNavbar = () => {
           <Box w="32px" h="32px" />
         </Box>
 
-        <VStack gap={10} w="full" px={4}>
+        <VStack gap={10} w="full" >
           <IconButton
             title="Event Catalog"
-            boxSize="30px"
-            variant="ghost"
-            as={LuClipboardList}
+            aria-label="Event Catalog"
+            {...navIconButtonProps}
             onClick={() => navigate("/events")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <ClipboardList size={22} />
+          </IconButton>
 
           <IconButton
             title="Email Templates"
-            boxSize="30px"
-            variant="ghost"
-            as={MdOutlineMailOutline}
+            aria-label="Email Templates"
+            {...navIconButtonProps}
             onClick={() => navigate("/email")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <LuMails size={22} />
+          </IconButton>
 
           <IconButton
             title="Profiles"
-            boxSize="30px"
-            variant="ghost"
-            as={RxPeople}
+            aria-label="Profiles"
+            {...navIconButtonProps}
             onClick={() => navigate("/volunteer-management")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <Users size={22} />
+          </IconButton>
 
           <IconButton
             title="Tags"
-            boxSize="30px"
-            variant="ghost"
-            as={LuTags}
+            aria-label="Tags"
+            {...navIconButtonProps}
             onClick={() => navigate("/tags")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <LuTags size={22} />
+          </IconButton>
         </VStack>
       </VStack>
 
