@@ -32,7 +32,11 @@ export const AdminNavbar = () => {
       py={8}
       justify="space-between"
     >
-      <VStack gap={8} w="full" align="stretch">
+      <VStack
+        gap={8}
+        w="full"
+        align="stretch"
+      >
         {/* ELDR Logo */}
         <Box px={6}>
           <Image
@@ -54,7 +58,7 @@ export const AdminNavbar = () => {
               <RouterLink
                 to={item.path}
                 key={item.name}
-                style={{ textDecoration: 'none', display: 'block' }}
+                style={{ textDecoration: "none", display: "block" }}
               >
                 <HStack
                   w="full"
@@ -87,7 +91,10 @@ export const AdminNavbar = () => {
       </VStack>
 
       {/* Profile Picture */}
-      <RouterLink to="/admin-profile" style={{ textDecoration: 'none', display: 'block' }}>
+      <RouterLink
+        to="/admin-profile"
+        style={{ textDecoration: "none", display: "block" }}
+      >
         <Box
           px="clamp(16px, 2vw, 20px)"
           cursor="pointer"
