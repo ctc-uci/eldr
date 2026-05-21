@@ -16,6 +16,7 @@ import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset } from "./components/adminProfile/adminPassReset";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { AddProfileView } from "./components/volunteerManagement/AddProfileView";
 import { StaffLayout } from "./components/navbar/StaffLayout";
 import { VolunteerLayout } from "./components/navbar/VolunteerLayout";
 import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
@@ -115,6 +116,10 @@ const App = () => {
                   <Route
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
+                  />
+                  <Route 
+                    path="/volunteer-management/new" 
+                    element={<AddProfileView />} 
                   />
                   <Route
                     path="/events/:eventId/email-notification/new"
