@@ -18,7 +18,8 @@ import { EventFilterDrawer } from "./FilterDrawer";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
-import { LuArrowRight, LuClipboardPlus, LuFiles, LuPencil } from "react-icons/lu";
+import { LuArrowRight, LuCalendar, LuPencil, LuTrash2, LuFiles, LuClipboardPlus } from "react-icons/lu";
+import { IoFilterOutline } from "react-icons/io5";
 import { MdFilterList } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
@@ -126,7 +127,7 @@ const renderLocation = (clinic) => {
     return [inPersonAddress, link].filter(Boolean).join(" | ");
   return inPersonAddress;
 };
-
+ 
 export const EventManagement = () => {
   const { backend } = useBackendContext();
   const navigate = useNavigate();
@@ -450,7 +451,7 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#487C9E"
+              bg="#547b9b"
               color="white"
               borderRadius="4px"
               px={5}
@@ -488,7 +489,6 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      fontWeight="semibold"
                       color="gray.800"
                     >
                       Upcoming Events
@@ -510,7 +510,6 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      fontWeight="semibold"
                       color="gray.800"
                     >
                       Past Events

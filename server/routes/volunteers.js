@@ -5,6 +5,12 @@ import { Router } from "express";
 
 export const volunteersRouter = Router();
 
+const normalizeNullableText = (value) => {
+  if (value == null) return null;
+  const normalized = String(value).trim();
+  return normalized === "" ? null : normalized;
+};
+
 // Create a new volunteer
 volunteersRouter.post("/", async (req, res) => {
   try {
@@ -25,97 +31,95 @@ volunteersRouter.post("/", async (req, res) => {
       state_bar_number,
     } = req.body;
 
-    if (!email) {
+    const normalizedEmail = normalizeNullableText(email);
+    if (!normalizedEmail) {
       return res.status(400).send("email are required");
     }
 
-    // Create the base user first (or reuse if email already exists)
-    let userId;
-    try {
-      const userResult = await db.query(
+    const normalizedFirstName = normalizeNullableText(first_name);
+    const normalizedLastName = normalizeNullableText(last_name);
+    const normalizedPhoneNumber = normalizeNullableText(phone_number);
+    const normalizedAffiliatedEmployer = normalizeNullableText(affiliated_employer);
+    const normalizedLawSchoolYear = normalizeNullableText(law_school_year);
+    const normalizedStateBarCertificate = normalizeNullableText(state_bar_certificate);
+    const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
+
+    const result = await db.tx(async (t) => {
+      const userResult = await t.one(
         `
-          INSERT INTO users (email, firebase_uid)
-          VALUES ($1, $2)
+          INSERT INTO users (email, firebase_uid, role)
+          VALUES ($1, $2, 'volunteer')
+          ON CONFLICT (email) DO UPDATE
+            SET firebase_uid = EXCLUDED.firebase_uid,
+                role = CASE
+                  WHEN users.role = 'guest' THEN 'volunteer'
+                  ELSE users.role
+                END
+          RETURNING id, email, firebase_uid, role;
+        `,
+        [normalizedEmail, firebaseUid ?? null]
+      );
+
+      const volunteerResult = await t.one(
+        `
+          INSERT INTO volunteers (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            form_completed,
+            form_link,
+            is_signed_confidentiality,
+            is_attorney,
+            is_notary,
+            affiliated_employer,
+            law_school_year,
+            state_bar_certificate,
+            state_bar_number
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          ON CONFLICT (id) DO UPDATE
+            SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
+                last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
+                email = COALESCE(EXCLUDED.email, volunteers.email),
+                phone_number = COALESCE(EXCLUDED.phone_number, volunteers.phone_number),
+                form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
+                form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
+                is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
+                is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
+                is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
+                affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
+                law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
+                state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
+                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number)
           RETURNING *;
         `,
-        [email, firebaseUid]
+        [
+          userResult.id,
+          normalizedFirstName,
+          normalizedLastName,
+          normalizedEmail,
+          normalizedPhoneNumber,
+          form_completed ?? null,
+          normalizeNullableText(form_link),
+          is_signed_confidentiality ?? null,
+          is_attorney ?? null,
+          is_notary ?? null,
+          normalizedAffiliatedEmployer,
+          normalizedLawSchoolYear,
+          normalizedStateBarCertificate,
+          normalizedStateBarNumber,
+        ]
       );
-      userId = userResult[0].id;
-    } catch (err) {
-      if (err.code === "23505") {
-        const existingUser = await db.query(
-          `
-            SELECT id
-            FROM users
-            WHERE email = $1;
-          `,
-          [email]
-        );
 
-        if (!existingUser.length) throw err;
-        userId = existingUser[0].id;
-      } else {
-        throw err;
-      }
-    }
+      return {
+        user: userResult,
+        volunteer: volunteerResult,
+      };
+    });
 
-    // Prevent duplicate volunteer insert
-    const existingVolunteer = await db.query(
-      `
-        SELECT *
-        FROM volunteers
-        WHERE id = $1;
-      `,
-      [userId]
-    );
-
-    if (existingVolunteer.length) {
-      return res.status(409).json({
-        message: "Volunteer already exists",
-        volunteer: keysToCamel(existingVolunteer[0]),
-      });
-    }
-
-    const volunteerResult = await db.query(
-      `
-        INSERT INTO volunteers (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          form_completed,
-          form_link,
-          is_signed_confidentiality,
-          is_attorney,
-          is_notary,
-          affiliated_employer,
-          law_school_year,
-          state_bar_certificate,
-          state_bar_number
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-        RETURNING *;
-      `,
-      [
-        userId,
-        first_name,
-        last_name,
-        email,
-        phone_number,
-        form_completed,
-        form_link,
-        is_signed_confidentiality,
-        is_attorney,
-        is_notary,
-        affiliated_employer,
-        law_school_year,
-        state_bar_certificate,
-        state_bar_number,
-      ]
-    );
-
-    res.status(201).json(keysToCamel(volunteerResult[0]));
+    res.status(201).json(keysToCamel(result.volunteer));
   } catch (e) {
     res.status(500).send(e.message);
   }

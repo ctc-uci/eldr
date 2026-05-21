@@ -68,7 +68,20 @@ export const Signup = () => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate);
+    const runRedirectResult = async () => {
+      try {
+        await handleRedirectResult(backend, navigate);
+      } catch (err) {
+        if (err instanceof Error) {
+          toaster.error({
+            title: "An error occurred",
+            description: err.message,
+          });
+        }
+      }
+    };
+
+    void runRedirectResult();
   }, [backend, handleRedirectResult, navigate]);
 
   return (
