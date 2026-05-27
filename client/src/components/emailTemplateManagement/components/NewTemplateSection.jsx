@@ -14,6 +14,7 @@ export const NewTemplateSection = ({
   setTemplateSubject,
   templateContent,
   setTemplateContent,
+  isEditable = true,
 }) => {
   // Rich text editor setup
   const editor = useEditor({
@@ -25,12 +26,19 @@ export const NewTemplateSection = ({
       TextStyleKit,
     ],
     content: templateContent || "<p></p>",
+    editable: isEditable,
     onUpdate: ({ editor }) => {
       setTemplateContent(editor.getHTML());
     },
     shouldRerenderOnTransaction: true,
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.setEditable(isEditable);
+  }, [editor, isEditable]);
 
   useEffect(() => {
     if (!editor) return;
@@ -65,10 +73,14 @@ export const NewTemplateSection = ({
               value={templateSubject}
               onChange={(e) => setTemplateSubject(e.target.value)}
               placeholder="Enter subject line"
+              readOnly={!isEditable}
+              cursor={isEditable ? "text" : "default"}
               h="40px"
               borderColor="#E4E4E7"
               borderWidth="1px"
               borderRadius="5px"
+              bg="white"
+              _readOnly={{ bg: "white", opacity: 1, cursor: "default" }}
               _focusVisible={{ borderColor: "#487C9E", boxShadow: "0 0 0 1px #487C9E" }}
             />
           </VStack>
@@ -115,6 +127,7 @@ export const NewTemplateSection = ({
             <Box
               flex="1"
               minH={0}
+              cursor={isEditable ? "text" : "default"}
             >
               <RichTextEditor.Content
                 style={{ height: "100%", minHeight: 0 }}
