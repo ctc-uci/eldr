@@ -145,39 +145,48 @@ export const VolunteerManagementView = ({
 
   const volunteersTable = (
     <Flex gap={6}>
-      <Box
+      <Flex
+        direction="column"
         w={viewMode === "split" ? "50%" : "100%"}
         minW={viewMode === "split" ? "300px" : undefined}
-        h="100%"
-        overflowY="auto"
-        onClick={(e) => {
-          if (viewMode === "split" && e.target === e.currentTarget) {
-            setViewMode("list");
-            setSelectedVolunteer(null);
-          }
-        }}
       >
-        <VolunteerList
-          variant={viewMode === "list" ? "table" : "list"}
-          refreshId={refreshTrigger}
-          onSelect={(volunteer) => {
-            if (selectedVolunteer?.id === volunteer.id) {
-              setSelectedVolunteer(null);
+        <Box
+          overflowY="auto"
+          border="1px solid #E4E4E7"
+          onClick={(e) => {
+            if (viewMode === "split" && e.target === e.currentTarget) {
               setViewMode("list");
-            } else {
-              setSelectedVolunteer(volunteer);
-              setViewMode("split");
+              setSelectedVolunteer(null);
             }
           }}
-          selectedId={selectedVolunteer?.id}
-          volunteers={filteredVolunteers}
-          setVolunteers={setVolunteers}
-          checkedIds={checkedIds}
-          setCheckedIds={setCheckedIds}
+        >
+          <VolunteerList
+            variant={viewMode === "list" ? "table" : "list"}
+            refreshId={refreshTrigger}
+            onSelect={(volunteer) => {
+              if (selectedVolunteer?.id === volunteer.id) {
+                setSelectedVolunteer(null);
+                setViewMode("list");
+              } else {
+                setSelectedVolunteer(volunteer);
+                setViewMode("split");
+              }
+            }}
+            selectedId={selectedVolunteer?.id}
+            volunteers={filteredVolunteers}
+            setVolunteers={setVolunteers}
+            checkedIds={checkedIds}
+            setCheckedIds={setCheckedIds}
+            page={page}
+            setPage={setPage}
+          />
+        </Box>
+        <Pagination
           page={page}
-          setPage={setPage}
+          totalCount={filteredVolunteers.length}
+          onPageChange={setPage}
         />
-      </Box>
+      </Flex>
 
       {viewMode === "split" && (
         <Box
@@ -202,25 +211,6 @@ export const VolunteerManagementView = ({
       )}
     </Flex>
   );
-
-  const paginationCount =
-    activeTab === "archived"
-      ? filteredArchived.length
-      : activeTab === "staff"
-        ? filteredStaff.length
-        : filteredVolunteers.length;
-  const currentPage =
-    activeTab === "archived"
-      ? archivedPage
-      : activeTab === "staff"
-        ? staffPage
-        : page;
-  const onPageChange =
-    activeTab === "archived"
-      ? setArchivedPage
-      : activeTab === "staff"
-        ? setStaffPage
-        : setPage;
 
   return (
     <Box
@@ -254,42 +244,49 @@ export const VolunteerManagementView = ({
           value="volunteers"
           p={0}
           pt={0}
-          border="1px solid #E4E4E7"
         >
           {volunteersTable}
         </Tabs.Content>
         <Tabs.Content
           value="staff"
           p={0}
-          border="1px solid #E4E4E7"
         >
           <Flex gap={6}>
-            <Box
+            <Flex
+              direction="column"
               w={staffViewMode === "split" ? "50%" : "100%"}
               minW={staffViewMode === "split" ? "300px" : undefined}
-              h="100%"
-              overflowY="auto"
             >
-              <StaffList
-                variant={staffViewMode === "split" ? "list" : "table"}
+              <Box
+                overflowY="auto"
+                border="1px solid #E4E4E7"
+              >
+                <StaffList
+                  variant={staffViewMode === "split" ? "list" : "table"}
+                  page={staffPage}
+                  setPage={setStaffPage}
+                  staffMembers={filteredStaff}
+                  setStaffMembers={setStaffMembers}
+                  checkedIds={checkedIds}
+                  setCheckedIds={setCheckedIds}
+                  selectedId={selectedStaffMember?.id}
+                  onSelect={(member) => {
+                    if (selectedStaffMember?.id === member.id) {
+                      setSelectedStaffMember(null);
+                      setStaffViewMode("list");
+                    } else {
+                      setSelectedStaffMember(member);
+                      setStaffViewMode("split");
+                    }
+                  }}
+                />
+              </Box>
+              <Pagination
                 page={staffPage}
-                setPage={setStaffPage}
-                staffMembers={filteredStaff}
-                setStaffMembers={setStaffMembers}
-                checkedIds={checkedIds}
-                setCheckedIds={setCheckedIds}
-                selectedId={selectedStaffMember?.id}
-                onSelect={(member) => {
-                  if (selectedStaffMember?.id === member.id) {
-                    setSelectedStaffMember(null);
-                    setStaffViewMode("list");
-                  } else {
-                    setSelectedStaffMember(member);
-                    setStaffViewMode("split");
-                  }
-                }}
+                totalCount={filteredStaff.length}
+                onPageChange={setStaffPage}
               />
-            </Box>
+            </Flex>
             {staffViewMode === "split" && (
               <Box
                 w="50%"
@@ -321,35 +318,43 @@ export const VolunteerManagementView = ({
         <Tabs.Content
           value="archived"
           p={0}
-          border="1px solid #E4E4E7"
         >
           <Flex gap={6}>
-            <Box
+            <Flex
+              direction="column"
               w={archivedViewMode === "split" ? "50%" : "100%"}
               minW={archivedViewMode === "split" ? "300px" : undefined}
-              h="100%"
-              overflowY="auto"
             >
-              <ArchivedList
-                variant={archivedViewMode === "split" ? "list" : "table"}
+              <Box
+                overflowY="auto"
+                border="1px solid #E4E4E7"
+              >
+                <ArchivedList
+                  variant={archivedViewMode === "split" ? "list" : "table"}
+                  page={archivedPage}
+                  setPage={setArchivedPage}
+                  archivedVolunteers={filteredArchived}
+                  setArchivedVolunteers={setArchivedVolunteers}
+                  checkedKeys={archivedCheckedKeys}
+                  setCheckedKeys={setArchivedCheckedKeys}
+                  selectedKey={selectedArchivedVolunteer?.listKey}
+                  onSelect={(volunteer) => {
+                    if (selectedArchivedVolunteer?.id === volunteer.id) {
+                      setSelectedArchivedVolunteer(null);
+                      setArchivedViewMode("list");
+                    } else {
+                      setSelectedArchivedVolunteer(volunteer);
+                      setArchivedViewMode("split");
+                    }
+                  }}
+                />
+              </Box>
+              <Pagination
                 page={archivedPage}
-                setPage={setArchivedPage}
-                archivedVolunteers={filteredArchived}
-                setArchivedVolunteers={setArchivedVolunteers}
-                checkedKeys={archivedCheckedKeys}
-                setCheckedKeys={setArchivedCheckedKeys}
-                selectedKey={selectedArchivedVolunteer?.listKey}
-                onSelect={(volunteer) => {
-                  if (selectedArchivedVolunteer?.id === volunteer.id) {
-                    setSelectedArchivedVolunteer(null);
-                    setArchivedViewMode("list");
-                  } else {
-                    setSelectedArchivedVolunteer(volunteer);
-                    setArchivedViewMode("split");
-                  }
-                }}
+                totalCount={filteredArchived.length}
+                onPageChange={setArchivedPage}
               />
-            </Box>
+            </Flex>
             {archivedViewMode === "split" && (
               <Box
                 w="50%"
@@ -379,12 +384,6 @@ export const VolunteerManagementView = ({
           </Flex>
         </Tabs.Content>
       </Tabs.Root>
-
-      <Pagination
-        page={currentPage}
-        totalCount={paginationCount}
-        onPageChange={onPageChange}
-      />
 
       {(checkedIds.size > 0 || archivedCheckedKeys.size > 0) && (
         <BulkActionBar
