@@ -150,10 +150,41 @@ export const VolunteerList = ({
           <Table.Root size="md">
             <Table.Header>
               <Table.Row bg="#EFF6FF">
+                <Table.ColumnHeader w="2%">
+                  <Checkbox.Root
+                    cursor="pointer"
+                    size="sm"
+                    checked={
+                      sortedVolunteers.length > 0 &&
+                      sortedVolunteers
+                        .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                        .every((v) => checkedIds.has(v.id))
+                    }
+                    onCheckedChange={() => {
+                      const pageIds = sortedVolunteers
+                        .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                        .map((v) => v.id);
+                      const allChecked = pageIds.every((id) =>
+                        checkedIds.has(id)
+                      );
+                      setCheckedIds((prev) => {
+                        const next = new Set(prev);
+                        if (allChecked)
+                          pageIds.forEach((id) => next.delete(id));
+                        else pageIds.forEach((id) => next.add(id));
+                        return next;
+                      });
+                    }}
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control cursor="pointer" />
+                  </Checkbox.Root>
+                </Table.ColumnHeader>
                 <Table.ColumnHeader
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
+                  w="49%"
                 >
                   <SortHeader
                     label="Name"
@@ -161,11 +192,15 @@ export const VolunteerList = ({
                   />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="49%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
                 >
-                  <SortHeader label="Role" />
+                  <SortHeader
+                    label="Interests"
+                    sortField="areasOfPractice"
+                  />
                 </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -189,6 +224,16 @@ export const VolunteerList = ({
                       cursor: "pointer",
                     }}
                   >
+                    <Table.Cell onClick={(e) => toggleCheck(e, volunteer.id)}>
+                      <Checkbox.Root
+                        cursor="pointer"
+                        size="sm"
+                        checked={checkedIds.has(volunteer.id)}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control cursor="pointer" />
+                      </Checkbox.Root>
+                    </Table.Cell>
                     <Table.Cell>
                       <Flex align="center">
                         <Box
@@ -216,12 +261,32 @@ export const VolunteerList = ({
                       </Flex>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text
-                        fontSize="sm"
-                        color="gray.600"
-                      >
-                        {volunteer.roles?.join(", ") || "—"}
-                      </Text>
+                      {volunteer.areasOfPractice?.length ? (
+                        <Flex
+                          wrap="wrap"
+                          gap={1}
+                        >
+                          {volunteer.areasOfPractice.map((area) => (
+                            <Box
+                              key={area}
+                              px={2}
+                              py={0.5}
+                              bg="gray.100"
+                              borderRadius="2px"
+                              whiteSpace="nowrap"
+                            >
+                              {area}
+                            </Box>
+                          ))}
+                        </Flex>
+                      ) : (
+                        <Text
+                          fontSize="sm"
+                          color="black"
+                        >
+                          —
+                        </Text>
+                      )}
                     </Table.Cell>
                   </Table.Row>
                 ))}
