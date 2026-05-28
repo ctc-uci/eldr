@@ -1,19 +1,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { Box, Flex, Tabs } from "@chakra-ui/react";
-import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
-import { FilterState } from "./FilterDrawer";
+import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
 import { ArchivedList } from "./ArchivedList";
 import { ArchivedProfilePanel } from "./ArchivedProfilePanel";
-import { StaffList } from "./StaffList";
-import { StaffProfilePanel } from "./StaffProfilePanel";
 import { BulkActionBar } from "./BulkActionBar";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { FilterState } from "./FilterDrawer";
 import { Pagination } from "./Pagination";
+import { StaffList } from "./StaffList";
+import { StaffProfilePanel } from "./StaffProfilePanel";
 import { VolunteerList } from "./VolunteerList";
 import { VolunteerProfilePanel } from "./VolunteerProfilePanel";
 
@@ -31,32 +31,43 @@ const TABS: { value: ActiveTab; icon: ReactNode; label: string }[] = [
   { value: "archived", icon: <LuArchive />, label: "Archived" },
 ];
 
-export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerManagementViewProps) => {
+export const VolunteerManagementView = ({
+  debouncedQuery,
+  filters,
+}: VolunteerManagementViewProps) => {
   const { backend } = useBackendContext();
   const [activeTab, setActiveTab] = useState<ActiveTab>("volunteers");
 
   // Volunteers tab state
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
+    null
+  );
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [page, setPage] = useState(1);
 
   // Staff tab state
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [staffPage, setStaffPage] = useState(1);
-  const [selectedStaffMember, setSelectedStaffMember] = useState<StaffMember | null>(null);
+  const [selectedStaffMember, setSelectedStaffMember] =
+    useState<StaffMember | null>(null);
   const [staffViewMode, setStaffViewMode] = useState<ViewMode>("list");
 
   // Archived tab state
-  const [archivedVolunteers, setArchivedVolunteers] = useState<ArchivedVolunteer[]>([]);
+  const [archivedVolunteers, setArchivedVolunteers] = useState<
+    ArchivedVolunteer[]
+  >([]);
   const [archivedPage, setArchivedPage] = useState(1);
-  const [selectedArchivedVolunteer, setSelectedArchivedVolunteer] = useState<ArchivedVolunteer | null>(null);
+  const [selectedArchivedVolunteer, setSelectedArchivedVolunteer] =
+    useState<ArchivedVolunteer | null>(null);
   const [archivedViewMode, setArchivedViewMode] = useState<ViewMode>("list");
 
   // Shared state
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
-  const [archivedCheckedKeys, setArchivedCheckedKeys] = useState<Set<string>>(new Set());
+  const [archivedCheckedKeys, setArchivedCheckedKeys] = useState<Set<string>>(
+    new Set()
+  );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const fuzzyMatch = (query: string, target: string): boolean => {
@@ -71,22 +82,36 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
   };
 
   const filteredVolunteers = volunteers.filter((v) => {
-    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
-    const matchesRoles = filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
-    const matchesInterests = filters.interests.size === 0 || v.areasOfPractice?.some((a) => filters.interests.has(a));
-    const matchesLanguages = filters.languages.size === 0 || v.languages?.some((l) => filters.languages.has(l));
-    return matchesSearch && matchesRoles && matchesInterests && matchesLanguages;
+    const matchesSearch =
+      !debouncedQuery ||
+      fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
+    const matchesRoles =
+      filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
+    const matchesInterests =
+      filters.interests.size === 0 ||
+      v.areasOfPractice?.some((a) => filters.interests.has(a));
+    const matchesLanguages =
+      filters.languages.size === 0 ||
+      v.languages?.some((l) => filters.languages.has(l));
+    return (
+      matchesSearch && matchesRoles && matchesInterests && matchesLanguages
+    );
   });
 
   const filteredStaff = staffMembers.filter((s) => {
-    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${s.firstName} ${s.lastName}`);
+    const matchesSearch =
+      !debouncedQuery ||
+      fuzzyMatch(debouncedQuery, `${s.firstName} ${s.lastName}`);
     const matchesRoles = filters.roles.size === 0 || filters.roles.has(s.role);
     return matchesSearch && matchesRoles;
   });
 
   const filteredArchived = archivedVolunteers.filter((v) => {
-    const matchesSearch = !debouncedQuery || fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
-    const matchesRoles = filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
+    const matchesSearch =
+      !debouncedQuery ||
+      fuzzyMatch(debouncedQuery, `${v.firstName} ${v.lastName}`);
+    const matchesRoles =
+      filters.roles.size === 0 || v.roles?.some((r) => filters.roles.has(r));
     return matchesSearch && matchesRoles;
   });
 
@@ -155,14 +180,21 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
       </Box>
 
       {viewMode === "split" && (
-        <Box w="50%" h="100%" overflowY="auto" p={6}>
+        <Box
+          w="50%"
+          h="100%"
+          overflowY="auto"
+          p={6}
+        >
           <VolunteerProfilePanel
             showBack
             onBack={() => setViewMode("list")}
             volunteer={selectedVolunteer}
             onConfirm={(data) => {
               if (!selectedVolunteer) return;
-              setSelectedVolunteer((prev) => prev ? { ...prev, ...data } : prev);
+              setSelectedVolunteer((prev) =>
+                prev ? { ...prev, ...data } : prev
+              );
               setRefreshTrigger((prev) => prev + 1);
             }}
           />
@@ -172,20 +204,29 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
   );
 
   const paginationCount =
-    activeTab === "archived" ? filteredArchived.length :
-    activeTab === "staff" ? filteredStaff.length :
-    filteredVolunteers.length;
+    activeTab === "archived"
+      ? filteredArchived.length
+      : activeTab === "staff"
+        ? filteredStaff.length
+        : filteredVolunteers.length;
   const currentPage =
-    activeTab === "archived" ? archivedPage :
-    activeTab === "staff" ? staffPage :
-    page;
+    activeTab === "archived"
+      ? archivedPage
+      : activeTab === "staff"
+        ? staffPage
+        : page;
   const onPageChange =
-    activeTab === "archived" ? setArchivedPage :
-    activeTab === "staff" ? setStaffPage :
-    setPage;
+    activeTab === "archived"
+      ? setArchivedPage
+      : activeTab === "staff"
+        ? setStaffPage
+        : setPage;
 
   return (
-    <Box h="100%" position="relative">
+    <Box
+      h="100%"
+      position="relative"
+    >
       <Tabs.Root
         defaultValue="volunteers"
         variant="outline"
@@ -193,16 +234,35 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
       >
         <Tabs.List w="fit-content">
           {TABS.map(({ value, icon, label }) => (
-            <Tabs.Trigger key={value} value={value} color="#52525B" _selected={{ color: "#27272A", bg: "white" }}>
-              <Flex align="center" gap={1}>{icon} {label}</Flex>
+            <Tabs.Trigger
+              key={value}
+              value={value}
+              color="#52525B"
+              _selected={{ color: "#27272A", bg: "white" }}
+            >
+              <Flex
+                align="center"
+                gap={1}
+              >
+                {icon} {label}
+              </Flex>
             </Tabs.Trigger>
           ))}
         </Tabs.List>
 
-        <Tabs.Content value="volunteers" p={0} pt={0} border="1px solid #E4E4E7">
+        <Tabs.Content
+          value="volunteers"
+          p={0}
+          pt={0}
+          border="1px solid #E4E4E7"
+        >
           {volunteersTable}
         </Tabs.Content>
-        <Tabs.Content value="staff" p={0} border="1px solid #E4E4E7">
+        <Tabs.Content
+          value="staff"
+          p={0}
+          border="1px solid #E4E4E7"
+        >
           <Flex gap={6}>
             <Box
               w={staffViewMode === "split" ? "50%" : "100%"}
@@ -231,7 +291,12 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
               />
             </Box>
             {staffViewMode === "split" && (
-              <Box w="50%" h="100%" overflowY="auto" p={6}>
+              <Box
+                w="50%"
+                h="100%"
+                overflowY="auto"
+                p={6}
+              >
                 <StaffProfilePanel
                   staff={selectedStaffMember}
                   onBack={() => {
@@ -239,9 +304,13 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
                     setSelectedStaffMember(null);
                   }}
                   onSaved={(data) => {
-                    setSelectedStaffMember((prev) => prev ? { ...prev, ...data } : prev);
+                    setSelectedStaffMember((prev) =>
+                      prev ? { ...prev, ...data } : prev
+                    );
                     setStaffMembers((prev) =>
-                      prev.map((s) => s.id === selectedStaffMember?.id ? { ...s, ...data } : s)
+                      prev.map((s) =>
+                        s.id === selectedStaffMember?.id ? { ...s, ...data } : s
+                      )
                     );
                   }}
                 />
@@ -249,7 +318,11 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
             )}
           </Flex>
         </Tabs.Content>
-        <Tabs.Content value="archived" p={0} border="1px solid #E4E4E7">
+        <Tabs.Content
+          value="archived"
+          p={0}
+          border="1px solid #E4E4E7"
+        >
           <Flex gap={6}>
             <Box
               w={archivedViewMode === "split" ? "50%" : "100%"}
@@ -278,7 +351,12 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
               />
             </Box>
             {archivedViewMode === "split" && (
-              <Box w="50%" h="100%" overflowY="auto" p={6}>
+              <Box
+                w="50%"
+                h="100%"
+                overflowY="auto"
+                p={6}
+              >
                 <ArchivedProfilePanel
                   volunteer={selectedArchivedVolunteer}
                   onBack={() => {
@@ -290,7 +368,9 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
                     const updated = { ...selectedArchivedVolunteer, ...data };
                     setSelectedArchivedVolunteer(updated);
                     setArchivedVolunteers((prev) =>
-                      prev.map((v) => v.id === selectedArchivedVolunteer.id ? updated : v)
+                      prev.map((v) =>
+                        v.id === selectedArchivedVolunteer.id ? updated : v
+                      )
                     );
                   }}
                 />
@@ -308,16 +388,28 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
 
       {(checkedIds.size > 0 || archivedCheckedKeys.size > 0) && (
         <BulkActionBar
-          count={activeTab === "archived" ? archivedCheckedKeys.size : checkedIds.size}
+          count={
+            activeTab === "archived"
+              ? archivedCheckedKeys.size
+              : checkedIds.size
+          }
           showArchive={activeTab !== "archived"}
           showUnarchive={activeTab === "archived"}
           onUnarchive={async () => {
-            const toUnarchive = archivedVolunteers.filter((v) => archivedCheckedKeys.has(v.listKey));
+            const toUnarchive = archivedVolunteers.filter((v) =>
+              archivedCheckedKeys.has(v.listKey)
+            );
 
-            setArchivedVolunteers((prev) => prev.filter((v) => !archivedCheckedKeys.has(v.listKey)));
+            setArchivedVolunteers((prev) =>
+              prev.filter((v) => !archivedCheckedKeys.has(v.listKey))
+            );
 
-            const restoredVolunteers = toUnarchive.filter((v) => v.source === "volunteer");
-            const restoredStaff = toUnarchive.filter((v) => v.source === "staff");
+            const restoredVolunteers = toUnarchive.filter(
+              (v) => v.source === "volunteer"
+            );
+            const restoredStaff = toUnarchive.filter(
+              (v) => v.source === "staff"
+            );
 
             if (restoredVolunteers.length > 0) {
               setVolunteers((prev) => [
@@ -361,12 +453,16 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
             const now = new Date().toISOString();
 
             if (activeTab === "staff") {
-              const toArchive = staffMembers.filter((s) => checkedIds.has(s.id));
+              const toArchive = staffMembers.filter((s) =>
+                checkedIds.has(s.id)
+              );
               const prevStaff = [...staffMembers];
               const prevArchived = [...archivedVolunteers];
               const prevChecked = new Set(checkedIds);
 
-              setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
+              setStaffMembers((prev) =>
+                prev.filter((s) => !checkedIds.has(s.id))
+              );
               setArchivedVolunteers((prev) => [
                 ...prev,
                 ...toArchive.map((s) => ({
@@ -400,7 +496,9 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
               const prevArchived = [...archivedVolunteers];
               const prevChecked = new Set(checkedIds);
 
-              setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+              setVolunteers((prev) =>
+                prev.filter((v) => !checkedIds.has(v.id))
+              );
               setArchivedVolunteers((prev) => [
                 ...prev,
                 ...toArchive.map((v) => ({
@@ -425,7 +523,9 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
 
               try {
                 await Promise.all(
-                  toArchive.map((v) => backend.patch(`/volunteers/${v.id}/archive`))
+                  toArchive.map((v) =>
+                    backend.patch(`/volunteers/${v.id}/archive`)
+                  )
                 );
               } catch (err) {
                 console.error("Failed to archive volunteers:", err);
@@ -448,7 +548,9 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
           if (activeTab === "archived") {
-            const toDelete = archivedVolunteers.filter((v) => archivedCheckedKeys.has(v.listKey));
+            const toDelete = archivedVolunteers.filter((v) =>
+              archivedCheckedKeys.has(v.listKey)
+            );
             await Promise.all(
               toDelete.map((v) =>
                 v.source === "staff"
@@ -456,8 +558,13 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
                   : backend.delete(`/volunteers/${v.id}`)
               )
             );
-            setArchivedVolunteers((prev) => prev.filter((v) => !archivedCheckedKeys.has(v.listKey)));
-            if (selectedArchivedVolunteer && archivedCheckedKeys.has(selectedArchivedVolunteer.listKey)) {
+            setArchivedVolunteers((prev) =>
+              prev.filter((v) => !archivedCheckedKeys.has(v.listKey))
+            );
+            if (
+              selectedArchivedVolunteer &&
+              archivedCheckedKeys.has(selectedArchivedVolunteer.listKey)
+            ) {
               setSelectedArchivedVolunteer(null);
               setArchivedViewMode("list");
             }
@@ -466,7 +573,9 @@ export const VolunteerManagementView = ({ debouncedQuery, filters }: VolunteerMa
             await Promise.all(
               [...checkedIds].map((id) => backend.delete(`/admins/${id}`))
             );
-            setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
+            setStaffMembers((prev) =>
+              prev.filter((s) => !checkedIds.has(s.id))
+            );
             if (selectedStaffMember && checkedIds.has(selectedStaffMember.id)) {
               setSelectedStaffMember(null);
               setStaffViewMode("list");
