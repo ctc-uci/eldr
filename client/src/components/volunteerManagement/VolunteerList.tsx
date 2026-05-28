@@ -232,10 +232,14 @@ export const VolunteerList = ({
 
       {variant === "table" && (
         <Box overflow="hidden">
-          <Table.Root size="md">
+          <Table.Root
+            size="md"
+            tableLayout="fixed"
+            w="100%"
+          >
             <Table.Header>
               <Table.Row bg="#EFF6FF">
-                <Table.ColumnHeader w="40px">
+                <Table.ColumnHeader w="3%">
                   <Checkbox.Root
                     cursor="pointer"
                     size="sm"
@@ -266,6 +270,7 @@ export const VolunteerList = ({
                   </Checkbox.Root>
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="30%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
@@ -276,6 +281,7 @@ export const VolunteerList = ({
                   />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="20%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
@@ -286,6 +292,7 @@ export const VolunteerList = ({
                   />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="17%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
@@ -296,6 +303,7 @@ export const VolunteerList = ({
                   />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="15%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
@@ -306,6 +314,7 @@ export const VolunteerList = ({
                   />
                 </Table.ColumnHeader>
                 <Table.ColumnHeader
+                  w="15%"
                   fontSize="xs"
                   fontWeight="semibold"
                   color="gray.600"
