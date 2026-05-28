@@ -392,7 +392,7 @@ export const VolunteerList = ({
                           wrap="wrap"
                           gap={1}
                         >
-                          {["one", "two"].map((area) => (
+                          {volunteer.areasOfPractice.map((area) => (
                             <Box
                               key={area}
                               px={2}
