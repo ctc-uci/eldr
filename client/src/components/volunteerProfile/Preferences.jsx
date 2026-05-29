@@ -15,6 +15,7 @@ import {
   addVolunteerInterest,
   formatLocationLabel,
   removeVolunteerInterest,
+  toAreaLabel,
 } from "./preferencesUtils.js";
 
 const Section = ({ title, description, children }) => (
@@ -65,10 +66,14 @@ export const Preferences = ({
   }, [savedAreaIds]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadPreferences = async () => {
       if (!volunteerId) {
-        setLoading(false);
-        setLocations([]);
+        if (!cancelled) {
+          setLoading(false);
+          setLocations([]);
+        }
         return;
       }
 
@@ -81,19 +86,27 @@ export const Preferences = ({
 
         try {
           const volunteerLocationsResp = await backend.get(`/volunteers/${volunteerId}/locations`);
+          if (cancelled) return;
           volunteerLocationRows = volunteerLocationsResp?.data ?? [];
         } catch (volunteerLocationsError) {
           console.error("Failed to load volunteer locations", volunteerLocationsError);
-          setError("Failed to load saved location preferences.");
+          if (!cancelled) {
+            setError("Failed to load saved location preferences.");
+          }
         }
 
         try {
           const locationsResp = await backend.get("/locations");
+          if (cancelled) return;
           allLocations = locationsResp?.data ?? [];
         } catch (locationsCatalogError) {
           console.error("Failed to load location catalog", locationsCatalogError);
-          setError((prev) => prev || "Failed to load location options.");
+          if (!cancelled) {
+            setError((prev) => prev || "Failed to load location options.");
+          }
         }
+
+        if (cancelled) return;
 
         setLocations(
           volunteerLocationRows.map((row) => ({
@@ -109,24 +122,34 @@ export const Preferences = ({
         );
       } catch (loadError) {
         console.error("Failed to load preferences", loadError);
-        setError("Failed to load preferences.");
-        setLocations([]);
-        setLocationCatalog([]);
+        if (!cancelled) {
+          setError("Failed to load preferences.");
+          setLocations([]);
+          setLocationCatalog([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, [backend, volunteerId]);
 
   const areaOptions = useMemo(
     () =>
       Array.from(
-        new Set([
-          ...localAreaCatalog.map((row) => row.areasOfPractice),
-          ...localInterests,
-        ]),
+        new Set(
+          [
+            ...localAreaCatalog.map((row) => toAreaLabel(row.areasOfPractice)),
+            ...localInterests.map(toAreaLabel),
+          ].filter(Boolean),
+        ),
       ),
     [localAreaCatalog, localInterests],
   );

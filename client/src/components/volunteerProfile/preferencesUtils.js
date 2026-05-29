@@ -2,6 +2,12 @@ const readFirst = (value) => (Array.isArray(value) ? value[0] : value);
 
 export const normalizeText = (value) => value?.trim().toLowerCase();
 
+export const toAreaLabel = (value) => {
+  if (typeof value === "string") return value.trim();
+  if (value == null) return "";
+  return String(value).trim();
+};
+
 export const formatLocationLabel = (row) => {
   if (row?.locationName) return row.locationName;
   const city = row?.city ?? "";

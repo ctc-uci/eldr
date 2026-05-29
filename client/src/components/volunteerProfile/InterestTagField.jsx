@@ -21,10 +21,11 @@ export const InterestTagField = ({
 }) => {
   const availableOptions = options.filter((option) => !tags.includes(option));
   const [inputValue, setInputValue] = useState("");
+  const tagsKey = useMemo(() => tags.join("\x1e"), [tags]);
 
   useEffect(() => {
     setInputValue("");
-  }, [tags.length]);
+  }, [tagsKey]);
 
   const filteredOptions = useMemo(() => {
     const query = inputValue.trim().toLowerCase();
@@ -100,7 +101,7 @@ export const InterestTagField = ({
           ))}
           {editable ? (
             <Combobox.Root
-              key={`tag-add-${tags.length}`}
+              key={`tag-add-${tagsKey}`}
               collection={collection}
               value={[]}
               inputValue={inputValue}
