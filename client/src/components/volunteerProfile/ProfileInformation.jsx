@@ -10,13 +10,13 @@ import {
   Input,
   NativeSelect,
   SimpleGrid,
-  Tag,
   Text,
   VStack,
 } from "@chakra-ui/react";
 import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
 import InputMask from "react-input-mask";
 
+import { InterestTagField } from "./InterestTagField";
 import {
   NOTARY_OPTIONS,
   PROFICIENCY_OPTIONS,
@@ -118,7 +118,7 @@ export const ProfileInformation = ({
       >
         <Box>
           <HStack flexWrap="wrap" gap={2} mb={2}>
-            <Heading size="2xl" lineHeight="snug" fontWeight="bold" color="gray.900">
+            <Heading size="2xl" lineHeight="snug" fontWeight="semibold" color="gray.900">
               Profile Information
             </Heading>
             {isEditing ? (
@@ -207,9 +207,9 @@ export const ProfileInformation = ({
               _hover={{ bg: "#2B6CB0" }}
               onClick={onEdit}
             >
-              <HStack gap={1}>
-                <LuPencil size={14} />
+              <HStack gap={2}>
                 <Text fontSize="sm">Edit</Text>
+                <LuPencil size={14} />
               </HStack>
             </Button>
           )}
@@ -219,7 +219,7 @@ export const ProfileInformation = ({
       <VStack gap={8} align="stretch">
         {/* Personal Info — 3 columns: Photo | First+Phone | Last+Email */}
         <Box>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Personal Info
           </Text>
           <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} mt={8} mb={10} alignItems="start">
@@ -338,7 +338,7 @@ export const ProfileInformation = ({
 
         {/* Occupation & Credentials */}
         <Box mb={6}>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Occupation & Credentials
           </Text>
           <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={12}>
@@ -385,7 +385,7 @@ export const ProfileInformation = ({
 
         {/* Experience: Languages + Interests / Areas */}
         <Box>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Experience
           </Text>
           <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start">
@@ -507,79 +507,16 @@ export const ProfileInformation = ({
 
           <Box flex="1" w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
-              Interests(s)
+              Listed Experience
             </Text>
-            <Flex
-              flexWrap="wrap"
-              gap={2}
-              align="center"
-              minH="44px"
-              p={2}
-              bg="white"
-              borderWidth="1px"
-              borderColor="gray.200"
-              borderRadius="md"
-            >
-              {!isEditing && data.interests.length === 0 ? (
-                <Text fontSize="sm" color="gray.600" px={1}>
-                  No interests found, please click &quot;Edit&quot; to add more
-                </Text>
-              ) : (
-                <>
-                  {data.interests.map((tag) => (
-                    <Tag.Root
-                      key={tag}
-                      size="sm"
-                      bg="gray.100"
-                      color="gray.900"
-                    >
-                      <Tag.Label>{tag}</Tag.Label>
-                      <Tag.EndElement>
-                        <Tag.CloseTrigger
-                          disabled={!isEditing}
-                          aria-label={isEditing ? `Remove ${tag}` : undefined}
-                          onClick={
-                            isEditing
-                              ? () => removeInterest(tag)
-                              : undefined
-                          }
-                        />
-                      </Tag.EndElement>
-                    </Tag.Root>
-                  ))}
-                  {isEditing ? (
-                    <NativeSelect.Root size="sm" minW="160px" maxW="160px">
-                      <NativeSelect.Field
-                        defaultValue=""
-                        border="none"
-                        bg="transparent"
-                        px={2}
-                        _focus={{ boxShadow: "none", borderColor: "transparent", outline: "none" }}
-                        _focusVisible={{
-                          boxShadow: "none",
-                          borderColor: "transparent",
-                          outline: "none",
-                        }}
-                        onChange={(e) => {
-                          addInterest(e.target.value);
-                          e.target.value = "";
-                        }}
-                      >
-                        <option value="" disabled>
-                          Add tag...
-                        </option>
-                        {availableAreaOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                  ) : null}
-                </>
-              )}
-            </Flex>
+            <InterestTagField
+              tags={data.interests}
+              options={availableAreaOptions}
+              editable={isEditing}
+              emptyMessage='No interests found, please click "Edit" to add more'
+              onAdd={addInterest}
+              onRemove={removeInterest}
+            />
           </Box>
         </Flex>
         </Box>

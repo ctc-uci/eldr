@@ -801,7 +801,7 @@ volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
 
     const listAll = await db.query(
       `
-        SELECT l.id, l.location_name
+        SELECT l.id, l.city, l.state, l.zip_code
         FROM volunteer_locations vl
         JOIN locations l ON vl.location_id = l.id
         WHERE vl.volunteer_id = $1;
