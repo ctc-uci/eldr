@@ -142,6 +142,7 @@ export const ProfileManagement = () => {
           phone: volunteer.phoneNumber ?? "",
           email: volunteer.email ?? userRow.email ?? "",
           photoUrl: userRow.profilePictureUrl ?? "",
+          listedExperience: volunteer.listedExperience ?? "",
           notary: volunteer.isNotary ? "Active" : "Inactive",
           occupation: "Volunteer",
           lawSchoolYear: "N/A",
@@ -225,6 +226,7 @@ export const ProfileManagement = () => {
         email: draft.email,
         phone_number: draft.phone,
         is_notary: draft.notary === "Active",
+        listed_experience: draft.listedExperience?.trim() ? draft.listedExperience.trim() : null,
       });
 
       let savedPhotoUrl = profile.photoUrl;

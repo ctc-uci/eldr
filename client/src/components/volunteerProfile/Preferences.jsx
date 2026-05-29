@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Box,
-  Flex,
   Heading,
   Spinner,
-  Switch,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -16,9 +14,7 @@ import { InterestTagField } from "./InterestTagField";
 import {
   addVolunteerInterest,
   formatLocationLabel,
-  loadNotificationPrefs,
   removeVolunteerInterest,
-  saveNotificationPrefs,
 } from "./preferencesUtils.js";
 
 const Section = ({ title, description, children }) => (
@@ -39,20 +35,6 @@ const FieldLabel = ({ children }) => (
   </Text>
 );
 
-const NotificationRow = ({ label, checked, onCheckedChange }) => (
-  <Flex align="center" gap={3}>
-    <Switch.Root checked={checked} onCheckedChange={(e) => onCheckedChange(e.checked)}>
-      <Switch.HiddenInput />
-      <Switch.Control>
-        <Switch.Thumb />
-      </Switch.Control>
-    </Switch.Root>
-    <Text fontSize="sm" color="gray.800">
-      {label}
-    </Text>
-  </Flex>
-);
-
 export const Preferences = ({
   volunteerId,
   interests = [],
@@ -66,7 +48,6 @@ export const Preferences = ({
   const [localSavedAreaIds, setLocalSavedAreaIds] = useState(savedAreaIds);
   const [locations, setLocations] = useState([]);
   const [locationCatalog, setLocationCatalog] = useState([]);
-  const [notifications, setNotifications] = useState(loadNotificationPrefs(volunteerId));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pendingAction, setPendingAction] = useState(false);
@@ -82,10 +63,6 @@ export const Preferences = ({
   useEffect(() => {
     setLocalSavedAreaIds(savedAreaIds);
   }, [savedAreaIds]);
-
-  useEffect(() => {
-    setNotifications(loadNotificationPrefs(volunteerId));
-  }, [volunteerId]);
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -276,12 +253,6 @@ export const Preferences = ({
     }
   };
 
-  const handleNotificationChange = (key, checked) => {
-    const next = { ...notifications, [key]: checked };
-    setNotifications(next);
-    saveNotificationPrefs(volunteerId, next);
-  };
-
   if (loading) {
     return (
       <Box
@@ -345,33 +316,6 @@ export const Preferences = ({
             onAdd={handleAddLocation}
             onRemove={handleRemoveLocation}
           />
-        </Section>
-
-        <Section
-          title="Notifications"
-          description="Manage notification preferences for volunteer events below"
-        >
-          <VStack gap={4} align="stretch">
-            <NotificationRow
-              label="In-person Event Alerts"
-              checked={notifications.inPersonEventAlerts}
-              onCheckedChange={(checked) =>
-                handleNotificationChange("inPersonEventAlerts", checked)
-              }
-            />
-            <NotificationRow
-              label="Virtual Event Alerts"
-              checked={notifications.virtualEventAlerts}
-              onCheckedChange={(checked) =>
-                handleNotificationChange("virtualEventAlerts", checked)
-              }
-            />
-            <NotificationRow
-              label="Interest Alerts"
-              checked={notifications.interestAlerts}
-              onCheckedChange={(checked) => handleNotificationChange("interestAlerts", checked)}
-            />
-          </VStack>
         </Section>
 
         {error ? (

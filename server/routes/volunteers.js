@@ -326,6 +326,14 @@ volunteersRouter.put("/:id", async (req, res) => {
       listed_experience,
     } = req.body;
 
+    const hasListedExperience = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "listed_experience",
+    );
+    const listedExperienceClause = hasListedExperience
+      ? "listed_experience = $15"
+      : "listed_experience = listed_experience";
+
     await db.query(
       `
         UPDATE volunteers
@@ -342,7 +350,7 @@ volunteersRouter.put("/:id", async (req, res) => {
             law_school_year = COALESCE($12, law_school_year),
             state_bar_certificate = COALESCE($13, state_bar_certificate),
             state_bar_number = COALESCE($14, state_bar_number),
-            listed_experience = COALESCE($15, listed_experience)
+            ${listedExperienceClause}
         WHERE id = $1;
       `,
       [
@@ -360,7 +368,7 @@ volunteersRouter.put("/:id", async (req, res) => {
         law_school_year ?? null,
         state_bar_certificate ?? null,
         state_bar_number ?? null,
-        normalizeNullableText(listed_experience),
+        hasListedExperience ? normalizeNullableText(listed_experience) : null,
       ]
     );
 

@@ -9,47 +9,6 @@ export const formatLocationLabel = (row) => {
   return [city, state].filter(Boolean).join(", ");
 };
 
-export const getNotificationPrefsKey = (volunteerId) =>
-  `volunteer_preferences_notifications_${volunteerId}`;
-
-export const loadNotificationPrefs = (volunteerId) => {
-  if (!volunteerId) {
-    return {
-      inPersonEventAlerts: false,
-      virtualEventAlerts: false,
-      interestAlerts: false,
-    };
-  }
-
-  try {
-    const raw = localStorage.getItem(getNotificationPrefsKey(volunteerId));
-    if (!raw) {
-      return {
-        inPersonEventAlerts: false,
-        virtualEventAlerts: false,
-        interestAlerts: false,
-      };
-    }
-    const parsed = JSON.parse(raw);
-    return {
-      inPersonEventAlerts: Boolean(parsed.inPersonEventAlerts),
-      virtualEventAlerts: Boolean(parsed.virtualEventAlerts),
-      interestAlerts: Boolean(parsed.interestAlerts),
-    };
-  } catch {
-    return {
-      inPersonEventAlerts: false,
-      virtualEventAlerts: false,
-      interestAlerts: false,
-    };
-  }
-};
-
-export const saveNotificationPrefs = (volunteerId, prefs) => {
-  if (!volunteerId) return;
-  localStorage.setItem(getNotificationPrefsKey(volunteerId), JSON.stringify(prefs));
-};
-
 export const addVolunteerInterest = async ({
   backend,
   volunteerId,

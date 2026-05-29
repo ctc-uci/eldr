@@ -12,13 +12,13 @@ import {
   Input,
   NativeSelect,
   SimpleGrid,
+  Textarea,
   Text,
   VStack,
 } from "@chakra-ui/react";
 import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
 import InputMask from "react-input-mask";
 
-import { InterestTagField } from "./InterestTagField";
 import {
   NOTARY_OPTIONS,
   PROFICIENCY_OPTIONS,
@@ -94,25 +94,6 @@ export const ProfileInformation = ({
       ],
     }));
   };
-
-  const removeInterest = (tag) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      interests: prev.interests.filter((t) => t !== tag),
-    }));
-  };
-
-  const addInterest = (value) => {
-    const v = value.trim();
-    if (!v || !setData) return;
-    setData((prev) =>
-      prev.interests.includes(v)
-        ? prev
-        : { ...prev, interests: [...prev.interests, v] },
-    );
-  };
-  const availableAreaOptions = areaOptions.filter((option) => !data.interests.includes(option));
 
   return (
     <Box
@@ -413,13 +394,13 @@ export const ProfileInformation = ({
           </SimpleGrid>
         </Box>
 
-        {/* Experience: Languages + Interests / Areas */}
-        <Box>
+        {/* Experience: Languages + Listed Experience */}
+        <Box minW={0}>
           <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Experience
           </Text>
-          <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start">
-          <Box flex="1" w="100%">
+          <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start" minW={0}>
+          <Box flex="1" minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
@@ -436,7 +417,7 @@ export const ProfileInformation = ({
             ) : null}
             {!isEditing && data.languages.length === 0 ? (
               <Text fontSize="sm" color="gray.600">
-                No languages found, please click &quot;Edit&quot; to add more
+                No languages found, please click &quot;Edit&quot; to add more.
               </Text>
             ) : (
             <VStack gap={2} align="stretch">
@@ -535,18 +516,50 @@ export const ProfileInformation = ({
             </Box>
           </Box>
 
-          <Box flex="1" w="100%">
+          <Box flex="1" minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Listed Experience
             </Text>
-            <InterestTagField
-              tags={data.interests}
-              options={availableAreaOptions}
-              editable={isEditing}
-              emptyMessage='No interests found, please click "Edit" to add more'
-              onAdd={addInterest}
-              onRemove={removeInterest}
-            />
+            {isEditing ? (
+              <Textarea
+                size="sm"
+                value={data.listedExperience ?? ""}
+                onChange={(e) => update({ listedExperience: e.target.value })}
+                placeholder="Enter listed experience."
+                minH="96px"
+                resize="none"
+                bg="white"
+                borderWidth="1px"
+                borderColor="gray.200"
+                borderRadius="md"
+                w="100%"
+                whiteSpace="pre-wrap"
+                wordBreak="break-word"
+                overflowWrap="anywhere"
+              />
+            ) : (
+              <Box
+                p={4}
+                w="100%"
+                minW={0}
+                bg="white"
+                borderWidth="1px"
+                borderColor="gray.200"
+                borderRadius="md"
+                overflow="hidden"
+              >
+                <Text
+                  fontSize="sm"
+                  lineHeight="short"
+                  whiteSpace="pre-wrap"
+                  wordBreak="break-word"
+                  overflowWrap="anywhere"
+                  color={data.listedExperience?.trim() ? "gray.900" : "gray.600"}
+                >
+                  {data.listedExperience?.trim() || 'No experience found, please click "Edit" to add more.'}
+                </Text>
+              </Box>
+            )}
           </Box>
         </Flex>
         </Box>
