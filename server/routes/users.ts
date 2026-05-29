@@ -1,3 +1,4 @@
+import { getProfilePictureUploadURL } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp"; // TODO: replace this db with
@@ -100,6 +101,30 @@ usersRouter.get("/", async (req, res) => {
   }
 });
 
+// Presigned URL for profile picture upload (must be registered before /:firebaseUid)
+usersRouter.get("/profile-picture/upload-url", async (req, res) => {
+  try {
+    const contentType =
+      typeof req.query.contentType === "string" ? req.query.contentType : "";
+    const firebaseUid =
+      typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+
+    if (!firebaseUid) {
+      return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    const { uploadUrl, profilePictureUrl } = await getProfilePictureUploadURL(
+      contentType,
+      firebaseUid,
+    );
+
+    return res.status(200).json({ uploadUrl, profilePictureUrl });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create upload URL";
+    return res.status(400).json({ message });
+  }
+});
+
 // Get a user by ID
 usersRouter.get("/:firebaseUid", async (req, res) => {
   try {
@@ -150,11 +175,38 @@ usersRouter.post("/create", async (req, res) => {
 // Update a user by ID
 usersRouter.put("/update", async (req, res) => {
   try {
-    const { email, firebaseUid } = req.body;
+    const { email, firebaseUid, profilePictureUrl } = req.body as {
+      email?: string;
+      firebaseUid?: string;
+      profilePictureUrl?: string | null;
+    };
 
+    if (!firebaseUid?.trim()) {
+      return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let paramIndex = 1;
+
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+
+    if (profilePictureUrl !== undefined) {
+      updates.push(`profile_picture_url = $${paramIndex++}`);
+      values.push(profilePictureUrl);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    values.push(firebaseUid.trim());
     const user = await db.query(
-      "UPDATE users SET email = $1 WHERE firebase_uid = $2 RETURNING *",
-      [email, firebaseUid]
+      `UPDATE users SET ${updates.join(", ")} WHERE firebase_uid = $${paramIndex} RETURNING *`,
+      values,
     );
 
     res.status(200).json(keysToCamel(user));

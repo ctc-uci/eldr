@@ -1,5 +1,3 @@
-// TODO: keep file only if using s3 file upload
-
 import crypto from "crypto";
 
 import aws from "aws-sdk";
@@ -25,21 +23,54 @@ const s3 = new aws.S3({
   signatureVersion: "v4",
 });
 
-const getS3UploadURL = async () => {
-  // generate a unique name for image
-  const imageName = crypto.randomBytes(16).toString("hex");
+const ALLOWED_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
-  // set up s3 params
-  const params = {
-    Bucket: process.env.S3_BUCKET_NAME,
-    Key: imageName,
-    Expires: 60,
-  };
-
-  // get a s3 upload url
-  const uploadURL = s3.getSignedUrl("putObject", params);
-
-  return uploadURL;
+const extensionForContentType = (contentType: string) => {
+  switch (contentType) {
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+    case "image/gif":
+      return "gif";
+    default:
+      return "jpg";
+  }
 };
 
-export { s3, getS3UploadURL };
+const getProfilePictureUploadURL = async (
+  contentType: string,
+  firebaseUid: string,
+) => {
+  const normalizedType = contentType.trim().toLowerCase();
+  if (!ALLOWED_CONTENT_TYPES.has(normalizedType)) {
+    throw new Error("Unsupported image type");
+  }
+
+  const bucket = process.env.AWS_BUCKET_NAME;
+  const region = process.env.AWS_REGION;
+  if (!bucket || !region) {
+    throw new Error("S3 is not configured");
+  }
+
+  const extension = extensionForContentType(normalizedType);
+  const key = `profile-pictures/${firebaseUid}/${crypto.randomBytes(16).toString("hex")}.${extension}`;
+
+  const uploadUrl = s3.getSignedUrl("putObject", {
+    Bucket: bucket,
+    Key: key,
+    Expires: 60,
+    ContentType: normalizedType,
+  });
+
+  const profilePictureUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+
+  return { uploadUrl, profilePictureUrl, key };
+};
+
+export { s3, getProfilePictureUploadURL };

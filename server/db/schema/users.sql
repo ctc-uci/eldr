@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.users
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     email character varying(256) COLLATE pg_catalog."default" NOT NULL,
     firebase_uid character varying(128) COLLATE pg_catalog."default" NOT NULL,
+    profile_picture_url character TEXT COLLATE pg_catalog."default" DEFAULT NULL,
     role character varying(16) COLLATE pg_catalog."default" NOT NULL DEFAULT 'volunteer'::character varying,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT email UNIQUE (email),

@@ -7,6 +7,8 @@ import { LuActivity, LuSlidersHorizontal, LuUser } from "react-icons/lu";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
+import { uploadProfilePicture } from "@/utils/uploadProfilePicture";
+
 import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
 import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
@@ -62,6 +64,8 @@ export const ProfileManagement = () => {
   const [savedLanguageIds, setSavedLanguageIds] = useState([]);
   const [savedAreaIds, setSavedAreaIds] = useState([]);
   const [showUpdatedBadge, setShowUpdatedBadge] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const section = VALID_SECTIONS.has(tab) ? tab : "information";
 
   useEffect(() => {
@@ -124,7 +128,7 @@ export const ProfileManagement = () => {
           lastName: volunteer.lastName ?? "",
           phone: volunteer.phoneNumber ?? "",
           email: volunteer.email ?? userRow.email ?? "",
-          photoUrl: prev.photoUrl,
+          photoUrl: userRow.profilePictureUrl ?? "",
           notary: volunteer.isNotary ? "Active" : "Inactive",
           occupation: "Volunteer",
           lawSchoolYear: "N/A",
@@ -162,7 +166,37 @@ export const ProfileManagement = () => {
     setDraft({ ...profile });
     setIsEditing(true);
     setShowUpdatedBadge(false);
+    setPhotoError("");
   }, [profile]);
+
+  const handlePhotoSelect = useCallback(
+    async (file) => {
+      if (!currentUser?.uid) return;
+
+      setIsUploadingPhoto(true);
+      setPhotoError("");
+
+      try {
+        const profilePictureUrl = await uploadProfilePicture(
+          backend,
+          file,
+          currentUser.uid,
+        );
+
+        setProfile((prev) => ({ ...prev, photoUrl: profilePictureUrl }));
+        setDraft((prev) => (prev ? { ...prev, photoUrl: profilePictureUrl } : prev));
+        setShowUpdatedBadge(true);
+      } catch (error) {
+        console.error("Failed to upload profile picture", error);
+        setPhotoError(
+          error instanceof Error ? error.message : "Failed to upload profile picture.",
+        );
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    },
+    [backend, currentUser?.uid],
+  );
 
   const saveEdit = useCallback(async () => {
     if (!draft || !volunteerId || !currentUser?.uid) return;
@@ -411,7 +445,10 @@ export const ProfileManagement = () => {
                 onEdit={startEdit}
                 onSave={saveEdit}
                 onCancel={cancelEdit}
+                onPhotoSelect={handlePhotoSelect}
                 isSaving={isSavingProfile}
+                isUploadingPhoto={isUploadingPhoto}
+                photoError={photoError}
                 errorMessage={loadError}
                 languageOptions={Array.from(
                   new Set([

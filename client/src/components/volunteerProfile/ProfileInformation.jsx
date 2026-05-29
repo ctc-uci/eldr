@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import {
   Avatar,
   Badge,
@@ -22,7 +24,6 @@ import {
   PROFICIENCY_OPTIONS,
 } from "./profileState.js";
 
-const primaryBlue = "#3182CE";
 
 const FieldLabel = ({ children }) => (
   <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={1}>
@@ -36,6 +37,8 @@ const ReadValue = ({ children, muted }) => (
   </Text>
 );
 
+const editBlue = "#3B6F8F";
+
 export const ProfileInformation = ({
   data,
   setData,
@@ -44,12 +47,24 @@ export const ProfileInformation = ({
   onEdit,
   onSave,
   onCancel,
+  onPhotoSelect,
   isSaving = false,
+  isUploadingPhoto = false,
+  photoError = "",
   errorMessage = "",
   languageOptions = [],
   areaOptions = [],
 }) => {
+  const photoInputRef = useRef(null);
   const defaultLanguage = languageOptions[0] ?? "";
+
+  const handlePhotoInputChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file && onPhotoSelect) {
+      onPhotoSelect(file);
+    }
+  };
 
   const update = (patch) => {
     if (!setData) return;
@@ -172,7 +187,7 @@ export const ProfileInformation = ({
           {isEditing ? (
             <>
               <Button
-                bg={primaryBlue}
+                bg={editBlue}
                 color="white"
                 size="sm"
                 minW="120px"
@@ -200,7 +215,7 @@ export const ProfileInformation = ({
             </>
           ) : (
             <Button
-              bg={primaryBlue}
+              bg={editBlue}
               color="white"
               size="sm"
               borderRadius="md"
@@ -251,14 +266,30 @@ export const ProfileInformation = ({
                   </Avatar.Root>
                 </Box>
                 {isEditing ? (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    colorPalette="blue"
-                    disabled
-                  >
-                    Change Photo
-                  </Button>
+                  <>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      hidden
+                      onChange={handlePhotoInputChange}
+                    />
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorPalette="blue"
+                      onClick={() => photoInputRef.current?.click()}
+                      loading={isUploadingPhoto}
+                      disabled={isSaving || isUploadingPhoto}
+                    >
+                      Change Photo
+                    </Button>
+                    {photoError ? (
+                      <Text fontSize="xs" color="red.600" textAlign="center" maxW="12rem">
+                        {photoError}
+                      </Text>
+                    ) : null}
+                  </>
                 ) : null}
               </VStack>
             </Box>
