@@ -9,6 +9,7 @@ import {
   Flex,
   Heading,
   HStack,
+  IconButton,
   Input,
   NativeSelect,
   SimpleGrid,
@@ -16,7 +17,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
+import { LuFileText, LuPencil, LuTriangleAlert, LuX } from "react-icons/lu";
 import InputMask from "react-input-mask";
 
 import {
@@ -92,6 +93,14 @@ export const ProfileInformation = ({
           proficiency: PROFICIENCY_OPTIONS[0],
         },
       ],
+    }));
+  };
+
+  const removeLanguageRow = (id) => {
+    if (!setData) return;
+    setData((prev) => ({
+      ...prev,
+      languages: prev.languages.filter((row) => row.id !== id),
     }));
   };
 
@@ -411,7 +420,7 @@ export const ProfileInformation = ({
               p={4}
             >
             {isEditing ? (
-              <Text fontSize="xs" color="gray.600" mb={3}>
+              <Text fontSize="sm" color="#A1A1AA" mb={3} fontWeight="normal">
                 Select the languages and your proficiency level.
               </Text>
             ) : null}
@@ -421,82 +430,90 @@ export const ProfileInformation = ({
               </Text>
             ) : (
             <VStack gap={2} align="stretch">
-              {data.languages.map((row) => (
-                <SimpleGrid
-                  key={row.id}
-                  columns={2}
-                  gap={2}
-                  minChildWidth="0"
-                >
-                  {isEditing ? (
-                    <>
-                      <NativeSelect.Root size="sm">
-                        <NativeSelect.Field
-                          value={row.language}
-                          onChange={(e) =>
-                            updateLanguage(row.id, {
-                              language: e.target.value,
-                            })
-                          }
-                        >
-                          {languageOptions.map((o) => (
-                            <option key={o} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                      </NativeSelect.Root>
-                      <NativeSelect.Root size="sm">
-                        <NativeSelect.Field
-                          value={row.proficiency}
-                          onChange={(e) =>
-                            updateLanguage(row.id, {
-                              proficiency: e.target.value,
-                            })
-                          }
-                        >
-                          {PROFICIENCY_OPTIONS.map((o) => (
-                            <option key={o} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                      </NativeSelect.Root>
-                    </>
-                  ) : (
-                    <>
-                      <Field.Root>
-                        <Input
-                          size="sm"
-                          readOnly
-                          value={row.language}
-                          bg="white"
-                          borderColor="gray.200"
-                          color="gray.900"
-                          cursor="default"
-                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                          _readOnly={{ opacity: 1, cursor: "default" }}
-                        />
-                      </Field.Root>
-                      <Field.Root>
-                        <Input
-                          size="sm"
-                          readOnly
-                          value={row.proficiency}
-                          bg="white"
-                          borderColor="gray.200"
-                          color="gray.900"
-                          cursor="default"
-                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                          _readOnly={{ opacity: 1, cursor: "default" }}
-                        />
-                      </Field.Root>
-                    </>
-                  )}
-                </SimpleGrid>
-              ))}
+              {data.languages.map((row) =>
+                isEditing ? (
+                  <Flex key={row.id} gap={2} align="center" minW={0}>
+                    <NativeSelect.Root size="sm" flex={1} minW={0}>
+                      <NativeSelect.Field
+                        value={row.language}
+                        onChange={(e) =>
+                          updateLanguage(row.id, {
+                            language: e.target.value,
+                          })
+                        }
+                      >
+                        {languageOptions.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    <NativeSelect.Root size="sm" flex={1} minW={0}>
+                      <NativeSelect.Field
+                        value={row.proficiency}
+                        onChange={(e) =>
+                          updateLanguage(row.id, {
+                            proficiency: e.target.value,
+                          })
+                        }
+                      >
+                        {PROFICIENCY_OPTIONS.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    <IconButton
+                      aria-label={`Remove ${row.language}`}
+                      variant="ghost"
+                      size="xs"
+                      color="gray.500"
+                      flexShrink={0}
+                      onClick={() => removeLanguageRow(row.id)}
+                    >
+                      <LuX size={14} />
+                    </IconButton>
+                  </Flex>
+                ) : (
+                  <SimpleGrid
+                    key={row.id}
+                    columns={2}
+                    gap={2}
+                    minChildWidth="0"
+                  >
+                    <Field.Root>
+                      <Input
+                        size="sm"
+                        readOnly
+                        value={row.language}
+                        bg="white"
+                        borderColor="gray.200"
+                        color="gray.900"
+                        cursor="default"
+                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                        _readOnly={{ opacity: 1, cursor: "default" }}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Input
+                        size="sm"
+                        readOnly
+                        value={row.proficiency}
+                        bg="white"
+                        borderColor="gray.200"
+                        color="gray.900"
+                        cursor="default"
+                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                        _readOnly={{ opacity: 1, cursor: "default" }}
+                      />
+                    </Field.Root>
+                  </SimpleGrid>
+                ),
+              )}
             </VStack>
             )}
             {isEditing ? (
@@ -526,8 +543,10 @@ export const ProfileInformation = ({
                 value={data.listedExperience ?? ""}
                 onChange={(e) => update({ listedExperience: e.target.value })}
                 placeholder="Enter listed experience."
+                _placeholder={{ color: "#A1A1AA" }}
                 minH="96px"
                 resize="none"
+                p={4}
                 bg="white"
                 borderWidth="1px"
                 borderColor="gray.200"

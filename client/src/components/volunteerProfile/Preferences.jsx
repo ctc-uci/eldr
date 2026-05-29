@@ -296,6 +296,7 @@ export const Preferences = ({
                 options={areaOptions}
                 editable
                 emptyMessage="No subjects of interest added yet."
+                addPlaceholderColor="#A1A1AA"
                 onAdd={handleAddInterest}
                 onRemove={handleRemoveInterest}
               />
@@ -313,6 +314,7 @@ export const Preferences = ({
             editable
             emptyMessage="No location preferences added yet."
             addPlaceholder="Add tag..."
+            addPlaceholderColor="#A1A1AA"
             onAdd={handleAddLocation}
             onRemove={handleRemoveLocation}
           />
