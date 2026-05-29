@@ -218,7 +218,7 @@ export const AdminProfile = () => {
 
   return (
     <Box flex="1" minH="100vh" bg="white" px={{ base: 6, md: 20 }} py={{ base: 6, md: 8 }}>
-        <Heading fontSize="18px" fontWeight={700} color="gray.900" mb={4}>
+        <Heading fontSize="24px" fontWeight={600} color="gray.900" mb={4}>
           Account Management
         </Heading>
         {isLoading ? (
@@ -272,7 +272,7 @@ export const AdminProfile = () => {
             >
               <HStack gap={2}>
                 <LuUser size={16} />
-                <Text fontSize="13px">Profile Information</Text>
+                <Text fontSize="16px">Profile Information</Text>
               </HStack>
             </Tabs.Trigger>
 
@@ -300,7 +300,7 @@ export const AdminProfile = () => {
             >
               <HStack gap={2}>
                 <LuLock size={16} />
-                <Text fontSize="13px">Security</Text>
+                <Text fontSize="16px">Security</Text>
               </HStack>
             </Tabs.Trigger>
           </Tabs.List>
@@ -310,7 +310,7 @@ export const AdminProfile = () => {
           <VStack align="stretch" gap={8}>
             <Flex align="center" justify="space-between">
               <HStack gap={3}>
-                <Text fontSize="18px" fontWeight={700} color="gray.900">
+                <Text fontSize="20px" fontWeight={600} color="gray.900">
                   Profile Information
                 </Text>
                 {isEditing ? (
@@ -395,7 +395,6 @@ export const AdminProfile = () => {
                   color="white"
                   _hover={{ bg: editBlue }}
                   borderRadius="4px"
-                  // h="36px"
                   px={4}
                   py={4}
                   onClick={startEdit}
@@ -413,9 +412,9 @@ export const AdminProfile = () => {
             <Box>
               <SimpleGrid columns={{ base: 1, md: 3 }} gapY={6} gapX={10}>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">First Name</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">First Name</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.firstName}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.firstName}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -432,9 +431,9 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Last Name</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Last Name</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.lastName}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.lastName}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -451,9 +450,9 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Phone Number</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Phone Number</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">
+                    <Text fontSize="14px" color="gray.900">
                       {display.phoneNumber || "—"}
                     </Text>
                   ) : (
@@ -487,9 +486,9 @@ export const AdminProfile = () => {
                 mt={10}
               >
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Email</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Email</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.email}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.email}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -507,14 +506,14 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Role</Field.Label>
-                  <Text fontSize="13px" color="gray.900">{profile.roleLabel}</Text>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Role</Field.Label>
+                  <Text fontSize="14px" color="gray.900">{profile.roleLabel}</Text>
                 </Field.Root>
               </SimpleGrid>
             </Box>
 
             <Box mt={12}>
-              <Text fontSize="16px" fontWeight={700} color="gray.900" mb={6}>
+              <Text fontSize="20px" fontWeight={600} color="gray.900" mb={6}>
                 Security
               </Text>
               <Button
@@ -537,7 +536,7 @@ export const AdminProfile = () => {
           </VStack>
         ) : (
           <Box>
-            <Text fontSize="16px" fontWeight={700} color="gray.900" mb={6}>
+            <Text fontSize="20px" fontWeight={600} color="gray.900" mb={6}>
               Security
             </Text>
             <Button
