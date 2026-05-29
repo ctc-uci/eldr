@@ -6,6 +6,7 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { ArchivedVolunteer, StaffMember, Volunteer } from "@/types/volunteer";
 import { LuArchive, LuBriefcase, LuCircleUser } from "react-icons/lu";
 
+import { ArchiveConfirmModal } from "./ArchiveConfirmModal";
 import { ArchivedList } from "./ArchivedList";
 import { ArchivedProfilePanel } from "./ArchivedProfilePanel";
 import { BulkActionBar } from "./BulkActionBar";
@@ -72,6 +73,7 @@ export const VolunteerManagementView = ({
     new Set()
   );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [archiveModalOpen, setArchiveModalOpen] = useState(false);
 
   const fuzzyMatch = (query: string, target: string): boolean => {
     if (!query) return true;
@@ -444,98 +446,102 @@ export const VolunteerManagementView = ({
             );
           }}
           onDelete={() => setDeleteModalOpen(true)}
-          onArchive={async () => {
-            const now = new Date().toISOString();
-
-            if (activeTab === "staff") {
-              const toArchive = staffMembers.filter((s) =>
-                checkedIds.has(s.id)
-              );
-              const prevStaff = [...staffMembers];
-              const prevArchived = [...archivedVolunteers];
-              const prevChecked = new Set(checkedIds);
-
-              setStaffMembers((prev) =>
-                prev.filter((s) => !checkedIds.has(s.id))
-              );
-              setArchivedVolunteers((prev) => [
-                ...prev,
-                ...toArchive.map((s) => ({
-                  id: s.id,
-                  listKey: `s-${s.id}`,
-                  source: "staff" as const,
-                  firstName: s.firstName,
-                  lastName: s.lastName,
-                  email: s.email,
-                  roles: [s.role],
-                  archivedDate: now,
-                  reactivation: undefined,
-                  archivedNotes: undefined,
-                })),
-              ]);
-              setCheckedIds(new Set());
-
-              try {
-                await Promise.all(
-                  toArchive.map((s) => backend.patch(`/admins/${s.id}/archive`))
-                );
-              } catch (err) {
-                console.error("Failed to archive staff:", err);
-                setStaffMembers(prevStaff);
-                setArchivedVolunteers(prevArchived);
-                setCheckedIds(prevChecked);
-              }
-            } else {
-              const toArchive = volunteers.filter((v) => checkedIds.has(v.id));
-              const prevVolunteers = [...volunteers];
-              const prevArchived = [...archivedVolunteers];
-              const prevChecked = new Set(checkedIds);
-
-              setVolunteers((prev) =>
-                prev.filter((v) => !checkedIds.has(v.id))
-              );
-              setArchivedVolunteers((prev) => [
-                ...prev,
-                ...toArchive.map((v) => ({
-                  id: v.id,
-                  listKey: `v-${v.id}`,
-                  source: "volunteer" as const,
-                  firstName: v.firstName,
-                  lastName: v.lastName,
-                  email: v.email,
-                  roles: v.roles,
-                  archivedDate: now,
-                  reactivation: undefined,
-                  archivedNotes: undefined,
-                })),
-              ]);
-
-              if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
-                setSelectedVolunteer(null);
-                setViewMode("list");
-              }
-              setCheckedIds(new Set());
-
-              try {
-                await Promise.all(
-                  toArchive.map((v) =>
-                    backend.patch(`/volunteers/${v.id}/archive`)
-                  )
-                );
-              } catch (err) {
-                console.error("Failed to archive volunteers:", err);
-                setVolunteers(prevVolunteers);
-                setArchivedVolunteers(prevArchived);
-                setCheckedIds(prevChecked);
-              }
-            }
-          }}
+          onArchive={() => setArchiveModalOpen(true)}
           onClear={() => {
             setCheckedIds(new Set());
             setArchivedCheckedKeys(new Set());
           }}
         />
       )}
+
+      <ArchiveConfirmModal
+        open={archiveModalOpen}
+        onClose={() => setArchiveModalOpen(false)}
+        onConfirm={async (note) => {
+          const now = new Date().toISOString();
+          const archivedNotes = note || undefined;
+
+          if (activeTab === "staff") {
+            const toArchive = staffMembers.filter((s) => checkedIds.has(s.id));
+            const prevStaff = [...staffMembers];
+            const prevArchived = [...archivedVolunteers];
+            const prevChecked = new Set(checkedIds);
+
+            setStaffMembers((prev) => prev.filter((s) => !checkedIds.has(s.id)));
+            setArchivedVolunteers((prev) => [
+              ...prev,
+              ...toArchive.map((s) => ({
+                id: s.id,
+                listKey: `s-${s.id}`,
+                source: "staff" as const,
+                firstName: s.firstName,
+                lastName: s.lastName,
+                email: s.email,
+                roles: [s.role],
+                archivedDate: now,
+                reactivation: undefined,
+                archivedNotes,
+              })),
+            ]);
+            setCheckedIds(new Set());
+
+            try {
+              await Promise.all(
+                toArchive.map((s) =>
+                  backend.patch(`/admins/${s.id}/archive`, { notes: archivedNotes })
+                )
+              );
+            } catch (err) {
+              console.error("Failed to archive staff:", err);
+              setStaffMembers(prevStaff);
+              setArchivedVolunteers(prevArchived);
+              setCheckedIds(prevChecked);
+            }
+          } else {
+            const toArchive = volunteers.filter((v) => checkedIds.has(v.id));
+            const prevVolunteers = [...volunteers];
+            const prevArchived = [...archivedVolunteers];
+            const prevChecked = new Set(checkedIds);
+
+            setVolunteers((prev) => prev.filter((v) => !checkedIds.has(v.id)));
+            setArchivedVolunteers((prev) => [
+              ...prev,
+              ...toArchive.map((v) => ({
+                id: v.id,
+                listKey: `v-${v.id}`,
+                source: "volunteer" as const,
+                firstName: v.firstName,
+                lastName: v.lastName,
+                email: v.email,
+                roles: v.roles,
+                archivedDate: now,
+                reactivation: undefined,
+                archivedNotes,
+              })),
+            ]);
+
+            if (selectedVolunteer && checkedIds.has(selectedVolunteer.id)) {
+              setSelectedVolunteer(null);
+              setViewMode("list");
+            }
+            setCheckedIds(new Set());
+
+            try {
+              await Promise.all(
+                toArchive.map((v) =>
+                  backend.patch(`/volunteers/${v.id}/archive`, { notes: archivedNotes })
+                )
+              );
+            } catch (err) {
+              console.error("Failed to archive volunteers:", err);
+              setVolunteers(prevVolunteers);
+              setArchivedVolunteers(prevArchived);
+              setCheckedIds(prevChecked);
+            }
+          }
+          setArchiveModalOpen(false);
+        }}
+      />
 
       <DeleteConfirmModal
         open={deleteModalOpen}
