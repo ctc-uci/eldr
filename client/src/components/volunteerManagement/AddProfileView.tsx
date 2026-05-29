@@ -203,11 +203,10 @@ export const AddProfileView = () => {
       </Breadcrumb.Root>
 
       <Tabs.Root value={activeTab} onValueChange={handleTabChange} variant="outline">
-        <Tabs.List borderBottom="none" pb={0}>
-          <Tabs.Trigger value="profile" h="8" gap={2}><LuCircleUser /> Profile Information</Tabs.Trigger>
+        <Tabs.List>
+          <Tabs.Trigger value="profile" gap={2}><LuCircleUser /> Profile Information</Tabs.Trigger>
           <Tabs.Trigger
             value="occupation"
-            h="8"
             gap={2}
             disabled={!profileCompleted}
             opacity={!profileCompleted ? 0.4 : 1}
@@ -260,7 +259,7 @@ export const AddProfileView = () => {
             </Flex>
 
             <Flex justify="flex-end">
-              <Button bg="#5F80A0" color="white" _hover={{ bg: "#487C9E" }} onClick={handleContinue}>
+              <Button bg="#487C9E" color="white" _hover={{ bg: "#294A5F" }} onClick={handleContinue}>
                 Continue
               </Button>
             </Flex>
