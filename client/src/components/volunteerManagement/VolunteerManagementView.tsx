@@ -23,6 +23,8 @@ type ActiveTab = "volunteers" | "staff" | "archived";
 interface VolunteerManagementViewProps {
   debouncedQuery: string;
   filters: FilterState;
+  volunteers: Volunteer[];
+  setVolunteers: React.Dispatch<React.SetStateAction<Volunteer[]>>;
 }
 
 const TABS: { value: ActiveTab; icon: ReactNode; label: string }[] = [
@@ -34,6 +36,8 @@ const TABS: { value: ActiveTab; icon: ReactNode; label: string }[] = [
 export const VolunteerManagementView = ({
   debouncedQuery,
   filters,
+  volunteers,
+  setVolunteers,
 }: VolunteerManagementViewProps) => {
   const { backend } = useBackendContext();
   const [activeTab, setActiveTab] = useState<ActiveTab>("volunteers");
@@ -44,7 +48,6 @@ export const VolunteerManagementView = ({
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(
     null
   );
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [page, setPage] = useState(1);
 
   // Staff tab state
@@ -135,13 +138,6 @@ export const VolunteerManagementView = ({
     setSelectedStaffMember(null);
     setStaffViewMode("list");
   }, [activeTab]);
-
-  useEffect(() => {
-    (async () => {
-      const res = await backend.get<Volunteer[]>("/volunteers");
-      setVolunteers(res.data);
-    })();
-  }, [backend]);
 
   const volunteersTable = (
     <Flex gap={6}>

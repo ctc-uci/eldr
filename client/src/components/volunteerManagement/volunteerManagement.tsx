@@ -1,6 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Box, Heading } from "@chakra-ui/react";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { Volunteer } from "@/types/volunteer";
 
 import { FilterDrawer, FilterState } from "./FilterDrawer";
 import { VolunteerManagementView } from "./VolunteerManagementView";
@@ -13,11 +16,20 @@ const EMPTY_FILTERS: FilterState = {
 };
 
 export const VolunteerManagement = () => {
+  const { backend } = useBackendContext();
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await backend.get<Volunteer[]>("/volunteers");
+      setVolunteers(res.data);
+    })();
+  }, [backend]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -44,12 +56,14 @@ export const VolunteerManagement = () => {
       <VolunteerManagementView
         debouncedQuery={debouncedQuery}
         filters={filters}
+        volunteers={volunteers}
+        setVolunteers={setVolunteers}
       />
 
       <FilterDrawer
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
-        totalCount={0}
+        volunteers={volunteers}
         onApply={(f) => setFilters(f)}
       />
     </Box>
