@@ -49,7 +49,6 @@ export const ProfileInformation = ({
   onCancel,
   onPhotoSelect,
   isSaving = false,
-  isUploadingPhoto = false,
   photoError = "",
   errorMessage = "",
   languageOptions = [],
@@ -276,11 +275,11 @@ export const ProfileInformation = ({
                     />
                     <Button
                       size="xs"
-                      variant="outline"
-                      colorPalette="blue"
+                      variant="solid"
+                      bg={editBlue}
+                      color="white"
                       onClick={() => photoInputRef.current?.click()}
-                      loading={isUploadingPhoto}
-                      disabled={isSaving || isUploadingPhoto}
+                      disabled={isSaving}
                     >
                       Change Photo
                     </Button>

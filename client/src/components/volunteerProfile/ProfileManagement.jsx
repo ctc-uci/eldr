@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Box, Heading, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
@@ -7,7 +7,10 @@ import { LuActivity, LuSlidersHorizontal, LuUser } from "react-icons/lu";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-import { uploadProfilePicture } from "@/utils/uploadProfilePicture";
+import {
+  uploadProfilePictureToS3,
+  validateProfilePictureFile,
+} from "@/utils/uploadProfilePicture";
 
 import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
@@ -64,15 +67,25 @@ export const ProfileManagement = () => {
   const [savedLanguageIds, setSavedLanguageIds] = useState([]);
   const [savedAreaIds, setSavedAreaIds] = useState([]);
   const [showUpdatedBadge, setShowUpdatedBadge] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");
+  const photoPreviewUrlRef = useRef(null);
   const section = VALID_SECTIONS.has(tab) ? tab : "information";
+
+  const revokePhotoPreview = useCallback(() => {
+    if (photoPreviewUrlRef.current) {
+      URL.revokeObjectURL(photoPreviewUrlRef.current);
+      photoPreviewUrlRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!tab || !VALID_SECTIONS.has(tab)) {
       navigate("/volunteer-profile/information", { replace: true });
     }
   }, [tab, navigate]);
+
+  useEffect(() => () => revokePhotoPreview(), [revokePhotoPreview]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -158,44 +171,38 @@ export const ProfileManagement = () => {
   }, [backend, volunteerId]);
 
   const cancelEdit = useCallback(() => {
+    revokePhotoPreview();
+    setPendingPhotoFile(null);
+    setPhotoError("");
     setDraft(null);
     setIsEditing(false);
-  }, []);
+  }, [revokePhotoPreview]);
 
   const startEdit = useCallback(() => {
+    revokePhotoPreview();
+    setPendingPhotoFile(null);
     setDraft({ ...profile });
     setIsEditing(true);
     setShowUpdatedBadge(false);
     setPhotoError("");
-  }, [profile]);
+  }, [profile, revokePhotoPreview]);
 
   const handlePhotoSelect = useCallback(
-    async (file) => {
-      if (!currentUser?.uid) return;
-
-      setIsUploadingPhoto(true);
-      setPhotoError("");
-
-      try {
-        const profilePictureUrl = await uploadProfilePicture(
-          backend,
-          file,
-          currentUser.uid,
-        );
-
-        setProfile((prev) => ({ ...prev, photoUrl: profilePictureUrl }));
-        setDraft((prev) => (prev ? { ...prev, photoUrl: profilePictureUrl } : prev));
-        setShowUpdatedBadge(true);
-      } catch (error) {
-        console.error("Failed to upload profile picture", error);
-        setPhotoError(
-          error instanceof Error ? error.message : "Failed to upload profile picture.",
-        );
-      } finally {
-        setIsUploadingPhoto(false);
+    (file) => {
+      const validationError = validateProfilePictureFile(file);
+      if (validationError) {
+        setPhotoError(validationError);
+        return;
       }
+
+      setPhotoError("");
+      revokePhotoPreview();
+      const previewUrl = URL.createObjectURL(file);
+      photoPreviewUrlRef.current = previewUrl;
+      setPendingPhotoFile(file);
+      setDraft((prev) => (prev ? { ...prev, photoUrl: previewUrl } : prev));
     },
-    [backend, currentUser?.uid],
+    [revokePhotoPreview],
   );
 
   const saveEdit = useCallback(async () => {
@@ -220,9 +227,19 @@ export const ProfileManagement = () => {
         is_notary: draft.notary === "Active",
       });
 
+      let savedPhotoUrl = profile.photoUrl;
+      if (pendingPhotoFile) {
+        savedPhotoUrl = await uploadProfilePictureToS3(
+          backend,
+          pendingPhotoFile,
+          currentUser.uid,
+        );
+      }
+
       await backend.put("/users/update", {
         email: draft.email,
         firebaseUid: currentUser.uid,
+        ...(pendingPhotoFile ? { profilePictureUrl: savedPhotoUrl } : {}),
       });
 
       const uniqueLanguageRows = [];
@@ -312,8 +329,11 @@ export const ProfileManagement = () => {
       const normalizedLanguages =
         uniqueLanguageRows.length > 0 ? uniqueLanguageRows : [];
 
+      revokePhotoPreview();
+      setPendingPhotoFile(null);
       setProfile({
         ...draft,
+        photoUrl: savedPhotoUrl,
         occupation: "Volunteer",
         lawSchoolYear: "N/A",
         stateBarState: "N/A",
@@ -340,6 +360,9 @@ export const ProfileManagement = () => {
     currentUser?.uid,
     draft,
     languageCatalog,
+    pendingPhotoFile,
+    profile.photoUrl,
+    revokePhotoPreview,
     savedAreaIds,
     savedLanguageIds,
     volunteerId,
@@ -447,7 +470,6 @@ export const ProfileManagement = () => {
                 onCancel={cancelEdit}
                 onPhotoSelect={handlePhotoSelect}
                 isSaving={isSavingProfile}
-                isUploadingPhoto={isUploadingPhoto}
                 photoError={photoError}
                 errorMessage={loadError}
                 languageOptions={Array.from(

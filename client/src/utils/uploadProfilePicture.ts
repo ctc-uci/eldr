@@ -18,7 +18,7 @@ export const validateProfilePictureFile = (file: File): string | null => {
   return null;
 };
 
-export const uploadProfilePicture = async (
+export const uploadProfilePictureToS3 = async (
   backend: AxiosInstance,
   file: File,
   firebaseUid: string,
@@ -52,11 +52,6 @@ export const uploadProfilePicture = async (
   if (!s3Resp.ok) {
     throw new Error("Failed to upload profile picture.");
   }
-
-  await backend.put("/users/update", {
-    firebaseUid,
-    profilePictureUrl,
-  });
 
   return profilePictureUrl;
 };
