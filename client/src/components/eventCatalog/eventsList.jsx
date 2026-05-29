@@ -21,7 +21,10 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             gap="8px"
             borderWidth="1px"
             borderStyle="solid"
-            borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
+            borderColor={{
+              base: "#E5E7EB",
+              md: isSelected ? "#3B82F6" : "#E5E7EB",
+            }}
             borderRadius="8px"
             bg="white"
             textAlign="left"
@@ -30,7 +33,10 @@ export const EventsList = ({ events, onSelect, selectedEvent }) => {
             _hover={{ bg: "#F9FAFB" }}
             _focus={{ outline: "none" }}
             _focusVisible={{ outline: "none" }}
-            boxShadow={isSelected ? "0 0 0 1px #3B82F6" : "none"}
+            boxShadow={{
+              base: "none",
+              md: isSelected ? "0 0 0 1px #3B82F6" : "none",
+            }}
             onClick={() => onSelect(event)}
             transition="all 0.15s ease"
           >

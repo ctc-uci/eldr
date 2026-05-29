@@ -30,6 +30,8 @@ import { LuCalendarDays } from "react-icons/lu";
 import { formatLocationTypeTag, getClinicLocationDisplay } from "./clinicLocationFormat";
 import RegStatus from "./regStatus";
 
+import { useNavigate } from "react-router-dom";
+
 export const EventInfo = ({
   event,
   activeTab,
@@ -49,6 +51,8 @@ export const EventInfo = ({
       return () => clearTimeout(timer);
     }
   }, [showCopyMessage]);
+
+  const navigate = useNavigate();
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -110,6 +114,7 @@ export const EventInfo = ({
             <Button
               bg="#487C9E"
               p={6}
+              onClick={() => navigate("/all-events")}
             >
               <LuCalendarDays />
               View All Events
@@ -120,7 +125,6 @@ export const EventInfo = ({
     );
   }
 
-  // Determine if this is a past event using the same logic as MyEventsList
   const getEventEndDateTime = () => {
     const dateObj = event.date ? new Date(event.date) : null;
     if (dateObj && event.endTime) {
@@ -188,28 +192,33 @@ export const EventInfo = ({
     >
       <HStack
         justify="space-between"
+        align="flex-start"
         mb="20px"
+        gap={3}
+        minW={0}
       >
         <Text
-          flexShrink={0}
-          fontSize="26px"
+          fontSize={{ base: "20px", md: "26px" }}
           fontWeight="bold"
-          lineHeight="44px"
+          lineHeight={{ base: "28px", md: "44px" }}
           letterSpacing="-2.5%"
           color="#000000"
+          wordBreak="break-word"
+          minW={0}
+          flex="1"
         >
           {event.name}
         </Text>
 
         {activeTab === "catalog" && (
-          <Box position="relative">
+          <Box position="relative" flexShrink={0}>
             <Box
               position="absolute"
               bottom="100%"
               right={0}
               mb={2}
               bg="#487C9E"
-              color="white"
+              color="whiteAlpha/0"
               rounded="md"
               fontWeight={500}
               fontSize="xs"
@@ -249,8 +258,11 @@ export const EventInfo = ({
           display="flex"
           alignItems="center"
           gap="18px"
+          wordBreak="break-word"
+          minW={0}
+          w="full"
         >
-          <CalendarDays />
+          <Box flexShrink={0}><CalendarDays /></Box>
           {event.displayDate}
         </Text>
         <Separator
@@ -261,8 +273,12 @@ export const EventInfo = ({
           display="flex"
           alignItems="center"
           gap="18px"
+          wordBreak="break-word"
+          minW={0}
+          w="full"
         >
-          <CalendarClock /> {event.displayTime}
+          <Box flexShrink={0}><CalendarClock /></Box>
+          {event.displayTime}
         </Text>
         <Separator
           w="full"
@@ -271,6 +287,8 @@ export const EventInfo = ({
         <Flex
           alignItems="flex-start"
           gap="18px"
+          w="full"
+          minW={0}
         >
           <Box
             flexShrink={0}
@@ -282,8 +300,9 @@ export const EventInfo = ({
             align="flex-start"
             gap="4px"
             flex="1"
+            minW={0}
           >
-            <Text lineHeight="1.4">{localityLine}</Text>
+            <Text lineHeight="1.4" wordBreak="break-word">{localityLine}</Text>
             {showMeetingLink ? (
               <Text
                 as="a"
@@ -294,6 +313,7 @@ export const EventInfo = ({
                 fontSize="13px"
                 fontWeight={500}
                 textDecoration="underline"
+                wordBreak="break-all"
               >
                 Meeting link
               </Text>
@@ -308,8 +328,12 @@ export const EventInfo = ({
           display="flex"
           alignItems="center"
           gap="18px"
+          wordBreak="break-word"
+          minW={0}
+          w="full"
         >
-          <Users /> {event.attendees}/{event.capacity} spots filled
+          <Box flexShrink={0}><Users /></Box>
+          {event.attendees}/{event.capacity} spots filled
         </Text>
       </VStack>
 
@@ -358,7 +382,7 @@ export const EventInfo = ({
         flex="1"
         minH={0}
       >
-        <Text whiteSpace="pre-line">{event.description}</Text>
+        <Text whiteSpace="pre-line" wordBreak="break-word">{event.description}</Text>
       </Box>
 
       {/* Register Button */}
@@ -426,7 +450,7 @@ export const EventInfo = ({
                   <Dialog.Header>
                     <Dialog.Title>Unregister from event?</Dialog.Title>
                   </Dialog.Header>
-                  <Dialog.Body>
+                  <Dialog.Body px={{ base: 6, md: 4 }}>
                     <p>
                       At Community Counsel, your role is vital for providing
                       justice for your neighbors. Are you sure you need to
