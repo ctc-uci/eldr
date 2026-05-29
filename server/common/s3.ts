@@ -2,18 +2,21 @@ import crypto from "crypto";
 
 import aws from "aws-sdk";
 
-const region =
-  process.env.NODE_ENV === "DEVELOPMENT"
-    ? process.env.DEV_S3_REGION
-    : process.env.PROD_S3_REGION;
-const accessKeyId =
-  process.env.NODE_ENV === "DEVELOPMENT"
-    ? process.env.DEV_S3_ACCESS_KEY_ID
-    : process.env.PROD_S3_ACCESS_KEY_ID;
-const secretAccessKey =
-  process.env.NODE_ENV === "DEVELOPMENT"
-    ? process.env.DEV_SECRET_ACCESS_KEY
-    : process.env.PROD_S3_SECRET_ACCESS_KEY;
+const isDevelopment = process.env.NODE_ENV?.toLowerCase() === "development";
+
+const region = isDevelopment
+  ? process.env.DEV_S3_REGION ?? process.env.AWS_REGION
+  : process.env.PROD_S3_REGION ?? process.env.AWS_REGION;
+
+const accessKeyId = isDevelopment
+  ? process.env.DEV_S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID
+  : process.env.PROD_S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID;
+
+const secretAccessKey = isDevelopment
+  ? process.env.DEV_S3_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY
+  : process.env.PROD_S3_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY;
+
+const bucket = process.env.S3_BUCKET_NAME ?? process.env.AWS_BUCKET_NAME;
 
 // initialize a S3 instance
 const s3 = new aws.S3({
@@ -52,10 +55,12 @@ const getProfilePictureUploadURL = async (
     throw new Error("Unsupported image type");
   }
 
-  const bucket = process.env.AWS_BUCKET_NAME;
-  const region = process.env.AWS_REGION;
   if (!bucket || !region) {
     throw new Error("S3 is not configured");
+  }
+
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("S3 credentials are not configured");
   }
 
   const extension = extensionForContentType(normalizedType);
