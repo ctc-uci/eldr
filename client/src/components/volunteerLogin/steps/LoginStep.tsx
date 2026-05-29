@@ -147,8 +147,19 @@ const LoginStep = ({ onNavigateToCreateAccount }: Props) => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate);
-  }, [backend, handleRedirectResult, navigate]);
+    const runRedirectResult = async () => {
+      try {
+        await handleRedirectResult(backend, navigate);
+      } catch (error) {
+        const authError = error as { message?: string };
+        toastLoginError(
+          authError?.message ?? "Unable to sign in with Google right now."
+        );
+      }
+    };
+
+    void runRedirectResult();
+  }, [backend, handleRedirectResult, navigate, toastLoginError]);
 
   return (
     <LoginLayout>

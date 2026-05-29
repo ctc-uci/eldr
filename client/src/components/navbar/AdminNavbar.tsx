@@ -4,13 +4,9 @@ TODO: Implement on all associated admin pages
 */
 
 import { useLocation, Link as RouterLink } from "react-router-dom";
-import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";import {
-  BriefcaseBusiness,
-  CircleUser,
-  ClipboardList,
-  Mails,
-  //Tag,
-} from "lucide-react";
+import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
+import { ClipboardList, Users } from "lucide-react";
+import { LuTags, LuMails } from "react-icons/lu";
 
 export const AdminNavbar = () => {
   const location = useLocation();
@@ -18,11 +14,9 @@ export const AdminNavbar = () => {
   // Array of mapping icons
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
-    { name: "Case Catalog", icon: BriefcaseBusiness, path: "/cases" },
-    { name: "Email Template", icon: Mails, path: "/email" },
-    { name: "Manage Profiles", icon: CircleUser, path: "/volunteer-management" },
-    //{ name: "Tags", icon: Tag, path: "/tags" }
-    // TODO: Tags not implemented yet ? Just need to uncomment and put path when done
+    { name: "Email Templates", icon: LuMails, path: "/email" },
+    { name: "Profiles", icon: Users, path: "/volunteer-management" },
+    { name: "Tags", icon: LuTags, path: "/tags" }
   ];
 
   return (
@@ -34,10 +28,15 @@ export const AdminNavbar = () => {
       borderRight="1px solid"
       borderColor="gray.200"
       bg="white"
+      px={2}
       py={8}
       justify="space-between"
     >
-      <VStack gap={8} w="full" align="stretch">
+      <VStack
+        gap={8}
+        w="full"
+        align="stretch"
+      >
         {/* ELDR Logo */}
         <Box px={6}>
           <Image
@@ -49,7 +48,7 @@ export const AdminNavbar = () => {
         </Box>
 
         {/* Nav Links */}
-        <VStack gap={4} w="full" px={4} align="stretch">
+        <VStack gap={8} w="full" px={4} align="stretch">
           {navItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const IconComponent = item.icon;
@@ -59,7 +58,7 @@ export const AdminNavbar = () => {
               <RouterLink
                 to={item.path}
                 key={item.name}
-                style={{ textDecoration: 'none', display: 'block' }}
+                style={{ textDecoration: "none", display: "block" }}
               >
                 <HStack
                   w="full"
@@ -68,8 +67,8 @@ export const AdminNavbar = () => {
                   borderRadius="md"
                   cursor="pointer"
                   gap={3}
-                  bg={isActive ? "#D8F1FF" : "transparent"}
-                  color={isActive ? "#5797BD" : "#294A5F"}
+                  bg={isActive ? "blue.50" : "transparent"}
+                  color={isActive ? "blue.700" : "#294A5F"}
                   _hover={{
                     bg: isActive ? "#D8F1FF" : "gray.100",
                   }}
@@ -92,7 +91,10 @@ export const AdminNavbar = () => {
       </VStack>
 
       {/* Profile Picture */}
-      <RouterLink to="/admin-profile" style={{ textDecoration: 'none', display: 'block' }}>
+      <RouterLink
+        to="/admin-profile"
+        style={{ textDecoration: "none", display: "block" }}
+      >
         <Box
           px="clamp(16px, 2vw, 20px)"
           cursor="pointer"

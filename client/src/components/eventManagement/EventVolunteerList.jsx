@@ -15,6 +15,7 @@ import {
 import { LuDownload, LuSearch, LuTrash2 } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 const volunteerDisplayRole = (row) => {
   if (row?.isAttorney) return "Attorney";
@@ -49,6 +50,8 @@ export const EventVolunteerList = ({ eventId }) => {
   const [registrationsLoading, setRegistrationsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchRegistrations = useCallback(async () => {
     if (!eventId) return;
@@ -108,12 +111,16 @@ export const EventVolunteerList = ({ eventId }) => {
     }
   };
 
-  const handleRemoveVolunteer = async (volunteerId) => {
+  const confirmRemoveVolunteer = async () => {
+    setDeleteLoading(true);
     try {
-      await backend.delete(`/clinics/${eventId}/registrations/${volunteerId}`);
-      setRegistrations((prev) => prev.filter((r) => r.id !== volunteerId));
+      await backend.delete(`/clinics/${eventId}/registrations/${deleteTarget}`);
+      setRegistrations((prev) => prev.filter((r) => r.id !== deleteTarget));
+      setDeleteTarget(null);
     } catch (err) {
       console.error(err);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -299,7 +306,7 @@ export const EventVolunteerList = ({ eventId }) => {
                       variant="ghost"
                       size="sm"
                       color="red.600"
-                      onClick={() => handleRemoveVolunteer(row.id)}
+                      onClick={() => setDeleteTarget(row.id)}
                     >
                       <LuTrash2 />
                       Delete
@@ -375,6 +382,14 @@ export const EventVolunteerList = ({ eventId }) => {
           </HStack>
         </Flex>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(e) => { if (!e.open) setDeleteTarget(null); }}
+        title="Delete Volunteer from List"
+        confirmLabel="Yes, Delete"
+        onConfirm={confirmRemoveVolunteer}
+        loading={deleteLoading}
+      />
     </Box>
   );
 };

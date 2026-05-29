@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL,
-    phone_number TEXT NOT NULL,
+    phone_number TEXT,
     form_completed BOOLEAN,
     form_link TEXT,
     is_signed_confidentiality TIMESTAMP,
