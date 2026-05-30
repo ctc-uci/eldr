@@ -103,11 +103,11 @@ export const ArchivedList = ({
 
   return (
     <Box overflow="hidden">
-      <Table.Root size="md">
+      <Table.Root size="md" tableLayout="fixed" w="100%">
         <Table.Header>
           <Table.Row bg="#EFF6FF">
             {!isList && (
-              <Table.ColumnHeader w="40px">
+              <Table.ColumnHeader w="3%">
                 <Checkbox.Root
                   cursor="pointer"
                   size="sm"
