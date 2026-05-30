@@ -2,7 +2,7 @@ import { getProfilePictureUploadURL } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp"; // TODO: replace this db with
-import { verifyRole } from "@/middleware";
+import { verifyRole, verifyToken } from "@/middleware";
 import { Router } from "express";
 
 export const usersRouter = Router();
@@ -173,16 +173,17 @@ usersRouter.post("/create", async (req, res) => {
 });
 
 // Update a user by ID
-usersRouter.put("/update", async (req, res) => {
+usersRouter.put("/update", verifyToken, async (req, res) => {
   try {
-    const { email, firebaseUid, profilePictureUrl } = req.body as {
+    const { email, profilePictureUrl } = req.body as {
       email?: string;
-      firebaseUid?: string;
       profilePictureUrl?: string | null;
     };
 
-    if (!firebaseUid?.trim()) {
-      return res.status(400).json({ message: "firebaseUid is required" });
+    // Use the authenticated user's UID from the verified token
+    const firebaseUid = res.locals.decodedToken?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const updates: string[] = [];
@@ -203,7 +204,7 @@ usersRouter.put("/update", async (req, res) => {
       return res.status(400).json({ message: "No fields to update" });
     }
 
-    values.push(firebaseUid.trim());
+    values.push(firebaseUid);
     const user = await db.query(
       `UPDATE users SET ${updates.join(", ")} WHERE firebase_uid = $${paramIndex} RETURNING *`,
       values,

@@ -18,7 +18,6 @@
     "*.js": "yarn run eslint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1056.0",
     "aws-sdk": "^2.1568.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
