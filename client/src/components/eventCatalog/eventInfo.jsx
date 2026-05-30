@@ -54,11 +54,10 @@ export const EventInfo = ({
     }
   }, [showCopyMessage]);
 
-  // Re-check scroll state whenever event changes (new content may or may not overflow)
+  // Re-check scroll state whenever event changes
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Reset to top on event change
     el.scrollTop = 0;
     checkScroll(el);
   }, [event]);
@@ -410,7 +409,6 @@ export const EventInfo = ({
         />
       )}
 
-      {/* ── Bottom gradient — shown whenever content is still scrollable below ── */}
       {!scrollState.bottom && (
         <Box
           position="absolute"

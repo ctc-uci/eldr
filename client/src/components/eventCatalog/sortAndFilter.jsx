@@ -331,12 +331,14 @@ export const SortAndFilter = ({
                   size="xl"
                   _hover={{ bg: "#5c86a3" }}
                   onClick={() => onOpenChange(false)}
-                  disabled={filteredCount === 0}
+                  isDisabled={selectedFilters.length === 0 || filteredCount === 0}
                 >
                   <ListFilter size={20} />
-                  {filteredCount > 0
-                    ? `See ${filteredCount} Results`
-                    : "No Results"}
+                  {selectedFilters.length === 0
+                    ? `Seeing ${filteredCount} Results`
+                    : filteredCount > 0
+                      ? `See ${filteredCount} Results`
+                      : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>
