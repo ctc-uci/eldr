@@ -136,7 +136,7 @@ export const EventInfo = ({
             <Button
               bg="#487C9E"
               p={6}
-              onClick={() => navigate("/all-events")}
+              onClick={() => navigate("/event-catalog/all-events")}
             >
               <LuCalendarDays />
               View All Events

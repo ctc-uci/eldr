@@ -31,6 +31,9 @@ export const EventCatalog = () => {
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
 
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [filteredCount, setFilteredCount] = useState(0);
+
   const { view: catalogView, eventId: parsedEventId } = parseEventCatalogPath(
     location.pathname
   );
@@ -95,6 +98,34 @@ export const EventCatalog = () => {
     );
   };
 
+  // Helper: build filter query params from selectedFilters
+  const buildFilterParams = (filters) => {
+    const areaIds = [];
+    const langIds = [];
+    const roleIds = [];
+    const locs = [];
+
+    filters.forEach((filter) => {
+      if (filter.id.startsWith("areasOfPracticeId")) {
+        areaIds.push(filter.id.replace("areasOfPracticeId", ""));
+      } else if (filter.id.startsWith("languageId")) {
+        langIds.push(filter.id.replace("languageId", ""));
+      } else if (filter.id.startsWith("roleId")) {
+        roleIds.push(filter.id.replace("roleId", ""));
+      } else {
+        locs.push(filter.id);
+      }
+    });
+
+    const params = new URLSearchParams();
+    if (areaIds.length > 0) params.set("areaOfPracticeIds", areaIds.join(","));
+    if (langIds.length > 0) params.set("languageIds", langIds.join(","));
+    if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
+    if (locs.length > 0) params.set("locations", locs.join(","));
+
+    return params;
+  };
+
   // Initial fetch - get volunteer ID and all events
   useEffect(() => {
     const fetchFullEventData = async () => {
@@ -113,6 +144,61 @@ export const EventCatalog = () => {
 
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
+
+  // Update the count preview whenever filters change (no button press needed)
+  useEffect(() => {
+    const fetchFilteredCount = async () => {
+      if (!volunteerId) {
+        setFilteredCount(0);
+        return;
+      }
+
+      try {
+        const params = buildFilterParams(selectedFilters);
+        console.log("COUNT", params.toString());
+        const res = await backend.get(`/clinics/search?${params.toString()}`);
+        console.log("COUNT RESPONSE", res.data.length);
+        setFilteredCount(res.data?.length ?? 0);
+      } catch (error) {
+        console.error("Failed to fetch filtered event count:", error);
+        setFilteredCount(res.data?.length ?? 0);
+      }
+    };
+
+    if (selectedFilters.length > 0) {
+      fetchFilteredCount();
+    } else {
+      fetchFilteredCount();
+    }
+  }, [selectedFilters, volunteerId]);
+
+  // Fetch and apply filtered events only when the apply button is pressed
+  useEffect(() => {
+    if (!filtersApplied || !volunteerId) return;
+
+    const fetchFilteredEvents = async () => {
+      try {
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          console.log("EVENTS", params.toString());
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          const enrichedEvents = await enrichEvents(res.data, volunteerId);
+          setEvents(enrichedEvents);
+        } else {
+          const res = await backend.get("/clinics");
+          console.log("EVENTS RESPONSE", res.data.length);
+          const enrichedEvents = await enrichEvents(res.data, volunteerId);
+          setEvents(enrichedEvents);
+        }
+      } catch (error) {
+        console.error("Failed to fetch filtered events:", error);
+      } finally {
+        setFiltersApplied(false);
+      }
+    };
+
+    fetchFilteredEvents();
+  }, [filtersApplied, volunteerId]);
 
   // Events filtered by tab/time but NOT search, used for suggestions
   const tabEvents = useMemo(() => {
@@ -208,65 +294,6 @@ export const EventCatalog = () => {
     }
   };
 
-  // fetch filtered events when filters change
-  useEffect(() => {
-    const fetchFilteredEvents = async () => {
-      if (!volunteerId) return;
-
-      try {
-        // group filter IDs by category for making API query params
-        const areaIds = [];
-        const langIds = [];
-        const roleIds = [];
-        const locs = [];
-
-        selectedFilters.forEach((filter) => {
-          if (filter.id.startsWith("areasOfPracticeId")) {
-            areaIds.push(filter.id.replace("areasOfPracticeId", ""));
-          } else if (filter.id.startsWith("languageId")) {
-            langIds.push(filter.id.replace("languageId", ""));
-          } else if (filter.id.startsWith("roleId")) {
-            roleIds.push(filter.id.replace("roleId", ""));
-          } else {
-            locs.push(filter.id);
-          }
-        });
-
-        // build query params with comma-separated values
-        const params = new URLSearchParams();
-        if (areaIds.length > 0)
-          params.set("areaOfPracticeIds", areaIds.join(","));
-        if (langIds.length > 0) params.set("languageIds", langIds.join(","));
-        if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
-        if (locs.length > 0) params.set("locations", locs.join(","));
-
-        const res = await backend.get(`/clinics/search?${params.toString()}`);
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
-      } catch (error) {
-        console.error("Failed to fetch filtered events:", error);
-      }
-    };
-
-    const fetchAllEvents = async () => {
-      if (!volunteerId) return;
-
-      try {
-        const res = await backend.get("/clinics");
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
-      } catch (error) {
-        console.error("Failed to fetch all events:", error);
-      }
-    };
-
-    if (selectedFilters.length > 0) {
-      fetchFilteredEvents();
-    } else if (volunteerId) {
-      fetchAllEvents();
-    }
-  }, [selectedFilters, volunteerId, backend]);
-
   const [registrationPending, setRegistrationPending] = useState(null);
 
   const handleRegister = async (clinicId) => {
@@ -335,7 +362,8 @@ export const EventCatalog = () => {
             setSearchQuery={setSearchQuery}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
-            filteredCount={filteredEvents.length}
+            filteredCount={filteredCount}
+            onApplyFilters={() => setFiltersApplied(true)}
             events={tabEvents}
           />
 

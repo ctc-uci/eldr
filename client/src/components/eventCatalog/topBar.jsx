@@ -24,6 +24,7 @@ export const TopBar = ({
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  onApplyFilters,
   events,
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -38,6 +39,12 @@ export const TopBar = ({
   }, [selectedFilters]);
 
   const showSearch = !isMobile || !showDetails;
+
+  // Removes a chip and immediately re-fetches with the updated filters
+  const handleRemoveFilter = (updatedFilters) => {
+    setSelectedFilters(updatedFilters);
+    onApplyFilters();
+  };
 
   return (
     <Flex
@@ -173,6 +180,7 @@ export const TopBar = ({
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
+            onApplyFilters={onApplyFilters}
           />
 
           <SearchBar
@@ -188,7 +196,7 @@ export const TopBar = ({
       {showSearch && (
         <AppliedFilters
           selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
+          setSelectedFilters={handleRemoveFilter}
         />
       )}
     </Flex>

@@ -92,10 +92,10 @@ const FilterCategory = ({
 export const SortAndFilter = ({
   open,
   onOpenChange,
-  setSortBy,
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  onApplyFilters,
 }) => {
   const { backend } = useBackendContext();
 
@@ -130,7 +130,6 @@ export const SortAndFilter = ({
         {
           label: "Location",
           key: "locations",
-          // ids must match clinics.location_type enum (API normalizes legacy labels)
           options: [
             { id: "hybrid", text: "Hybrid" },
             { id: "in-person", text: "In-person" },
@@ -169,7 +168,17 @@ export const SortAndFilter = ({
 
   const clearAll = () => {
     setSelectedFilters([]);
-    setSortBy("upcoming");
+  };
+
+  const handleApply = () => {
+    onApplyFilters();
+    onOpenChange(false);
+  };
+
+  const handleClose = () => {
+    clearAll();
+    onApplyFilters();
+    onOpenChange(false);
   };
 
   return (
@@ -204,7 +213,8 @@ export const SortAndFilter = ({
                 </Text>
                 <CloseButton
                   size="sm"
-                  onClick={() => onOpenChange(false)}
+                  onClick={handleClose}
+
                 />
               </Flex>
             </Drawer.Header>
@@ -330,8 +340,8 @@ export const SortAndFilter = ({
                   fontWeight={500}
                   size="xl"
                   _hover={{ bg: "#5c86a3" }}
-                  onClick={() => onOpenChange(false)}
-                  isDisabled={selectedFilters.length === 0 || filteredCount === 0}
+                  onClick={handleApply}
+                  disabled={selectedFilters.length === 0 || filteredCount === 0}
                 >
                   <ListFilter size={20} />
                   {selectedFilters.length === 0
