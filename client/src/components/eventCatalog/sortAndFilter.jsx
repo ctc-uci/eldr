@@ -101,6 +101,8 @@ export const SortAndFilter = ({
 
   const [filterCategories, setFilterCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
+  const [first, setFirst] = useState(true);
 
   const fetchFilterOptions = async () => {
     try {
@@ -159,6 +161,7 @@ export const SortAndFilter = ({
   }, []);
 
   const toggleFilter = (option) => {
+    if (first) setFirst(false);
     setSelectedFilters((prev) =>
       prev.some((f) => f.id === option.id)
         ? prev.filter((f) => f.id !== option.id)
@@ -171,8 +174,10 @@ export const SortAndFilter = ({
   };
 
   const handleApply = () => {
+    setApplying(true);
     onApplyFilters();
     onOpenChange(false);
+    setApplying(false);
   };
 
   const handleClose = () => {
@@ -214,7 +219,6 @@ export const SortAndFilter = ({
                 <CloseButton
                   size="sm"
                   onClick={handleClose}
-
                 />
               </Flex>
             </Drawer.Header>
@@ -341,13 +345,13 @@ export const SortAndFilter = ({
                   size="xl"
                   _hover={{ bg: "#5c86a3" }}
                   onClick={handleApply}
-                  disabled={selectedFilters.length === 0 || filteredCount === 0}
+                  disabled={first || filteredCount === 0}
                 >
                   <ListFilter size={20} />
-                  {selectedFilters.length === 0
-                    ? `Seeing ${filteredCount} Results`
+                  {selectedFilters.length === 0 && filteredCount === 0
+                    ? `See ${filteredCount} Results`
                     : filteredCount > 0
-                      ? `See ${filteredCount} Results`
+                      ? `See ${filteredCount} ${filteredCount === 1 ? "Result" : "Results"}`
                       : "No Results"}
                 </Button>
               </Flex>
