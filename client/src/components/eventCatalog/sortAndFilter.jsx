@@ -304,32 +304,31 @@ export const SortAndFilter = ({
               borderColor="#E5E7EB"
             >
               <Flex
-                justify="space-between"
-                align="center"
                 w="100%"
+                gap="12px"
               >
                 <Button
+                  flex={1}
                   variant="outline"
                   borderColor="#D1D5DB"
                   color="#374151"
                   fontSize="14px"
                   fontWeight={500}
                   size="xl"
-                  px="20px"
-                  py="2px"
                   _hover={{ bg: "#F9FAFB" }}
                   onClick={clearAll}
                 >
                   Clear
                 </Button>
+
                 <Button
+                  flex={2}
+                  minW="fit-content"
                   bg="#487C9E"
                   color="white"
                   fontSize="14px"
                   fontWeight={500}
                   size="xl"
-                  px="20px"
-                  py="2px"
                   _hover={{ bg: "#5c86a3" }}
                   onClick={() => onOpenChange(false)}
                   disabled={filteredCount === 0}
