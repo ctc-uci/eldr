@@ -154,23 +154,35 @@ export const EventCatalog = () => {
       }
 
       try {
-        const params = buildFilterParams(selectedFilters);
-        console.log("COUNT", params.toString());
-        const res = await backend.get(`/clinics/search?${params.toString()}`);
-        console.log("COUNT RESPONSE", res.data.length);
-        setFilteredCount(res.data?.length ?? 0);
+        const now = new Date();
+        let data;
+
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          data = res.data;
+        } else {
+          const res = await backend.get("/clinics");
+          data = res.data;
+        }
+
+        const count = data.filter((e) => {
+          if (catalogView === "catalog") {
+            if (!e.endTime) return true;
+            return new Date(e.endTime) > now;
+          }
+          return true;
+        }).length;
+
+        setFilteredCount(count);
       } catch (error) {
         console.error("Failed to fetch filtered event count:", error);
-        setFilteredCount(res.data?.length ?? 0);
+        setFilteredCount(0);
       }
     };
 
-    if (selectedFilters.length > 0) {
-      fetchFilteredCount();
-    } else {
-      fetchFilteredCount();
-    }
-  }, [selectedFilters, volunteerId]);
+    fetchFilteredCount();
+  }, [selectedFilters, volunteerId, catalogView]);
 
   // Fetch and apply filtered events only when the apply button is pressed
   useEffect(() => {
