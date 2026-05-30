@@ -29,20 +29,24 @@ export const TopBar = ({
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState([]);
 
   const hasAppliedFilters = useMemo(() => {
-    if (!selectedFilters) return false;
-    return Object.values(selectedFilters).some((value) => {
-      if (Array.isArray(value)) return value.length > 0;
-      return value !== null && value !== undefined && value !== "";
-    });
-  }, [selectedFilters]);
+    return appliedFilters.length > 0;
+  }, [appliedFilters]);
 
   const showSearch = !isMobile || !showDetails;
 
-  // Removes a chip and immediately re-fetches with the updated filters
+  // Snapshots selected filters into appliedFilters and triggers the fetch
+  const handleApply = () => {
+    setAppliedFilters(selectedFilters);
+    onApplyFilters();
+  };
+
+  // Removes a chip, updates both states, and immediately re-fetches
   const handleRemoveFilter = (updatedFilters) => {
     setSelectedFilters(updatedFilters);
+    setAppliedFilters(updatedFilters);
     onApplyFilters();
   };
 
@@ -180,7 +184,7 @@ export const TopBar = ({
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
-            onApplyFilters={onApplyFilters}
+            onApplyFilters={handleApply}
           />
 
           <SearchBar
@@ -192,10 +196,10 @@ export const TopBar = ({
         </Flex>
       )}
 
-      {/* Applied filter chips row - returns null when no filters active */}
+      {/* Applied filter chips row - renders based on committed filters only */}
       {showSearch && (
         <AppliedFilters
-          selectedFilters={selectedFilters}
+          selectedFilters={appliedFilters}
           setSelectedFilters={handleRemoveFilter}
         />
       )}
