@@ -456,6 +456,7 @@ export const VolunteerManagementView = ({
 
       <ArchiveConfirmModal
         open={archiveModalOpen}
+        count={checkedIds.size}
         onClose={() => setArchiveModalOpen(false)}
         onConfirm={async (note) => {
           const now = new Date().toISOString();
@@ -545,7 +546,9 @@ export const VolunteerManagementView = ({
 
       <DeleteConfirmModal
         open={deleteModalOpen}
-        count={checkedIds.size}
+        count={
+          activeTab === "archived" ? archivedCheckedKeys.size : checkedIds.size
+        }
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
           if (activeTab === "archived") {

@@ -11,12 +11,14 @@ import {
 
 interface ArchiveConfirmModalProps {
   open: boolean;
+  count: number;
   onClose: () => void;
   onConfirm: (note: string) => Promise<void>;
 }
 
 export const ArchiveConfirmModal = ({
   open,
+  count,
   onClose,
   onConfirm,
 }: ArchiveConfirmModalProps) => {
@@ -50,7 +52,9 @@ export const ArchiveConfirmModal = ({
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Archive Profile</Dialog.Title>
+              <Dialog.Title>
+                Archive {count > 1 ? `${count} Profiles` : "Profile"}
+              </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <Field.Root>

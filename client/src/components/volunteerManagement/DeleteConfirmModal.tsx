@@ -9,6 +9,7 @@ interface DeleteConfirmModalProps {
 
 export const DeleteConfirmModal = ({
   open,
+  count,
   onClose,
   onConfirm,
 }: DeleteConfirmModalProps) => {
@@ -34,7 +35,9 @@ export const DeleteConfirmModal = ({
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Delete Profile</Dialog.Title>
+              <Dialog.Title>
+                Delete {count > 1 ? `${count} Profiles` : "Profile"}
+              </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <Text
