@@ -217,6 +217,7 @@ export const EventInfo = ({
         scrollbar="hidden"
         py={{ base: 7, md: "50px" }}
         px={{ base: 4, md: 8 }}
+        bg = "white"
       >
         {/* Title + share button */}
         <HStack
@@ -247,7 +248,7 @@ export const EventInfo = ({
                 right={0}
                 mb={2}
                 bg="#487C9E"
-                color="whiteAlpha/0"
+                color="white"
                 rounded="md"
                 fontWeight={500}
                 fontSize="xs"

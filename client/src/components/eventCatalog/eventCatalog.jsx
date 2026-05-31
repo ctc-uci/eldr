@@ -408,6 +408,7 @@ export const EventCatalog = () => {
           direction="column"
           overflow="hidden"
           align="start"
+          bg="white"
           px={{ base: "12px", md: "none" }}
         >
           {/* Back Button */}
