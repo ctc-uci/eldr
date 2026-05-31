@@ -185,6 +185,7 @@ export const TopBar = ({
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
             onApplyFilters={handleApply}
+            appliedFilters={appliedFilters}
           />
 
           <SearchBar

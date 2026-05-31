@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
@@ -96,6 +96,7 @@ export const SortAndFilter = ({
   setSelectedFilters,
   filteredCount,
   onApplyFilters,
+  appliedFilters,
 }) => {
   const { backend } = useBackendContext();
 
@@ -103,6 +104,12 @@ export const SortAndFilter = ({
   const [isLoading, setIsLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [first, setFirst] = useState(true);
+
+  const isUnchanged = useMemo(() => {
+    if (selectedFilters.length !== appliedFilters.length) return false;
+    const appliedIds = new Set(appliedFilters.map((f) => f.id));
+    return selectedFilters.every((f) => appliedIds.has(f.id));
+  }, [selectedFilters, appliedFilters]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -345,7 +352,7 @@ export const SortAndFilter = ({
                   size="xl"
                   _hover={{ bg: "#5c86a3" }}
                   onClick={handleApply}
-                  disabled={first || filteredCount === 0}
+                  disabled={first || filteredCount === 0 || isUnchanged}
                 >
                   <ListFilter size={20} />
                   {selectedFilters.length === 0 && filteredCount === 0
