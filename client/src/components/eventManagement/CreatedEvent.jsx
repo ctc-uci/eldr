@@ -159,10 +159,9 @@ export const CreatedEvent = () => {
       {/* Breadcrumb */}
       <HStack
         fontSize="lg"
-        gap={1}
+        gap={5}
       >
         <Text
-          fontWeight="semibold"
           color="gray.800"
           cursor="pointer"
           onClick={() => navigate("/events")}
