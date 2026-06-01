@@ -823,19 +823,6 @@ export const CreateEvent = () => {
           <VStack align="start" gap={1} w="100%">
             <HStack w="100%" justify="space-between" align="center" mb={1}>
               <Label>Description</Label>
-              <Button
-                variant="outline"
-                border="1px solid #E2E8F0"
-                bg="white"
-                color="gray.600"
-                borderRadius="4px"
-                size="sm"
-                px={3}
-                _hover={{ bg: "gray.50" }}
-              >
-                <LuImageUp />
-                Upload images
-              </Button>
             </HStack>
             <Textarea
               value={description}
