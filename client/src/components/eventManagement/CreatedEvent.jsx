@@ -380,7 +380,7 @@ export const CreatedEvent = () => {
 
         {activeTab === "volunteers" && (
           <Box w="100%" bg="white" borderLeft="1px solid" borderRight="1px solid" borderBottom="1px solid" borderColor="gray.200" borderRadius="0 0 6px 6px" p={8}>
-            <EventVolunteerList eventId={eventId} />
+            <EventVolunteerList eventId={eventId} eventName={name}/>
           </Box>
         )}
 
