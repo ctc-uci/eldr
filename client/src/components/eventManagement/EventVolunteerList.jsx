@@ -306,7 +306,13 @@ export const EventVolunteerList = ({ eventId }) => {
                       variant="ghost"
                       size="sm"
                       color="red.600"
+                      borderColor="#FECACA"
                       onClick={() => setDeleteTarget(row.id)}
+                      _hover={{
+                        borderColor: "red.600",
+                        bg: "red.600",
+                        color:"white",
+                      }}
                     >
                       <LuTrash2 />
                       Delete
