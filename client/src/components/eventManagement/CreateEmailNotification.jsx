@@ -319,7 +319,7 @@ export const CreateEmailNotification = () => {
                 fontWeight="semibold"
                 color="gray.700"
               >
-                Timing
+                Time Before Event Start
               </Text>
               <Text
                 as="span"
