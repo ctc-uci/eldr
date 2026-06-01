@@ -104,26 +104,28 @@ export const NewTemplateSection = ({
               minHeight: 0,
             }}
           >
-            <RichTextEditor.Toolbar
-              style={{ borderBottom: "1px solid #EFEFF1" }}
-            >
-              <RichTextEditor.ControlGroup>
-                <Control.FontFamily />
-                <Control.FontSize />
-              </RichTextEditor.ControlGroup>
-              <RichTextEditor.ControlGroup>
-                <Control.Bold />
-                <Control.Italic />
-                <Control.Underline />
-                <Control.Strikethrough />
-              </RichTextEditor.ControlGroup>
-              <RichTextEditor.ControlGroup>
-                <Control.H1 />
-                <Control.H2 />
-                <Control.H3 />
-                <Control.H4 />
-              </RichTextEditor.ControlGroup>
-            </RichTextEditor.Toolbar>
+            {isEditable && (
+              <RichTextEditor.Toolbar
+                style={{ borderBottom: "1px solid #EFEFF1" }}
+              >
+                <RichTextEditor.ControlGroup>
+                  <Control.FontFamily />
+                  <Control.FontSize />
+                </RichTextEditor.ControlGroup>
+                <RichTextEditor.ControlGroup>
+                  <Control.Bold />
+                  <Control.Italic />
+                  <Control.Underline />
+                  <Control.Strikethrough />
+                </RichTextEditor.ControlGroup>
+                <RichTextEditor.ControlGroup>
+                  <Control.H1 />
+                  <Control.H2 />
+                  <Control.H3 />
+                  <Control.H4 />
+                </RichTextEditor.ControlGroup>
+              </RichTextEditor.Toolbar>
+            )}
             <Box
               flex="1"
               minH={0}

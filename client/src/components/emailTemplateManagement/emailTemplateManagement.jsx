@@ -1010,17 +1010,19 @@ export const EmailTemplateManagement = () => {
                       {templateName}
                     </Text>
                   )}
-                  <Pencil
-                    size={20}
-                    cursor="pointer"
-                    onClick={() => {
-                      setRenameTarget({
-                        type: "template",
-                        item: { id: currentTemplateId, name: templateName },
-                      });
-                      setShowRenameDialog(true);
-                    }}
-                  />
+                  {isTemplateEditable && (
+                    <Pencil
+                      size={20}
+                      cursor="pointer"
+                      onClick={() => {
+                        setRenameTarget({
+                          type: "template",
+                          item: { id: currentTemplateId, name: templateName },
+                        });
+                        setShowRenameDialog(true);
+                      }}
+                    />
+                  )}
                 </HStack>
                 
                 <HStack spacing={4} ml="auto">
@@ -1054,7 +1056,24 @@ export const EmailTemplateManagement = () => {
                         await handleSaveButtonClick();
                         return;
                       }
+                      const isEnteringEditMode = !isEditingTemplate;
                       setIsEditingTemplate((prev) => !prev);
+                      // When entering edit mode, prompt to move/link orphaned templates
+                      if (isEnteringEditMode) {
+                        try {
+                          const templateIdToCheck =
+                            currentTemplateId ||
+                            (urlTemplateId && !urlTemplateId.startsWith("new-")
+                              ? urlTemplateId
+                              : null);
+                          const shouldOpenMoveModal = await hasNoLinkedFolders(templateIdToCheck);
+                          if (shouldOpenMoveModal) {
+                            openMoveTemplateModalWithDefaultFolder();
+                          }
+                        } catch (error) {
+                          // don't block user flow on lookup errors
+                        }
+                      }
                     }}
                   >
                     {hasUnsavedChanges ? <Save size={16} /> : <Pencil size={16} />}
