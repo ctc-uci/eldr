@@ -9,7 +9,6 @@ import {
   Flex,
   HStack,
   Input,
-  NativeSelect,
   Portal,
   Textarea,
   Text,
@@ -18,10 +17,9 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuMail, LuImageUp, LuTriangleAlert } from "react-icons/lu";
+import { LuMail, LuImageUp, LuTriangleAlert, LuChevronDown } from "react-icons/lu";
 import { useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { MdOutlineMailOutline } from "react-icons/md";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
 
 const parseTimeField = (ts) => {
@@ -64,6 +62,62 @@ const buildEditBaseline = (c, langNames) => {
     description: c.description ?? "",
     languagesKey: [...langNames].sort().join("|"),
   };
+};
+
+// Reusable styled dropdown matching the language combobox arrow style
+const StyledSelect = ({ value, onChange, options, placeholder, width = "100%", color }) => {
+  return (
+    <Box
+      position="relative"
+      w={width}
+      style={{ display: "inline-block" }}
+    >
+      <Box
+        as="select"
+        value={value}
+        onChange={onChange}
+        style={{
+          width: "100%",
+          border: "1px solid #CBD5E0",
+          borderRadius: "6px",
+          background: "white",
+          fontSize: "14px",
+          height: "44px",
+          paddingLeft: "12px",
+          paddingRight: "32px",
+          color: color || (value ? "black" : "#718096"),
+          appearance: "none",
+          WebkitAppearance: "none",
+          MozAppearance: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        {placeholder && (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        )}
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </Box>
+      <Box
+        position="absolute"
+        right="8px"
+        top="50%"
+        transform="translateY(-50%)"
+        pointerEvents="none"
+        color="gray.500"
+        display="flex"
+        alignItems="center"
+      >
+        <LuChevronDown size={16} />
+      </Box>
+    </Box>
+  );
 };
 
 export const CreateEvent = () => {
@@ -175,7 +229,6 @@ export const CreateEvent = () => {
     fetchSource();
   }, [isDuplicating, sourceId, backend]);
 
-  // raf edit start
   const languagesKey = useMemo(
     () => [...languages].sort().join("|"),
     [languages]
@@ -248,7 +301,6 @@ export const CreateEvent = () => {
     navigate(`/events/${eventId}`, { state: { editFeedback: "discarded" } });
   };
 
-  // raf edit end
   const filteredLanguages = useMemo(
     () =>
       allLanguages
@@ -277,16 +329,6 @@ export const CreateEvent = () => {
     color: "gray.500",
     _placeholder: { color: "gray.400" },
     _focus: { borderColor: "blue.400", boxShadow: "none" },
-  };
-
-  const selectStyle = {
-    border: "1px solid #CBD5E0",
-    borderRadius: "6px",
-    background: "white",
-    fontSize: "14px",
-    height: "44px",
-    paddingLeft: "12px",
-    color: "#718096",
   };
 
   const formatTime = (value) => {
@@ -344,7 +386,6 @@ export const CreateEvent = () => {
         );
       }
 
-      // TODO: add proficiency field to form
       await Promise.all(
         languages.map(async (langName) => {
           const lang = allLanguages.find((l) => l.language === langName);
@@ -368,25 +409,58 @@ export const CreateEvent = () => {
   };
 
   const Label = ({ children }) => (
-    <HStack
-      gap={0}
-      mb={1}
-    >
-      <Text
-        fontSize="sm"
-        fontWeight="semibold"
-        color="gray.700"
-      >
+    <HStack gap={0} mb={1}>
+      <Text fontSize="sm" fontWeight="semibold" color="gray.700">
         {children}
       </Text>
-      <Text
-        color="red.500"
-        ml="2px"
-      >
-        *
-      </Text>
+      <Text color="red.500" ml="2px">*</Text>
     </HStack>
   );
+
+  const US_STATES = [
+    { value: "AL", label: "AL" }, { value: "AK", label: "AK" },
+    { value: "AZ", label: "AZ" }, { value: "AR", label: "AR" },
+    { value: "CA", label: "CA" }, { value: "CO", label: "CO" },
+    { value: "CT", label: "CT" }, { value: "DE", label: "DE" },
+    { value: "FL", label: "FL" }, { value: "GA", label: "GA" },
+    { value: "HI", label: "HI" }, { value: "ID", label: "ID" },
+    { value: "IL", label: "IL" }, { value: "IN", label: "IN" },
+    { value: "IA", label: "IA" }, { value: "KS", label: "KS" },
+    { value: "KY", label: "KY" }, { value: "LA", label: "LA" },
+    { value: "ME", label: "ME" }, { value: "MD", label: "MD" },
+    { value: "MA", label: "MA" }, { value: "MI", label: "MI" },
+    { value: "MN", label: "MN" }, { value: "MS", label: "MS" },
+    { value: "MO", label: "MO" }, { value: "MT", label: "MT" },
+    { value: "NE", label: "NE" }, { value: "NV", label: "NV" },
+    { value: "NH", label: "NH" }, { value: "NJ", label: "NJ" },
+    { value: "NM", label: "NM" }, { value: "NY", label: "NY" },
+    { value: "NC", label: "NC" }, { value: "ND", label: "ND" },
+    { value: "OH", label: "OH" }, { value: "OK", label: "OK" },
+    { value: "OR", label: "OR" }, { value: "PA", label: "PA" },
+    { value: "RI", label: "RI" }, { value: "SC", label: "SC" },
+    { value: "SD", label: "SD" }, { value: "TN", label: "TN" },
+    { value: "TX", label: "TX" }, { value: "UT", label: "UT" },
+    { value: "VT", label: "VT" }, { value: "VA", label: "VA" },
+    { value: "WA", label: "WA" }, { value: "WV", label: "WV" },
+    { value: "WI", label: "WI" }, { value: "WY", label: "WY" },
+  ];
+
+  const PERIOD_OPTIONS = [
+    { value: "AM", label: "AM" },
+    { value: "PM", label: "PM" },
+  ];
+
+  const CLINIC_TYPE_OPTIONS = [
+    { value: "Estate Planning", label: "Estate Planning" },
+    { value: "Limited Conservatorship", label: "Limited Conservatorship" },
+    { value: "Probate Note Clearing", label: "Probate Note Clearing" },
+  ];
+
+  const EVENT_FORMAT_OPTIONS = [
+    { value: "in-person", label: "In-Person" },
+    { value: "hybrid", label: "Hybrid" },
+    { value: "online", label: "Online" },
+  ];
 
   return (
     <VStack
@@ -400,47 +474,25 @@ export const CreateEvent = () => {
       gap={6}
     >
       {/* Breadcrumb */}
-      <HStack
-        fontSize="lg"
-        gap={5}
-      >
-        <Text
-          color="gray.800"
-          cursor="pointer"
-          onClick={() => navigate("/events")}
-        >
+      <HStack fontSize="lg" gap={5}>
+        <Text color="gray.800" cursor="pointer" onClick={() => navigate("/events")}>
           Event Catalog
         </Text>
         <Text color="gray.400">›</Text>
         {isEditing ? (
-          <Text color="blue.600">
-            Edit Event
-          </Text>
+          <Text color="blue.600">Edit Event</Text>
         ) : isDuplicating ? (
-          <Text
-            color="blue.500"
-            cursor="pointer"
-            onClick={() => navigate("/events")}
-          >
+          <Text color="blue.500" cursor="pointer" onClick={() => navigate("/events")}>
             Duplicate Event
           </Text>
         ) : (
-          <Text color="blue.600">
-            Create New Event
-          </Text>
+          <Text color="blue.600">Create New Event</Text>
         )}
       </HStack>
 
       {/* Title */}
-      <HStack
-        align="center"
-        gap={3}
-      >
-        <Text
-          fontSize="4xl"
-          fontWeight="bold"
-          color="#1A202C"
-        >
+      <HStack align="center" gap={3}>
+        <Text fontSize="4xl" fontWeight="bold" color="#1A202C">
           {isEditing ? "Edit Event" : isDuplicating ? "Duplicate Event" : "Create New Event"}
         </Text>
         {isEditing && (
@@ -462,12 +514,7 @@ export const CreateEvent = () => {
       </HStack>
 
       {/* Tabs */}
-      <HStack
-        gap={1}
-        borderBottom="1px solid #E2E8F0"
-        w="100%"
-        align="end"
-      >
+      <HStack gap={1} borderBottom="1px solid #E2E8F0" w="100%" align="end">
         {tabs.map((tab) => (
           <Button
             key={tab.key}
@@ -495,12 +542,7 @@ export const CreateEvent = () => {
 
       {/* Form card */}
       {activeTab === "details" && (
-        <VStack
-          w="100%"
-          align="start"
-          gap={8}
-          pt={{ base: 2, md: 4 }}
-        >
+        <VStack w="100%" align="start" gap={8} pt={{ base: 2, md: 4 }}>
           {/* Row 1: Clinic Type + Event Name */}
           <Flex
             w="100%"
@@ -508,37 +550,17 @@ export const CreateEvent = () => {
             direction={{ base: "column", lg: "row" }}
             align={{ base: "stretch", lg: "end" }}
           >
-            <VStack
-              align="start"
-              gap={1}
-              w={{ base: "100%", lg: "30%" }}
-              flexShrink={0}
-            >
+            <VStack align="start" gap={1} w={{ base: "100%", lg: "30%" }} flexShrink={0}>
               <Label>Clinic Type</Label>
-              <NativeSelect.Root w="100%">
-                <NativeSelect.Field
-                  placeholder="Select"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  style={selectStyle}
-                >
-                  <option value="Estate Planning">Estate Planning</option>
-                  <option value="Limited Conservatorship">
-                    Limited Conservatorship
-                  </option>
-                  <option value="Probate Note Clearing">
-                    Probate Note Clearing
-                  </option>
-                </NativeSelect.Field>
-              </NativeSelect.Root>
+              <StyledSelect
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                options={CLINIC_TYPE_OPTIONS}
+                placeholder="Select"
+              />
             </VStack>
 
-            <VStack
-              align="start" // incoming was align="end"
-              gap={1} // incoming was gap={8}
-              flex={1}
-              w="100%"
-            >
+            <VStack align="start" gap={1} flex={1} w="100%">
               <Label>Event Name</Label>
               <Input
                 placeholder="Type here"
@@ -557,41 +579,20 @@ export const CreateEvent = () => {
             direction={{ base: "column", lg: "row" }}
             align={{ base: "stretch", lg: "end" }}
           >
-            <VStack
-              align="start"
-              gap={1}
-              flexShrink={0}
-              w={{ base: "100%", lg: "15%" }}
-            >
+            <VStack align="start" gap={1} flexShrink={0} w={{ base: "100%", lg: "15%" }}>
               <Label>Event Format</Label>
-              <NativeSelect.Root w={{ base: "100%", lg: "full" }}>
-                <NativeSelect.Field
-                  value={locationType}
-                  onChange={(e) => setLocationType(e.target.value)}
-                  style={{ ...selectStyle, color: "black" }}
-                >
-                  <option value="in-person">In-Person</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="online">Online</option>
-                </NativeSelect.Field>
-              </NativeSelect.Root>
+              <StyledSelect
+                value={locationType}
+                onChange={(e) => setLocationType(e.target.value)}
+                options={EVENT_FORMAT_OPTIONS}
+                color="black"
+              />
             </VStack>
 
-            <VStack
-              align="start"
-              gap={1}
-              flex={1}
-              w="100%"
-            >
+            <VStack align="start" gap={1} flex={1} w="100%">
               <Label>Location</Label>
-              <HStack
-                w="100%"
-                gap={2}
-                flexWrap="wrap"
-                align="start"
-              >
-                {(locationType === "in-person" ||
-                  locationType === "hybrid") && (
+              <HStack w="100%" gap={2} flexWrap="wrap" align="start">
+                {(locationType === "in-person" || locationType === "hybrid") && (
                   <>
                     <Input
                       placeholder="Address"
@@ -606,16 +607,17 @@ export const CreateEvent = () => {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       {...fieldStyle}
-                      w={{ base: "calc(50% - 4px)", md: "20%"}}
+                      w={{ base: "calc(50% - 4px)", md: "20%" }}
                     />
-                    <Input
-                      placeholder="State"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      {...fieldStyle}
-                      w={{ base: "calc(25% - 6px)", md: "95px" }}
-                      maxLength={2}
-                    />
+                    <Box w={{ base: "calc(25% - 6px)", md: "95px" }}>
+                      <StyledSelect
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        options={US_STATES}
+                        placeholder="State"
+                        color={state ? "black" : undefined}
+                      />
+                    </Box>
                     <Input
                       placeholder="Zip Code"
                       value={zip}
@@ -647,12 +649,7 @@ export const CreateEvent = () => {
             align={{ base: "stretch", lg: "end" }}
             flexWrap="wrap"
           >
-            <VStack
-              align="start"
-              gap={1}
-              w={{ base: "100%", lg: "25%" }}
-              flexShrink={0}
-            >
+            <VStack align="start" gap={1} w={{ base: "100%", lg: "25%" }} flexShrink={0}>
               <Label>Date</Label>
               <Input
                 type="date"
@@ -663,17 +660,9 @@ export const CreateEvent = () => {
               />
             </VStack>
 
-            <VStack
-              align="start"
-              gap={1}
-              flex={1}
-              w="100%"
-            >
+            <VStack align="start" gap={1} flex={1} w="100%">
               <Label>Event Time</Label>
-              <HStack
-                gap={2}
-                flexWrap="wrap"
-              >
+              <HStack gap={2} flexWrap="wrap">
                 <Input
                   placeholder="9:00"
                   value={startTime}
@@ -682,20 +671,14 @@ export const CreateEvent = () => {
                   w="70px"
                   textAlign="center"
                 />
-                <NativeSelect.Root w="70px">
-                  <NativeSelect.Field
+                <Box w="75px">
+                  <StyledSelect
                     value={startPeriod}
                     onChange={(e) => setStartPeriod(e.target.value)}
-                    style={{
-                      ...selectStyle,
-                      paddingLeft: "8px",
-                      color: "black",
-                    }}
-                  >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </NativeSelect.Field>
-                </NativeSelect.Root>
+                    options={PERIOD_OPTIONS}
+                    color="black"
+                  />
+                </Box>
                 <Text color="gray.400">-</Text>
                 <Input
                   placeholder="12:00"
@@ -705,29 +688,18 @@ export const CreateEvent = () => {
                   w="70px"
                   textAlign="center"
                 />
-                <NativeSelect.Root w="70px">
-                  <NativeSelect.Field
+                <Box w="75px">
+                  <StyledSelect
                     value={endPeriod}
                     onChange={(e) => setEndPeriod(e.target.value)}
-                    style={{
-                      ...selectStyle,
-                      paddingLeft: "8px",
-                      color: "black",
-                    }}
-                  >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
-                  </NativeSelect.Field>
-                </NativeSelect.Root>
+                    options={PERIOD_OPTIONS}
+                    color="black"
+                  />
+                </Box>
               </HStack>
             </VStack>
 
-            <VStack
-              align="start"
-              gap={1}
-              w={{ base: "100%", lg: "15%" }}
-              flexShrink={0}
-            >
+            <VStack align="start" gap={1} w={{ base: "100%", lg: "15%" }} flexShrink={0}>
               <Label>Target Number</Label>
               <Input
                 placeholder="Type number"
@@ -739,12 +711,7 @@ export const CreateEvent = () => {
               />
             </VStack>
 
-            <VStack
-              align="start"
-              gap={1}
-              w={{ base: "100%", lg: "15%" }}
-              flexShrink={0}
-            >
+            <VStack align="start" gap={1} w={{ base: "100%", lg: "15%" }} flexShrink={0}>
               <Label>Maximum</Label>
               <Input
                 placeholder="Type number"
@@ -758,11 +725,7 @@ export const CreateEvent = () => {
           </Flex>
 
           {/* Row 4: Languages */}
-          <VStack
-            align="start"
-            gap={1}
-            w="100%"
-          >
+          <VStack align="start" gap={1} w="100%">
             <Label>Languages</Label>
             <Combobox.Root
               multiple
@@ -771,13 +734,14 @@ export const CreateEvent = () => {
               value={languages}
               collection={languageCollection}
               onValueChange={(details) => setLanguages(details.value)}
-              onInputValueChange={(details) =>
-                setLanguageSearch(details.inputValue)
-              }
+              onInputValueChange={(details) => setLanguageSearch(details.inputValue)}
             >
               <Combobox.Control
                 style={{
-                  ...selectStyle,
+                  border: "1px solid #CBD5E0",
+                  borderRadius: "6px",
+                  background: "white",
+                  fontSize: "14px",
                   height: "auto",
                   minHeight: "44px",
                   display: "flex",
@@ -785,11 +749,7 @@ export const CreateEvent = () => {
                   paddingRight: "8px",
                 }}
               >
-                <Wrap
-                  gap="1"
-                  flex={1}
-                  py={1}
-                >
+                <Wrap gap="1" flex={1} py={1}>
                   {languages.map((lang) => (
                     <Badge
                       key={lang}
@@ -815,9 +775,7 @@ export const CreateEvent = () => {
                     </Badge>
                   ))}
                   <Combobox.Input
-                    placeholder={
-                      languages.length === 0 ? "Select languages" : ""
-                    }
+                    placeholder={languages.length === 0 ? "Select languages" : ""}
                     onKeyDown={(e) => {
                       if (
                         (e.key === "Backspace" || e.key === "Delete") &&
@@ -832,7 +790,7 @@ export const CreateEvent = () => {
                       outline: "none",
                       background: "transparent",
                       fontSize: "14px",
-                      color: "#718096",
+                      color: "#A0AEC0",
                       minWidth: "80px",
                       flex: 1,
                     }}
@@ -846,14 +804,9 @@ export const CreateEvent = () => {
                 <Combobox.Positioner>
                   <Combobox.Content>
                     <Combobox.ItemGroup>
-                      <Combobox.ItemGroupLabel>
-                        Languages
-                      </Combobox.ItemGroupLabel>
+                      <Combobox.ItemGroupLabel>Languages</Combobox.ItemGroupLabel>
                       {filteredLanguages.map((lang) => (
-                        <Combobox.Item
-                          key={lang}
-                          item={lang}
-                        >
+                        <Combobox.Item key={lang} item={lang}>
                           {lang}
                           <Combobox.ItemIndicator />
                         </Combobox.Item>
@@ -867,17 +820,8 @@ export const CreateEvent = () => {
           </VStack>
 
           {/* Row 5: Description */}
-          <VStack
-            align="start"
-            gap={1}
-            w="100%"
-          >
-            <HStack
-              w="100%"
-              justify="space-between"
-              align="center"
-              mb={1}
-            >
+          <VStack align="start" gap={1} w="100%">
+            <HStack w="100%" justify="space-between" align="center" mb={1}>
               <Label>Description</Label>
               <Button
                 variant="outline"
@@ -913,25 +857,12 @@ export const CreateEvent = () => {
       )}
 
       {activeTab !== "details" && (
-        <Flex
-          w="100%"
-          p={8}
-          bg="white"
-          border="1px solid #E2E8F0"
-          borderRadius="4px"
-        >
+        <Flex w="100%" p={8} bg="white" border="1px solid #E2E8F0" borderRadius="4px">
           {activeTab === "email" ? (
             <EmailNotificationTimeline eventId={isEditing ? eventId : undefined} />
           ) : (
-            <Flex
-              align="center"
-              justify="center"
-              minH="200px"
-            >
-              <Text
-                color="gray.400"
-                fontSize="sm"
-              >
+            <Flex align="center" justify="center" minH="200px">
+              <Text color="gray.400" fontSize="sm">
                 {tabs.find((t) => t.key === activeTab)?.label}
               </Text>
             </Flex>
@@ -940,12 +871,7 @@ export const CreateEvent = () => {
       )}
 
       {/* Action buttons */}
-      <HStack
-        w="100%"
-        justify="flex-end"
-        gap={3}
-        pt={0} // was pt={2} on incoming
-      >
+      <HStack w="100%" justify="flex-end" gap={3} pt={0}>
         <Button
           bg="#4A7FA5"
           color="white"
@@ -964,7 +890,7 @@ export const CreateEvent = () => {
           fontSize="sm"
           border="1px solid #CBD5E0"
           color="gray.600"
-          onClick={handleCancelClick} // incoming was onClick={() => navigate(isEditing ? `/events/${eventId}` : "/events")}
+          onClick={handleCancelClick}
         >
           Cancel
         </Button>

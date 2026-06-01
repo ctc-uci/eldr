@@ -451,7 +451,7 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#547b9b"
+              bg="#487C9E"
               color="white"
               borderRadius="4px"
               px={5}
