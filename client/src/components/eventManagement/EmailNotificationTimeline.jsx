@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, HStack, Table, Text } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Calendar,
   CheckCircle2,
@@ -227,13 +227,30 @@ export const EmailNotificationTimeline = ({ eventId }) => {
                     {sendTiming}
                   </Table.Cell>
                   <Table.Cell verticalAlign="middle" py={4}>
-                    <Text
-                      fontSize="sm"
-                      color="gray.700"
-                      maxW="280px"
-                    >
-                      {templateLabel}
-                    </Text>
+                    {row.kind === "custom" && row.templateId ? (
+                      <Text
+                        as={Link}
+                        to={`/email/template/${row.templateId}`}
+                        fontSize="sm"
+                        color="blue.600"
+                        fontWeight="medium"
+                        maxW="280px"
+                        display="inline-flex"
+                        alignItems="center"
+                        gap={1.5}
+                        _hover={{ color: "blue.800", textDecoration: "underline" }}
+                      >
+                        {templateLabel} <span>&rarr;</span>
+                      </Text>
+                    ) : (
+                      <Text
+                        fontSize="sm"
+                        color="gray.700"
+                        maxW="280px"
+                      >
+                        {templateLabel}
+                      </Text>
+                    )}
                   </Table.Cell>
                   <Table.Cell verticalAlign="middle" py={4}>
                     <HStack justify="flex-start" gap={2} flexWrap="wrap">
