@@ -107,6 +107,7 @@ export const EmailTemplateManagement = () => {
 
   // inline title editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isRenamingFolder, setIsRenamingFolder] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState("");
   const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const titleInputRef = useRef(null);
@@ -869,6 +870,8 @@ export const EmailTemplateManagement = () => {
                   <RenameFolderDialog
                     folderName={currentFolder.name}
                     onRename={handleRenameFolder}
+                    isRenaming={isRenamingFolder}
+                    setIsRenaming={setIsRenamingFolder}
                   />
                 )}
               </Flex>
@@ -881,7 +884,7 @@ export const EmailTemplateManagement = () => {
                       isOpen={showNewTemplatePopover}
                       onOpenChange={setShowNewTemplatePopover}
                       onSubmit={handleCreateTemplateFromPopover}
-                      buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500" }}
+                      buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500"}}
                     />
                     <NewFolderPopover
                       isOpen={showNewFolderPopover}
@@ -901,6 +904,11 @@ export const EmailTemplateManagement = () => {
                       fontSize: "14px",
                       px: "16px",
                       fontWeight: "500",
+                      disabled: isRenamingFolder,
+                      backgroundColor: isRenamingFolder ? "#E4E4E7" : "#487C9E",
+                      color: isRenamingFolder ? "#71717A" : "white",
+                      _hover: isRenamingFolder ? { bg: "#E4E4E7" } : { bg: "#294A5F" },
+
                       ...(showDeleteFolderModal
                         ? {
                             backgroundColor: "#E4E4E7",
@@ -914,15 +922,17 @@ export const EmailTemplateManagement = () => {
                 {view === "folderView" && 
                   (templates.length === 0 ?
                     <Button
-                      bg="#DC2626"
-                      color="white"
+                      disabled={isRenamingFolder}
+                      bg={isRenamingFolder ? "#E4E4E7" : "#DC2626"}
+                      color={isRenamingFolder ? "#71717A" : "white"}
                       h="40px"
                       px="16px"
                       fontSize="14px"
                       fontWeight="500"
                       borderRadius="4px"
                       borderWidth="1px"
-                      borderColor="#DC2626"
+                      borderColor={isRenamingFolder ? "#E4E4E7" : "#DC2626"}
+                      _hover={isRenamingFolder ? { bg: "#E4E4E7" } : { bg: "#B91C1C" }}
                       onClick={() => setShowDeleteFolderModal(true)}
                       display="flex"
                       gap="8px"
@@ -933,16 +943,35 @@ export const EmailTemplateManagement = () => {
                     </Button>
                   :
                     <Button
-                      bg={showNewTemplatePopover ? "#E4E4E7" : "white"}
-                      color={showNewTemplatePopover ? "black" : "#991919"}
+                      disabled={isRenamingFolder}
+                      bg={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? "#E4E4E7"
+                          : "white"
+                      }
+                      color={
+                        isRenamingFolder
+                          ? "#71717A"
+                          : showNewTemplatePopover
+                            ? "black"
+                            : "#991919"
+                      }
                       h="40px"
                       px="16px"
                       fontSize="14px"
                       fontWeight="500"
                       borderRadius="4px"
                       borderWidth="1px"
-                      borderColor={showNewTemplatePopover ? "#E4E4E7" : "#FECACA"}
-                      _hover={showNewTemplatePopover ? { bg: "#E4E4E7" } : { bg: "#FEE2E2" }}
+                      borderColor={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? "#E4E4E7"
+                          : "#FECACA"
+                      }
+                      _hover={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? { bg: "#E4E4E7" }
+                          : { bg: "#FEE2E2" }
+                      }
                       onClick={() => setShowDeleteFolderModal(true)}
                       display="flex"
                       gap="8px"
