@@ -231,19 +231,26 @@ export const ProfileManagement = () => {
 
       let savedPhotoUrl = profile.photoUrl;
       if (pendingPhotoFile) {
-        savedPhotoUrl = await uploadProfilePictureToS3(
+        const profilePictureKey = await uploadProfilePictureToS3(
           backend,
           pendingPhotoFile,
           currentUser.uid,
-          "volunteers",
         );
-      }
 
-      await backend.put("/users/update", {
-        email: draft.email,
-        firebaseUid: currentUser.uid,
-        ...(pendingPhotoFile ? { profilePictureUrl: savedPhotoUrl } : {}),
-      });
+        const updateResp = await backend.put("/users/update", {
+          email: draft.email,
+          firebaseUid: currentUser.uid,
+          profilePictureKey,
+        });
+
+        const updatedUser = updateResp?.data?.[0];
+        savedPhotoUrl = updatedUser?.profilePictureUrl ?? profile.photoUrl;
+      } else {
+        await backend.put("/users/update", {
+          email: draft.email,
+          firebaseUid: currentUser.uid,
+        });
+      }
 
       const uniqueLanguageRows = [];
       const seenLanguageNames = new Set();

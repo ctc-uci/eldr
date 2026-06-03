@@ -22,7 +22,6 @@ export const uploadProfilePictureToS3 = async (
   backend: AxiosInstance,
   file: File,
   firebaseUid: string,
-  user_type: string,
 ): Promise<string> => {
   const validationError = validateProfilePictureFile(file);
   if (validationError) {
@@ -32,15 +31,15 @@ export const uploadProfilePictureToS3 = async (
   const contentType = file.type;
 
   const uploadUrlResp = await backend.get("/users/profile-picture/upload-url", {
-    params: { contentType, firebaseUid, user_type },
+    params: { contentType, firebaseUid },
   });
 
-  const { uploadUrl, profilePictureUrl } = uploadUrlResp.data as {
+  const { uploadUrl, key } = uploadUrlResp.data as {
     uploadUrl?: string;
-    profilePictureUrl?: string;
+    key?: string;
   };
 
-  if (!uploadUrl || !profilePictureUrl) {
+  if (!uploadUrl || !key) {
     throw new Error("Failed to prepare profile picture upload.");
   }
 
@@ -54,5 +53,5 @@ export const uploadProfilePictureToS3 = async (
     throw new Error("Failed to upload profile picture.");
   }
 
-  return profilePictureUrl;
+  return key;
 };

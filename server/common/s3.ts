@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 import aws from "aws-sdk";
 
 const isDevelopment = process.env.NODE_ENV?.toLowerCase() === "development";
@@ -46,26 +44,28 @@ const extensionForContentType = (contentType: string) => {
   }
 };
 
+const assertS3Configured = () => {
+  if (!bucket || !region) {
+    throw new Error("S3 is not configured");
+  }
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("S3 credentials are not configured");
+  }
+};
+
 const getProfilePictureUploadURL = async (
   contentType: string,
   firebaseUid: string,
-  user_type: string,
 ) => {
   const normalizedType = contentType.trim().toLowerCase();
   if (!ALLOWED_CONTENT_TYPES.has(normalizedType)) {
     throw new Error("Unsupported image type");
   }
 
-  if (!bucket || !region) {
-    throw new Error("S3 is not configured");
-  }
-
-  if (!accessKeyId || !secretAccessKey) {
-    throw new Error("S3 credentials are not configured");
-  }
+  assertS3Configured();
 
   const extension = extensionForContentType(normalizedType);
-  const key = `${user_type}/${firebaseUid}/${crypto.randomBytes(16).toString("hex")}.${extension}`;
+  const key = `volunteers/${firebaseUid}/pfp.${extension}`;
 
   const uploadUrl = s3.getSignedUrl("putObject", {
     Bucket: bucket,
@@ -74,9 +74,19 @@ const getProfilePictureUploadURL = async (
     ContentType: normalizedType,
   });
 
-  const profilePictureUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-
-  return { uploadUrl, profilePictureUrl, key };
+  return { uploadUrl, key };
 };
 
-export { s3, getProfilePictureUploadURL };
+const getProfilePictureGetURL = async (key: string) => {
+  assertS3Configured();
+
+  const viewUrl = s3.getSignedUrl("getObject", {
+    Bucket: bucket,
+    Key: key,
+    Expires: 3600,
+  });
+
+  return viewUrl;
+};
+
+export { s3, getProfilePictureUploadURL, getProfilePictureGetURL };
