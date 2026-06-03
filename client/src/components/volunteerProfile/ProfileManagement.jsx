@@ -235,6 +235,7 @@ export const ProfileManagement = () => {
           backend,
           pendingPhotoFile,
           currentUser.uid,
+          "volunteers",
         );
       }
 

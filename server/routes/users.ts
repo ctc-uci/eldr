@@ -108,6 +108,8 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
       typeof req.query.contentType === "string" ? req.query.contentType : "";
     const firebaseUid =
       typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+    const user_type =
+      typeof req.query.user_type === "string" ? req.query.user_type.trim() : "";
 
     if (!firebaseUid) {
       return res.status(400).json({ message: "firebaseUid is required" });
@@ -116,6 +118,7 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
     const { uploadUrl, profilePictureUrl } = await getProfilePictureUploadURL(
       contentType,
       firebaseUid,
+      user_type,
     );
 
     return res.status(200).json({ uploadUrl, profilePictureUrl });

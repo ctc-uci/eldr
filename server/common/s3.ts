@@ -49,6 +49,7 @@ const extensionForContentType = (contentType: string) => {
 const getProfilePictureUploadURL = async (
   contentType: string,
   firebaseUid: string,
+  user_type: string,
 ) => {
   const normalizedType = contentType.trim().toLowerCase();
   if (!ALLOWED_CONTENT_TYPES.has(normalizedType)) {
@@ -64,7 +65,7 @@ const getProfilePictureUploadURL = async (
   }
 
   const extension = extensionForContentType(normalizedType);
-  const key = `profile-pictures/${firebaseUid}/${crypto.randomBytes(16).toString("hex")}.${extension}`;
+  const key = `${user_type}/${firebaseUid}/${crypto.randomBytes(16).toString("hex")}.${extension}`;
 
   const uploadUrl = s3.getSignedUrl("putObject", {
     Bucket: bucket,
