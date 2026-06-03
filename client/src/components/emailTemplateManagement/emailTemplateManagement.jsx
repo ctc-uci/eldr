@@ -870,7 +870,6 @@ export const EmailTemplateManagement = () => {
                   <RenameFolderDialog
                     folderName={currentFolder.name}
                     onRename={handleRenameFolder}
-                    isRenaming={isRenamingFolder}
                     setIsRenaming={setIsRenamingFolder}
                   />
                 )}
@@ -905,17 +904,20 @@ export const EmailTemplateManagement = () => {
                       px: "16px",
                       fontWeight: "500",
                       disabled: isRenamingFolder,
-                      backgroundColor: isRenamingFolder ? "#E4E4E7" : "#487C9E",
-                      color: isRenamingFolder ? "#71717A" : "white",
-                      _hover: isRenamingFolder ? { bg: "#E4E4E7" } : { bg: "#294A5F" },
-
-                      ...(showDeleteFolderModal
+                      ...(isRenamingFolder
                         ? {
-                            backgroundColor: "#E4E4E7",
-                            color: "black",
-                            _hover: { bg: "#E4E4E7" },
+                            backgroundColor: "#D4D4D8",
+                            color: "#18181B",
+                            borderColor: "#D4D4D8",
+                            _hover: { bg: "#D4D4D8" },
                           }
-                        : {}),
+                        : showDeleteFolderModal
+                          ? {
+                              backgroundColor: "#E4E4E7",
+                              color: "black",
+                              _hover: { bg: "#E4E4E7" },
+                            }
+                          : {}),
                     }}
                   />
                 )}
