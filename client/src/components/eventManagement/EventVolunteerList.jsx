@@ -44,7 +44,7 @@ const buildVisiblePageNumbers = (totalPages, currentPage) => {
   });
 };
 
-export const EventVolunteerList = ({ eventId }) => {
+export const EventVolunteerList = ({ eventId, eventName }) => {
   const { backend } = useBackendContext();
   const [registrations, setRegistrations] = useState([]);
   const [registrationsLoading, setRegistrationsLoading] = useState(false);
@@ -139,7 +139,14 @@ export const EventVolunteerList = ({ eventId }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `volunteers-event-${eventId}.csv`;
+
+    const safeEventName = (eventName || "event")
+      .replace(/[<>:"/\\|?*]/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+      
+    a.download = `${safeEventName}-event-volunteer-list.csv`;
+
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -306,7 +313,13 @@ export const EventVolunteerList = ({ eventId }) => {
                       variant="ghost"
                       size="sm"
                       color="red.600"
+                      borderColor="#FECACA"
                       onClick={() => setDeleteTarget(row.id)}
+                      _hover={{
+                        borderColor: "red.600",
+                        bg: "red.600",
+                        color:"white",
+                      }}
                     >
                       <LuTrash2 />
                       Delete
