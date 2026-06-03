@@ -29,6 +29,7 @@ volunteersRouter.post("/", async (req, res) => {
       law_school_year,
       state_bar_certificate,
       state_bar_number,
+      listed_experience,
     } = req.body;
 
     const normalizedEmail = normalizeNullableText(email);
@@ -43,6 +44,7 @@ volunteersRouter.post("/", async (req, res) => {
     const normalizedLawSchoolYear = normalizeNullableText(law_school_year);
     const normalizedStateBarCertificate = normalizeNullableText(state_bar_certificate);
     const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
+    const normalizedListedExperience = normalizeNullableText(listed_experience);
 
     const result = await db.tx(async (t) => {
       const userResult = await t.one(
@@ -76,9 +78,10 @@ volunteersRouter.post("/", async (req, res) => {
             affiliated_employer,
             law_school_year,
             state_bar_certificate,
-            state_bar_number
+            state_bar_number,
+            listed_experience
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           ON CONFLICT (id) DO UPDATE
             SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
                 last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
@@ -92,7 +95,8 @@ volunteersRouter.post("/", async (req, res) => {
                 affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
                 law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
                 state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
-                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number)
+                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number),
+                listed_experience = COALESCE(EXCLUDED.listed_experience, volunteers.listed_experience)
           RETURNING *;
         `,
         [
@@ -110,6 +114,7 @@ volunteersRouter.post("/", async (req, res) => {
           normalizedLawSchoolYear,
           normalizedStateBarCertificate,
           normalizedStateBarNumber,
+          normalizedListedExperience,
         ]
       );
 
@@ -318,7 +323,16 @@ volunteersRouter.put("/:id", async (req, res) => {
       law_school_year,
       state_bar_certificate,
       state_bar_number,
+      listed_experience,
     } = req.body;
+
+    const hasListedExperience = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "listed_experience",
+    );
+    const listedExperienceClause = hasListedExperience
+      ? "listed_experience = $15"
+      : "listed_experience = listed_experience";
 
     await db.query(
       `
@@ -335,7 +349,8 @@ volunteersRouter.put("/:id", async (req, res) => {
             affiliated_employer = COALESCE($11, affiliated_employer),
             law_school_year = COALESCE($12, law_school_year),
             state_bar_certificate = COALESCE($13, state_bar_certificate),
-            state_bar_number = COALESCE($14, state_bar_number)
+            state_bar_number = COALESCE($14, state_bar_number),
+            ${listedExperienceClause}
         WHERE id = $1;
       `,
       [
@@ -353,6 +368,7 @@ volunteersRouter.put("/:id", async (req, res) => {
         law_school_year ?? null,
         state_bar_certificate ?? null,
         state_bar_number ?? null,
+        hasListedExperience ? normalizeNullableText(listed_experience) : null,
       ]
     );
 
@@ -801,7 +817,7 @@ volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
 
     const listAll = await db.query(
       `
-        SELECT l.id, l.location_name
+        SELECT l.id, l.city, l.state, l.zip_code
         FROM volunteer_locations vl
         JOIN locations l ON vl.location_id = l.id
         WHERE vl.volunteer_id = $1;

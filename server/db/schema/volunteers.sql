@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     law_school_year TEXT,
     state_bar_certificate TEXT,
     state_bar_number TEXT,
+    listed_experience TEXT,
     FOREIGN KEY (id) REFERENCES users(id)
 );

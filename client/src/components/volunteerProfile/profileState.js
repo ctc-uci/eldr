@@ -4,6 +4,7 @@ export const createInitialProfile = () => ({
   phone: "",
   email: "",
   photoUrl: "",
+  listedExperience: "",
   notary: "Inactive",
   occupation: "Volunteer",
   lawSchoolYear: "N/A",
