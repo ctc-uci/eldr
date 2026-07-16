@@ -7,17 +7,20 @@ import { Pencil } from "lucide-react";
  * The trigger is just an icon — no labelled button — so it sits cleanly
  * next to the folder title text (matching Figma 1519-83577).
  */
-export const RenameFolderDialog = ({ folderName = "", onRename }) => {
+export const RenameFolderDialog = ({ folderName = "", onRename, setIsRenaming }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
   const handleOpen = () => {
     setInputValue(folderName);
+    setIsRenaming?.(true);
     setIsOpen(true);
   };
 
   const handleOpenChange = ({ open }) => {
     setIsOpen(open);
+    setIsRenaming?.(open);
+
     if (!open) setInputValue("");
   };
 
@@ -25,6 +28,7 @@ export const RenameFolderDialog = ({ folderName = "", onRename }) => {
     if (!inputValue.trim()) return;
     onRename(inputValue.trim());
     setIsOpen(false);
+    setIsRenaming?.(false);
     setInputValue("");
   };
 
