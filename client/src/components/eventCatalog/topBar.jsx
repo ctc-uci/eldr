@@ -37,9 +37,12 @@ export const TopBar = ({
 
   const showSearch = !isMobile || !showDetails;
 
-  // Snapshots selected filters into appliedFilters and triggers the fetch
-  const handleApply = () => {
-    setAppliedFilters(selectedFilters);
+  // Snapshots selected filters into appliedFilters and triggers the fetch.
+  // Takes the filters explicitly rather than only reading the `selectedFilters`
+  // prop, since a caller may have just queued a setSelectedFilters update in
+  // the same tick (that prop wouldn't reflect it yet on this render).
+  const handleApply = (filtersToApply = selectedFilters) => {
+    setAppliedFilters(filtersToApply);
     onApplyFilters();
   };
 

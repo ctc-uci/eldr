@@ -102,7 +102,6 @@ export const SortAndFilter = ({
 
   const [filterCategories, setFilterCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [applying, setApplying] = useState(false);
   const [first, setFirst] = useState(true);
 
   const isUnchanged = useMemo(() => {
@@ -181,15 +180,12 @@ export const SortAndFilter = ({
   };
 
   const handleApply = () => {
-    setApplying(true);
     onApplyFilters();
     onOpenChange(false);
-    setApplying(false);
   };
 
   const handleClose = () => {
-    clearAll();
-    onApplyFilters();
+    setSelectedFilters(appliedFilters);
     onOpenChange(false);
   };
 

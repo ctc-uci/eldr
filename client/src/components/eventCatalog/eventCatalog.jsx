@@ -31,7 +31,7 @@ export const EventCatalog = () => {
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
 
-  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [applyToken, setApplyToken] = useState(0);
   const [filteredCount, setFilteredCount] = useState(0);
 
   const { view: catalogView, eventId: parsedEventId } = parseEventCatalogPath(
@@ -166,15 +166,30 @@ export const EventCatalog = () => {
           data = res.data;
         }
 
-        const count = data.filter((e) => {
+        let candidates = data.filter((e) => {
           if (catalogView === "catalog") {
             if (!e.endTime) return true;
             return new Date(e.endTime) > now;
           }
           return true;
-        }).length;
+        });
 
-        setFilteredCount(count);
+        // "My Events" only shows events the volunteer is registered for —
+        // mirror that here so the preview count matches what Apply will show.
+        if (catalogView === "my") {
+          const registered = await Promise.all(
+            candidates.map((e) =>
+              backend
+                .get(`/clinics/${e.id}/registrations`)
+                .then((regRes) =>
+                  regRes.data.some((reg) => reg.id === volunteerId)
+                )
+            )
+          );
+          candidates = candidates.filter((_, i) => registered[i]);
+        }
+
+        setFilteredCount(candidates.length);
       } catch (error) {
         console.error("Failed to fetch filtered event count:", error);
         setFilteredCount(0);
@@ -184,33 +199,39 @@ export const EventCatalog = () => {
     fetchFilteredCount();
   }, [selectedFilters, volunteerId, catalogView]);
 
-  // Fetch and apply filtered events only when the apply button is pressed
+  // Fetch and apply filtered events only when the apply button is pressed.
+  // `applyToken` is a counter rather than a boolean so that two applies
+  // requested back-to-back (before the first fetch resolves) each still
+  // produce a distinct value and reliably re-trigger this effect.
   useEffect(() => {
-    if (!filtersApplied || !volunteerId) return;
+    if (applyToken === 0 || !volunteerId) return;
+
+    let cancelled = false;
 
     const fetchFilteredEvents = async () => {
       try {
+        let enrichedEvents;
         if (selectedFilters.length > 0) {
           const params = buildFilterParams(selectedFilters);
-          console.log("EVENTS", params.toString());
           const res = await backend.get(`/clinics/search?${params.toString()}`);
-          const enrichedEvents = await enrichEvents(res.data, volunteerId);
-          setEvents(enrichedEvents);
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
         } else {
           const res = await backend.get("/clinics");
-          console.log("EVENTS RESPONSE", res.data.length);
-          const enrichedEvents = await enrichEvents(res.data, volunteerId);
-          setEvents(enrichedEvents);
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
         }
+        // Ignore results from a stale apply that resolved after a newer one.
+        if (!cancelled) setEvents(enrichedEvents);
       } catch (error) {
         console.error("Failed to fetch filtered events:", error);
-      } finally {
-        setFiltersApplied(false);
       }
     };
 
     fetchFilteredEvents();
-  }, [filtersApplied, volunteerId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyToken, volunteerId]);
 
   // Events filtered by tab/time but NOT search, used for suggestions
   const tabEvents = useMemo(() => {
@@ -375,7 +396,7 @@ export const EventCatalog = () => {
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
-            onApplyFilters={() => setFiltersApplied(true)}
+            onApplyFilters={() => setApplyToken((t) => t + 1)}
             events={tabEvents}
           />
 
