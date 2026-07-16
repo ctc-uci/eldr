@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
@@ -92,15 +92,23 @@ const FilterCategory = ({
 export const SortAndFilter = ({
   open,
   onOpenChange,
-  setSortBy,
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  onApplyFilters,
+  appliedFilters,
 }) => {
   const { backend } = useBackendContext();
 
   const [filterCategories, setFilterCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [first, setFirst] = useState(true);
+
+  const isUnchanged = useMemo(() => {
+    if (selectedFilters.length !== appliedFilters.length) return false;
+    const appliedIds = new Set(appliedFilters.map((f) => f.id));
+    return selectedFilters.every((f) => appliedIds.has(f.id));
+  }, [selectedFilters, appliedFilters]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -130,7 +138,6 @@ export const SortAndFilter = ({
         {
           label: "Location",
           key: "locations",
-          // ids must match clinics.location_type enum (API normalizes legacy labels)
           options: [
             { id: "hybrid", text: "Hybrid" },
             { id: "in-person", text: "In-person" },
@@ -160,6 +167,7 @@ export const SortAndFilter = ({
   }, []);
 
   const toggleFilter = (option) => {
+    if (first) setFirst(false);
     setSelectedFilters((prev) =>
       prev.some((f) => f.id === option.id)
         ? prev.filter((f) => f.id !== option.id)
@@ -169,7 +177,16 @@ export const SortAndFilter = ({
 
   const clearAll = () => {
     setSelectedFilters([]);
-    setSortBy("upcoming");
+  };
+
+  const handleApply = () => {
+    onApplyFilters();
+    onOpenChange(false);
+  };
+
+  const handleClose = () => {
+    setSelectedFilters(appliedFilters);
+    onOpenChange(false);
   };
 
   return (
@@ -204,7 +221,7 @@ export const SortAndFilter = ({
                 </Text>
                 <CloseButton
                   size="sm"
-                  onClick={() => onOpenChange(false)}
+                  onClick={handleClose}
                 />
               </Flex>
             </Drawer.Header>
@@ -304,40 +321,41 @@ export const SortAndFilter = ({
               borderColor="#E5E7EB"
             >
               <Flex
-                justify="space-between"
-                align="center"
                 w="100%"
+                gap="12px"
               >
                 <Button
+                  flex={1}
                   variant="outline"
                   borderColor="#D1D5DB"
                   color="#374151"
                   fontSize="14px"
                   fontWeight={500}
                   size="xl"
-                  px="20px"
-                  py="2px"
                   _hover={{ bg: "#F9FAFB" }}
                   onClick={clearAll}
                 >
                   Clear
                 </Button>
+
                 <Button
+                  flex={2}
+                  minW="fit-content"
                   bg="#487C9E"
                   color="white"
                   fontSize="14px"
                   fontWeight={500}
                   size="xl"
-                  px="20px"
-                  py="2px"
                   _hover={{ bg: "#5c86a3" }}
-                  onClick={() => onOpenChange(false)}
-                  disabled={filteredCount === 0}
+                  onClick={handleApply}
+                  disabled={first || filteredCount === 0 || isUnchanged}
                 >
                   <ListFilter size={20} />
-                  {filteredCount > 0
+                  {selectedFilters.length === 0 && filteredCount === 0
                     ? `See ${filteredCount} Results`
-                    : "No Results"}
+                    : filteredCount > 0
+                      ? `See ${filteredCount} ${filteredCount === 1 ? "Result" : "Results"}`
+                      : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>
