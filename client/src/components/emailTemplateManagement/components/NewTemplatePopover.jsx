@@ -1,6 +1,6 @@
-import { FaMailBulk } from "react-icons/fa";
+import { MailPlus } from "lucide-react";
 
-import { InputPopover } from "./InputPopover";
+import { InputDialog } from "./InputPopover";
 
 export const NewTemplatePopover = ({
   isOpen,
@@ -8,14 +8,16 @@ export const NewTemplatePopover = ({
   onSubmit,
   buttonProps = {},
 }) => (
-  <InputPopover
+  <InputDialog
     isOpen={isOpen}
     onOpenChange={onOpenChange}
     onSubmit={onSubmit}
-    triggerIcon={<FaMailBulk />}
-    triggerLabel="New Template"
-    popoverTitle="New Template Creation"
-    inputPlaceholder="Enter a template name"
+    triggerIcon={<MailPlus size={20} />}
+    triggerLabel="Create New Template"
+    dialogTitle="Create New Template"
+    inputLabel="Template Name"
+    inputPlaceholder="Untitled Template"
+    submitLabel="Create Template"
     buttonProps={buttonProps}
   />
 );

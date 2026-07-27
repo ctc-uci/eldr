@@ -1,0 +1,205 @@
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+
+import { Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
+import { LuChevronsUpDown, LuChevronUp, LuChevronDown } from "react-icons/lu";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { ArchivedVolunteer } from "@/types/volunteer";
+import { PAGE_SIZE } from "./VolunteerList";
+
+interface ArchivedListProps {
+  page: number;
+  setPage: Dispatch<SetStateAction<number>>;
+  archivedVolunteers: ArchivedVolunteer[];
+  setArchivedVolunteers: Dispatch<SetStateAction<ArchivedVolunteer[]>>;
+  checkedKeys: Set<string>;
+  setCheckedKeys: Dispatch<SetStateAction<Set<string>>>;
+  onSelect?: (volunteer: ArchivedVolunteer) => void;
+  selectedKey?: string;
+  variant?: "table" | "list";
+}
+
+export const ArchivedList = ({
+  page,
+  setPage,
+  archivedVolunteers,
+  setArchivedVolunteers,
+  checkedKeys,
+  setCheckedKeys,
+  onSelect,
+  selectedKey,
+  variant = "table",
+}: ArchivedListProps) => {
+  const { backend } = useBackendContext();
+  const [sortKey, setSortKey] = useState<keyof ArchivedVolunteer | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    (async () => {
+      const [volunteersRes, staffRes] = await Promise.all([
+        backend.get<ArchivedVolunteer[]>("/volunteers/archived"),
+        backend.get<ArchivedVolunteer[]>("/admins/archived"),
+      ]);
+      setArchivedVolunteers([
+        ...volunteersRes.data.map((v) => ({ ...v, listKey: `v-${v.id}`, source: "volunteer" as const })),
+        ...staffRes.data.map((v: ArchivedVolunteer & { role?: string }) => ({
+          ...v,
+          listKey: `s-${v.id}`,
+          source: "staff" as const,
+          roles: v.roles ?? (v.role ? [v.role] : []),
+        })),
+      ]);
+    })();
+  }, [backend, setArchivedVolunteers]);
+
+  const handleSort = (key: keyof ArchivedVolunteer) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+    setPage(1);
+  };
+
+  const sortedVolunteers = sortKey
+    ? [...archivedVolunteers].sort((a, b) => {
+        const raw = (v: ArchivedVolunteer) => {
+          const val = v[sortKey];
+          return Array.isArray(val) ? val[0] ?? "" : (val ?? "");
+        };
+        const av = String(raw(a));
+        const bv = String(raw(b));
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+      })
+    : archivedVolunteers;
+
+  const toggleCheck = (e: React.MouseEvent, key: string) => {
+    e.stopPropagation();
+    setCheckedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const SortHeader = ({ label, sortField }: { label: string; sortField?: keyof ArchivedVolunteer }) => {
+    const active = sortField && sortKey === sortField;
+    return (
+      <Flex
+        align="center"
+        gap={1}
+        cursor={sortField ? "pointer" : undefined}
+        userSelect="none"
+        onClick={sortField ? () => handleSort(sortField) : undefined}
+      >
+        {label}
+        {sortField && (active
+          ? (sortDir === "asc" ? <LuChevronUp size={12} /> : <LuChevronDown size={12} />)
+          : <LuChevronsUpDown size={12} />
+        )}
+      </Flex>
+    );
+  };
+
+  const pageSlice = sortedVolunteers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const isList = variant === "list";
+
+  return (
+    <Box overflow="hidden">
+      <Table.Root size="md">
+        <Table.Header>
+          <Table.Row bg="#EFF6FF">
+            {!isList && (
+              <Table.ColumnHeader w="40px">
+                <Checkbox.Root
+                  cursor="pointer"
+                  size="sm"
+                  checked={
+                    pageSlice.length > 0 &&
+                    pageSlice.every((v) => checkedKeys.has(v.listKey))
+                  }
+                  onCheckedChange={() => {
+                    const pageKeys = pageSlice.map((v) => v.listKey);
+                    const allChecked = pageKeys.every((k) => checkedKeys.has(k));
+                    setCheckedKeys((prev) => {
+                      const next = new Set(prev);
+                      if (allChecked) pageKeys.forEach((k) => next.delete(k));
+                      else pageKeys.forEach((k) => next.add(k));
+                      return next;
+                    });
+                  }}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control cursor="pointer" />
+                </Checkbox.Root>
+              </Table.ColumnHeader>
+            )}
+            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+              <SortHeader label="Name" sortField="firstName" />
+            </Table.ColumnHeader>
+            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+              <SortHeader label="Role" sortField="roles" />
+            </Table.ColumnHeader>
+            {!isList && (
+              <>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Reactivation" sortField="reactivation" />
+                </Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  <SortHeader label="Archived Date" sortField="archivedDate" />
+                </Table.ColumnHeader>
+                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
+                  Notes
+                </Table.ColumnHeader>
+              </>
+            )}
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {pageSlice.map((volunteer) => (
+            <Table.Row
+              key={volunteer.listKey}
+              bg={!isList && checkedKeys.has(volunteer.listKey) ? "blue.50" : "transparent"}
+              boxShadow={selectedKey === volunteer.listKey ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
+              _hover={{ bg: "gray.50", cursor: "pointer" }}
+              onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
+            >
+              {!isList && (
+                <Table.Cell onClick={(e) => toggleCheck(e, volunteer.listKey)}>
+                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedKeys.has(volunteer.listKey)}>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control cursor="pointer" />
+                  </Checkbox.Root>
+                </Table.Cell>
+              )}
+              <Table.Cell>
+                <Flex align="center" gap={3}>
+                  <Box w="36px" h="36px" borderRadius="full" bg="gray.200" flexShrink={0} />
+                  <Box>
+                    <Text fontSize="sm" fontWeight="semibold">
+                      {volunteer.firstName} {volunteer.lastName}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">{volunteer.email}</Text>
+                  </Box>
+                </Flex>
+              </Table.Cell>
+              <Table.Cell>
+                <Text fontSize="sm" color="black">{volunteer.roles?.join(", ") || "—"}</Text>
+              </Table.Cell>
+              {!isList && (
+                <>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.reactivation ?? "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.archivedDate ? new Date(volunteer.archivedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text fontSize="sm" color="black">{volunteer.archivedNotes ?? "—"}</Text>
+                  </Table.Cell>
+                </>
+              )}
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+    </Box>
+  );
+};

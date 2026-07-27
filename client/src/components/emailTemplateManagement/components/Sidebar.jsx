@@ -1,13 +1,13 @@
 import { Box, HStack, Icon, Image, Text, VStack } from "@chakra-ui/react";
 
 import { FaBriefcase, FaClipboard, FaMailBulk, FaUser } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const sidebarNav = [
-  { label: "Event Catalog", icon: FaClipboard, active: false },
-  { label: "Case Catalog", icon: FaBriefcase, active: false },
-  { label: "Email Template", icon: FaMailBulk, active: true },
-  { label: "Manage Profiles", icon: FaUser, active: false },
+  { label: "Event Catalog", icon: FaClipboard, path: "/event-catalog" },
+  { label: "Case Catalog", icon: FaBriefcase, path: "/catalog" },
+  { label: "Email Template", icon: FaMailBulk, path: "/email" },
+  { label: "Manage Profiles", icon: FaUser, path: "/volunteer-management" },
 ];
 
 const SidebarNavItem = ({ icon, label, active }) => (
@@ -32,7 +32,9 @@ const SidebarNavItem = ({ icon, label, active }) => (
   </HStack>
 );
 
-export const Sidebar = () => (
+export const Sidebar = () => {
+  const { pathname } = useLocation();
+  return (
   <Box
     w="260px"
     borderRight="1px solid #E0E0E0"
@@ -62,7 +64,7 @@ export const Sidebar = () => (
             key={item.label}
             icon={item.icon}
             label={item.label}
-            active={item.active}
+            active={pathname.startsWith(item.path)}
           />
         ))}
       </VStack>
@@ -88,4 +90,5 @@ export const Sidebar = () => (
       </Box>
     </Box>
   </Box>
-);
+  );
+};

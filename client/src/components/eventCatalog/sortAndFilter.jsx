@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
@@ -10,45 +10,27 @@ import {
   Flex,
   HStack,
   Portal,
-  Separator,
   Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { ListFilter } from "lucide-react";
 import { LuChevronUp } from "react-icons/lu";
 
-const filterCategories = [
-  {
-    label: "Type",
-    options: ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"],
-  },
-  {
-    label: "Language",
-    options: ["Arabic", "Japanese", "Korean", "Mandarin", "Spanish", "Vietnamese"],
-  },
-  {
-    label: "Location",
-    options: ["Virtual", "In-person"],
-  },
-  {
-    label: "Occupation",
-    options: [
-      "Attorney",
-      "Law Student 1L",
-      "Law Student 2L",
-      "Law Student 3L",
-      "Law Student LLM",
-      "Undergraduate Student",
-      "Paralegal/Legal Worker",
-      "Paralegal Student",
-    ],
-  },
-];
-
-const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
+const FilterCategory = ({
+  label,
+  options,
+  selectedFilters,
+  onToggle,
+  isFirst,
+}) => {
   return (
-    <Collapsible.Root defaultOpen>
+    <Collapsible.Root
+      defaultOpen
+      m={2}
+    >
       <Collapsible.Trigger
         w="100%"
         display="flex"
@@ -56,10 +38,14 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         justifyContent="space-between"
         py="12px"
         cursor="pointer"
-        borderTopWidth="1px"
+        borderTopWidth={isFirst ? "0" : "1px"}
         borderColor="#E5E7EB"
       >
-        <Text fontSize="16px" fontWeight={600} color="#111827">
+        <Text
+          fontSize="16px"
+          fontWeight={600}
+          color="#111827"
+        >
           {label}
         </Text>
         <Collapsible.Indicator
@@ -71,19 +57,28 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
         </Collapsible.Indicator>
       </Collapsible.Trigger>
       <Collapsible.Content>
-        <VStack align="stretch" gap="10px" pl="8px" pb="12px">
+        <VStack
+          align="stretch"
+          gap="10px"
+          px="8px"
+          py="8px"
+        >
           {options.map((option) => (
             <Checkbox.Root
-              key={option}
-              checked={selectedFilters.includes(option)}
+              key={option.id}
+              checked={selectedFilters.some((f) => f.id === option.id)}
               onCheckedChange={() => onToggle(option)}
               size="sm"
             >
               <Checkbox.HiddenInput />
               <Checkbox.Control />
               <Checkbox.Label>
-                <Text fontSize="14px" fontWeight={400} color="#374151">
-                  {option}
+                <Text
+                  fontSize="14px"
+                  fontWeight={400}
+                  color="#374151"
+                >
+                  {option.text}
                 </Text>
               </Checkbox.Label>
             </Checkbox.Root>
@@ -94,18 +89,104 @@ const FilterCategory = ({ label, options, selectedFilters, onToggle }) => {
   );
 };
 
-export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedFilters, setSelectedFilters, filteredCount }) => {
+export const SortAndFilter = ({
+  open,
+  onOpenChange,
+  selectedFilters,
+  setSelectedFilters,
+  filteredCount,
+  onApplyFilters,
+  appliedFilters,
+}) => {
+  const { backend } = useBackendContext();
+
+  const [filterCategories, setFilterCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [first, setFirst] = useState(true);
+
+  const isUnchanged = useMemo(() => {
+    if (selectedFilters.length !== appliedFilters.length) return false;
+    const appliedIds = new Set(appliedFilters.map((f) => f.id));
+    return selectedFilters.every((f) => appliedIds.has(f.id));
+  }, [selectedFilters, appliedFilters]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [typesRes, languagesRes, occupationsRes] = await Promise.all([
+        backend.get("/areas-of-practice"),
+        backend.get("/languages/with-volunteers"),
+        backend.get("/roles"),
+      ]);
+
+      const categories = [
+        {
+          label: "Category",
+          key: "areasOfPracticeIds",
+          options: typesRes.data.map((t) => ({
+            id: "areasOfPracticeId" + t.id,
+            text: t.areasOfPractice,
+          })),
+        },
+        {
+          label: "Language",
+          key: "languageIds",
+          options: languagesRes.data.map((l) => ({
+            id: "languageId" + l.id,
+            text: l.language,
+          })),
+        },
+        {
+          label: "Location",
+          key: "locations",
+          options: [
+            { id: "hybrid", text: "Hybrid" },
+            { id: "in-person", text: "In-person" },
+            { id: "online", text: "Online" },
+          ],
+        },
+        {
+          label: "Role",
+          key: "roleIds",
+          options: occupationsRes.data.map((o) => ({
+            id: "roleId" + o.id,
+            text: o.roleName,
+          })),
+        },
+      ];
+
+      setFilterCategories(categories);
+    } catch (e) {
+      console.error("Error fetching filter options:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
   const toggleFilter = (option) => {
+    if (first) setFirst(false);
     setSelectedFilters((prev) =>
-      prev.includes(option)
-        ? prev.filter((f) => f !== option)
+      prev.some((f) => f.id === option.id)
+        ? prev.filter((f) => f.id !== option.id)
         : [...prev, option]
     );
   };
 
   const clearAll = () => {
     setSelectedFilters([]);
-    setSortBy("upcoming");
+  };
+
+  const handleApply = () => {
+    onApplyFilters();
+    onOpenChange(false);
+  };
+
+  const handleClose = () => {
+    setSelectedFilters(appliedFilters);
+    onOpenChange(false);
   };
 
   return (
@@ -120,70 +201,45 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
         <Drawer.Positioner>
           <Drawer.Content>
             {/* Header */}
-            <Drawer.Header px="24px" pt="24px" pb="16px">
-              <Flex justify="space-between" align="center" w="100%">
-                <Text fontSize="20px" fontWeight={700} color="#111827">
-                  Sort and Filter
+            <Drawer.Header
+              px="24px"
+              pt="24px"
+              pb="16px"
+              borderBottom="1px solid #E4E4E7"
+            >
+              <Flex
+                justify="space-between"
+                align="center"
+                w="100%"
+              >
+                <Text
+                  fontSize="20px"
+                  fontWeight={700}
+                  color="#111827"
+                >
+                  Filter
                 </Text>
                 <CloseButton
                   size="sm"
-                  onClick={() => onOpenChange(false)}
+                  onClick={handleClose}
                 />
               </Flex>
             </Drawer.Header>
 
-            <Separator borderColor="#111827" mx="24px" />
-
             {/* Body */}
-            <Drawer.Body px="24px" py="16px" overflowY="auto">
-              {/* Sort By */}
-              <Box mb="20px">
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="12px">
-                  Sort By
-                </Text>
-                <HStack gap="8px">
-                  <Button
-                    size="sm"
-                    variant={sortBy === "upcoming" ? "solid" : "outline"}
-                    bg={sortBy === "upcoming" ? "#111827" : "white"}
-                    color={sortBy === "upcoming" ? "white" : "#374151"}
-                    borderColor="#D1D5DB"
-                    borderRadius="6px"
-                    fontWeight={500}
-                    fontSize="14px"
-                    px="16px"
-                    h="36px"
-                    _hover={{
-                      bg: sortBy === "upcoming" ? "#1F2937" : "#F9FAFB",
-                    }}
-                    onClick={() => setSortBy("upcoming")}
-                  >
-                    Upcoming
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={sortBy === "urgency" ? "solid" : "outline"}
-                    bg={sortBy === "urgency" ? "#111827" : "white"}
-                    color={sortBy === "urgency" ? "white" : "#374151"}
-                    borderColor="#D1D5DB"
-                    borderRadius="6px"
-                    fontWeight={500}
-                    fontSize="14px"
-                    px="16px"
-                    h="36px"
-                    _hover={{
-                      bg: sortBy === "urgency" ? "#1F2937" : "#F9FAFB",
-                    }}
-                    onClick={() => setSortBy("urgency")}
-                  >
-                    Urgency
-                  </Button>
-                </HStack>
-              </Box>
-
+            <Drawer.Body
+              px="24px"
+              py="16px"
+              overflowY="auto"
+            >
               {/* Selected Filters */}
               <Box mb="20px">
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="12px">
+                <Text
+                  fontSize="16px"
+                  fontWeight={600}
+                  color="#111827"
+                  mb="12px"
+                >
                   Selected Filters
                 </Text>
                 <Box
@@ -191,13 +247,17 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                   borderColor="#D1D5DB"
                   borderRadius="6px"
                   minH="40px"
-                  px="12px"
-                  py="8px"
+                  px="7px"
+                  py="5px"
                 >
-                  <HStack gap="6px" flexWrap="wrap">
+                  <HStack
+                    gap="6px"
+                    flexWrap="wrap"
+                  >
                     {selectedFilters.map((filter) => (
                       <Button
-                        key={filter}
+                        key={filter.id}
+                        bg="#F4F4F5"
                         size="xs"
                         variant="outline"
                         borderColor="#D1D5DB"
@@ -209,7 +269,7 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
                         px="8px"
                         onClick={() => toggleFilter(filter)}
                       >
-                        {filter} ×
+                        {filter.text} ×
                       </Button>
                     ))}
                   </HStack>
@@ -218,52 +278,84 @@ export const SortAndFilter = ({ open, onOpenChange, sortBy, setSortBy, selectedF
 
               {/* Filter Categories */}
               <Box>
-                <Text fontSize="16px" fontWeight={600} color="#111827" mb="8px">
+                <Text
+                  fontSize="16px"
+                  fontWeight={600}
+                  color="#111827"
+                  mb="8px"
+                >
                   Filter Categories
                 </Text>
-                <Stack gap="0" pl="8px">
-                  {filterCategories.map((category) => (
-                    <FilterCategory
-                      key={category.label}
-                      label={category.label}
-                      options={category.options}
-                      selectedFilters={selectedFilters}
-                      onToggle={toggleFilter}
-                    />
-                  ))}
-                </Stack>
+                {isLoading ? (
+                  <Text
+                    fontSize="14px"
+                    color="#6B7280"
+                  >
+                    Loading filter options...
+                  </Text>
+                ) : (
+                  <Stack
+                    gap="0"
+                    pl="8px"
+                  >
+                    {filterCategories.map((category, index) => (
+                      <FilterCategory
+                        key={category.label}
+                        label={category.label}
+                        options={category.options}
+                        selectedFilters={selectedFilters}
+                        onToggle={toggleFilter}
+                        isFirst={index === 0}
+                      />
+                    ))}
+                  </Stack>
+                )}
               </Box>
             </Drawer.Body>
 
             {/* Footer */}
-            <Drawer.Footer px="24px" py="16px" borderTopWidth="1px" borderColor="#E5E7EB">
-              <Flex justify="space-between" align="center" w="100%">
+            <Drawer.Footer
+              px="24px"
+              py="16px"
+              borderTopWidth="1px"
+              borderColor="#E5E7EB"
+            >
+              <Flex
+                w="100%"
+                gap="12px"
+              >
                 <Button
+                  flex={1}
                   variant="outline"
                   borderColor="#D1D5DB"
                   color="#374151"
-                  borderRadius="8px"
                   fontSize="14px"
                   fontWeight={500}
-                  h="40px"
-                  px="24px"
+                  size="xl"
                   _hover={{ bg: "#F9FAFB" }}
                   onClick={clearAll}
                 >
                   Clear
                 </Button>
+
                 <Button
-                  bg="#111827"
+                  flex={2}
+                  minW="fit-content"
+                  bg="#487C9E"
                   color="white"
-                  borderRadius="8px"
                   fontSize="14px"
                   fontWeight={500}
-                  h="40px"
-                  px="24px"
-                  _hover={{ bg: "#1F2937" }}
-                  onClick={() => onOpenChange(false)}
+                  size="xl"
+                  _hover={{ bg: "#5c86a3" }}
+                  onClick={handleApply}
+                  disabled={first || filteredCount === 0 || isUnchanged}
                 >
-                  See {filteredCount} Results
+                  <ListFilter size={20} />
+                  {selectedFilters.length === 0 && filteredCount === 0
+                    ? `See ${filteredCount} Results`
+                    : filteredCount > 0
+                      ? `See ${filteredCount} ${filteredCount === 1 ? "Result" : "Results"}`
+                      : "No Results"}
                 </Button>
               </Flex>
             </Drawer.Footer>

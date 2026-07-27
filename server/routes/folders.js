@@ -133,16 +133,37 @@ foldersRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await db.query(
-      "DELETE FROM folders WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db.tx(async (t) => {
+      const folder = await t.oneOrNone("SELECT * FROM folders WHERE id = $1", [id]);
+      if (!folder) return null;
 
-    if (deleted.length === 0) {
+      const deletedTemplates = await t.query(
+        `DELETE FROM email_templates et
+         WHERE et.id IN (
+           SELECT etf.email_template_id
+           FROM email_template_folders etf
+           WHERE etf.folder_id = $1
+         )
+         RETURNING et.id`,
+        [id]
+      );
+
+      await t.none("DELETE FROM folders WHERE id = $1", [id]);
+
+      return {
+        folder,
+        deletedTemplateCount: deletedTemplates.length,
+      };
+    });
+
+    if (!result) {
       return res.status(404).json({ message: "Folder not found" });
     }
 
-    res.status(200).json(keysToCamel(deleted[0]));
+    res.status(200).json({
+      ...keysToCamel(result.folder),
+      deletedTemplateCount: result.deletedTemplateCount,
+    });
   } catch (error) {
     console.error("Error deleting folder:", error);
     res.status(500).json({ message: "Internal server error" });

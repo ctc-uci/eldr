@@ -68,3 +68,6 @@ server/config/eldr-firebase-sdk.json
 # playground
 
 client/src/components/playground/Playground.tsx
+
+tsconfig.app.tsbuildinfo
+tsconfig.vite.tsbuildinfo

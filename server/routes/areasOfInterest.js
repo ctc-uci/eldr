@@ -54,7 +54,7 @@ areasOfPracticeRouter.post("/", async (req, res) => {
             return res.status(404).json({ message: "Area of practice not created" });
         }
 
-        res.status(200).json(keysToCamel(newAreaOfPractice));
+        res.status(200).json(keysToCamel(newAreaOfPractice[0]));
     } catch (err) {
         res.status(500).send(err.message);
     }

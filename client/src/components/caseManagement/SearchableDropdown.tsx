@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 
-import { ChevronDownIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
+  Icon,
   Input,
   Menu,
   MenuButton,
@@ -11,6 +11,7 @@ import {
   MenuList,
   Text,
 } from "@chakra-ui/react";
+import { FiChevronDown } from "react-icons/fi";
 
 type Props = {
   options?: string[];
@@ -50,7 +51,7 @@ function SearchableDropdown({
     >
       <MenuButton
         as={Button}
-        rightIcon={<ChevronDownIcon boxSize={7} />}
+        rightIcon={<Icon as={FiChevronDown} boxSize={7} />}
         bg="#ADADAD"
         border="2px solid black"
         px="8px"

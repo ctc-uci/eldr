@@ -1,3 +1,4 @@
+import { Spinner } from "@chakra-ui/react";
 import { Navigate } from "react-router-dom";
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
@@ -13,14 +14,18 @@ export const ProtectedRoute = ({
   allowedRoles = [],
 }: ProtectedRouteProps) => {
   const { currentUser } = useAuthContext();
-  const { role } = useRoleContext();
+  const { role, loading } = useRoleContext();
+
+  if (currentUser && loading) {
+    return <Spinner />;
+  }
 
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   const isValidRole = getIsValidRole(roles, role);
   return currentUser && isValidRole ? (
     element
   ) : currentUser ? (
-    <Navigate to={"dashboard"} />
+    <Navigate to={"/dashboard"} />
   ) : (
     <Navigate to={"/"} />
   );
@@ -28,7 +33,7 @@ export const ProtectedRoute = ({
 
 /**
  * Helper function for determining if a user may access a route based on their role.
- * If no allowed roles are specified, or if the user is an admin, they are authorized. Otherwise, their role must be within the list of allowed roles.
+ * If no allowed roles are specified, or if the user is a supervisor, they are authorized. Otherwise, their role must be within the list of allowed roles.
  *
  * @param roles a list of roles which may access this route
  * @param role the current user's role
@@ -37,6 +42,6 @@ function getIsValidRole(roles: string[], role: string | undefined) {
   return (
     roles.length === 0 ||
     (role !== undefined && roles.includes(role)) ||
-    role === "admin"
+    role === "supervisor"
   );
 }

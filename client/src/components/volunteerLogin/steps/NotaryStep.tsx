@@ -3,43 +3,35 @@ import { useMemo, useState } from "react";
 import {
   Box,
   Button,
-  Combobox,
+  Select,
   Flex,
   Heading,
-  HStack,
-  Image,
-  Link,
   Progress,
   Text,
   useListCollection,
 } from "@chakra-ui/react";
 
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
-import { LuArrowRight, LuFacebook, LuMail } from "react-icons/lu";
+import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
   onNext: () => void;
-  volunteerId?: number;
 };
 
 const NOTARY_STATUSES = ["Active Notary", "Non-Active (Not a Notary)"];
 
-const NotaryStep = ({ onNext, volunteerId }: Props) => {
-  const { backend } = useBackendContext();
-
-  const [selected, setSelected] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const NotaryStep = ({ onNext }: Props) => {
+  const [selected, setSelected] = useState<string>(() => {
+    const n = loadDraft()?.isNotary;
+    if (n === true) return "Active Notary";
+    if (n === false) return "Non-Active (Not a Notary)";
+    return "";
+  });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const effectiveVolunteerId =
-    volunteerId ?? Number(localStorage.getItem("volunteerId") || 0);
-
-  const { collection, filter } = useListCollection({
+  const { collection } = useListCollection({
     initialItems: NOTARY_STATUSES,
     filter: (item, inputValue) =>
       item.toLowerCase().includes(inputValue.toLowerCase()),
@@ -47,42 +39,17 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
 
   const isNotary = useMemo(() => selected === "Active Notary", [selected]);
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     setErrorMsg(null);
 
-    if (!effectiveVolunteerId) {
-      setErrorMsg(
-        "Missing volunteer id. Please go back and create your account again."
-      );
-      return;
-    }
-
     if (!selected) {
-      // If they skip selection, just move forward (or you can require it)
+      saveDraft({ isNotary: null });
       onNext();
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // Update volunteer record. (Your volunteersRouter uses PUT /volunteers/:id)
-      await backend.put(`/volunteers/${effectiveVolunteerId}`, {
-        is_notary: isNotary,
-      });
-
-      onNext();
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data ||
-        e?.message ||
-        "Failed to save notary status.";
-      setErrorMsg(
-        typeof msg === "string" ? msg : "Failed to save notary status."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    saveDraft({ isNotary: isNotary });
+    onNext();
   };
 
   return (
@@ -108,12 +75,6 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -123,7 +84,7 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
           {/* Left side */}
           <Flex
             direction="column"
-            justify="space-between"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -132,87 +93,28 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
             borderColor="#E4E4E7"
             gap={{ base: "32px", md: "0" }}
           >
-            <Box>
+            <Box maxW="350px">
               <Heading
                 fontSize={{ base: "17px", md: "22px", lg: "27px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Community Counsel Account Manager
+                Volunteer Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
                 Please indicate whether or not you are an active notary.
               </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "24px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
             </Box>
           </Flex>
 
           {/* Right side */}
           <Flex
             direction="column"
-            justify="center"
+            justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
@@ -220,14 +122,15 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
             align="center"
           >
             <Progress.Root
-              value={75}
+              value={65}
               size="xs"
               w="30vw"
               minW="320px"
               maxW="460px"
+              mb="24px"
             >
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
 
@@ -251,74 +154,73 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               </Box>
             )}
 
-            <Box
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-            >
+            <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={600}
                 color="black"
                 mb="6px"
               >
-                What is your notary status?
+                Notary Status
               </Text>
-              <Combobox.Root
+
+              <Box position="relative">
+              <Select.Root
                 collection={collection}
-                onInputValueChange={({ inputValue }) => filter(inputValue)}
-                css={{ "--focus-color": "transparent" }}
-                openOnClick
-                onValueChange={({ value }: { value: string[] }) => {
-                  if (value?.[0]) setSelected(value[0]);
-                }}
+                value={selected ? [selected] : []}
+                onValueChange={(e) => setSelected(e.value[0] || "")}
               >
-                <Combobox.Control
+
+                <Select.Trigger
+                  h="44px"
                   border="1px solid"
                   borderColor="#E4E4E7"
                   borderRadius="6px"
-                  h={{ base: "40px", md: "44px" }}
-                  px="12px"
                   bg="white"
-                  boxShadow="none"
-                  _focusWithin={{
-                    borderColor: "#E4E4E7",
-                    boxShadow: "none",
-                    outline: "none",
-                  }}
+                  fontSize="14px"
+                  _hover={{ borderColor: "#CBD5E1" }}
+                  _focus={{ borderColor: "#3182CE", boxShadow: "0 0 0 1px #3182CE" }}
                 >
-                  <Combobox.Input
-                    placeholder="Type to search"
-                    border="none"
-                    p="0"
-                    fontSize="14px"
-                    focusRingColor="transparent"
-                    _focusVisible={{
-                      outline: "none",
-                      boxShadow: "none",
-                    }}
-                  />
-                  <Combobox.Trigger />
-                </Combobox.Control>
-                <Combobox.Positioner>
-                  <Combobox.Content>
-                    <Combobox.Empty>No results found</Combobox.Empty>
-                    {collection.items.map((item) => (
-                      <Combobox.Item
-                        key={item}
-                        item={item}
-                      >
-                        <Combobox.ItemText>{item}</Combobox.ItemText>
-                      </Combobox.Item>
-                    ))}
-                  </Combobox.Content>
-                </Combobox.Positioner>
-              </Combobox.Root>
+                  <Select.ValueText placeholder="Select status" />
+
+                  <Box ml="auto" display="flex" alignItems="center">
+                    <LuChevronDown size={16} color="#9CA3AF" />
+                  </Box>
+                </Select.Trigger>
+
+                <Select.Content
+                  bg="white"
+                  border="1px solid #E4E4E7"
+                  borderRadius="8px"
+                  boxShadow="lg"
+                  position="absolute"
+                  top="calc(100% + 6px)"
+                  left={0}
+                  w="100%"
+                  mt="0"
+                >
+                  {collection.items.map((item) => (
+                    <Select.Item
+                      key={item}
+                      item={item}
+                      px="12px"
+                      py="10px"
+                      fontSize="14px"
+                      _hover={{ bg: "gray.50" }}
+                    >
+                      {item === "Active Notary" ? "Active" : "Inactive"}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+
+              </Select.Root>
+              </Box>
             </Box>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -326,15 +228,26 @@ const NotaryStep = ({ onNext, volunteerId }: Props) => {
               borderRadius="8px"
               fontSize={{ base: "13px", md: "16px" }}
               fontWeight={600}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              position="relative"
               px="20px"
               onClick={handleContinue}
-              loading={isSubmitting}
             >
-              Continue
-              <LuArrowRight size={16} />
+              <Box w="100%" textAlign="center">
+                Continue
+              </Box>
+              <Box position="absolute" right="12px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
+
           </Flex>
         </Flex>
 

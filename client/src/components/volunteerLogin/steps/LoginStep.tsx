@@ -3,7 +3,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
   Image,
   Input,
   Link,
@@ -12,32 +11,29 @@ import {
 } from "@chakra-ui/react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithCustomToken } from "firebase/auth";
 
-import { BsInstagram } from "react-icons/bs";
-import { FaGoogle } from "react-icons/fa";
-import { FiLinkedin } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import microsoft from "../../../assets/microsoft_logo.svg";
+
+
 import {
   LuArrowRight,
-  LuFacebook,
-  LuKeyRound,
-  LuMail,
-  LuUser,
+  LuExternalLink,
 } from "react-icons/lu";
-import { RiMicrosoftLine } from "react-icons/ri";
 import { toaster } from "@/components/ui/toaster";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { auth } from "@/utils/auth/firebase";
 import {
   authenticateGoogleUser,
   authenticateMicrosoftUser,
 } from "@/utils/auth/providers";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
-  onNext: () => void;
-  onBack: () => void;
+  onNavigateToCreateAccount: () => void;
 };
 
 type VolunteerLookupRow = {
@@ -48,14 +44,18 @@ type VolunteerLookupRow = {
   email?: string;
 };
 
-const LoginStep = ({ onNext, onBack }: Props) => {
+const LoginStep = ({ onNavigateToCreateAccount }: Props) => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
-  const { login, handleRedirectResult } = useAuthContext();
+  const { handleRedirectResult } = useAuthContext();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+
+  const [firstNameError, setFirstNameError] = useState(false);
+  const [lastNameError, setLastNameError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
 
   const toastLoginError = useCallback((msg: string) => {
     toaster.error({
@@ -66,83 +66,75 @@ const LoginStep = ({ onNext, onBack }: Props) => {
 
   const handleLogin = async () => {
     try {
-      if (!firstName.trim() || !lastName.trim() || !password) {
-        toastLoginError("Please enter first name, last name, and password.");
+      // reset errors
+      setFirstNameError(false);
+      setLastNameError(false);
+      setEmailError(false);
+  
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        toastLoginError("Please enter first name, last name, and email.");
         return;
       }
-
+  
       const response = await backend.get("/volunteers");
       const volunteers = (response.data ?? []) as VolunteerLookupRow[];
-
-      const normalizedInputFirst = firstName.trim().toLowerCase();
-      const normalizedInputLast = lastName.trim().toLowerCase();
-
-      const matchingVolunteers = volunteers.filter((v) => {
-        const volunteerFirstName = (v.firstName ?? v.first_name ?? "").trim().toLowerCase();
-        const volunteerLastName = (v.lastName ?? v.last_name ?? "").trim().toLowerCase();
-        return (
-          volunteerFirstName === normalizedInputFirst &&
-          volunteerLastName === normalizedInputLast &&
-          Boolean(v.email?.trim())
-        );
+  
+      const f = firstName.trim().toLowerCase();
+      const l = lastName.trim().toLowerCase();
+      const e = email.trim().toLowerCase();
+  
+      const match = volunteers.find((v) => {
+        const vf = (v.firstName ?? v.first_name ?? "").toLowerCase().trim();
+        const vl = (v.lastName ?? v.last_name ?? "").toLowerCase().trim();
+        const ve = (v.email ?? "").toLowerCase().trim();
+  
+        return vf === f && vl === l && ve === e;
       });
-
-      if (!matchingVolunteers.length) {
-        toastLoginError(
-          "No account found with this first and last name. Please check your information or create an account."
+  
+      if (!match) {
+        const firstExists = volunteers.some(
+          v => (v.firstName ?? v.first_name ?? "").toLowerCase().trim() === f
         );
+  
+        const lastExists = volunteers.some(
+          v => (v.lastName ?? v.last_name ?? "").toLowerCase().trim() === l
+        );
+  
+        const emailExists = volunteers.some(
+          v => (v.email ?? "").toLowerCase().trim() === e
+        );
+  
+        setFirstNameError(!firstExists);
+        setLastNameError(firstExists && !lastExists);
+        setEmailError(firstExists && lastExists && !emailExists);
+  
+
+        if (!firstExists) setFirstName("");
+        if (firstExists && !lastExists) setLastName("");
+        if (firstExists && lastExists && !emailExists) setEmail("");
+  
         return;
       }
-
-      let didAuthenticate = false;
-      let lastAuthError: unknown = null;
-
-      // Support duplicate names by validating password against each matched email.
-      for (const volunteer of matchingVolunteers) {
-        try {
-          await login({
-            email: volunteer.email!.trim().toLowerCase(),
-            password,
-          });
-          didAuthenticate = true;
-          break;
-        } catch (authError) {
-          lastAuthError = authError;
-        }
+  
+      const tokenResponse = await backend.post("/users/custom-token", {
+        email: match.email!.toLowerCase().trim(),
+      });
+  
+      const customToken = tokenResponse.data?.customToken;
+  
+      if (!customToken) {
+        throw new Error("Unable to generate authentication token.");
       }
+  
+      await signInWithCustomToken(auth, customToken);
 
-      if (!didAuthenticate) {
-        throw lastAuthError ?? new Error("Unable to sign in with provided credentials.");
-      }
-
-      navigate("/dashboard");
+      // Volunteer portal home (not /dashboard — that hub is for staff/supervisor
+      // routing and falls through to a generic "Guest" dashboard when role is slow).
+      navigate("/event-catalog/all-events", { replace: true });
     } catch (err: unknown) {
-      const authError = err as { code?: string; message?: string };
-      const errorCode = authError?.code;
-      const firebaseErrorMsg = authError?.message;
-
-      switch (errorCode) {
-        case "auth/wrong-password":
-        case "auth/invalid-credential":
-        case "auth/invalid-email":
-        case "auth/user-not-found":
-          toastLoginError("First name, last name, or password does not match our records!");
-          break;
-        case "auth/unverified-email":
-          toastLoginError("Please verify your email address.");
-          break;
-        case "auth/user-disabled":
-          toastLoginError("This account has been disabled.");
-          break;
-        case "auth/too-many-requests":
-          toastLoginError("Too many attempts. Please try again later.");
-          break;
-        case "auth/user-signed-out":
-          toastLoginError("You have been signed out. Please sign in again.");
-          break;
-        default:
-          toastLoginError(firebaseErrorMsg ?? "Unable to sign in.");
-      }
+      const authError = err as { message?: string };
+  
+      toastLoginError(authError?.message ?? "Unable to sign in.");
     }
   };
 
@@ -155,8 +147,19 @@ const LoginStep = ({ onNext, onBack }: Props) => {
   };
 
   useEffect(() => {
-    handleRedirectResult(backend, navigate);
-  }, [backend, handleRedirectResult, navigate]);
+    const runRedirectResult = async () => {
+      try {
+        await handleRedirectResult(backend, navigate);
+      } catch (error) {
+        const authError = error as { message?: string };
+        toastLoginError(
+          authError?.message ?? "Unable to sign in with Google right now."
+        );
+      }
+    };
+
+    void runRedirectResult();
+  }, [backend, handleRedirectResult, navigate, toastLoginError]);
 
   return (
     <LoginLayout>
@@ -180,12 +183,6 @@ const LoginStep = ({ onNext, onBack }: Props) => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -194,7 +191,7 @@ const LoginStep = ({ onNext, onBack }: Props) => {
         >
           <Flex
             direction="column"
-            justify="space-between"
+            justify="center"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -205,81 +202,31 @@ const LoginStep = ({ onNext, onBack }: Props) => {
           >
             <Box>
               <Heading
-                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
+                lineHeight="1.2"
               >
-                Welcome to Volunteer Portal by Community Counsel
+                Community Counsel's Event Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                color="black"
               >
-                Log in using your CC Credentials. If you don't have one, click
-                on the create link below. If you need to reset your password,
-                click "Forgot Password".
+                Need help? Visit our website{" "}
+                
+                <Link
+                href="https://eldrcenter.org/"
+                display="inline-flex"
+                alignItems="center"
+              >
+                <LuExternalLink size={20} color="#2563EB"/>
+              </Link>
               </Text>
             </Box>
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "32px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
-            </Box>
+            
           </Flex>
 
           <Flex
@@ -294,27 +241,24 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
+                fontWeight="bold"
                 color="black"
                 mb="6px"
               >
                 First Name
+                <Box as="span" color="#991919"> *</Box>
               </Text>
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={firstNameError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter First Name"
+                  placeholder="Enter your first name"
                   border="none"
                   outline="none"
                   p="0"
@@ -327,32 +271,34 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </Flex>
+              {firstNameError && (
+                  <Text fontSize="10px" color="red.500" mt="4px">
+                    No matching first name found. Please try again.
+                  </Text>
+                )}
             </Box>
 
             <Box w="30vw" minW="320px" maxW="460px">
               <Text
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
+                fontWeight="bold"
                 color="black"
                 mb="6px"
               >
                 Last Name
+                <Box as="span" color="#991919"> *</Box>
               </Text>
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={lastNameError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuUser
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter Last Name"
+                  placeholder="Enter your last name"
                   border="none"
                   outline="none"
                   p="0"
@@ -365,47 +311,35 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </Flex>
+              {lastNameError && (
+                  <Text fontSize="10px" color="red.500" mt="4px">
+                    No matching last name found. Please try again.
+                  </Text>
+                )}
             </Box>
 
             <Box w="30vw" minW="320px" maxW="460px">
-              <Flex
-                justify="space-between"
-                align="center"
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight="bold"
+                color="black"
                 mb="6px"
               >
-                <Text
-                  fontSize={{ base: "13px", md: "14px" }}
-                  fontWeight={500}
-                  color="black"
-                >
-                  Password
-                </Text>
-                <Link
-                  href="#"
-                  fontSize="13px"
-                  color="blue.500"
-                  textDecoration="underline"
-                  onClick={onBack}
-                >
-                  Forgot Password?
-                </Link>
-              </Flex>
+                Email
+                <Box as="span" color="#991919"> *</Box>
+              </Text>
               <Flex
                 align="center"
                 border="1px solid"
-                borderColor="#E4E4E7"
+                borderColor={emailError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 px="12px"
                 h={{ base: "40px", md: "44px" }}
                 gap="8px"
               >
-                <LuKeyRound
-                  size={16}
-                  color="#9CA3AF"
-                />
                 <Input
-                  placeholder="Enter Password"
-                  type="password"
+                  placeholder="Enter an email"
+                  type="email"
                   border="none"
                   outline="none"
                   p="0"
@@ -414,15 +348,21 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                   color="black"
                   _placeholder={{ color: "gray.400" }}
                   focusRingColor="transparent"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Flex>
+              {emailError && (
+                  <Text fontSize="12px" color="red.500" mt="4px">
+                    Email not found or does not match this account.
+                  </Text>
+                )}
             </Box>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -430,14 +370,25 @@ const LoginStep = ({ onNext, onBack }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              justifyContent="center"
               px="20px"
               mt="4px"
               onClick={handleLogin}
+              position="relative"
             >
               Login
-              <LuArrowRight size={16} />
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
 
             <Flex
@@ -449,8 +400,9 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 borderColor="#E4E4E7"
               />
               <Text
-                fontSize={{ base: "14px", md: "17px" }}
-                color="gray.400"
+                fontSize={{ base: "12px", md: "14px" }}
+                color="black"
+                fontWeight="bold"
               >
                 or continue with
               </Text>
@@ -461,8 +413,9 @@ const LoginStep = ({ onNext, onBack }: Props) => {
             </Flex>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -470,21 +423,36 @@ const LoginStep = ({ onNext, onBack }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              position="relative"
               px="20px"
               onClick={handleGoogleLogin}
-            >
-              <HStack gap="10px">
-                <FaGoogle size={18} />
-                <span>Google</span>
-              </HStack>
-              <LuArrowRight size={16} />
+              >
+
+              <Box position="absolute" left="16px">
+                <FcGoogle size={18} />
+              </Box>
+
+              <Text textAlign="center" w="100%">
+                Google
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
               w="30vw"
               minW="320px"
@@ -492,16 +460,33 @@ const LoginStep = ({ onNext, onBack }: Props) => {
               borderRadius="6px"
               fontSize={{ base: "13px", md: "14px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5", 
+                _active: {
+                  bg: "black", 
+                  color: "white",
+                },
+              }}
+              position="relative"
               px="20px"
               onClick={handleMicrosoftLogin}
             >
-              <HStack gap="10px">
-                <RiMicrosoftLine size={18} />
-                <span>Microsoft</span>
-              </HStack>
-              <LuArrowRight size={16} />
+
+              <Box position="absolute" left="16px">
+                <Image src={microsoft} alt="Microsoft logo" boxSize="18px" />
+              </Box>
+
+              <Text textAlign="center" w="100%">
+                Microsoft
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
+
+
+
             </Button>
 
             <Text
@@ -513,11 +498,13 @@ const LoginStep = ({ onNext, onBack }: Props) => {
                 href="#"
                 color="#3182CE"
                 textDecoration="underline"
-                onClick={onNext}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigateToCreateAccount();
+                }}
               >
-                Create
-              </Link>{" "}
-              an Account
+                Create an account
+              </Link>
             </Text>
           </Flex>
         </Flex>

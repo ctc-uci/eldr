@@ -10,6 +10,8 @@ interface RoleSelectProps {
   disabled?: boolean;
 }
 
+const VALID_ROLES: User["role"][] = ["guest", "volunteer", "staff", "supervisor"];
+
 export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
   const { backend } = useBackendContext();
 
@@ -19,6 +21,12 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
   const handleChangeRole = useCallback(
     async (e: ChangeEvent<HTMLSelectElement>) => {
       const updatedRole = e.currentTarget.value;
+
+      if (!VALID_ROLES.includes(updatedRole as User["role"])) {
+        console.error("Error updating user role: Role is not valid");
+        return;
+      }
+
       setLoading(true);
 
       try {
@@ -26,12 +34,7 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
           role: updatedRole,
           firebaseUid: user.firebaseUid,
         });
-
-        if (updatedRole !== "user" && updatedRole !== "admin") {
-          throw Error("Role is not valid");
-        }
-
-        setRole(updatedRole);
+        setRole(updatedRole as User["role"]);
 
       } catch (error) {
         console.error("Error updating user role:", error);
@@ -40,20 +43,22 @@ export const RoleSelect = ({ user, disabled = true }: RoleSelectProps) => {
         setLoading(false);
       }
     },
-    [backend, role, user.firebaseUid]
+    [backend, user.firebaseUid]
   );
 
   return (
     <NativeSelect.Root
+      disabled={loading || disabled}
     >
       <NativeSelect.Field
         placeholder="Select role"
         value={role}
         onChange={handleChangeRole}
-        disabled={loading || disabled}
       >
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
+        <option value="guest">Guest</option>
+        <option value="volunteer">Volunteer</option>
+        <option value="staff">Staff</option>
+        <option value="supervisor">Supervisor</option>
       </NativeSelect.Field>
       <NativeSelect.Indicator />
     </NativeSelect.Root>

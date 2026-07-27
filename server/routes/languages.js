@@ -30,6 +30,25 @@ languagesRouter.get("/", async (_, res) => {
     }
 });
 
+// Get all languages with 1+ volunteers tied to them
+languagesRouter.get("/with-volunteers", async (_, res) => {
+    try {
+        const languages = await db.query(`
+            SELECT languages.* FROM languages
+            INNER JOIN volunteer_language ON languages.id = volunteer_language.language_id
+            GROUP BY languages.id
+            HAVING COUNT(volunteer_language.volunteer_id) > 0
+            ORDER BY languages.id ASC
+        `);
+
+        res.status(200).json(keysToCamel(languages));
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+
+
 // Get a language by ID
 languagesRouter.get("/:id", async (req, res) => {
     try {

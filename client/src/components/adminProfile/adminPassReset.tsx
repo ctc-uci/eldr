@@ -1,113 +1,58 @@
-import { 
-  Flex, 
-  Box, 
-  Text,
-  InputGroup,
-  Input, 
-  Icon,
-  VStack, 
+import {
+  Box,
   Button,
-  Link,
-  Image,
-  IconButton,
+  Field,
+  Flex,
   HStack,
+  Icon,
+  IconButton,
+  Image,
+  Input,
+  InputGroup,
+  Link,
   Separator,
-  Card,
-  CloseButton
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
-import { FaArrowRight, FaInstagram, FaRegEyeSlash, FaRegEye, FaLock } from "react-icons/fa";
+import {
+  FaArrowRight,
+  FaInfoCircle,
+  FaInstagram,
+  FaRegEye,
+  FaRegEyeSlash,
+} from "react-icons/fa";
 import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { HiOutlineKey } from "react-icons/hi";
 import { MdOutlineEmail } from "react-icons/md";
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import logo from "./ELDR_Logo.png"
-
-import { getAuth, confirmPasswordReset } from "firebase/auth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import logo from "./ELDR_Logo.png";
 
 export const AdminPassReset: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const oobCode = searchParams.get("oobCode");
+  const { state } = useLocation() as {
+    state: { email: string; from?: string } | null;
+  };
+
+  const email = state?.email ?? "";
+  const loginRoute = state?.from === "volunteer" ? "/volunteerLogin" : "/adminLogin";
+
+  const { backend } = useBackendContext();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+  const [mismatchError, setMismatchError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  const matching = (newPassword === confirmPassword);
-  const auth = getAuth();
-
-  const Popup = () => (
-    <Flex
-      position="fixed"
-      top="0"
-      left="0"
-      w="100vw"
-      h="100vh"
-      bg="rgba(0,0,0,0.4)"
-      align="center"
-      justify="center"
-      zIndex={9999}
-    >
-      <Card.Root
-        w="500px"
-        p={6}
-        borderRadius="md"
-        boxShadow="xl"
-      >
-        <Card.Header p={0}>
-          <HStack w="100%" align="center">
-            <HStack gap={2}>
-              {!resetSuccess && <Icon as={FaLock} />}
-              
-              <Text fontWeight="bold">
-                {resetSuccess
-                  ? "Password Confirmation"
-                  : "Password Reset Failed"}
-              </Text>
-            </HStack>
-
-            <CloseButton
-              ml="auto"
-              boxSize="20px"
-              onClick={() => setShowPopup(false)}
-              _hover={{ bg: "white" }}
-            />
-          </HStack>
-        </Card.Header>
-        <Card.Body px={1} py={5}>
-          <Text>
-            {resetSuccess
-              ? "Your password has been changed. Sign in using your updated credentials."
-              : "Please make sure your new password entries match and the reset link is valid."}
-          </Text>
-        </Card.Body>
-        <Card.Footer p={1}>
-          <Flex justify="flex-end" w="100%">
-            {resetSuccess && (
-              <Button
-                bg="#3182CE"
-                color="white"
-                onClick={() => {
-                  setShowPopup(false);
-                  navigate("/adminLogin");
-                }}
-              >
-                Return to Login
-              </Button>
-            )}
-          </Flex>
-        </Card.Footer>
-      </Card.Root>
-    </Flex>
-  );
+  const matching = newPassword === confirmPassword;
 
   return (
-    <Flex 
+    <Flex
       minH="100vh"
       w="100%"
       bg="white"
@@ -129,28 +74,21 @@ export const AdminPassReset: React.FC = () => {
         <Flex w="80vw" bg="#F6F6F6" h="70px" align="left" px="2%" py="1%">
           <Image src={logo} />
         </Flex>
-        
+
         <Flex flex="1" w="100%" bg="white">
           <VStack align="left" width="50%" px="5%" gap={1}>
             <Text fontWeight="bold" fontSize="30px" pt="15%">
               Community Counsel Password Manager
             </Text>
-            
             <Text mb={6} pt="10%">
               Enter your new password below, and confirm where prompted.
             </Text>
-
             <Text mb={6}>
               Recommended: minimum 8 characters with 1 special character.
             </Text>
-            
-            <Text fontWeight="bold" pt="10%">
-              Need help?
-            </Text>
-            <Text fontWeight="bold">
-              Visit our website
-            </Text>
-            <Link 
+            <Text fontWeight="bold" pt="10%">Need help?</Text>
+            <Text fontWeight="bold">Visit our website</Text>
+            <Link
               textDecoration="underline"
               color="#3182CE"
               bg="white"
@@ -159,7 +97,6 @@ export const AdminPassReset: React.FC = () => {
             >
               Community Counsel Website
             </Link>
-            
             <HStack pt="15%" align="left">
               <IconButton boxSize="20px" as={FiFacebook} variant="ghost"
                 onClick={() => window.open("https://www.facebook.com/ELDRCenter/photos/")}
@@ -178,143 +115,175 @@ export const AdminPassReset: React.FC = () => {
           <Separator orientation="vertical" />
 
           <VStack w="50%" bg="#FFFFFF" h="100%" align="left" justify="center" px="5%" py="10%">
-            <Box>
-              <Text fontWeight="bold" mb={2}>
-                New Password
-              </Text>
-            </Box>
-            
-            <Box w="80%" h="40px" mb={6}>
-              <InputGroup 
-                startElement={<HiOutlineKey />}
-                endElement={
-                  newPassword ? (
-                    <IconButton
-                      variant="ghost"
-                      boxSize="20px"
-                      onClick={() => setShowNewPassword(prev => !prev)}
-                      aria-label="Toggle password visibility"
-                      _hover={{ bg: "white" }}
-                    >
-                      {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                    </IconButton>
-                  ) : null
-                }
-              >
-                <Input 
-                  type={showNewPassword ? "text" : "password"}
-                  placeholder="Enter Password"
-                  variant="outline"
-                  borderColor="#E4E4E7"
-                  borderWidth="1px"
+            {resetSuccess ? (
+              <>
+                <Box
+                  bg="#F0FFF4"
+                  border="1px solid"
+                  borderColor="green.200"
                   borderRadius="md"
-                  _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                  css={{
-                    "&::-ms-reveal, &::-ms-clear": {
-                      display: "none",
-                    },
-                  }}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </InputGroup>
-            </Box>
+                  p={4}
+                  w="80%"
+                  mb={4}
+                >
+                  <HStack align="flex-start" gap={3}>
+                    <Icon as={FaInfoCircle} color="green.600" mt="2px" flexShrink={0} />
+                    <VStack align="left" gap={0}>
+                      <Text fontWeight="bold" color="green.700">Password updated.</Text>
+                      <Text color="green.700">
+                        Use your new credentials to log in to portal.
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Box>
 
-            <Box>
-              <Text fontWeight="bold" mb={2}>
-                Confirm Password
-              </Text>
-            </Box>
-            
-            <Box w="80%" h="40px" mb={6}>
-              <InputGroup 
-                startElement={<HiOutlineKey />}
-                endElement={
-                  confirmPassword ? (
-                    <IconButton
-                      variant="ghost"
-                      boxSize="20px"
-                      onClick={() => setShowConfirmPassword(prev => !prev)}
-                      aria-label="Toggle password visibility"
-                      _hover={{ bg: "white" }}
-                    >
-                      {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                    </IconButton>
-                  ) : null
-                }
-              >
-                <Input 
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Enter Password"
-                  variant="outline"
-                  borderColor="#E4E4E7"
-                  borderWidth="1px"
+                <Button
+                  position="relative"
+                  bg="#3182CE"
+                  color="white"
+                  w="80%"
+                  h="50px"
                   borderRadius="md"
-                  _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                  css={{
-                    "&::-ms-reveal, &::-ms-clear": {
-                      display: "none",
-                    },
-                  }}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </InputGroup>
-            </Box>
+                  _hover={{ bg: "#5797BD" }}
+                  mb={4}
+                  onClick={() => navigate(loginRoute)}
+                >
+                  Return to Login
+                  <Icon
+                    as={FaArrowRight}
+                    position="absolute"
+                    right="16px"
+                    top="50%"
+                    transform="translateY(-50%)"
+                  />
+                </Button>
 
-            <Button
-              position="relative"
-              variant="outline"
-              borderRadius="md"
-              background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
-              w="80%"
-              h="50px"
-              color="white"
-              disabled={!newPassword || !confirmPassword}
-              _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
-              mb={4}
-              onClick={async () => {
-                if (!matching || !oobCode) {
-                  setResetSuccess(false);
-                  setShowPopup(true);
-                  return;
-                }
+                <Text fontSize="sm" color="gray.600">
+                  Go back to{" "}
+                  <Link color="#3182CE" textDecoration="underline" href={loginRoute}>
+                    Login Portal
+                  </Link>
+                </Text>
+              </>
+            ) : (
+              <>
+                <Field.Root w="80%" mb={4}>
+                  <Field.Label fontWeight="bold">New Password</Field.Label>
+                  <InputGroup
+                    startElement={<HiOutlineKey />}
+                    endElement={
+                      newPassword ? (
+                        <IconButton
+                          variant="ghost"
+                          boxSize="20px"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          aria-label="Toggle password visibility"
+                          _hover={{ bg: "white" }}
+                        >
+                          {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                        </IconButton>
+                      ) : null
+                    }
+                  >
+                    <Input
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Enter Password"
+                      borderRadius="md"
+                      _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                      css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setMismatchError(false);
+                      }}
+                    />
+                  </InputGroup>
+                </Field.Root>
 
-                try {
-                  await confirmPasswordReset(auth, oobCode, newPassword);
-                  setResetSuccess(true);
-                  setShowPopup(true);
-                } catch (error) {
-                  setResetSuccess(false);
-                  setShowPopup(true);
-                }
-              }}
-            >
-              Continue
-              <Icon
-                as={FaArrowRight}
-                position="absolute"
-                right="16px"
-                top="50%"
-                transform="translateY(-50%)"
-              />
-            </Button>
+                <Field.Root invalid={mismatchError} w="80%" mb={4}>
+                  <Field.Label fontWeight="bold">Confirm Password</Field.Label>
+                  <InputGroup
+                    startElement={<HiOutlineKey />}
+                    endElement={
+                      confirmPassword ? (
+                        <IconButton
+                          variant="ghost"
+                          boxSize="20px"
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          aria-label="Toggle password visibility"
+                          _hover={{ bg: "white" }}
+                        >
+                          {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                        </IconButton>
+                      ) : null
+                    }
+                  >
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Enter Password"
+                      borderRadius="md"
+                      _placeholder={{ color: "#A1A1AA", opacity: 1 }}
+                      css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setMismatchError(false);
+                      }}
+                    />
+                  </InputGroup>
+                  <Field.ErrorText>Passwords do not match.</Field.ErrorText>
+                </Field.Root>
 
-            {showPopup && <Popup />}
+                <Field.Root invalid={submitError} w="80%" mb={4}>
+                  <Button
+                    position="relative"
+                    variant="outline"
+                    borderRadius="md"
+                    background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
+                    w="100%"
+                    h="50px"
+                    color="white"
+                    disabled={!newPassword || !confirmPassword}
+                    _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
+                    onClick={async () => {
+                      if (!matching) {
+                        setMismatchError(true);
+                        return;
+                      }
+                      try {
+                        await backend.put("/users/update-password", {
+                          email,
+                          newPassword,
+                        });
+                        setResetSuccess(true);
+                      } catch {
+                        setSubmitError(true);
+                      }
+                    }}
+                  >
+                    Continue
+                    <Icon
+                      as={FaArrowRight}
+                      position="absolute"
+                      right="16px"
+                      top="50%"
+                      transform="translateY(-50%)"
+                    />
+                  </Button>
+                  <Field.ErrorText>Failed to update password. Please try again.</Field.ErrorText>
+                </Field.Root>
 
-            <Text fontSize="sm" color="gray.600">
-              Go back to{" "}
-              <Link 
-                color="#3182CE" 
-                textDecoration="underline"
-                href="/adminLogin"
-              >
-                Login Portal
-              </Link>
-            </Text>
+                <Text fontSize="sm" color="gray.600">
+                  Go back to{" "}
+                  <Link color="#3182CE" textDecoration="underline" href={loginRoute}>
+                    Login Portal
+                  </Link>
+                </Text>
+              </>
+            )}
           </VStack>
         </Flex>
-        
+
         <Flex w="80vw" bg="#F6F6F6" h="70px" />
       </VStack>
     </Flex>

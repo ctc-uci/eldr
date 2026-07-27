@@ -1,4 +1,5 @@
-import { Box, VStack } from "@chakra-ui/react";
+import { Box, Input, Text, VStack } from "@chakra-ui/react";
+import { useEffect } from "react";
 
 import { Control, RichTextEditor } from "@/components/ui/rich-text-editor";
 import Subscript from "@tiptap/extension-subscript";
@@ -8,7 +9,13 @@ import { TextStyleKit } from "@tiptap/extension-text-style";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-export const NewTemplateSection = ({ templateContent, setTemplateContent }) => {
+export const NewTemplateSection = ({
+  templateSubject,
+  setTemplateSubject,
+  templateContent,
+  setTemplateContent,
+  isEditable = true,
+}) => {
   // Rich text editor setup
   const editor = useEditor({
     extensions: [
@@ -19,12 +26,28 @@ export const NewTemplateSection = ({ templateContent, setTemplateContent }) => {
       TextStyleKit,
     ],
     content: templateContent || "<p></p>",
+    editable: isEditable,
     onUpdate: ({ editor }) => {
       setTemplateContent(editor.getHTML());
     },
     shouldRerenderOnTransaction: true,
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.setEditable(isEditable);
+  }, [editor, isEditable]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const nextContent = templateContent || "<p></p>";
+    if (editor.getHTML() !== nextContent) {
+      editor.commands.setContent(nextContent, false);
+    }
+  }, [editor, templateContent]);
 
   if (!editor) return null;
 
@@ -42,12 +65,30 @@ export const NewTemplateSection = ({ templateContent, setTemplateContent }) => {
         flex="1"
         minH={0}
       >
+          <VStack align="stretch" spacing={2}>
+            <Text fontSize="14px" fontWeight="600" color="#18181B">
+              Subject line
+            </Text>
+            <Input
+              value={templateSubject}
+              onChange={(e) => setTemplateSubject(e.target.value)}
+              placeholder="Enter subject line"
+              readOnly={!isEditable}
+              cursor={isEditable ? "text" : "default"}
+              h="40px"
+              borderColor="#E4E4E7"
+              borderWidth="1px"
+              borderRadius="5px"
+              bg="white"
+              _readOnly={{ bg: "white", opacity: 1, cursor: "default" }}
+              _focusVisible={{ borderColor: "#487C9E", boxShadow: "0 0 0 1px #487C9E" }}
+            />
+          </VStack>
         <Box
           bg="white"
           border="1px solid"
-          borderColor="#EFEFF1"
-          borderRadius="5px"
-          boxShadow="sm"
+          borderColor="#E4E4E7"
+          borderRadius="8px"
           overflow="hidden"
           flex="1"
           display="flex"
@@ -63,29 +104,32 @@ export const NewTemplateSection = ({ templateContent, setTemplateContent }) => {
               minHeight: 0,
             }}
           >
-            <RichTextEditor.Toolbar
-              style={{ borderBottom: "1px solid #EFEFF1" }}
-            >
-              <RichTextEditor.ControlGroup>
-                <Control.FontFamily />
-                <Control.FontSize />
-              </RichTextEditor.ControlGroup>
-              <RichTextEditor.ControlGroup>
-                <Control.Bold />
-                <Control.Italic />
-                <Control.Underline />
-                <Control.Strikethrough />
-              </RichTextEditor.ControlGroup>
-              <RichTextEditor.ControlGroup>
-                <Control.H1 />
-                <Control.H2 />
-                <Control.H3 />
-                <Control.H4 />
-              </RichTextEditor.ControlGroup>
-            </RichTextEditor.Toolbar>
+            {isEditable && (
+              <RichTextEditor.Toolbar
+                style={{ borderBottom: "1px solid #EFEFF1" }}
+              >
+                <RichTextEditor.ControlGroup>
+                  <Control.FontFamily />
+                  <Control.FontSize />
+                </RichTextEditor.ControlGroup>
+                <RichTextEditor.ControlGroup>
+                  <Control.Bold />
+                  <Control.Italic />
+                  <Control.Underline />
+                  <Control.Strikethrough />
+                </RichTextEditor.ControlGroup>
+                <RichTextEditor.ControlGroup>
+                  <Control.H1 />
+                  <Control.H2 />
+                  <Control.H3 />
+                  <Control.H4 />
+                </RichTextEditor.ControlGroup>
+              </RichTextEditor.Toolbar>
+            )}
             <Box
               flex="1"
               minH={0}
+              cursor={isEditable ? "text" : "default"}
             >
               <RichTextEditor.Content
                 style={{ height: "100%", minHeight: 0 }}

@@ -1,4 +1,4 @@
-CREATE TYPE PROFICIENCY_LEVEL AS ENUM ('basic', 'conversational', 'fluent', 'native');
+CREATE TYPE PROFICIENCY_LEVEL AS ENUM ('proficient', 'professional', 'native/fluent');
 
 CREATE TABLE IF NOT EXISTS public.languages
 (

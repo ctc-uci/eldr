@@ -1,7 +1,6 @@
-import { Flex, Text, Icon } from "@chakra-ui/react";
-import { FaGripLines } from "react-icons/fa";
+import { Flex, Text } from "@chakra-ui/react";
 
-export const TemplateCard = ({ name, onClick }) => (
+export const TemplateCard = ({ name, onClick, onContextMenu }) => (
   <Flex
     align="center"
     bg="white"
@@ -12,15 +11,15 @@ export const TemplateCard = ({ name, onClick }) => (
     py={4}
     justify="space-between"
     cursor="pointer"
-    _hover={{ bg: "gray.50" }}
+    _hover={{ bg: "#E4E4E7" }}
     onClick={onClick}
+    onContextMenu={(e) => {
+      e.preventDefault();
+      onContextMenu?.(e);
+    }}
   >
-    <Text
-      fontWeight="medium"
-      fontSize="lg"
-    >
+    <Text fontWeight="medium" fontSize="lg">
       {name}
     </Text>
-    <Icon as={FaGripLines} boxSize={5} color="gray.500" />
   </Flex>
 );

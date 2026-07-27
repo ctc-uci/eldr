@@ -6,5 +6,8 @@ CREATE TABLE admins (
   last_name TEXT NOT NULL,
   email TEXT NOT NULL,
   calendar_email TEXT,
+  is_supervisor BOOLEAN NOT NULL DEFAULT FALSE,
+  phone_number TEXT,
+  start_date DATE,
   FOREIGN KEY (id) REFERENCES users(id)
 );
