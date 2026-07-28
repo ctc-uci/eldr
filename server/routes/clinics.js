@@ -1,8 +1,16 @@
+import {
+  addAttendee,
+  createCalendarEvent,
+  deleteCalendarEvent,
+  removeAttendee,
+  updateCalendarEvent,
+} from "@/common/calendar";
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
-import { sendEmail } from "./emailService.js";
+
 import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
+import { sendEmail } from "./emailService.js";
 
 export const clinicsRouter = Router();
 
@@ -19,6 +27,43 @@ async function syncClinicAttendeesFromRegistrations(clinicId) {
      WHERE id = $1`,
     [clinicId]
   );
+}
+
+/** Canonical account email for a volunteer (volunteers.id === users.id). */
+async function getUserEmail(volunteerId) {
+  const rows = await db.query("SELECT email FROM users WHERE id = $1", [
+    volunteerId,
+  ]);
+  return rows[0]?.email ?? null;
+}
+
+async function getRegisteredUserEmails(clinicId) {
+  const rows = await db.query(
+    `SELECT u.email
+     FROM clinic_registration cr
+     JOIN users u ON u.id = cr.volunteer_id
+     WHERE cr.clinic_id = $1`,
+    [clinicId]
+  );
+  return rows.map((row) => row.email).filter(Boolean);
+}
+
+/**
+ * Persists a newly created Google Calendar event id on the clinic row.
+ * Best-effort: a failure here must never fail the enclosing request.
+ */
+async function saveGoogleEventId(clinicId, googleEventId) {
+  try {
+    await db.query("UPDATE clinics SET google_event_id = $1 WHERE id = $2", [
+      googleEventId,
+      clinicId,
+    ]);
+  } catch (err) {
+    console.error(
+      `[calendar] failed to persist google_event_id clinicId=${clinicId}`,
+      err
+    );
+  }
 }
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
@@ -52,7 +97,8 @@ clinicsRouter.post("/", async (req, res) => {
 
     if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+        message:
+          "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
       });
     }
 
@@ -85,7 +131,16 @@ clinicsRouter.post("/", async (req, res) => {
         type,
       ]
     );
-    res.status(201).json(keysToCamel(clinic[0]));
+
+    // Best-effort Google Calendar sync: the clinic is created even if this fails.
+    const created = clinic[0];
+    const googleEventId = await createCalendarEvent(created);
+    if (googleEventId) {
+      await saveGoogleEventId(created.id, googleEventId);
+      created.google_event_id = googleEventId;
+    }
+
+    res.status(201).json(keysToCamel(created));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -101,8 +156,6 @@ clinicsRouter.get("/", async (req, res) => {
   }
 });
 
-
-
 // GET: list all clinics based on filters (type, language, location, occupation)
 // type - clinics areas of practice / areas of practice table
 // language - clinic languages / languages table
@@ -114,16 +167,29 @@ clinicsRouter.get("/search", async (req, res) => {
     const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
 
     // parse comma-separated strings into arrays for proper SQL querying
-    const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
-    const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
-    const locationsRaw = locations ? locations.split(",").map((s) => s.trim()).filter(Boolean) : [];
-    const invalidLocations = locationsRaw.filter((t) => !allowedLocationTypes.includes(t));
+    const areaIdsArr = areaOfPracticeIds
+      ? areaOfPracticeIds.split(",").map(Number)
+      : null;
+    const languageIdsArr = languageIds
+      ? languageIds.split(",").map(Number)
+      : null;
+    const locationsRaw = locations
+      ? locations
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    const invalidLocations = locationsRaw.filter(
+      (t) => !allowedLocationTypes.includes(t)
+    );
     if (invalidLocations.length > 0) {
       return res.status(400).json({
-        message: "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
+        message:
+          "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
       });
     }
-    const locationsArr = locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
+    const locationsArr =
+      locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
     const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
 
     // IS NULL - if no filters provided for a category, ignore that category in filtering
@@ -143,12 +209,7 @@ clinicsRouter.get("/search", async (req, res) => {
           SELECT 1 FROM clinic_roles CR
           WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])
       ))`,
-      [
-        areaIdsArr,
-        languageIdsArr,
-        locationsArr,
-        roleIdsArr,
-      ]
+      [areaIdsArr, languageIdsArr, locationsArr, roleIdsArr]
     );
     res.status(200).json(keysToCamel(clinics));
   } catch (err) {
@@ -241,7 +302,8 @@ clinicsRouter.put("/:id", async (req, res) => {
 
     if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+        message:
+          "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
       });
     }
 
@@ -294,6 +356,37 @@ clinicsRouter.put("/:id", async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    // Best-effort Google Calendar sync; self-heals when the event is missing
+    // (creation failed earlier, pre-existing clinic, or deleted from Google).
+    try {
+      const updated = clinic[0];
+      let needsCreate = !updated.google_event_id;
+      if (updated.google_event_id) {
+        const result = await updateCalendarEvent(
+          updated.google_event_id,
+          updated
+        );
+        needsCreate = result === "not_found";
+      }
+      if (needsCreate) {
+        const attendeeEmails = await getRegisteredUserEmails(id);
+        const googleEventId = await createCalendarEvent(
+          updated,
+          attendeeEmails
+        );
+        if (googleEventId) {
+          await saveGoogleEventId(updated.id, googleEventId);
+          updated.google_event_id = googleEventId;
+        }
+      }
+    } catch (calendarErr) {
+      console.error(
+        `[calendar] sync on clinic update failed clinicId=${id}`,
+        calendarErr
+      );
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -311,6 +404,11 @@ clinicsRouter.delete("/:id", async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    if (clinic[0].google_event_id) {
+      await deleteCalendarEvent(clinic[0].google_event_id);
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -417,6 +515,31 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
 
     await syncClinicAttendeesFromRegistrations(clinicId);
 
+    // Invite the volunteer to the clinic's Google Calendar event (best-effort).
+    // data is empty when ON CONFLICT made this a no-op — skip to avoid re-inviting.
+    if (data.length > 0) {
+      try {
+        const clinicRows = await db.query(
+          "SELECT google_event_id FROM clinics WHERE id = $1",
+          [clinicId]
+        );
+        const email = await getUserEmail(volunteerId);
+        const googleEventId = clinicRows[0]?.google_event_id;
+        if (googleEventId && email) {
+          await addAttendee(googleEventId, email);
+        } else {
+          console.warn(
+            `[calendar] skipping invite clinicId=${clinicId} volunteerId=${volunteerId} hasEvent=${Boolean(googleEventId)} hasEmail=${Boolean(email)}`
+          );
+        }
+      } catch (inviteError) {
+        console.error(
+          `[calendar] add attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          inviteError
+        );
+      }
+    }
+
     res.status(200).json(keysToCamel(data));
 
     // Confirmation email: registration should succeed even if email fails.
@@ -512,6 +635,23 @@ clinicsRouter.delete(
       }
 
       await syncClinicAttendeesFromRegistrations(clinicId);
+
+      // Remove the volunteer from the clinic's Google Calendar event (best-effort).
+      try {
+        const clinicRows = await db.query(
+          "SELECT google_event_id FROM clinics WHERE id = $1",
+          [clinicId]
+        );
+        const email = await getUserEmail(volunteerId);
+        if (clinicRows[0]?.google_event_id && email) {
+          await removeAttendee(clinicRows[0].google_event_id, email);
+        }
+      } catch (calendarErr) {
+        console.error(
+          `[calendar] remove attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          calendarErr
+        );
+      }
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
