@@ -1,4 +1,10 @@
-import { sendCalendarInvite } from "@/common/calendar";
+import {
+  addAttendee,
+  createCalendarEvent,
+  deleteCalendarEvent,
+  removeAttendee,
+  updateCalendarEvent,
+} from "@/common/calendar";
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
@@ -21,6 +27,43 @@ async function syncClinicAttendeesFromRegistrations(clinicId) {
      WHERE id = $1`,
     [clinicId]
   );
+}
+
+/** Canonical account email for a volunteer (volunteers.id === users.id). */
+async function getUserEmail(volunteerId) {
+  const rows = await db.query("SELECT email FROM users WHERE id = $1", [
+    volunteerId,
+  ]);
+  return rows[0]?.email ?? null;
+}
+
+async function getRegisteredUserEmails(clinicId) {
+  const rows = await db.query(
+    `SELECT u.email
+     FROM clinic_registration cr
+     JOIN users u ON u.id = cr.volunteer_id
+     WHERE cr.clinic_id = $1`,
+    [clinicId]
+  );
+  return rows.map((row) => row.email).filter(Boolean);
+}
+
+/**
+ * Persists a newly created Google Calendar event id on the clinic row.
+ * Best-effort: a failure here must never fail the enclosing request.
+ */
+async function saveGoogleEventId(clinicId, googleEventId) {
+  try {
+    await db.query("UPDATE clinics SET google_event_id = $1 WHERE id = $2", [
+      googleEventId,
+      clinicId,
+    ]);
+  } catch (err) {
+    console.error(
+      `[calendar] failed to persist google_event_id clinicId=${clinicId}`,
+      err
+    );
+  }
 }
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
@@ -88,7 +131,16 @@ clinicsRouter.post("/", async (req, res) => {
         type,
       ]
     );
-    res.status(201).json(keysToCamel(clinic[0]));
+
+    // Best-effort Google Calendar sync: the clinic is created even if this fails.
+    const created = clinic[0];
+    const googleEventId = await createCalendarEvent(created);
+    if (googleEventId) {
+      await saveGoogleEventId(created.id, googleEventId);
+      created.google_event_id = googleEventId;
+    }
+
+    res.status(201).json(keysToCamel(created));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -304,6 +356,37 @@ clinicsRouter.put("/:id", async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    // Best-effort Google Calendar sync; self-heals when the event is missing
+    // (creation failed earlier, pre-existing clinic, or deleted from Google).
+    try {
+      const updated = clinic[0];
+      let needsCreate = !updated.google_event_id;
+      if (updated.google_event_id) {
+        const result = await updateCalendarEvent(
+          updated.google_event_id,
+          updated
+        );
+        needsCreate = result === "not_found";
+      }
+      if (needsCreate) {
+        const attendeeEmails = await getRegisteredUserEmails(id);
+        const googleEventId = await createCalendarEvent(
+          updated,
+          attendeeEmails
+        );
+        if (googleEventId) {
+          await saveGoogleEventId(updated.id, googleEventId);
+          updated.google_event_id = googleEventId;
+        }
+      }
+    } catch (calendarErr) {
+      console.error(
+        `[calendar] sync on clinic update failed clinicId=${id}`,
+        calendarErr
+      );
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -321,6 +404,11 @@ clinicsRouter.delete("/:id", async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    if (clinic[0].google_event_id) {
+      await deleteCalendarEvent(clinic[0].google_event_id);
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -427,23 +515,29 @@ clinicsRouter.post("/:clinicId/registrations", async (req, res) => {
 
     await syncClinicAttendeesFromRegistrations(clinicId);
 
-    // Fetch volunteer email and clinic details for the calendar invite
-    try {
-      const volunteer = await db.query(
-        "SELECT email FROM volunteers WHERE id = $1",
-        [volunteerId]
-      );
-      const clinic = await db.query("SELECT * FROM clinics WHERE id = $1", [
-        clinicId,
-      ]);
-
-      if (volunteer.length > 0 && clinic.length > 0) {
-        sendCalendarInvite(volunteer[0].email, clinic[0]).catch((err) => {
-          console.error("Failed to send calendar invite:", err);
-        });
+    // Invite the volunteer to the clinic's Google Calendar event (best-effort).
+    // data is empty when ON CONFLICT made this a no-op — skip to avoid re-inviting.
+    if (data.length > 0) {
+      try {
+        const clinicRows = await db.query(
+          "SELECT google_event_id FROM clinics WHERE id = $1",
+          [clinicId]
+        );
+        const email = await getUserEmail(volunteerId);
+        const googleEventId = clinicRows[0]?.google_event_id;
+        if (googleEventId && email) {
+          await addAttendee(googleEventId, email);
+        } else {
+          console.warn(
+            `[calendar] skipping invite clinicId=${clinicId} volunteerId=${volunteerId} hasEvent=${Boolean(googleEventId)} hasEmail=${Boolean(email)}`
+          );
+        }
+      } catch (inviteError) {
+        console.error(
+          `[calendar] add attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          inviteError
+        );
       }
-    } catch (inviteError) {
-      console.error("Error fetching data for calendar invite:", inviteError);
     }
 
     res.status(200).json(keysToCamel(data));
@@ -541,6 +635,23 @@ clinicsRouter.delete(
       }
 
       await syncClinicAttendeesFromRegistrations(clinicId);
+
+      // Remove the volunteer from the clinic's Google Calendar event (best-effort).
+      try {
+        const clinicRows = await db.query(
+          "SELECT google_event_id FROM clinics WHERE id = $1",
+          [clinicId]
+        );
+        const email = await getUserEmail(volunteerId);
+        if (clinicRows[0]?.google_event_id && email) {
+          await removeAttendee(clinicRows[0].google_event_id, email);
+        }
+      } catch (calendarErr) {
+        console.error(
+          `[calendar] remove attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          calendarErr
+        );
+      }
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
