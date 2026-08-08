@@ -17,12 +17,18 @@ import {
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuCheck, LuLock, LuPencil, LuSave, LuUser } from "react-icons/lu";
+import {
+  formatPhoneNumber,
+  isCompletePhoneNumber,
+  phoneNumberForSave,
+} from "@/utils/phoneNumber";
+import { LuCheck, LuLock, LuPencil, LuTriangleAlert, LuSave, LuUser } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 type AdminProfileData = {
   firstName: string;
   lastName: string;
+  phoneNumber: string;
   email: string;
   roleLabel: string;
 };
@@ -30,6 +36,7 @@ type AdminProfileData = {
 const initialProfile: AdminProfileData = {
   firstName: "",
   lastName: "",
+  phoneNumber: "",
   email: "",
   roleLabel: "",
 };
@@ -92,10 +99,19 @@ export const AdminProfile = () => {
     const save = async () => {
       if (!draft || !adminId || !currentUser?.uid) return;
 
+      const phoneDigits = draft.phoneNumber.replace(/\D/g, "");
+      if (phoneDigits.length > 0 && !isCompletePhoneNumber(draft.phoneNumber)) {
+        setErrorMessage("Enter a valid 10-digit phone number (e.g. 621-438-2991).");
+        return;
+      }
+
+      const savedPhone = phoneNumberForSave(draft.phoneNumber);
+
       try {
         await backend.put(`/admins/${adminId}`, {
           firstName: draft.firstName,
           lastName: draft.lastName,
+          phoneNumber: savedPhone,
           email: draft.email,
           calendarEmail: draft.email,
         });
@@ -105,7 +121,7 @@ export const AdminProfile = () => {
           firebaseUid: currentUser.uid,
         });
 
-        setProfile(draft);
+        setProfile({ ...draft, phoneNumber: savedPhone ?? "" });
         setDraft(null);
         setIsEditing(false);
         setShowUpdated(true);
@@ -175,6 +191,7 @@ export const AdminProfile = () => {
         setProfile({
           firstName,
           lastName,
+          phoneNumber: formatPhoneNumber(String(adminRow.phoneNumber ?? "")),
           email: adminRow.email ?? userRow.email ?? "",
           roleLabel: staffRoleLabel(rawRole, isSupervisor),
         });
@@ -201,7 +218,7 @@ export const AdminProfile = () => {
 
   return (
     <Box flex="1" minH="100vh" bg="white" px={{ base: 6, md: 20 }} py={{ base: 6, md: 8 }}>
-        <Heading fontSize="18px" fontWeight={700} color="gray.900" mb={4}>
+        <Heading fontSize="24px" fontWeight={600} color="gray.900" mb={4}>
           Account Management
         </Heading>
         {isLoading ? (
@@ -218,68 +235,72 @@ export const AdminProfile = () => {
         <Tabs.Root
           value={activeTab}
           onValueChange={(e) => setActiveTab(e.value as "profile" | "security")}
-          fitted
-          variant="outline" // doesn't align with documentation & hi-fi for some reason...
+          variant="plain"
         >
           <Tabs.List
-            borderWidth="1px"
+            alignItems="flex-end"
+            gap={0}
+            borderBottom="1px solid"
             borderColor="gray.200"
-            borderRadius="6px"
-            overflow="hidden"
             mb={10}
-            maxW="420px"
+            maxW="fit-content"
             px={0}
             h="auto"
+            bg="transparent"
           >
             <Tabs.Trigger
               value="profile"
-              flex="1"
-              py={2}
+              py={2.5}
               px={4}
-              borderRight="1px solid"
-              borderRightColor="gray.200"
-              bg={activeTab === "profile" ? "white" : "gray.50"}
-              borderBottom="2px solid"
-              borderBottomColor={
-                activeTab === "profile" ? "gray.900" : "transparent"
-              }
-              _selected={{ bg: "white", borderBottomColor: "gray.900" }}
-              _hover={{ bg: "gray.100" }}
+              borderRadius="6px 6px 0 0"
+              border="none"
+              bg="transparent"
+              color="gray.500"
+              fontWeight={500}
+              _hover={{ bg: "gray.50", color: "gray.600" }}
+              _selected={{
+                bg: "white",
+                color: "gray.900",
+                fontWeight: 500,
+                border: "1px solid",
+                borderColor: "gray.200",
+                borderBottom: "1px solid",
+                borderBottomColor: "white",
+                mb: "-1px",
+                _hover: { bg: "white", color: "gray.900" },
+              }}
             >
               <HStack gap={2}>
                 <LuUser size={16} />
-                <Text
-                  fontSize="13px"
-                  fontWeight={activeTab === "profile" ? 600 : 500}
-                  color="gray.700"
-                >
-                  Profile Information
-                </Text>
+                <Text fontSize="16px">Profile Information</Text>
               </HStack>
             </Tabs.Trigger>
 
             <Tabs.Trigger
               value="security"
-              flex="1"
-              py={2}
+              py={2.5}
               px={4}
-              bg={activeTab === "security" ? "white" : "gray.50"}
-              borderBottom="2px solid"
-              borderBottomColor={
-                activeTab === "security" ? "gray.900" : "transparent"
-              }
-              _selected={{ bg: "white", borderBottomColor: "gray.900" }}
-              _hover={{ bg: "gray.100" }}
+              borderRadius="6px 6px 0 0"
+              border="none"
+              bg="transparent"
+              color="gray.500"
+              fontWeight={500}
+              _hover={{ bg: "gray.50", color: "gray.600" }}
+              _selected={{
+                bg: "white",
+                color: "gray.900",
+                fontWeight: 500,
+                border: "1px solid",
+                borderColor: "gray.200",
+                borderBottom: "1px solid",
+                borderBottomColor: "white",
+                mb: "-1px",
+                _hover: { bg: "white", color: "gray.900" },
+              }}
             >
               <HStack gap={2}>
                 <LuLock size={16} />
-                <Text
-                  fontSize="13px"
-                  fontWeight={activeTab === "security" ? 600 : 500}
-                  color="gray.700"
-                >
-                  Security
-                </Text>
+                <Text fontSize="16px">Security</Text>
               </HStack>
             </Tabs.Trigger>
           </Tabs.List>
@@ -289,13 +310,13 @@ export const AdminProfile = () => {
           <VStack align="stretch" gap={8}>
             <Flex align="center" justify="space-between">
               <HStack gap={3}>
-                <Text fontSize="18px" fontWeight={700} color="gray.900">
+                <Text fontSize="20px" fontWeight={600} color="gray.900">
                   Profile Information
                 </Text>
                 {isEditing ? (
                   <Badge
                     px={2}
-                    py={0.5}
+                    py={2}
                     bg="yellow.100"
                     color="yellow.900"
                     border="1px solid"
@@ -305,7 +326,7 @@ export const AdminProfile = () => {
                     lineHeight="1"
                   >
                     <HStack gap={1}>
-                      <LuPencil size={14} />
+                      <LuTriangleAlert size={14} />
                       <Text fontSize="12px" fontWeight={600}>
                         Edit Mode
                       </Text>
@@ -315,7 +336,7 @@ export const AdminProfile = () => {
                 {!isEditing && showUpdated ? (
                   <Badge
                     px={2}
-                    py={0.5}
+                    py={2}
                     bg="green.100"
                     color="green.800"
                     border="1px solid"
@@ -374,8 +395,8 @@ export const AdminProfile = () => {
                   color="white"
                   _hover={{ bg: editBlue }}
                   borderRadius="4px"
-                  h="36px"
-                  px={6}
+                  px={4}
+                  py={4}
                   onClick={startEdit}
                 >
                   <HStack gap={2}>
@@ -391,9 +412,9 @@ export const AdminProfile = () => {
             <Box>
               <SimpleGrid columns={{ base: 1, md: 3 }} gapY={6} gapX={10}>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">First Name</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">First Name</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.firstName}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.firstName}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -410,9 +431,9 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Last Name</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Last Name</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.lastName}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.lastName}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -429,8 +450,32 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Role</Field.Label>
-                  <Text fontSize="13px" color="gray.900">{profile.roleLabel}</Text>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Phone Number</Field.Label>
+                  {readOnly ? (
+                    <Text fontSize="14px" color="gray.900">
+                      {display.phoneNumber || "—"}
+                    </Text>
+                  ) : (
+                    <Input
+                      size="sm"
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="000-000-0000"
+                      maxLength={12}
+                      value={display.phoneNumber}
+                      onChange={(e) => {
+                        if (!draft) return;
+                        setDraft({
+                          ...draft,
+                          phoneNumber: formatPhoneNumber(e.target.value),
+                        });
+                      }}
+                      bg="white"
+                      borderColor="gray.200"
+                      borderRadius="4px"
+                      _focus={{ boxShadow: "none", borderColor: "gray.300" }}
+                    />
+                  )}
                 </Field.Root>
               </SimpleGrid>
 
@@ -441,9 +486,9 @@ export const AdminProfile = () => {
                 mt={10}
               >
                 <Field.Root>
-                  <Field.Label fontSize="12px" color="gray.600" fontWeight="bold">Email</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Email</Field.Label>
                   {readOnly ? (
-                    <Text fontSize="13px" color="gray.900">{display.email}</Text>
+                    <Text fontSize="14px" color="gray.900">{display.email}</Text>
                   ) : (
                     <Input
                       size="sm"
@@ -460,11 +505,15 @@ export const AdminProfile = () => {
                     />
                   )}
                 </Field.Root>
+                <Field.Root>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Role</Field.Label>
+                  <Text fontSize="14px" color="gray.900">{profile.roleLabel}</Text>
+                </Field.Root>
               </SimpleGrid>
             </Box>
 
             <Box mt={12}>
-              <Text fontSize="16px" fontWeight={700} color="gray.900" mb={6}>
+              <Text fontSize="20px" fontWeight={600} color="gray.900" mb={6}>
                 Security
               </Text>
               <Button
@@ -487,7 +536,7 @@ export const AdminProfile = () => {
           </VStack>
         ) : (
           <Box>
-            <Text fontSize="16px" fontWeight={700} color="gray.900" mb={6}>
+            <Text fontSize="20px" fontWeight={600} color="gray.900" mb={6}>
               Security
             </Text>
             <Button

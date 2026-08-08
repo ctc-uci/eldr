@@ -1,9 +1,71 @@
+import {
+  addAttendee,
+  createCalendarEvent,
+  deleteCalendarEvent,
+  removeAttendee,
+  updateCalendarEvent,
+} from "@/common/calendar";
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
+import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
+import { sendEmail } from "./emailService.js";
+
 export const clinicsRouter = Router();
+
+/**
+ * Keeps `clinics.attendees` equal to the number of rows in `clinic_registration`
+ * for this clinic (source of truth for registration count in the UI).
+ */
+async function syncClinicAttendeesFromRegistrations(clinicId) {
+  await db.query(
+    `UPDATE clinics
+     SET attendees = (
+       SELECT COUNT(*)::int FROM clinic_registration WHERE clinic_id = $1
+     )
+     WHERE id = $1`,
+    [clinicId]
+  );
+}
+
+/** Canonical account email for a volunteer (volunteers.id === users.id). */
+async function getUserEmail(volunteerId) {
+  const rows = await db.query("SELECT email FROM users WHERE id = $1", [
+    volunteerId,
+  ]);
+  return rows[0]?.email ?? null;
+}
+
+async function getRegisteredUserEmails(clinicId) {
+  const rows = await db.query(
+    `SELECT u.email
+     FROM clinic_registration cr
+     JOIN users u ON u.id = cr.volunteer_id
+     WHERE cr.clinic_id = $1`,
+    [clinicId]
+  );
+  return rows.map((row) => row.email).filter(Boolean);
+}
+
+/**
+ * Persists a newly created Google Calendar event id on the clinic row.
+ * Best-effort: a failure here must never fail the enclosing request.
+ */
+async function saveGoogleEventId(clinicId, googleEventId) {
+  try {
+    await db.query("UPDATE clinics SET google_event_id = $1 WHERE id = $2", [
+      googleEventId,
+      clinicId,
+    ]);
+  } catch (err) {
+    console.error(
+      `[calendar] failed to persist google_event_id clinicId=${clinicId}`,
+      err
+    );
+  }
+}
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
 const allowedClinicTypes = [
@@ -21,7 +83,6 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -37,7 +98,8 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
 
     if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+        message:
+          "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
       });
     }
 
@@ -49,15 +111,14 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
     }
 
     const clinic = await db.query(
-      `INSERT INTO clinics (name, description, start_time, end_time, date, attendees, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      `INSERT INTO clinics (name, description, start_time, end_time, date, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
@@ -71,7 +132,16 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
         type,
       ]
     );
-    res.status(201).json(keysToCamel(clinic[0]));
+
+    // Best-effort Google Calendar sync: the clinic is created even if this fails.
+    const created = clinic[0];
+    const googleEventId = await createCalendarEvent(created);
+    if (googleEventId) {
+      await saveGoogleEventId(created.id, googleEventId);
+      created.google_event_id = googleEventId;
+    }
+
+    res.status(201).json(keysToCamel(created));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -87,8 +157,6 @@ clinicsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-
-
 // GET: list all clinics based on filters (type, language, location, occupation)
 // type - clinics areas of practice / areas of practice table
 // language - clinic languages / languages table
@@ -100,16 +168,29 @@ clinicsRouter.get("/search", verifyRole("volunteer"), async (req, res) => {
     const { areaOfPracticeIds, languageIds, locations, roleIds } = req.query;
 
     // parse comma-separated strings into arrays for proper SQL querying
-    const areaIdsArr = areaOfPracticeIds ? areaOfPracticeIds.split(",").map(Number) : null;
-    const languageIdsArr = languageIds ? languageIds.split(",").map(Number) : null;
-    const locationsRaw = locations ? locations.split(",").map((s) => s.trim()).filter(Boolean) : [];
-    const invalidLocations = locationsRaw.filter((t) => !allowedLocationTypes.includes(t));
+    const areaIdsArr = areaOfPracticeIds
+      ? areaOfPracticeIds.split(",").map(Number)
+      : null;
+    const languageIdsArr = languageIds
+      ? languageIds.split(",").map(Number)
+      : null;
+    const locationsRaw = locations
+      ? locations
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    const invalidLocations = locationsRaw.filter(
+      (t) => !allowedLocationTypes.includes(t)
+    );
     if (invalidLocations.length > 0) {
       return res.status(400).json({
-        message: "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
+        message:
+          "Invalid locations. Each value must be exactly: in-person, hybrid, or online.",
       });
     }
-    const locationsArr = locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
+    const locationsArr =
+      locationsRaw.length > 0 ? [...new Set(locationsRaw)] : null;
     const roleIdsArr = roleIds ? roleIds.split(",").map(Number) : null;
 
     // IS NULL - if no filters provided for a category, ignore that category in filtering
@@ -129,16 +210,57 @@ clinicsRouter.get("/search", verifyRole("volunteer"), async (req, res) => {
           SELECT 1 FROM clinic_roles CR
           WHERE CR.clinic_id = C.id AND CR.role_id = ANY($4::int[])
       ))`,
-      [
-        areaIdsArr,
-        languageIdsArr,
-        locationsArr,
-        roleIdsArr,
-      ]
+      [areaIdsArr, languageIdsArr, locationsArr, roleIdsArr]
     );
     res.status(200).json(keysToCamel(clinics));
   } catch (err) {
     res.status(500).send(err.message);
+  }
+});
+
+/**
+ * All clinics with nested languages in one round-trip (avoids N+1 GETs per clinic).
+ * Must be registered before `/:id` so "with-languages" is not parsed as an id.
+ */
+clinicsRouter.get("/with-languages", async (req, res) => {
+  try {
+    const rows = await db.query(
+      `SELECT
+        c.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', l.id,
+              'language', l.language,
+              'proficiency', wl.proficiency
+            )
+            ORDER BY l.language
+          ) FILTER (WHERE l.id IS NOT NULL),
+          '[]'::json
+        ) AS languages
+      FROM clinics c
+      LEFT JOIN clinic_languages wl ON wl.clinic_id = c.id
+      LEFT JOIN languages l ON l.id = wl.language_id
+      GROUP BY c.id
+      ORDER BY c.date ASC NULLS LAST, c.start_time ASC NULLS LAST`
+    );
+
+    const payload = rows.map((row) => {
+      const { languages, ...clinic } = row;
+      const langs =
+        languages === null || languages === undefined
+          ? []
+          : Array.isArray(languages)
+            ? languages
+            : typeof languages === "string"
+              ? JSON.parse(languages)
+              : languages;
+      return keysToCamel({ ...clinic, languages: langs });
+    });
+
+    res.status(200).json(payload);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
@@ -166,7 +288,6 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
       start_time,
       end_time,
       date,
-      attendees,
       min_attendees,
       capacity,
       max_target_roles,
@@ -182,7 +303,8 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 
     if (location_type && !allowedLocationTypes.includes(location_type)) {
       return res.status(400).json({
-        message: "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
+        message:
+          "Invalid location_type. Must be 'in-person', 'hybrid', or 'online'.",
       });
     }
 
@@ -194,32 +316,30 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
     }
 
     const clinic = await db.query(
-      `UPDATE clinics SET 
-        name = $1, 
-        description = $2, 
-        start_time = $3, 
-        end_time = $4, 
-        date = $5, 
-        attendees = $6, 
-        min_attendees = $7, 
-        capacity = $8, 
-        max_target_roles = $9, 
-        parking = $10,
-        address = $11,
-        city = $12,
-        state = $13,
-        zip = $14,
-        meeting_link = $15,
-        location_type = $16, 
-        type = $17
-       WHERE id = $18 RETURNING *`,
+      `UPDATE clinics SET
+        name = $1,
+        description = $2,
+        start_time = $3,
+        end_time = $4,
+        date = $5,
+        min_attendees = $6,
+        capacity = $7,
+        max_target_roles = $8,
+        parking = $9,
+        address = $10,
+        city = $11,
+        state = $12,
+        zip = $13,
+        meeting_link = $14,
+        location_type = $15,
+        type = $16
+       WHERE id = $17 RETURNING *`,
       [
         name,
         description,
         start_time,
         end_time,
         date,
-        attendees,
         min_attendees,
         capacity,
         max_target_roles,
@@ -237,6 +357,37 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    // Best-effort Google Calendar sync; self-heals when the event is missing
+    // (creation failed earlier, pre-existing clinic, or deleted from Google).
+    try {
+      const updated = clinic[0];
+      let needsCreate = !updated.google_event_id;
+      if (updated.google_event_id) {
+        const result = await updateCalendarEvent(
+          updated.google_event_id,
+          updated
+        );
+        needsCreate = result === "not_found";
+      }
+      if (needsCreate) {
+        const attendeeEmails = await getRegisteredUserEmails(id);
+        const googleEventId = await createCalendarEvent(
+          updated,
+          attendeeEmails
+        );
+        if (googleEventId) {
+          await saveGoogleEventId(updated.id, googleEventId);
+          updated.google_event_id = googleEventId;
+        }
+      }
+    } catch (calendarErr) {
+      console.error(
+        `[calendar] sync on clinic update failed clinicId=${id}`,
+        calendarErr
+      );
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -254,6 +405,11 @@ clinicsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
     if (clinic.length === 0) {
       return res.status(404).json({ message: "Clinic not found" });
     }
+
+    if (clinic[0].google_event_id) {
+      await deleteCalendarEvent(clinic[0].google_event_id);
+    }
+
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
     res.status(500).send(err.message);
@@ -262,72 +418,87 @@ clinicsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
 
 // Workshop Languages Routes
 // Assign a language to a workshop
-clinicsRouter.post("/:clinicId/languages", verifyRole("staff"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
-    const { languageId, proficiency } = req.body;
+clinicsRouter.post(
+  "/:clinicId/languages",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const { languageId, proficiency } = req.body;
 
-    const result = await db.query(
-      `INSERT INTO clinic_languages (clinic_id, language_id, proficiency)
+      const result = await db.query(
+        `INSERT INTO clinic_languages (clinic_id, language_id, proficiency)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [clinicId, languageId, proficiency]
-    );
+        [clinicId, languageId, proficiency]
+      );
 
-    res.status(201).json(keysToCamel(result[0]));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(result[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Remove a language from a workshop
-clinicsRouter.delete("/:clinicId/languages/:languageId", verifyRole("staff"), async (req, res) => {
-  try {
-    const { clinicId, languageId } = req.params;
-    const result = await db.query(
-      `DELETE FROM clinic_languages
+clinicsRouter.delete(
+  "/:clinicId/languages/:languageId",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId, languageId } = req.params;
+      const result = await db.query(
+        `DELETE FROM clinic_languages
        WHERE clinic_id = $1 AND language_id = $2
        RETURNING *`,
-      [clinicId, languageId]
-    );
+        [clinicId, languageId]
+      );
 
-    if (!result.length) {
-      return res
-        .status(404)
-        .json({ message: "Language not assigned to this clinic" });
+      if (!result.length) {
+        return res
+          .status(404)
+          .json({ message: "Language not assigned to this clinic" });
+      }
+
+      res.status(200).json(keysToCamel(result[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(result[0]));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
 // List all languages for a workshop
-clinicsRouter.get("/:clinicId/languages", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
+clinicsRouter.get(
+  "/:clinicId/languages",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
 
-    const languages = await db.query(
-      `SELECT l.*, wl.proficiency
+      const languages = await db.query(
+        `SELECT l.*, wl.proficiency
        FROM languages l
        JOIN clinic_languages wl ON wl.language_id = l.id
        WHERE wl.clinic_id = $1`,
-      [clinicId]
-    );
+        [clinicId]
+      );
 
-    res.status(200).json(keysToCamel(languages));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(languages));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Workshop Registration Routes
-clinicsRouter.get("/:clinicId/registrations", verifyRole("staff"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
-    const data = await db.query(
-      `
+clinicsRouter.get(
+  "/:clinicId/registrations",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const data = await db.query(
+        `
         SELECT 
             v.*, cr.has_attended
         FROM clinics c
@@ -335,46 +506,156 @@ clinicsRouter.get("/:clinicId/registrations", verifyRole("staff"), async (req, r
         JOIN volunteers v ON v.id = cr.volunteer_id
         WHERE c.id = $1;
         `,
-      [clinicId]
-    );
-
-    res.status(200).json(keysToCamel(data));
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-clinicsRouter.post("/:clinicId/registrations", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
-    const { volunteerId } = req.body;
-
-    const callerUid = res.locals.decodedToken?.uid;
-    if (callerUid) {
-      const callerRows = await db.query(
-        `SELECT u.id, u.role FROM users u WHERE u.firebase_uid = $1 LIMIT 1`,
-        [callerUid]
+        [clinicId]
       );
-      const caller = callerRows[0];
-      if (caller?.role === "volunteer" && String(caller.id) !== String(volunteerId)) {
-        return res.status(403).json({ message: "Forbidden: cannot register for another volunteer" });
-      }
-    }
 
-    const data = await db.query(
-      `
+      res.status(200).json(keysToCamel(data));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
+
+clinicsRouter.post(
+  "/:clinicId/registrations",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+      const { volunteerId } = req.body;
+
+      const callerUid = res.locals.decodedToken?.uid;
+      if (callerUid) {
+        const callerRows = await db.query(
+          `SELECT u.id, u.role FROM users u WHERE u.firebase_uid = $1 LIMIT 1`,
+          [callerUid]
+        );
+        const caller = callerRows[0];
+        if (
+          caller?.role === "volunteer" &&
+          String(caller.id) !== String(volunteerId)
+        ) {
+          return res
+            .status(403)
+            .json({
+              message: "Forbidden: cannot register for another volunteer",
+            });
+        }
+      }
+
+      const data = await db.query(
+        `
         INSERT INTO clinic_registration (volunteer_id, clinic_id, has_attended)
         VALUES ($1, $2, false)
+        ON CONFLICT (volunteer_id, clinic_id) DO NOTHING
         RETURNING *;
         `,
-      [volunteerId, clinicId]
-    );
+        [volunteerId, clinicId]
+      );
 
-    res.status(200).json(keysToCamel(data));
-  } catch (err) {
-    res.status(500).send(err.message);
+      await syncClinicAttendeesFromRegistrations(clinicId);
+
+      // Invite the volunteer to the clinic's Google Calendar event (best-effort).
+      // data is empty when ON CONFLICT made this a no-op — skip to avoid re-inviting.
+      if (data.length > 0) {
+        try {
+          const clinicRows = await db.query(
+            "SELECT google_event_id FROM clinics WHERE id = $1",
+            [clinicId]
+          );
+          const email = await getUserEmail(volunteerId);
+          const googleEventId = clinicRows[0]?.google_event_id;
+          if (googleEventId && email) {
+            await addAttendee(googleEventId, email);
+          } else {
+            console.warn(
+              `[calendar] skipping invite clinicId=${clinicId} volunteerId=${volunteerId} hasEvent=${Boolean(googleEventId)} hasEmail=${Boolean(email)}`
+            );
+          }
+        } catch (inviteError) {
+          console.error(
+            `[calendar] add attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+            inviteError
+          );
+        }
+      }
+
+      res.status(200).json(keysToCamel(data));
+
+      // Confirmation email: registration should succeed even if email fails.
+      try {
+        const [volunteerRows, clinicRows] = await Promise.all([
+          db.query(
+            `
+            SELECT first_name, email
+            FROM volunteers
+            WHERE id = $1
+            LIMIT 1;
+          `,
+            [volunteerId]
+          ),
+          db.query(
+            `
+            SELECT name, description, date, start_time, end_time, parking, address, city, state, zip, meeting_link
+            FROM clinics
+            WHERE id = $1
+            LIMIT 1;
+          `,
+            [clinicId]
+          ),
+        ]);
+
+        const volunteer = volunteerRows?.[0];
+        const clinicInfo = clinicRows?.[0];
+
+        if (!volunteer) {
+          console.warn(
+            `[clinics] confirmation email skipped: volunteer not found clinicId=${clinicId} volunteerId=${volunteerId}`
+          );
+        } else if (!volunteer.email) {
+          console.warn(
+            `[clinics] confirmation email skipped: missing volunteer email clinicId=${clinicId} volunteerId=${volunteerId}`
+          );
+        } else if (!clinicInfo) {
+          console.warn(
+            `[clinics] confirmation email skipped: clinic not found clinicId=${clinicId} volunteerId=${volunteerId}`
+          );
+        } else {
+          const safeName = volunteer.first_name ?? "there";
+
+          await sendEmail({
+            to: volunteer.email,
+            subject: `Registration confirmed: ${clinicInfo.name}`,
+            html: renderClinicEmailTemplate(
+              `
+            <p>Hi ${safeName},</p>
+            <p>Your registration for <strong>{{clinic name}}</strong> is confirmed.</p>
+            <p>
+              <strong>Date:</strong> {{date}}<br />
+              <strong>Time:</strong> {{time}}<br />
+              <strong>Location:</strong> {{location}}<br />
+              <strong>Parking:</strong> {{parking}}<br />
+              <strong>Meeting Link:</strong> {{meeting_link}}
+            </p>
+            {{description}}
+            <p>Thanks for volunteering!</p>
+          `,
+              clinicInfo,
+              { name: safeName }
+            ),
+          });
+        }
+      } catch (emailError) {
+        console.error(
+          `[clinics] registration succeeded but confirmation email failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          emailError
+        );
+      }
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
   }
-});
+);
 
 clinicsRouter.delete(
   "/:clinicId/registrations/:volunteerId",
@@ -390,8 +671,16 @@ clinicsRouter.delete(
           [callerUid]
         );
         const caller = callerRows[0];
-        if (caller?.role === "volunteer" && String(caller.id) !== String(volunteerId)) {
-          return res.status(403).json({ message: "Forbidden: cannot cancel registration for another volunteer" });
+        if (
+          caller?.role === "volunteer" &&
+          String(caller.id) !== String(volunteerId)
+        ) {
+          return res
+            .status(403)
+            .json({
+              message:
+                "Forbidden: cannot cancel registration for another volunteer",
+            });
         }
       }
 
@@ -406,6 +695,25 @@ clinicsRouter.delete(
 
       if (!data.length) {
         return res.status(404).send("Volunteer not found for this clinic");
+      }
+
+      await syncClinicAttendeesFromRegistrations(clinicId);
+
+      // Remove the volunteer from the clinic's Google Calendar event (best-effort).
+      try {
+        const clinicRows = await db.query(
+          "SELECT google_event_id FROM clinics WHERE id = $1",
+          [clinicId]
+        );
+        const email = await getUserEmail(volunteerId);
+        if (clinicRows[0]?.google_event_id && email) {
+          await removeAttendee(clinicRows[0].google_event_id, email);
+        }
+      } catch (calendarErr) {
+        console.error(
+          `[calendar] remove attendee failed clinicId=${clinicId} volunteerId=${volunteerId}`,
+          calendarErr
+        );
       }
 
       res.status(200).json(keysToCamel(data));
@@ -447,25 +755,31 @@ clinicsRouter.patch(
 // Workshop Areas of Practice Routes
 // POST: assign an area to a workshop
 // /workshops/{workshopId}/areas-of-practice
-clinicsRouter.post("/:clinicId/areas-of-practice", verifyRole("staff"), async (req, res) => {
-  try {
-    const { areaOfPracticeId } = req.body; // get JSON body
-    const { clinicId } = req.params; // get URL parameters
+clinicsRouter.post(
+  "/:clinicId/areas-of-practice",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { areaOfPracticeId } = req.body; // get JSON body
+      const { clinicId } = req.params; // get URL parameters
 
-    if (!areaOfPracticeId) {
-      return res.status(400).json({ message: "Area of practice is required" });
+      if (!areaOfPracticeId) {
+        return res
+          .status(400)
+          .json({ message: "Area of practice is required" });
+      }
+
+      const newRelationship = await db.query(
+        "INSERT INTO clinic_areas_of_practice (clinic_id, area_of_practice_id) VALUES ($1, $2) RETURNING *",
+        [clinicId, areaOfPracticeId]
+      );
+
+      res.status(200).json(keysToCamel(newRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
     }
-
-    const newRelationship = await db.query(
-      "INSERT INTO clinic_areas_of_practice (clinic_id, area_of_practice_id) VALUES ($1, $2) RETURNING *",
-      [clinicId, areaOfPracticeId]
-    );
-
-    res.status(200).json(keysToCamel(newRelationship));
-  } catch (err) {
-    res.status(500).send(err.message);
   }
-});
+);
 
 // DELETE: remove an area from a workshop
 // /workshops/{workshopId}/areas-of-practice/{areaId}
@@ -494,89 +808,105 @@ clinicsRouter.delete(
 
 // GET: list all areas for a clinic, including area IDs and text
 // /clinics/{clinicId}/areas-of-practice
-clinicsRouter.get("/:clinicId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
+clinicsRouter.get(
+  "/:clinicId/areas-of-practice",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
 
-    const listAll = await db.query(
-      `SELECT aop.id, aop.areas_of_practice
+      const listAll = await db.query(
+        `SELECT aop.id, aop.areas_of_practice
        FROM clinic_areas_of_practice caop
        JOIN areas_of_practice aop ON caop.area_of_practice_id = aop.id
        WHERE caop.clinic_id = $1`,
-      [clinicId]
-    );
+        [clinicId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (err) {
-    res.status(500).send(err.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
   }
-});
+);
 
 // Clinic Roles Routes
 // POST: assign a role to a clinic
 // /clinics/{clinicId}/roles
-clinicsRouter.post("/:clinicId/roles", verifyRole("staff"), async (req, res) => {
-  try {
-    const { roleId } = req.body; // get JSON body
-    const { clinicId } = req.params; // get URL parameters
+clinicsRouter.post(
+  "/:clinicId/roles",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { roleId } = req.body; // get JSON body
+      const { clinicId } = req.params; // get URL parameters
 
-    if (!roleId) {
-      return res.status(400).json({ message: "Role ID is required" });
+      if (!roleId) {
+        return res.status(400).json({ message: "Role ID is required" });
+      }
+
+      const newRelationship = await db.query(
+        "INSERT INTO clinic_roles (clinic_id, role_id) VALUES ($1, $2) RETURNING *",
+        [clinicId, roleId]
+      );
+
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
     }
-
-    const newRelationship = await db.query(
-      "INSERT INTO clinic_roles (clinic_id, role_id) VALUES ($1, $2) RETURNING *",
-      [clinicId, roleId]
-    );
-
-    res.status(201).json(keysToCamel(newRelationship));
-  } catch (err) {
-    res.status(500).send(err.message);
   }
-});
+);
 
 // DELETE: remove a role from a clinic
 // /clinics/{clinicId}/roles/{roleId}
-clinicsRouter.delete("/:clinicId/roles/:roleId", verifyRole("staff"), async (req, res) => {
-  try {
-    const { clinicId, roleId } = req.params;
+clinicsRouter.delete(
+  "/:clinicId/roles/:roleId",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId, roleId } = req.params;
 
-    const deletedRelationship = await db.query(
-      "DELETE FROM clinic_roles WHERE clinic_id = $1 AND role_id = $2 RETURNING *",
-      [clinicId, roleId]
-    );
+      const deletedRelationship = await db.query(
+        "DELETE FROM clinic_roles WHERE clinic_id = $1 AND role_id = $2 RETURNING *",
+        [clinicId, roleId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Role not assigned to this clinic" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Role not assigned to this clinic" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (err) {
-    res.status(500).send(err.message);
   }
-});
+);
 
 // GET: list all roles for a clinic, including role IDs and text
 // /clinics/{clinicId}/roles
-clinicsRouter.get("/:clinicId/roles", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
+clinicsRouter.get(
+  "/:clinicId/roles",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
 
-    const listAll = await db.query(
-      `SELECT r.id, r.role_name
+      const listAll = await db.query(
+        `SELECT r.id, r.role_name
              FROM clinic_roles cr
              JOIN roles r ON cr.role_id = r.id
              WHERE cr.clinic_id = $1`,
-      [clinicId]
-    );
+        [clinicId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (err) {
-    res.status(500).send(err.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
   }
-});
+);
 
 // Clinic Tags Routes
 // POST: assign a tag to a clinic
@@ -603,42 +933,50 @@ clinicsRouter.post("/:clinicId/tags", verifyRole("staff"), async (req, res) => {
 
 // DELETE: remove a tag from a clinic
 // /clinics/{clinicId}/tags/{tagId}
-clinicsRouter.delete("/:clinicId/tags/:tagId", verifyRole("staff"), async (req, res) => {
-  try {
-    const { clinicId, tagId } = req.params;
+clinicsRouter.delete(
+  "/:clinicId/tags/:tagId",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId, tagId } = req.params;
 
-    const deletedRelationship = await db.query(
-      "DELETE FROM clinic_tags WHERE clinic_id = $1 AND tag_id = $2 RETURNING *",
-      [clinicId, tagId]
-    );
+      const deletedRelationship = await db.query(
+        "DELETE FROM clinic_tags WHERE clinic_id = $1 AND tag_id = $2 RETURNING *",
+        [clinicId, tagId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Tag not assigned to this clinic" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Tag not assigned to this clinic" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (err) {
-    res.status(500).send(err.message);
   }
-});
+);
 
 // GET: list all tags for a clinic, including tag IDs and text
 // /clinics/{clinicId}/tags
-clinicsRouter.get("/:clinicId/tags", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { clinicId } = req.params;
+clinicsRouter.get(
+  "/:clinicId/tags",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
 
-    const listAll = await db.query(
-      `SELECT t.id, t.tag FROM clinic_tags ct
+      const listAll = await db.query(
+        `SELECT t.id, t.tag FROM clinic_tags ct
        JOIN tags t ON ct.tag_id = t.id
        WHERE ct.clinic_id = $1`,
-      [clinicId]
-    );
+        [clinicId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (err) {
-    res.status(500).send(err.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
   }
-});
+);

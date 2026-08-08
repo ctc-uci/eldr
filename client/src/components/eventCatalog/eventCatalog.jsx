@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Box, Button, Flex, useBreakpointValue } from "@chakra-ui/react";
 
+import { useLocation, useNavigate } from "react-router-dom";
+
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { MdChevronLeft } from "react-icons/md";
@@ -9,32 +11,40 @@ import { MdChevronLeft } from "react-icons/md";
 import { EventInfo } from "./eventInfo";
 import { EventsList } from "./eventsList";
 import { MyEventsList } from "./myEventsList";
+import {
+  buildEventCatalogPath,
+  eventCatalogAllEventsPath,
+  getCanonicalEventCatalogPath,
+  parseEventCatalogPath,
+} from "./eventCatalogRoutes";
 import { TopBar } from "./topBar";
 
 export const EventCatalog = () => {
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [showDetails, setShowDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("upcoming");
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [events, setEvents] = useState([]);
   const [volunteerId, setVolunteerId] = useState(null);
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
-  const getAreaLabel = (area) => area.areasOfPractice ?? area.areas_of_practice ?? "";
 
-  /** Search blob for location-ish fields (street address omitted from public catalog) */
-  const getEventLocationSearchText = (event) => {
-    const parts = [
-      event.locationType,
-      event.city,
-      event.state,
-      event.zip,
-      event.meetingLink,
-    ].filter(Boolean);
-    return parts.join(" ").toLowerCase();
-  };
+  const [applyToken, setApplyToken] = useState(0);
+  const [filteredCount, setFilteredCount] = useState(0);
+
+  const { view: catalogView, eventId: parsedEventId } = parseEventCatalogPath(
+    location.pathname
+  );
+
+  // `/event-catalog` and `/event-catalog/:id` → canonical `/event-catalog/all-events/...`
+  useEffect(() => {
+    const canonical = getCanonicalEventCatalogPath(location.pathname);
+    if (canonical) {
+      navigate(canonical, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   // Shared function to enrich events with languages, areas, registrations, and formatted dates
   const enrichEvents = async (baseEvents, volId) => {
@@ -54,10 +64,11 @@ export const EventCatalog = () => {
 
     return Promise.all(
       baseEvents.map(async (event) => {
-        const [langRes, areaRes, regRes] = await Promise.all([
+        const [langRes, areaRes, regRes, tagsRes] = await Promise.all([
           backend.get(`/clinics/${event.id}/languages`),
           backend.get(`/clinics/${event.id}/areas-of-practice`),
           backend.get(`/clinics/${event.id}/registrations`),
+          backend.get(`/clinics/${event.id}/tags`),
         ]);
 
         const myRegistration = regRes.data.find((reg) => reg.id === volId);
@@ -75,8 +86,9 @@ export const EventCatalog = () => {
 
         return {
           ...event,
-          languages: langRes.data,
-          areas: areaRes.data,
+          languages: langRes.data.map((item) => item.language),
+          areas: areaRes.data.map((item) => item.areasOfPractice),
+          tags: tagsRes.data.map((item) => item.tag),
           displayDate,
           displayTime,
           isRegistered: !!myRegistration,
@@ -84,6 +96,34 @@ export const EventCatalog = () => {
         };
       })
     );
+  };
+
+  // Helper: build filter query params from selectedFilters
+  const buildFilterParams = (filters) => {
+    const areaIds = [];
+    const langIds = [];
+    const roleIds = [];
+    const locs = [];
+
+    filters.forEach((filter) => {
+      if (filter.id.startsWith("areasOfPracticeId")) {
+        areaIds.push(filter.id.replace("areasOfPracticeId", ""));
+      } else if (filter.id.startsWith("languageId")) {
+        langIds.push(filter.id.replace("languageId", ""));
+      } else if (filter.id.startsWith("roleId")) {
+        roleIds.push(filter.id.replace("roleId", ""));
+      } else {
+        locs.push(filter.id);
+      }
+    });
+
+    const params = new URLSearchParams();
+    if (areaIds.length > 0) params.set("areaOfPracticeIds", areaIds.join(","));
+    if (langIds.length > 0) params.set("languageIds", langIds.join(","));
+    if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
+    if (locs.length > 0) params.set("locations", locs.join(","));
+
+    return params;
   };
 
   // Initial fetch - get volunteer ID and all events
@@ -105,152 +145,232 @@ export const EventCatalog = () => {
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
 
-  // Filter and sort events
-  const filteredEvents = useMemo(() => {
-    let result = [...events];
-
-    // Apply search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          getEventLocationSearchText(e).includes(q) ||
-          (e.description && e.description.toLowerCase().includes(q)) ||
-          e.languages.some((l) => l.language.toLowerCase().includes(q)) ||
-          e.areas.some((a) => getAreaLabel(a).toLowerCase().includes(q))
-      );
-    }
-
-    // Category filters are applied server-side via /clinics/search when filters are selected;
-    // search + sort run here on the current `events` list.
-
-    // Apply sort
-    if (sortBy === "upcoming") {
-      result.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA - dateB;
-      });
-    } else if (sortBy === "urgency") {
-      result.sort((a, b) => (b.urgency || 0) - (a.urgency || 0));
-    }
-
-    return result;
-  }, [searchQuery, sortBy, events]);
-
+  // Update the count preview whenever filters change (no button press needed)
   useEffect(() => {
-    // Only auto-select if we have events and haven't selected one yet
-    if (filteredEvents.length > 0 && !selectedEvent) {
-      setSelectedEvent(filteredEvents[0]);
-    }
-  }, [filteredEvents, selectedEvent]);
-
-  const showEventDetails = (event) => {
-    setSelectedEvent(event);
-    setShowDetails(true);
-  };
-
-  // fetch filtered events when filters change
-  useEffect(() => {
-    const fetchFilteredEvents = async () => {
-      if (!volunteerId) return;
+    const fetchFilteredCount = async () => {
+      if (!volunteerId) {
+        setFilteredCount(0);
+        return;
+      }
 
       try {
-        // group filter IDs by category for making API query params
-        const areaIds = [];
-        const langIds = [];
-        const roleIds = [];
-        const locs = [];
+        const now = new Date();
+        let data;
 
-        selectedFilters.forEach((filter) => {
-          if (filter.id.startsWith('areasOfPracticeId')) {
-            areaIds.push(filter.id.replace('areasOfPracticeId', ''));
-          } else if (filter.id.startsWith('languageId')) {
-            langIds.push(filter.id.replace('languageId', ''));
-          } else if (filter.id.startsWith('roleId')) {
-            roleIds.push(filter.id.replace('roleId', ''));
-          } else {
-            locs.push(filter.id);
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          data = res.data;
+        } else {
+          const res = await backend.get("/clinics");
+          data = res.data;
+        }
+
+        let candidates = data.filter((e) => {
+          if (catalogView === "catalog") {
+            if (!e.endTime) return true;
+            return new Date(e.endTime) > now;
           }
+          return true;
         });
 
-        // build query params with comma-separated values
-        const params = new URLSearchParams();
-        if (areaIds.length > 0) params.set('areaOfPracticeIds', areaIds.join(','));
-        if (langIds.length > 0) params.set('languageIds', langIds.join(','));
-        if (roleIds.length > 0) params.set('roleIds', roleIds.join(','));
-        if (locs.length > 0) params.set('locations', locs.join(','));
+        // "My Events" only shows events the volunteer is registered for —
+        // mirror that here so the preview count matches what Apply will show.
+        if (catalogView === "my") {
+          const registered = await Promise.all(
+            candidates.map((e) =>
+              backend
+                .get(`/clinics/${e.id}/registrations`)
+                .then((regRes) =>
+                  regRes.data.some((reg) => reg.id === volunteerId)
+                )
+            )
+          );
+          candidates = candidates.filter((_, i) => registered[i]);
+        }
 
-        const res = await backend.get(`/clinics/search?${params.toString()}`);
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
+        setFilteredCount(candidates.length);
+      } catch (error) {
+        console.error("Failed to fetch filtered event count:", error);
+        setFilteredCount(0);
+      }
+    };
+
+    fetchFilteredCount();
+  }, [selectedFilters, volunteerId, catalogView]);
+
+  // Fetch and apply filtered events only when the apply button is pressed.
+  // `applyToken` is a counter rather than a boolean so that two applies
+  // requested back-to-back (before the first fetch resolves) each still
+  // produce a distinct value and reliably re-trigger this effect.
+  useEffect(() => {
+    if (applyToken === 0 || !volunteerId) return;
+
+    let cancelled = false;
+
+    const fetchFilteredEvents = async () => {
+      try {
+        let enrichedEvents;
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
+        } else {
+          const res = await backend.get("/clinics");
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
+        }
+        // Ignore results from a stale apply that resolved after a newer one.
+        if (!cancelled) setEvents(enrichedEvents);
       } catch (error) {
         console.error("Failed to fetch filtered events:", error);
       }
     };
 
-    const fetchAllEvents = async () => {
-      if (!volunteerId) return;
+    fetchFilteredEvents();
 
-      try {
-        const res = await backend.get('/clinics');
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
-      } catch (error) {
-        console.error("Failed to fetch all events:", error);
-      }
+    return () => {
+      cancelled = true;
     };
+  }, [applyToken, volunteerId]);
 
-    if (selectedFilters.length > 0) {
-      fetchFilteredEvents();
-    } else if (volunteerId) {
-      fetchAllEvents();
+  // Events filtered by tab/time but NOT search, used for suggestions
+  const tabEvents = useMemo(() => {
+    const now = new Date();
+    let result = events.filter((e) => {
+      if (catalogView === "catalog") {
+        if (!e.endTime) return true;
+        return new Date(e.endTime) > now;
+      }
+      return true; // Show all for 'my' tab
+    });
+
+    if (catalogView === "my") {
+      result = result.filter((e) => e.isRegistered);
     }
-  }, [selectedFilters, volunteerId, backend]);
+
+    return result;
+  }, [events, catalogView]);
+
+  // Filter and sort events for the list display
+  const filteredEvents = useMemo(() => {
+    let result = [...tabEvents];
+
+    // Apply search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((e) => e.name.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [searchQuery, tabEvents]);
+
+  const selectedEvent = useMemo(() => {
+    if (!parsedEventId) return null;
+    return (
+      filteredEvents.find((e) => String(e.id) === parsedEventId) ?? null
+    );
+  }, [parsedEventId, filteredEvents]);
+
+  // Keep URL aligned with tab + searchable list (and fill in default event id when missing)
+  useEffect(() => {
+    if (!volunteerId || events.length === 0) return;
+
+    const { view, eventId } = parseEventCatalogPath(location.pathname);
+
+    if (eventId) {
+      const existsInEvents = events.some((e) => String(e.id) === eventId);
+      if (!existsInEvents) {
+        const fallback = events[0];
+        navigate(buildEventCatalogPath(view, fallback?.id ?? null), {
+          replace: true,
+        });
+        return;
+      }
+    }
+
+    const inFiltered = filteredEvents.some((e) => String(e.id) === eventId);
+
+    if (eventId && !inFiltered) {
+      if (filteredEvents.length > 0) {
+        navigate(buildEventCatalogPath(view, filteredEvents[0].id), {
+          replace: true,
+        });
+      } else {
+        navigate(buildEventCatalogPath(view, null), { replace: true });
+      }
+      return;
+    }
+
+    if (!eventId && filteredEvents.length > 0) {
+      navigate(buildEventCatalogPath(view, filteredEvents[0].id), {
+        replace: true,
+      });
+    }
+  }, [
+    volunteerId,
+    events,
+    filteredEvents,
+    location.pathname,
+    navigate,
+  ]);
+
+  const showEventDetails = (event) => {
+    navigate(buildEventCatalogPath(catalogView, event.id));
+    setShowDetails(true);
+  };
+
+  const handleTabChange = (value) => {
+    if (value === "my") {
+      navigate("/event-catalog/my-events");
+    } else {
+      navigate(eventCatalogAllEventsPath());
+    }
+  };
+
+  const [registrationPending, setRegistrationPending] = useState(null);
 
   const handleRegister = async (clinicId) => {
-    if (!volunteerId) return;
+    if (!volunteerId || registrationPending) return;
+    setRegistrationPending(clinicId);
     try {
       await backend.post(`/clinics/${clinicId}/registrations`, {
         volunteerId,
       });
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: true } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: true } : e))
       );
-      if (selectedEvent && selectedEvent.id === clinicId) {
-        setSelectedEvent({ ...selectedEvent, isRegistered: true });
-      }
     } catch (error) {
       console.error("Failed to register for event:", error);
       console.error(error.response?.data || error);
+    } finally {
+      setRegistrationPending(null);
     }
   };
 
   const handleUnregister = async (clinicId) => {
-    if (!volunteerId) return;
+    if (!volunteerId || registrationPending) return;
+    setRegistrationPending(clinicId);
     try {
       await backend.delete(`/clinics/${clinicId}/registrations/${volunteerId}`);
       setEvents((prev) =>
-        prev.map((e) =>
-          e.id === clinicId ? { ...e, isRegistered: false } : e
-        )
+        prev.map((e) => (e.id === clinicId ? { ...e, isRegistered: false } : e))
       );
-      if (selectedEvent && selectedEvent.id === clinicId) {
-        setSelectedEvent({ ...selectedEvent, isRegistered: false });
-      }
     } catch (error) {
       console.error("Failed to unregister from event:", error);
       console.error(error.response?.data || error);
+    } finally {
+      setRegistrationPending(null);
     }
   };
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
-    <Flex direction="column" flex="1" minH="100vh" overflow="hidden">
+    <Flex
+      direction="column"
+      h="100%"
+      overflow="hidden"
+    >
       <Flex
         flex="1"
         minH={0}
@@ -269,15 +389,15 @@ export const EventCatalog = () => {
         >
           <TopBar
             showDetails={showDetails}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
+            activeTab={catalogView}
+            onTabChange={handleTabChange}
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
+            setSearchQuery={setSearchQuery}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
-            filteredCount={filteredEvents.length}
+            filteredCount={filteredCount}
+            onApplyFilters={() => setApplyToken((t) => t + 1)}
+            events={tabEvents}
           />
 
           {/* Event catalog list */}
@@ -285,7 +405,7 @@ export const EventCatalog = () => {
             flex="1"
             overflowY="auto"
           >
-            {activeTab === "all" ? (
+            {catalogView === "catalog" ? (
               <EventsList
                 events={filteredEvents}
                 onSelect={showEventDetails}
@@ -309,6 +429,7 @@ export const EventCatalog = () => {
           direction="column"
           overflow="hidden"
           align="start"
+          bg="white"
           px={{ base: "12px", md: "none" }}
         >
           {/* Back Button */}
@@ -322,7 +443,7 @@ export const EventCatalog = () => {
               gap="2px"
               fontSize="md"
               fontWeight="normal"
-              my={2}
+              mt={2}
             >
               <MdChevronLeft />
               Back
@@ -331,8 +452,11 @@ export const EventCatalog = () => {
 
           <EventInfo
             event={selectedEvent}
+            activeTab={catalogView}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
+            isMobile={isMobile}
+            registrationPending={registrationPending === selectedEvent?.id}
           />
         </Flex>
       </Flex>

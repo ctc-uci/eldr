@@ -16,6 +16,7 @@ import { AdminLogin } from "@/components/adminProfile/adminLogin";
 import { AdminForgotPass } from "./components/adminProfile/adminForgotPass";
 import { AdminPassReset } from "./components/adminProfile/adminPassReset";
 import { VolunteerManagement } from "./components/volunteerManagement/VolunteerManagement";
+import { AddProfileView } from "./components/volunteerManagement/AddProfileView";
 import { StaffLayout } from "./components/navbar/StaffLayout";
 import { VolunteerLayout } from "./components/navbar/VolunteerLayout";
 import { VolunteerProfile } from "@/components/volunteerProfile/volunteerProfile";
@@ -23,21 +24,38 @@ import { EmailTemplateManagement } from "@/components/emailTemplateManagement/em
 import { VolunteerLogin } from "./components/volunteerLogin/volunteerLogin";
 import { TagManagement } from "@/components/tagManagement/tagManagement";
 import { EventManagement } from "./components/eventManagement/EventManagement";
-import { EventsSubPagePlaceholder } from "@/components/eventManagement/EventsSubPagePlaceholder";
-// import { EventDetail } from "@/components/eventManagement/EventDetail.jsx";
-// import { CaseCatalog } from "@/components/caseCatalog/CaseCatalog.jsx";
-// import { CaseManagement } from "./components/caseManagement/CaseManagement";
+import { CreateEvent } from "./components/eventManagement/createEvent";
+import { CreatedEvent } from "./components/eventManagement/CreatedEvent";
+import { CreateEmailNotification } from "./components/eventManagement/CreateEmailNotification";
 // Backend Auth Components (Don't Touch!)
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
+import { Spinner } from "@chakra-ui/react";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
+import { useAuthContext } from "@/contexts/hooks/useAuthContext";
+import { useRoleContext } from "@/contexts/hooks/useRoleContext";
+
+const DashboardLanding = () => {
+  const { currentUser } = useAuthContext();
+  const { role, loading } = useRoleContext();
+
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (loading) return <Spinner />;
+
+  if (role === "volunteer")
+    return <Navigate to="/event-catalog/all-events" replace />;
+  if (role === "staff" || role === "supervisor")
+    return <Navigate to="/events" replace />;
+
+  return <Dashboard />;
+};
 
 const App = () => {
   return (
@@ -99,15 +117,31 @@ const App = () => {
                     path="/volunteer-management"
                     element={<VolunteerManagement />}
                   />
-                  <Route
-                    path="/events/*"
-                    element={<EventsSubPagePlaceholder />}
+                  <Route 
+                    path="/volunteer-management/new" 
+                    element={<AddProfileView />} 
                   />
+                  <Route
+                    path="/events/:eventId/email-notification/new"
+                    element={<CreateEmailNotification />}
+                  />
+                  <Route
+                    path="/events/:eventId/email-notification/edit/:notificationId"
+                    element={<CreateEmailNotification />}
+                  />
+                  <Route path="/events/:eventId" element={<CreatedEvent />} />
+                  <Route path="/events/create" element={<Navigate to="/events/create/header" replace />} />
+                  <Route path="/events/create/:tab" element={<CreateEvent />} />
+                  <Route path="/events/:eventId/edit/:tab" element={<CreateEvent />} />
+                  <Route path="/events/:sourceId/duplicate/:tab" element={<CreateEvent />} />
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}
                 <Route element={<VolunteerLayout />}>
-                  <Route path="/event-catalog" element={<EventCatalog />} />
+                  <Route
+                    path="/event-catalog/*"
+                    element={<EventCatalog />}
+                  />
                   <Route
                     path="/volunteer-profile"
                     element={
@@ -141,6 +175,10 @@ const App = () => {
                   element={<VolunteerLogin />}
                 />
                 <Route
+                  path="/login/volunteer/*"
+                  element={<VolunteerLogin />}
+                />
+                <Route
                   path="/login/staff"
                   element={<AdminLogin />}
                 />
@@ -154,7 +192,7 @@ const App = () => {
                 />
                 <Route
                   path="/dashboard"
-                  element={<ProtectedRoute element={<Dashboard />} />}
+                  element={<ProtectedRoute element={<DashboardLanding />} />}
                 />
                 <Route
                   path="/"

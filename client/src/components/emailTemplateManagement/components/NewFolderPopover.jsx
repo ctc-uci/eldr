@@ -1,6 +1,6 @@
-import { FaFolder } from "react-icons/fa";
+import { FolderPlus } from "lucide-react";
 
-import { InputPopover } from "./InputPopover";
+import { InputDialog } from "./InputPopover";
 
 export const NewFolderPopover = ({
   isOpen,
@@ -8,14 +8,16 @@ export const NewFolderPopover = ({
   onSubmit,
   buttonProps = {},
 }) => (
-  <InputPopover
+  <InputDialog
     isOpen={isOpen}
     onOpenChange={onOpenChange}
     onSubmit={onSubmit}
-    triggerIcon={<FaFolder />}
-    triggerLabel="New Folder"
-    popoverTitle="New Folder Creation"
-    inputPlaceholder="Enter a folder name"
+    triggerIcon={<FolderPlus size={20} />}
+    triggerLabel="Create New Folder"
+    dialogTitle="Create New Folder"
+    inputLabel="Folder Name"
+    inputPlaceholder="Untitled Folder"
+    submitLabel="Create Folder"
     buttonProps={buttonProps}
   />
 );

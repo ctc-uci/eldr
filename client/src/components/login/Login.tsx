@@ -3,7 +3,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
   Image,
   Link,
   Text,
@@ -11,17 +10,13 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
 import {
   LuArrowRight,
   LuBriefcase,
-  LuFacebook,
-  LuMail,
   LuUser,
+  LuExternalLink,
 } from "react-icons/lu";
 
-import logo from "../../assets/EldrLogo.png";
 import LoginLayout from "../volunteerLogin/steps/BackgroundLayout";
 
 export const Login = () => {
@@ -49,12 +44,6 @@ export const Login = () => {
           px="2%"
           py="1%"
         >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
         </Flex>
 
         <Flex
@@ -63,7 +52,7 @@ export const Login = () => {
         >
           <Flex
             direction="column"
-            justify="space-between"
+            justify="center"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="8%"
@@ -74,78 +63,27 @@ export const Login = () => {
           >
             <Box>
               <Heading
-                fontSize={{ base: "17px", md: "22px", lg: "28px" }}
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
                 fontWeight={700}
                 color="black"
                 mb="12px"
               >
-                Welcome to CC Login Portal by Community Counsel
+                Community Counsel's Event Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.600"
+                color="black"
               >
-                Indicate whether you are a staff member or volunteer
-              </Text>
-            </Box>
+                Need help? Visit our website{" "}
 
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
+                <Link
                 href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
+                display="inline-flex"
+                alignItems="center"
               >
-                Community Counsel Website
+                <LuExternalLink size={16} color="#3182CE"/>
               </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "32px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
+              </Text>
             </Box>
           </Flex>
 
@@ -174,21 +112,29 @@ export const Login = () => {
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
-                color="gray.500"
+                color="black"
                 mb={{ base: "24px", md: "32px" }}
                 fontStyle="italic"
               >
-                Choose from the options below to continue.
+                Indicate if you're a staff member or volunteer.
               </Text>
 
               <Button
-                bg="#3182CE"
-                color="white"
+                bg="white"
+                borderColor="#E0E0E0"
+                color="black"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
                 justifyContent="center"
                 position="relative"
                 px="20px"
@@ -214,13 +160,21 @@ export const Login = () => {
               </Button>
 
               <Button
-                bg="#3182CE"
-                color="white"
+                bg="white"
+                borderColor="#E0E0E0"
+                color="black"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
                 fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                _active={{ bg: "black", color: "white" }}
+                _hover={{
+                  bg: "#F4F4F5", 
+                  _active: {
+                    bg: "black", 
+                    color: "white",
+                  },
+                }}
                 justifyContent="center"
                 position="relative"
                 px="20px"

@@ -4,11 +4,22 @@ Implement on event creation ONLY (potentially case creation too??)
 */
 
 import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/react";
-import { LuClipboardList } from "react-icons/lu";
-import { IoBriefcaseOutline } from "react-icons/io5";
-import { MdOutlineMailOutline } from "react-icons/md";
-import { RxPeople } from "react-icons/rx";
+import { LuTags, LuMails } from "react-icons/lu";
+import { ClipboardList, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const navIconButtonProps = {
+  variant: "ghost" as const,
+  boxSize: "40px",
+  minW: "40px",
+  p: 2,
+  borderRadius: "md",
+  color: "#294A5F",
+  _hover: {
+    bg: "blue.50",
+    color: "blue.700",
+  },
+};
 
 export const CollapsedNavbar = () => {
   const navigate = useNavigate();
@@ -35,42 +46,42 @@ export const CollapsedNavbar = () => {
           <Box w="32px" h="32px" />
         </Box>
 
-        <VStack gap={10} w="full" px={4}>
+        <VStack gap={10} w="full" >
           <IconButton
             title="Event Catalog"
-            boxSize="30px"
-            variant="ghost"
-            as={LuClipboardList}
+            aria-label="Event Catalog"
+            {...navIconButtonProps}
             onClick={() => navigate("/events")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <ClipboardList size={22} />
+          </IconButton>
 
           <IconButton
-            title="Case Catalog"
-            boxSize="30px"
-            variant="ghost"
-            as={IoBriefcaseOutline}
-            onClick={() => navigate("/cases")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
-
-          <IconButton
-            title="Email Template"
-            boxSize="30px"
-            variant="ghost"
-            as={MdOutlineMailOutline}
+            title="Email Templates"
+            aria-label="Email Templates"
+            {...navIconButtonProps}
             onClick={() => navigate("/email")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <LuMails size={22} />
+          </IconButton>
 
           <IconButton
-            title="Manage Profiles"
-            boxSize="30px"
-            variant="ghost"
-            as={RxPeople}
+            title="Profiles"
+            aria-label="Profiles"
+            {...navIconButtonProps}
             onClick={() => navigate("/volunteer-management")}
-            _hover={{ bg: "#D8F1FF" }}
-          />
+          >
+            <Users size={22} />
+          </IconButton>
+
+          <IconButton
+            title="Tags"
+            aria-label="Tags"
+            {...navIconButtonProps}
+            onClick={() => navigate("/tags")}
+          >
+            <LuTags size={22} />
+          </IconButton>
         </VStack>
       </VStack>
 

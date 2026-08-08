@@ -1,9 +1,16 @@
 import { keysToCamel } from "@/common/utils";
+import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
+
+const normalizeNullableText = (value) => {
+  if (value == null) return null;
+  const normalized = String(value).trim();
+  return normalized === "" ? null : normalized;
+};
 
 // Create a new volunteer
 volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
@@ -19,106 +26,232 @@ volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
+      listed_experience,
     } = req.body;
 
-    if (!email) {
+    const normalizedEmail = normalizeNullableText(email);
+    if (!normalizedEmail) {
       return res.status(400).send("email are required");
     }
 
-    // Create the base user first (or reuse if email already exists)
-    let userId;
-    try {
-      const userResult = await db.query(
+    const normalizedFirstName = normalizeNullableText(first_name);
+    const normalizedLastName = normalizeNullableText(last_name);
+    const normalizedPhoneNumber = normalizeNullableText(phone_number);
+    const normalizedAffiliatedEmployer =
+      normalizeNullableText(affiliated_employer);
+    const normalizedLawSchoolYear = normalizeNullableText(law_school_year);
+    const normalizedStateBarCertificate = normalizeNullableText(
+      state_bar_certificate
+    );
+    const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
+    const normalizedListedExperience = normalizeNullableText(listed_experience);
+
+    const result = await db.tx(async (t) => {
+      const userResult = await t.one(
         `
-          INSERT INTO users (email, firebase_uid)
-          VALUES ($1, $2)
+          INSERT INTO users (email, firebase_uid, role)
+          VALUES ($1, $2, 'volunteer')
+          ON CONFLICT (email) DO UPDATE
+            SET firebase_uid = EXCLUDED.firebase_uid,
+                role = CASE
+                  WHEN users.role = 'guest' THEN 'volunteer'
+                  ELSE users.role
+                END
+          RETURNING id, email, firebase_uid, role;
+        `,
+        [normalizedEmail, firebaseUid ?? null]
+      );
+
+      const volunteerResult = await t.one(
+        `
+          INSERT INTO volunteers (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            form_completed,
+            form_link,
+            is_signed_confidentiality,
+            is_attorney,
+            is_notary,
+            affiliated_employer,
+            law_school_year,
+            state_bar_certificate,
+            state_bar_number,
+            listed_experience
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          ON CONFLICT (id) DO UPDATE
+            SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
+                last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
+                email = COALESCE(EXCLUDED.email, volunteers.email),
+                phone_number = COALESCE(EXCLUDED.phone_number, volunteers.phone_number),
+                form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
+                form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
+                is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
+                is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
+                is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
+                affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
+                law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
+                state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
+                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number),
+                listed_experience = COALESCE(EXCLUDED.listed_experience, volunteers.listed_experience)
           RETURNING *;
         `,
-        [email, firebaseUid]
+        [
+          userResult.id,
+          normalizedFirstName,
+          normalizedLastName,
+          normalizedEmail,
+          normalizedPhoneNumber,
+          form_completed ?? null,
+          normalizeNullableText(form_link),
+          is_signed_confidentiality ?? null,
+          is_attorney ?? null,
+          is_notary ?? null,
+          normalizedAffiliatedEmployer,
+          normalizedLawSchoolYear,
+          normalizedStateBarCertificate,
+          normalizedStateBarNumber,
+          normalizedListedExperience,
+        ]
       );
-      userId = userResult[0].id;
-    } catch (err) {
-      if (err.code === "23505") {
-        const existingUser = await db.query(
-          `
-            SELECT id
-            FROM users
-            WHERE email = $1;
-          `,
-          [email]
-        );
 
-        if (!existingUser.length) throw err;
-        userId = existingUser[0].id;
-      } else {
-        throw err;
-      }
-    }
+      return {
+        user: userResult,
+        volunteer: volunteerResult,
+      };
+    });
 
-    // Prevent duplicate volunteer insert
-    const existingVolunteer = await db.query(
-      `
-        SELECT *
-        FROM volunteers
-        WHERE id = $1;
-      `,
-      [userId]
-    );
-
-    if (existingVolunteer.length) {
-      return res.status(409).json({
-        message: "Volunteer already exists",
-        volunteer: keysToCamel(existingVolunteer[0]),
-      });
-    }
-
-    const volunteerResult = await db.query(
-      `
-        INSERT INTO volunteers (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone_number,
-          form_completed,
-          form_link,
-          is_signed_confidentiality,
-          is_attorney,
-          is_notary
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-        RETURNING *;
-      `,
-      [
-        userId,
-        first_name,
-        last_name,
-        email,
-        phone_number,
-        form_completed,
-        form_link,
-        is_signed_confidentiality,
-        is_attorney,
-        is_notary,
-      ]
-    );
-
-    res.status(201).json(keysToCamel(volunteerResult[0]));
+    res.status(201).json(keysToCamel(result.volunteer));
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-// Get all volunteers
+// Get all active (non-archived) volunteers
 volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
-        SELECT *
-        FROM volunteers;
+        SELECT v.*,
+          COALESCE(
+            array_agg(DISTINCT r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles,
+          COALESCE(
+            array_agg(DISTINCT aop.areas_of_practice) FILTER (WHERE aop.areas_of_practice IS NOT NULL),
+            '{}'::text[]
+          ) AS areas_of_practice,
+          COALESCE(
+            array_agg(DISTINCT l.language) FILTER (WHERE l.language IS NOT NULL),
+            '{}'::text[]
+          ) AS languages,
+          (
+            SELECT c.date
+            FROM clinic_registration cr
+            JOIN clinics c ON cr.clinic_id = c.id
+            WHERE cr.volunteer_id = v.id
+              AND cr.has_attended = TRUE
+            ORDER BY c.date DESC
+            LIMIT 1
+          ) AS most_recent_event
+        FROM volunteers v
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        LEFT JOIN volunteer_areas_of_practice vaop ON v.id = vaop.volunteer_id
+        LEFT JOIN areas_of_practice aop ON vaop.area_of_practice_id = aop.id
+        LEFT JOIN volunteer_language vl ON v.id = vl.volunteer_id
+        LEFT JOIN languages l ON vl.language_id = l.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
+        )
+        GROUP BY v.id;
       `
     );
     res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Get all archived volunteers
+volunteersRouter.get("/archived", async (req, res) => {
+  try {
+    const volunteersQuery = await db.query(
+      `
+        SELECT v.*,
+          av.archived_date,
+          av.reactivation,
+          av.archived_notes,
+          COALESCE(
+            array_agg(r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
+            '{}'::text[]
+          ) AS roles
+        FROM volunteers v
+        JOIN volunteer_archived av ON av.volunteer_id = v.id
+        LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
+        LEFT JOIN roles r ON vr.role_id = r.id
+        GROUP BY v.id, av.archived_date, av.reactivation, av.archived_notes;
+      `
+    );
+    res.status(200).json(keysToCamel(volunteersQuery));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Archive a volunteer
+volunteersRouter.patch("/:id/archive", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reactivation, notes } = req.body;
+
+    const result = await db.query(
+      `
+        INSERT INTO volunteer_archived (volunteer_id, reactivation, archived_notes)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (volunteer_id) DO UPDATE
+          SET archived_date  = NOW(),
+              reactivation   = EXCLUDED.reactivation,
+              archived_notes = EXCLUDED.archived_notes
+        RETURNING *;
+      `,
+      [id, reactivation ?? null, notes ?? null]
+    );
+
+    res.status(200).json(keysToCamel(result[0]));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+// Unarchive a volunteer
+volunteersRouter.patch("/:id/unarchive", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `
+        DELETE FROM volunteer_archived
+        WHERE volunteer_id = $1
+        RETURNING *;
+      `,
+      [id]
+    );
+
+    if (!result.length) {
+      return res
+        .status(404)
+        .json({ message: "Volunteer not found in archived list" });
+    }
+
+    res.status(200).json(keysToCamel(result[0]));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -144,6 +277,41 @@ volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
+// Delete a volunteer via ID
+volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userRow = await db.query(
+      `SELECT firebase_uid FROM users WHERE id = $1`,
+      [id]
+    );
+
+    if (!userRow.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
+
+    await db.tx(async (t) => {
+      await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
+        id,
+      ]);
+      await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
+      await t.query(`DELETE FROM users WHERE id = $1`, [id]);
+    });
+
+    if (userRow.length && userRow[0].firebase_uid) {
+      await admin
+        .auth()
+        .deleteUser(userRow[0].firebase_uid)
+        .catch((err) => console.error("Failed to delete Firebase user:", err));
+    }
+
+    res.status(200).send(`Volunteer ${id} deleted successfully`);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // Update a volunteer's information via ID
 volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
@@ -159,7 +327,20 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      affiliated_employer,
+      law_school_year,
+      state_bar_certificate,
+      state_bar_number,
+      listed_experience,
     } = req.body;
+
+    const hasListedExperience = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "listed_experience"
+    );
+    const listedExperienceClause = hasListedExperience
+      ? "listed_experience = $15"
+      : "listed_experience = listed_experience";
 
     await db.query(
       `
@@ -172,7 +353,12 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             form_link = COALESCE($7, form_link),
             is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
             is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary)
+            is_notary = COALESCE($10, is_notary),
+            affiliated_employer = COALESCE($11, affiliated_employer),
+            law_school_year = COALESCE($12, law_school_year),
+            state_bar_certificate = COALESCE($13, state_bar_certificate),
+            state_bar_number = COALESCE($14, state_bar_number),
+            ${listedExperienceClause}
         WHERE id = $1;
       `,
       [
@@ -186,30 +372,15 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         is_signed_confidentiality,
         is_attorney,
         is_notary,
+        affiliated_employer ?? null,
+        law_school_year ?? null,
+        state_bar_certificate ?? null,
+        state_bar_number ?? null,
+        hasListedExperience ? normalizeNullableText(listed_experience) : null,
       ]
     );
 
     res.status(200).send(`Volunteer ${id} updated successfully`);
-  } catch (e) {
-    res.status(500).send(e.message);
-  }
-});
-
-// Delete a single volunteer via ID
-volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await db.query(
-      `
-        DELETE
-        FROM volunteers
-        WHERE id = $1;
-      `,
-      [id]
-    );
-
-    res.status(200).send(`Volunteer ${id} deleted successfully`);
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -222,17 +393,22 @@ volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
 // Assign an area of practice to a volunteer
 // POST /volunteers/:volunteerId/areas-of-practice
 // body: { areaOfPracticeId }
-volunteersRouter.post("/:volunteerId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { areaOfPracticeId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/areas-of-practice",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { areaOfPracticeId } = req.body;
 
-    if (!areaOfPracticeId) {
-      return res.status(400).json({ message: "areaOfPracticeId is required" });
-    }
+      if (!areaOfPracticeId) {
+        return res
+          .status(400)
+          .json({ message: "areaOfPracticeId is required" });
+      }
 
-    const areaAssignment = await db.query(
-      `
+      const areaAssignment = await db.query(
+        `
         INSERT INTO volunteer_areas_of_practice (
           volunteer_id,
           area_of_practice_id
@@ -242,27 +418,33 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", verifyRole("volunteer")
         DO NOTHING
         RETURNING *;
       `,
-      [volunteerId, areaOfPracticeId]
-    );
+        [volunteerId, areaOfPracticeId]
+      );
 
-    if (!areaAssignment.length) {
-      return res.status(200).json({ message: "Area of practice already assigned" });
+      if (!areaAssignment.length) {
+        return res
+          .status(200)
+          .json({ message: "Area of practice already assigned" });
+      }
+
+      res.status(201).json(keysToCamel(areaAssignment[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(201).json(keysToCamel(areaAssignment[0]));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
 // List all areas of practice for a volunteer
 // GET /volunteers/:volunteerId/areas-of-practice
-volunteersRouter.get("/:volunteerId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/areas-of-practice",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const areasOfPractice = await db.query(
-      `
+      const areasOfPractice = await db.query(
+        `
         SELECT
           aop.id AS area_of_practice_id,
           aop.areas_of_practice
@@ -271,14 +453,15 @@ volunteersRouter.get("/:volunteerId/areas-of-practice", verifyRole("volunteer"),
         WHERE vs.volunteer_id = $1
         ORDER BY aop.areas_of_practice ASC;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(areasOfPractice));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(areasOfPractice));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Remove an area of practice from a volunteer
 // DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
@@ -315,64 +498,78 @@ volunteersRouter.delete(
 // Volunteer Tags Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/tags", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { tagId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/tags",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { tagId } = req.body;
 
-    const volunteerResult = await db.query(
-      `
+      const volunteerResult = await db.query(
+        `
         INSERT INTO volunteer_tags (volunteer_id, tag_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, tagId]
-    );
+        [volunteerId, tagId]
+      );
 
-    res.status(201).json(keysToCamel(volunteerResult));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(volunteerResult));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.delete("/:volunteerId/tags/:tagId", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId, tagId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/tags/:tagId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, tagId } = req.params;
 
-    await db.query(
-      `
+      await db.query(
+        `
         DELETE
         FROM volunteer_tags
         WHERE volunteer_id = $1 AND tag_id = $2;
       `,
-      [volunteerId, tagId]
-    );
+        [volunteerId, tagId]
+      );
 
-    res.status(200).send(`Tag ${tagId} deleted from volunteer ${volunteerId}`);
-  } catch (e) {
-    res.status(500).send(e.message);
+      res
+        .status(200)
+        .send(`Tag ${tagId} deleted from volunteer ${volunteerId}`);
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.get("/:volunteerId/tags", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/tags",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const volunteerResult = await db.query(
-      `
+      const volunteerResult = await db.query(
+        `
         SELECT t.id, t.tag
         FROM volunteer_tags vt
         JOIN tags t ON t.id = vt.tag_id
         WHERE vt.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(volunteerResult));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(volunteerResult));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // -----------------------------
 // Volunteer Languages Routes (join table + is_literate)
@@ -381,44 +578,51 @@ volunteersRouter.get("/:volunteerId/tags", verifyRole("volunteer"), async (req, 
 // Batch upsert languages for a volunteer
 // POST /volunteers/:volunteerId/languages
 // body: { languages: [{ languageId, proficiency?, isLiterate? }] }
-volunteersRouter.post("/:volunteerId/languages", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { languages } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/languages",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { languages } = req.body;
 
-    if (!Array.isArray(languages) || languages.length === 0) {
-      return res.status(400).json({ message: "languages array is required" });
-    }
-
-    for (const entry of languages) {
-      if (!entry?.languageId) {
-        return res.status(400).json({
-          message: "Each language must include languageId",
-        });
+      if (!Array.isArray(languages) || languages.length === 0) {
+        return res.status(400).json({ message: "languages array is required" });
       }
-    }
 
-    const valuesSql = languages
-      .map((_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`)
-      .join(", ");
+      for (const entry of languages) {
+        if (!entry?.languageId) {
+          return res.status(400).json({
+            message: "Each language must include languageId",
+          });
+        }
+      }
 
-    const params = [volunteerId];
-    for (const entry of languages) {
-      const normalizedProficiency = String(entry?.proficiency ?? "")
-        .trim()
-        .toLowerCase();
-      const proficiency = ["proficient", "professional", "native/fluent"].includes(
-        normalizedProficiency
-      )
-        ? normalizedProficiency
-        : "proficient";
-      const isLiterate =
-        typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
-      params.push(entry.languageId, isLiterate, proficiency);
-    }
+      const valuesSql = languages
+        .map(
+          (_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`
+        )
+        .join(", ");
 
-    const result = await db.query(
-      `
+      const params = [volunteerId];
+      for (const entry of languages) {
+        const normalizedProficiency = String(entry?.proficiency ?? "")
+          .trim()
+          .toLowerCase();
+        const proficiency = [
+          "proficient",
+          "professional",
+          "native/fluent",
+        ].includes(normalizedProficiency)
+          ? normalizedProficiency
+          : "proficient";
+        const isLiterate =
+          typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
+        params.push(entry.languageId, isLiterate, proficiency);
+      }
+
+      const result = await db.query(
+        `
         INSERT INTO volunteer_language (volunteer_id, language_id, is_literate, proficiency)
         VALUES ${valuesSql}
         ON CONFLICT (volunteer_id, language_id)
@@ -427,36 +631,41 @@ volunteersRouter.post("/:volunteerId/languages", verifyRole("volunteer"), async 
           proficiency = EXCLUDED.proficiency
         RETURNING *;
       `,
-      params
-    );
+        params
+      );
 
-    res.status(201).json(keysToCamel(result));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(result));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // List all languages for a volunteer (joins to languages.language)
-volunteersRouter.get("/:volunteerId/languages", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/languages",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const languages = await db.query(
-      `
+      const languages = await db.query(
+        `
         SELECT l.id, l.language, vl.proficiency
         FROM volunteer_language vl
         JOIN languages l ON l.id = vl.language_id
         WHERE vl.volunteer_id = $1
         ORDER BY l.language ASC;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(languages));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(languages));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Remove a language from a volunteer
 volunteersRouter.delete(
@@ -492,140 +701,168 @@ volunteersRouter.delete(
 // Volunteer Roles Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/roles", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { roleId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/roles",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { roleId } = req.body;
 
-    if (!roleId) {
-      return res.status(400).json({ message: "roleId is required" });
-    }
+      if (!roleId) {
+        return res.status(400).json({ message: "roleId is required" });
+      }
 
-    const newRelationship = await db.query(
-      `
+      const newRelationship = await db.query(
+        `
         INSERT INTO volunteer_roles (volunteer_id, role_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, roleId]
-    );
+        [volunteerId, roleId]
+      );
 
-    res.status(201).json(keysToCamel(newRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.delete("/:volunteerId/roles/:roleId", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId, roleId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/roles/:roleId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, roleId } = req.params;
 
-    const deletedRelationship = await db.query(
-      `
+      const deletedRelationship = await db.query(
+        `
         DELETE FROM volunteer_roles
         WHERE volunteer_id = $1 AND role_id = $2
         RETURNING *;
       `,
-      [volunteerId, roleId]
-    );
+        [volunteerId, roleId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Role not assigned to this volunteer" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Role not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
-volunteersRouter.get("/:volunteerId/roles", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/roles",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const listAll = await db.query(
-      `
+      const listAll = await db.query(
+        `
         SELECT r.id, r.role_name
         FROM volunteer_roles vr
         JOIN roles r ON vr.role_id = r.id
         WHERE vr.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // -----------------------------
 // Volunteer Locations Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/locations", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { locationId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/locations",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { locationId } = req.body;
 
-    if (!locationId) {
-      return res.status(400).json({ message: "locationId is required" });
-    }
+      if (!locationId) {
+        return res.status(400).json({ message: "locationId is required" });
+      }
 
-    const newRelationship = await db.query(
-      `
+      const newRelationship = await db.query(
+        `
         INSERT INTO volunteer_locations (volunteer_id, location_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, locationId]
-    );
+        [volunteerId, locationId]
+      );
 
-    res.status(201).json(keysToCamel(newRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.delete("/:volunteerId/locations/:locationId", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId, locationId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/locations/:locationId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, locationId } = req.params;
 
-    const deletedRelationship = await db.query(
-      `
+      const deletedRelationship = await db.query(
+        `
         DELETE FROM volunteer_locations
         WHERE volunteer_id = $1 AND location_id = $2
         RETURNING *;
       `,
-      [volunteerId, locationId]
-    );
+        [volunteerId, locationId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res.status(404).json({ message: "Location not assigned to this volunteer" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Location not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
-volunteersRouter.get("/:volunteerId/locations", verifyRole("volunteer"), async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/locations",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const listAll = await db.query(
-      `
-        SELECT l.id, l.location_name
+      const listAll = await db.query(
+        `
+        SELECT l.id, l.city, l.state, l.zip_code
         FROM volunteer_locations vl
         JOIN locations l ON vl.location_id = l.id
         WHERE vl.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);

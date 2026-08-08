@@ -8,7 +8,6 @@ import {
   HStack,
   NativeSelect,
   Table,
-  Tag,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -70,27 +69,11 @@ const loadVolunteerActivityData = async (backend, volunteerId) => {
   );
 
   const joinedEvents = registrationResults.filter(Boolean);
-  let joinedLocations = [];
-
-  try {
-    const locationsResp = await backend.get(`/volunteers/${volunteerId}/locations`);
-    const locationRows = locationsResp?.data ?? [];
-    joinedLocations = locationRows.map((row) => {
-      if (row.locationName) return row.locationName;
-      const city = row.city ?? "";
-      const state = row.state ?? "";
-      const zip = row.zipCode ?? "";
-      return [city, state, zip].filter(Boolean).join(", ");
-    });
-  } catch {
-    joinedLocations = [];
-  }
-
-  return { events: joinedEvents, locations: joinedLocations };
+  return { events: joinedEvents };
 };
 
 const getVolunteerActivityData = async (backend, volunteerId) => {
-  if (!volunteerId) return { events: [], locations: [] };
+  if (!volunteerId) return { events: [] };
 
   if (activityCache.has(volunteerId)) {
     return activityCache.get(volunteerId);
@@ -126,7 +109,6 @@ export const prefetchVolunteerActivity = async (backend, volunteerId) => {
 export const VolunteerActivity = ({ volunteerId }) => {
   const { backend } = useBackendContext();
   const [events, setEvents] = useState([]);
-  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -138,7 +120,6 @@ export const VolunteerActivity = ({ volunteerId }) => {
       if (!volunteerId) {
         setLoading(false);
         setEvents([]);
-        setLocations([]);
         return;
       }
 
@@ -148,12 +129,10 @@ export const VolunteerActivity = ({ volunteerId }) => {
       try {
         const activityData = await getVolunteerActivityData(backend, volunteerId);
         setEvents(activityData.events ?? []);
-        setLocations(activityData.locations ?? []);
       } catch (e) {
         console.error("Failed to load volunteer activity", e);
         setError("Failed to load activity history.");
         setEvents([]);
-        setLocations([]);
       } finally {
         setLoading(false);
       }
@@ -223,47 +202,51 @@ export const VolunteerActivity = ({ volunteerId }) => {
       p={{ base: 5, md: 8 }}
     >
     <VStack gap={8} align="stretch">
-      <Heading size="2xl" fontWeight="bold" color="gray.900">
-        Activity History
-      </Heading>
-
-      <Flex gap={4} flexWrap="wrap">
-        <Box
-          flex="1"
-          minW="200px"
-          p={6}
-          bg="white"
-          borderRadius="md"
-          borderWidth="1px"
-          borderColor="gray.200"
-        >
-          <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-            {loading ? "-" : renderHours(totalHours)}
-          </Text>
-          <Text fontSize="sm" color="gray.600" mt={1}>
-            Total Volunteer Hours
-          </Text>
-        </Box>
-        <Box
-          flex="1"
-          minW="200px"
-          p={6}
-          bg="white"
-          borderRadius="md"
-          borderWidth="1px"
-          borderColor="gray.200"
-        >
-          <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-            {loading ? "-" : pastRegisteredEvents.length}
-          </Text>
-          <Text fontSize="sm" color="gray.600" mt={1}>
-            Total Event Count
-          </Text>
-        </Box>
-      </Flex>
+      <Box>
+        <Heading size="2xl" fontWeight="semibold" color="gray.900">
+          Activity History
+        </Heading>
+        <Text fontWeight="semibold" fontSize="lg" mb={4} mt={4}>
+          Volunteer Summary
+        </Text>
+        <Flex gap={4} flexWrap="wrap">
+          <Box
+            flex="1"
+            minW="200px"
+            p={6}
+            bg="white"
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="gray.200"
+          >
+            <Text fontSize="3xl" fontWeight="bold" color="gray.900">
+              {loading ? "-" : renderHours(totalHours)}
+            </Text>
+            <Text fontSize="sm" color="gray.600" mt={1}>
+              Total Volunteer Hours
+            </Text>
+          </Box>
+          <Box
+            flex="1"
+            minW="200px"
+            p={6}
+            bg="white"
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="gray.200"
+          >
+            <Text fontSize="3xl" fontWeight="bold" color="gray.900">
+              {loading ? "-" : pastRegisteredEvents.length}
+            </Text>
+            <Text fontSize="sm" color="gray.600" mt={1}>
+              Total Event Count
+            </Text>
+          </Box>
+        </Flex>
+      </Box>
 
       <Box>
-        <Text fontWeight="bold" fontSize="lg" mb={4}>
+        <Text fontWeight="semibold" fontSize="lg" mb={4}>
           Event Log
         </Text>
         <Flex gap={3} mt={6} mb={8} flexWrap="wrap" justifyContent="space-between">
@@ -286,11 +269,11 @@ export const VolunteerActivity = ({ volunteerId }) => {
         <Table.ScrollArea>
           <Table.Root size="sm" variant="line" borderWidth={1}>
             <Table.Header bg="blue.50">
-              <Table.Row bg="blue.50" fontWeight="bold">
-                <Table.ColumnHeader fontWeight="bold">Event</Table.ColumnHeader>
-                <Table.ColumnHeader fontWeight="bold">Date</Table.ColumnHeader>
-                <Table.ColumnHeader fontWeight="bold">Hours</Table.ColumnHeader>
-                <Table.ColumnHeader fontWeight="bold">Type</Table.ColumnHeader>
+              <Table.Row bg="blue.50" fontWeight="semibold">
+                <Table.ColumnHeader fontWeight="semibold">Event</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="semibold">Date</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="semibold">Hours</Table.ColumnHeader>
+                <Table.ColumnHeader fontWeight="semibold">Type</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -353,39 +336,6 @@ export const VolunteerActivity = ({ volunteerId }) => {
             ›
           </Button>
         </HStack>
-      </Box>
-
-      <Box>
-        <Text fontWeight="bold" fontSize="lg" mb={3}>
-          Locations
-        </Text>
-        <Flex
-          flexWrap="wrap"
-          gap={2}
-          align="center"
-          p={2}
-          borderWidth="1px"
-          borderColor="gray.200"
-          borderRadius="md"
-          bg="white"
-          w="50%"
-        >
-          {locations.map((loc) => (
-            <Tag.Root
-              key={loc}
-              size="md"
-              bg="gray.150"
-              color="gray.900"
-            >
-              <Tag.Label>{loc}</Tag.Label>
-            </Tag.Root>
-          ))}
-          {!loading && locations.length === 0 ? (
-            <Text color="gray.500" fontSize="sm">
-              No saved locations.
-            </Text>
-          ) : null}
-        </Flex>
       </Box>
     </VStack>
     </Box>

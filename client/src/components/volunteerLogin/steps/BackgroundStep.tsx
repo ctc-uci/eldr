@@ -1,88 +1,62 @@
 import {
   Box,
   Button,
-  Combobox,
   Flex,
   Heading,
-  HStack,
-  Image,
   Input,
-  Link,
   Progress,
   Text,
-  useListCollection,
 } from "@chakra-ui/react";
 
-import { BsInstagram } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
-import { LuArrowRight, LuFacebook, LuMail } from "react-icons/lu";
+import { useEffect, useState } from "react";
 
-import logo from "../../../assets/EldrLogo.png";
+import { LuArrowRight } from "react-icons/lu";
+
 import LoginLayout from "./BackgroundLayout";
+import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 
 type Props = {
-  onNext: () => void;
+  onComplete: () => Promise<void>;
+  isSubmitting: boolean;
 };
 
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
-];
+const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
+  const [gradYear, setGradYear] = useState("");
+  const [gradError, setGradError] = useState(false);
+  const [employer, setEmployer] = useState("");
+  const [employerError, setEmployerError] = useState(false);
+  useEffect(() => {
+    const d = loadDraft();
+    if (d) {
+      setGradYear(d.lawSchoolYear);
+      setEmployer(d.affiliatedEmployer);
+    }
+  }, []);
 
-const BackgroundStep = ({ onNext }: Props) => {
-  const { collection, filter } = useListCollection({
-    initialItems: US_STATES,
-    filter: (item, inputValue) =>
-      item.toLowerCase().includes(inputValue.toLowerCase()),
-  });
+  const handleSubmit = async () => {
+    const isValidYear = /^\d{4}$/.test(gradYear);
+
+    if (!isValidYear) {
+      setGradError(true);
+      setGradYear("");
+      return;
+    }
+
+    if (!employer.trim()) {
+      setEmployerError(true);
+      return;
+    }
+
+    setGradError(false);
+    setEmployerError(false);
+
+    saveDraft({
+      lawSchoolYear: gradYear.trim(),
+      affiliatedEmployer: employer.trim(),
+    });
+
+    await onComplete();
+  };
 
   return (
     <LoginLayout>
@@ -105,14 +79,7 @@ const BackgroundStep = ({ onNext }: Props) => {
           align="center"
           px="2%"
           py="1%"
-        >
-          <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
-            objectFit="contain"
-          />
-        </Flex>
+        />
 
         <Flex
           flex="1"
@@ -122,6 +89,7 @@ const BackgroundStep = ({ onNext }: Props) => {
             direction="column"
             justify="space-between"
             w={{ base: "100%", md: "50%" }}
+            mt="2%"
             px="5%"
             py="8%"
             borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
@@ -136,74 +104,14 @@ const BackgroundStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Community Counsel Account Manager
+                Account Creation
               </Heading>
               <Text
-                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                fontSize={{ base: "14px", md: "16px", lg: "22px" }}
                 color="gray.600"
               >
-                Please fill out your background and prior experience section.
-                Please note that each of the prompts are optional.
+                Fill out the following information.
               </Text>
-            </Box>
-
-            <Box>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-              >
-                Need help?
-              </Text>
-              <Text
-                fontWeight={700}
-                fontSize={{ base: "16px", md: "18px", lg: "22px" }}
-                color="black"
-                mb="8px"
-              >
-                Visit our website
-              </Text>
-              <Link
-                href="https://eldrcenter.org/"
-                color="#3182CE"
-                fontSize={{ base: "14px", md: "16px", lg: "20px" }}
-                textDecoration="underline"
-              >
-                Community Counsel Website
-              </Link>
-              <HStack
-                gap={{ base: "12px", md: "16px" }}
-                mt={{ base: "20px", md: "32px" }}
-              >
-                <Link
-                  href="https://www.facebook.com/ELDRCenter/photos/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuFacebook size={20} />
-                </Link>
-                <Link
-                  href="https://www.linkedin.com/company/elderlawanddisabilityrightscenter/"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <FiLinkedin size={20} />
-                </Link>
-                <Link
-                  href="https://www.instagram.com/eldr_center/?hl=en"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <BsInstagram size={20} />
-                </Link>
-                <Link
-                  href="#"
-                  color="gray.600"
-                  cursor="pointer"
-                >
-                  <LuMail size={20} />
-                </Link>
-              </HStack>
             </Box>
           </Flex>
 
@@ -220,7 +128,7 @@ const BackgroundStep = ({ onNext }: Props) => {
               size="xs"
             >
               <Progress.Track>
-                <Progress.Range bg="#3182CE" />
+                <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
 
@@ -229,17 +137,29 @@ const BackgroundStep = ({ onNext }: Props) => {
                 fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
+                fontWeight="bold"
               >
-                Law School Graduation Year
+                Graduation Year <Box as="span" color="#991919"> *</Box>
               </Text>
               <Input
-                placeholder="Law School Graduation Year"
-                borderColor="#E4E4E7"
+                placeholder="20XX"
+                value={gradYear}
+                onChange={(e) => setGradYear(e.target.value)}
+                borderColor={gradError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 fontSize="14px"
                 h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
+              {gradError && (
+                <Text
+                  fontSize="12px"
+                  color="red.500"
+                  mt="6px"
+                >
+                  Invalid Graduation Year. Please ensure it is in XXXX format.
+                </Text>
+              )}
             </Box>
 
             <Box>
@@ -247,87 +167,64 @@ const BackgroundStep = ({ onNext }: Props) => {
                 fontSize={{ base: "13px", md: "16px" }}
                 color="black"
                 mb="8px"
+                fontWeight="bold"
               >
-                State Bar Certificate State
-              </Text>
-              <Combobox.Root
-                collection={collection}
-                onInputValueChange={({ inputValue }) => filter(inputValue)}
-                css={{ "--focus-color": "colors.gray.200" }}
-                openOnClick
-              >
-                <Combobox.Control>
-                  <Combobox.Input placeholder="Select a State" />
-                  <Combobox.Trigger />
-                </Combobox.Control>
-                <Combobox.Positioner>
-                  <Combobox.Content>
-                    <Combobox.Empty>No results found</Combobox.Empty>
-                    {collection.items.map((item) => (
-                      <Combobox.Item
-                        key={item}
-                        item={item}
-                      >
-                        <Combobox.ItemText>{item}</Combobox.ItemText>
-                      </Combobox.Item>
-                    ))}
-                  </Combobox.Content>
-                </Combobox.Positioner>
-              </Combobox.Root>
-            </Box>
-
-            <Box mt="-10px">
-              <Text
-                fontSize={{ base: "13px", md: "16px" }}
-                color="black"
-                mb="8px"
-              >
-                State Bar Number
+                Employer <Box as="span" color="#991919"> *</Box>
               </Text>
               <Input
-                placeholder="Enter State Bar Number"
-                borderColor="#E4E4E7"
+                placeholder="Enter your company name"
+                value={employer}
+                onChange={(e) => {
+                  setEmployer(e.target.value);
+                  if (employerError) setEmployerError(false);
+                }}
+                borderColor={employerError ? "red.400" : "#E4E4E7"}
                 borderRadius="6px"
                 fontSize="14px"
                 h={{ base: "40px", md: "44px" }}
                 focusRingColor="gray.200"
               />
-            </Box>
-
-            <Box>
-              <Text
-                fontSize={{ base: "13px", md: "16px" }}
-                color="black"
-                mb="8px"
-              >
-                Employer
-              </Text>
-              <Input
-                placeholder="Enter Employer"
-                borderColor="#E4E4E7"
-                borderRadius="6px"
-                fontSize="14px"
-                h={{ base: "40px", md: "44px" }}
-                focusRingColor="gray.200"
-              />
+              {employerError && (
+                <Text
+                  fontSize="12px"
+                  color="red.500"
+                  mt="6px"
+                >
+                  Employer is required.
+                </Text>
+              )}
             </Box>
 
             <Button
-              bg="#3182CE"
-              color="white"
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
               h={{ base: "40px", md: "48px" }}
-              w="100%"
               borderRadius="6px"
               fontSize={{ base: "13px", md: "17px" }}
               fontWeight={500}
-              _hover={{ bg: "#5797BD" }}
-              justifyContent="space-between"
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              position="relative"
+              w="100%"
               px="20px"
-              onClick={onNext}
+              onClick={handleSubmit}
+              loading={isSubmitting}
             >
-              Continue
-              <LuArrowRight size={16} />
+              <Box w="100%" textAlign="center">
+                Create Account
+              </Box>
+              <Box position="absolute" right="12px">
+                <LuArrowRight size={16} />
+              </Box>
             </Button>
+
           </Flex>
         </Flex>
 
