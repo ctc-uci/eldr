@@ -1,10 +1,11 @@
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 
 import { Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
-import { LuChevronsUpDown, LuChevronUp, LuChevronDown } from "react-icons/lu";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { StaffMember } from "@/types/volunteer";
+import { LuChevronDown, LuChevronsUpDown, LuChevronUp } from "react-icons/lu";
+
 import { PAGE_SIZE } from "./VolunteerList";
 
 interface StaffListProps {
@@ -47,7 +48,10 @@ export const StaffList = ({
 
   const handleSort = (key: keyof StaffMember) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
     setPage(1);
   };
 
@@ -63,12 +67,19 @@ export const StaffList = ({
     e.stopPropagation();
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
-  const SortHeader = ({ label, sortField }: { label: string; sortField?: keyof StaffMember }) => {
+  const SortHeader = ({
+    label,
+    sortField,
+  }: {
+    label: string;
+    sortField?: keyof StaffMember;
+  }) => {
     const active = sortField && sortKey === sortField;
     return (
       <Flex
@@ -79,10 +90,16 @@ export const StaffList = ({
         onClick={sortField ? () => handleSort(sortField) : undefined}
       >
         {label}
-        {sortField && (active
-          ? (sortDir === "asc" ? <LuChevronUp size={12} /> : <LuChevronDown size={12} />)
-          : <LuChevronsUpDown size={12} />
-        )}
+        {sortField &&
+          (active ? (
+            sortDir === "asc" ? (
+              <LuChevronUp size={12} />
+            ) : (
+              <LuChevronDown size={12} />
+            )
+          ) : (
+            <LuChevronsUpDown size={12} />
+          ))}
       </Flex>
     );
   };
@@ -102,11 +119,15 @@ export const StaffList = ({
 
   return (
     <Box overflow="hidden">
-      <Table.Root size="md">
+      <Table.Root
+        size="md"
+        tableLayout="fixed"
+        w="100%"
+      >
         <Table.Header>
           <Table.Row bg="#EFF6FF">
             {!isList && (
-              <Table.ColumnHeader w="40px">
+              <Table.ColumnHeader w="3%">
                 <Checkbox.Root
                   cursor="pointer"
                   size="sm"
@@ -116,7 +137,9 @@ export const StaffList = ({
                   }
                   onCheckedChange={() => {
                     const pageIds = pageSlice.map((s) => s.id);
-                    const allChecked = pageIds.every((id) => checkedIds.has(id));
+                    const allChecked = pageIds.every((id) =>
+                      checkedIds.has(id)
+                    );
                     setCheckedIds((prev) => {
                       const next = new Set(prev);
                       if (allChecked) pageIds.forEach((id) => next.delete(id));
@@ -130,19 +153,47 @@ export const StaffList = ({
                 </Checkbox.Root>
               </Table.ColumnHeader>
             )}
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Name" sortField="firstName" />
+            <Table.ColumnHeader
+              fontSize="xs"
+              fontWeight="semibold"
+              color="gray.600"
+            >
+              <SortHeader
+                label="Name"
+                sortField="firstName"
+              />
             </Table.ColumnHeader>
-            <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-              <SortHeader label="Role" sortField="role" />
+            <Table.ColumnHeader
+              fontSize="xs"
+              fontWeight="semibold"
+              color="gray.600"
+            >
+              <SortHeader
+                label="Role"
+                sortField="role"
+              />
             </Table.ColumnHeader>
             {!isList && (
               <>
-                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Phone Number" sortField="phoneNumber" />
+                <Table.ColumnHeader
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  color="gray.600"
+                >
+                  <SortHeader
+                    label="Phone Number"
+                    sortField="phoneNumber"
+                  />
                 </Table.ColumnHeader>
-                <Table.ColumnHeader fontSize="xs" fontWeight="semibold" color="gray.600">
-                  <SortHeader label="Start Date" sortField="startDate" />
+                <Table.ColumnHeader
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  color="gray.600"
+                >
+                  <SortHeader
+                    label="Start Date"
+                    sortField="startDate"
+                  />
                 </Table.ColumnHeader>
               </>
             )}
@@ -152,40 +203,86 @@ export const StaffList = ({
           {pageSlice.map((member) => (
             <Table.Row
               key={member.id}
-              bg={!isList && checkedIds.has(member.id) ? "blue.50" : "transparent"}
-              boxShadow={selectedId === member.id ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
+              bg={
+                !isList && checkedIds.has(member.id) ? "blue.50" : "transparent"
+              }
+              boxShadow={
+                selectedId === member.id
+                  ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)"
+                  : undefined
+              }
               _hover={{ bg: "gray.50", cursor: "pointer" }}
-              onClick={(e) => { e.stopPropagation(); onSelect?.(member); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect?.(member);
+              }}
             >
               {!isList && (
                 <Table.Cell onClick={(e) => toggleCheck(e, member.id)}>
-                  <Checkbox.Root cursor="pointer" size="sm" checked={checkedIds.has(member.id)}>
+                  <Checkbox.Root
+                    cursor="pointer"
+                    size="sm"
+                    checked={checkedIds.has(member.id)}
+                  >
                     <Checkbox.HiddenInput />
                     <Checkbox.Control cursor="pointer" />
                   </Checkbox.Root>
                 </Table.Cell>
               )}
               <Table.Cell>
-                <Flex align="center" gap={3}>
-                  <Box w="36px" h="36px" borderRadius="full" bg="gray.200" flexShrink={0} />
+                <Flex
+                  align="center"
+                  gap={3}
+                >
+                  <Box
+                    w="36px"
+                    h="36px"
+                    borderRadius="full"
+                    bg="gray.200"
+                    flexShrink={0}
+                  />
                   <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="black">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      color="black"
+                    >
                       {member.firstName} {member.lastName}
                     </Text>
-                    <Text fontSize="xs" color="gray.500">{member.email}</Text>
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                    >
+                      {member.email}
+                    </Text>
                   </Box>
                 </Flex>
               </Table.Cell>
               <Table.Cell>
-                <Text fontSize="sm" color="black">{member.role}</Text>
+                <Text
+                  fontSize="sm"
+                  color="black"
+                >
+                  {member.role}
+                </Text>
               </Table.Cell>
               {!isList && (
                 <>
                   <Table.Cell>
-                    <Text fontSize="sm" color="black">{member.phoneNumber ?? "—"}</Text>
+                    <Text
+                      fontSize="sm"
+                      color="black"
+                    >
+                      {member.phoneNumber ?? "—"}
+                    </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text fontSize="sm" color="black">{formatDate(member.startDate)}</Text>
+                    <Text
+                      fontSize="sm"
+                      color="black"
+                    >
+                      {formatDate(member.startDate)}
+                    </Text>
                   </Table.Cell>
                 </>
               )}

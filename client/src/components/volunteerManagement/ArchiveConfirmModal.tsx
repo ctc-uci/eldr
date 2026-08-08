@@ -1,23 +1,40 @@
-import { Button, CloseButton, Dialog, Portal, Text } from "@chakra-ui/react";
+import { useState } from "react";
 
-interface DeleteConfirmModalProps {
+import {
+  Button,
+  CloseButton,
+  Dialog,
+  Field,
+  Input,
+  Portal,
+} from "@chakra-ui/react";
+
+interface ArchiveConfirmModalProps {
   open: boolean;
   count: number;
   onClose: () => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: (note: string) => Promise<void>;
 }
 
-export const DeleteConfirmModal = ({
+export const ArchiveConfirmModal = ({
   open,
   count,
   onClose,
   onConfirm,
-}: DeleteConfirmModalProps) => {
-  const handleDelete = async () => {
+}: ArchiveConfirmModalProps) => {
+  const [note, setNote] = useState("");
+
+  const close = () => {
+    setNote("");
+    onClose();
+  };
+
+  const handleArchive = async () => {
     try {
-      await onConfirm();
+      await onConfirm(note.trim());
+      setNote("");
     } catch (error) {
-      console.error("Error deleting volunteer(s):", error);
+      console.error("Error archiving profile(s):", error);
     }
   };
 
@@ -25,7 +42,7 @@ export const DeleteConfirmModal = ({
     <Dialog.Root
       open={open}
       onOpenChange={(e) => {
-        if (!e.open) onClose();
+        if (!e.open) close();
       }}
       placement="center"
       size="sm"
@@ -36,16 +53,21 @@ export const DeleteConfirmModal = ({
           <Dialog.Content>
             <Dialog.Header>
               <Dialog.Title>
-                Delete {count > 1 ? `${count} Profiles` : "Profile"}
+                Archive {count > 1 ? `${count} Profiles` : "Profile"}
               </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              <Text
-                fontSize="sm"
-                color="gray.700"
-              >
-                Are you sure? You can't undo this action afterwards.
-              </Text>
+              <Field.Root>
+                <Field.Label>Note</Field.Label>
+                <Input
+                  placeholder="Type archive note here"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleArchive();
+                  }}
+                />
+              </Field.Root>
             </Dialog.Body>
             <Dialog.Footer
               gap={3}
@@ -55,16 +77,16 @@ export const DeleteConfirmModal = ({
                 <Button
                   variant="outline"
                   borderColor="#CBD5E0"
-                  onClick={onClose}
+                  onClick={close}
                 >
                   Cancel
                 </Button>
               </Dialog.ActionTrigger>
               <Button
-                onClick={handleDelete}
+                onClick={handleArchive}
                 colorPalette="red"
               >
-                Yes, Delete
+                Yes, Archive
               </Button>
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild>

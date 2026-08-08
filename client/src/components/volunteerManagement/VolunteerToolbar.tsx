@@ -46,12 +46,12 @@ export const VolunteerToolbar = ({ searchQuery, onSearchChange, onFilterOpen }: 
       </Flex>
       <Button
         size="md"
-        bg="#5F80A0"
+        bg="#487C9E"
         color="white"
         borderRadius="md"
         py={4}
         gap={2}
-        _hover={{ bg: "#487C9E" }}
+        _hover={{ bg: "#294A5F" }}
         onClick={() => navigate("/volunteer-management/new")}
       >
         <LuCircleUser />
