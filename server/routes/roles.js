@@ -1,11 +1,12 @@
 import { db } from "@/db/db-pgp";
 import { Router } from "express";
 import { keysToCamel } from "@/common/utils";
+import { verifyRole } from "@/middleware";
 
 export const rolesRouter = Router();
 
 // Create a new role
-rolesRouter.post("/", async (req, res) => {
+rolesRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { roleName } = req.body;
 
@@ -25,7 +26,7 @@ rolesRouter.post("/", async (req, res) => {
 });
 
 // Get all roles
-rolesRouter.get("/", async (req, res) => {
+rolesRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const roles = await db.query(
       `
@@ -41,7 +42,7 @@ rolesRouter.get("/", async (req, res) => {
 });
 
 // Get a single role by ID
-rolesRouter.get("/:id", async (req, res) => {
+rolesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
     const roles = await db.query(
@@ -60,7 +61,7 @@ rolesRouter.get("/:id", async (req, res) => {
 });
 
 // Delete a role by ID
-rolesRouter.delete("/:id", async (req, res) => {
+rolesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query(

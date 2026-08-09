@@ -1,12 +1,13 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const locationsRouter = Router();
 
 // GET: list all locations
 // /locations
-locationsRouter.get("/", async (req, res) => {
+locationsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const locations = await db.query("SELECT * FROM locations");
     res.status(200).json(keysToCamel(locations));
@@ -18,7 +19,7 @@ locationsRouter.get("/", async (req, res) => {
 
 // POST: create a new location
 // /locations
-locationsRouter.post("/", async (req, res) => {
+locationsRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { city, state, zip_code } = req.body;
 
@@ -37,7 +38,7 @@ locationsRouter.post("/", async (req, res) => {
 
 // DELETE: delete a location
 // /locations/{locationId}
-locationsRouter.delete("/:locationId", async (req, res) => {
+locationsRouter.delete("/:locationId", verifyRole("staff"), async (req, res) => {
   try {
     const { locationId } = req.params;
     const deletedLocation = await db.query(
@@ -58,7 +59,7 @@ locationsRouter.delete("/:locationId", async (req, res) => {
 
 // PUT: update a location
 // /locations/{locationId}
-locationsRouter.put("/:locationId", async (req, res) => {
+locationsRouter.put("/:locationId", verifyRole("staff"), async (req, res) => {
   try {
     const { locationId } = req.params;
     const { city, state, zip_code } = req.body;

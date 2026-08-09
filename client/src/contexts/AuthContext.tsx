@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /**
    * Helper function which keeps our DB and our Firebase in sync.
-   * If a user signs in with Google redirect, we ensure the DB has a user + volunteer row.
+   * If a user signs in with an SSO redirect, we ensure the DB has a user + volunteer row.
    *
    * The volunteer endpoint upserts both records, including a stub volunteer profile.
    */
@@ -115,13 +115,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (result) {
         if (!result.user.email) {
-          throw new Error("Google account is missing an email address.");
+          throw new Error("Account is missing an email address.");
         }
 
         const nameParts = splitDisplayName(result.user.displayName);
         if (!nameParts) {
           throw new Error(
-            "Google SSO needs a first and last name. Please update your Google profile name and try again."
+            "SSO needs a first and last name. Please update your profile name and try again."
           );
         }
 
@@ -142,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           state_bar_number: null,
         });
 
-        navigate("/event-catalog/all-events", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("Redirect result error:", error);
