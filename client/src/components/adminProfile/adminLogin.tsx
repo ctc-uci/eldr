@@ -1,55 +1,35 @@
 import {
   Box,
   Button,
-  Field,
   Flex,
-  HStack,
-  Icon,
+  Heading,
   IconButton,
   Image,
   Input,
-  InputGroup,
   Link,
-  List,
   Separator,
   Text,
-  VStack,
-  FormControl,
-  FormLabel,
 } from "@chakra-ui/react";
-
-import {
-  LuExternalLink,
-} from "react-icons/lu";
-
 import { useEffect, useState } from "react";
-import {
-  FaArrowRight,
-  FaGoogle,
-  FaInstagram,
-  FaMicrosoft,
-  FaRegEye,
-  FaRegEyeSlash,
-} from "react-icons/fa";
-import { FiFacebook, FiLinkedin } from "react-icons/fi";
-import { HiOutlineKey } from "react-icons/hi";
-import { MdOutlineEmail } from "react-icons/md";
-
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+import { LuArrowRight, LuExternalLink } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
+import microsoft from "@/assets/microsoft_logo.svg";
+import LoginLayout from "@/components/volunteerLogin/steps/BackgroundLayout";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import {
   authenticateGoogleUser,
   authenticateMicrosoftUser,
 } from "@/utils/auth/providers";
-import logo from "./ELDR_Logo.png";
+import { clearCookies } from "@/utils/auth/cookie";
+import { refreshToken } from "@/utils/auth/firebase";
 import {
   getAuth,
   getRedirectResult,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { refreshToken } from "@/utils/auth/firebase";
-import { clearCookies } from "@/utils/auth/cookie";
 import { Cookies } from "react-cookie";
 
 type UserRecord = {
@@ -60,7 +40,7 @@ type UserRecord = {
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const { backend } = useBackendContext();
-  const [userFilled, setUserFilled] = useState(false);
+  const [, setUserFilled] = useState(false);
   const [passFilled, setPassFilled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -176,244 +156,337 @@ export const AdminLogin: React.FC = () => {
   }, [auth, backend, navigate]);
 
   return (
-    <Flex
-      minH="100vh"
-      w="100%"
-      bg="white"
-      align="center"
-      justify="center"
-      position="relative"
-      p="3vh"
-    >
-      <Box
-        position="absolute"
-        top="-400px"
-        left="-400px"
-        w="900px"
-        h="900px"
-        bg="#EFF6FF"
-        borderRadius="50%"
-        zIndex={0}
-      />
-      <VStack
-        minH="80vh"
+    <LoginLayout>
+      <Flex
         w="80vw"
         maxW="1200px"
-        borderWidth="1px"
+        minH="80vh"
+        bg="#FFFFFF"
         borderRadius="sm"
+        border="1px solid"
         borderColor="#E4E4E7"
-        zIndex={1}
-        gap={0}
+        direction="column"
         overflow="hidden"
       >
         <Flex
           w="100%"
-          bg="#F6F6F6"
           h="70px"
-          align="left"
+          bg="#F6F6F6"
+          flexShrink={0}
+          align="center"
           px="2%"
           py="1%"
+        />
+
+        <Flex
+          flex="1"
+          direction={{ base: "column", md: "row" }}
         >
-        </Flex>
-        <Flex flex="1" w="100%" bg="white">
-          <VStack align="left" width="50%" px="5%" gap={1}>
-            <Text fontWeight="bold" fontSize="30px" pt="15%">
-              Community Counsel's Event Portal
-            </Text>
-            <HStack>
-              <Text pt="3%">Need help? Visit our website </Text>
-              <Link
-                color="#3182CE"
-                bg="white"
-                href="https://eldrcenter.org/"
-                pt="2%"
-              >
-                <LuExternalLink />
-              </Link>
-            </HStack>
-          </VStack>
-          <Separator orientation="vertical" />
-          <VStack
-            w="50%"
-            bg="#FFFFFF"
-            h="100%"
-            align="left"
+          <Flex
+            direction="column"
             justify="center"
+            w={{ base: "100%", md: "50%" }}
+            px="5%"
+            py="8%"
+            borderRight={{ base: "none", md: "1px solid #E4E4E7" }}
+            borderBottom={{ base: "1px solid #E4E4E7", md: "none" }}
+            borderColor="#E4E4E7"
+            gap={{ base: "32px", md: "0" }}
+          >
+            <Box>
+              <Heading
+                fontSize={{ base: "17px", md: "22px", lg: "32px" }}
+                fontWeight={700}
+                color="black"
+                mb="12px"
+                lineHeight="1.2"
+              >
+                Community Counsel's Event Portal
+              </Heading>
+              <Text
+                fontSize={{ base: "14px", md: "16px", lg: "18px" }}
+                color="black"
+              >
+                Need help? Visit our website{" "}
+                <Link
+                  href="https://eldrcenter.org/"
+                  display="inline-flex"
+                  alignItems="center"
+                >
+                  <LuExternalLink size={20} color="#2563EB" />
+                </Link>
+              </Text>
+            </Box>
+          </Flex>
+
+          <Flex
+            direction="column"
+            justify="center"
+            w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
+            gap={{ base: "12px", md: "16px" }}
+            align="center"
           >
-            <VStack w="30vw" minW="320px" align="stretch" gap={3}>
-              <Field.Root invalid={!!emailError} required>
-                <Field.Label fontWeight="bold">Email
-                  <Field.RequiredIndicator />
-                </Field.Label>
-                <InputGroup width="100%">
-                  <Input
-                    placeholder="Enter an email"
-                    borderRadius="md"
-                    _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setUserFilled(value.length > 0);
-                      setEmail(value);
-                      setEmailError("");
-                    }}
-                  />
-                </InputGroup>
-                <Field.ErrorText>
-                  {emailError || "Please enter a valid email."}
-                </Field.ErrorText>
-              </Field.Root>
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight="bold"
+                color="black"
+                mb="6px"
+              >
+                Email
+                <Box as="span" color="#991919"> *</Box>
+              </Text>
+              <Flex
+                align="center"
+                border="1px solid"
+                borderColor={emailError ? "red.400" : "#E4E4E7"}
+                borderRadius="6px"
+                px="12px"
+                h={{ base: "40px", md: "44px" }}
+                gap="8px"
+              >
+                <Input
+                  placeholder="Enter an email"
+                  type="email"
+                  border="none"
+                  outline="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                  value={email}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setUserFilled(value.length > 0);
+                    setEmail(value);
+                    setEmailError("");
+                  }}
+                />
+              </Flex>
+              {emailError && (
+                <Text fontSize="12px" color="red.500" mt="4px">
+                  {emailError}
+                </Text>
+              )}
+            </Box>
 
-              <Field.Root invalid={!!passwordError} required>
-                <Field.Label fontWeight="bold">Password
-                  <Field.RequiredIndicator />
-                </Field.Label>
-                <InputGroup
-                  width="100%"
-                  endElement={
-                    passFilled ? (
-                      <IconButton
-                        variant="ghost"
-                        boxSize="20px"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        aria-label="Toggle password visibility"
-                        _hover={{ bg: "white" }}
-                      >
-                        {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                      </IconButton>
-                    ) : null
-                  }
-                >
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter Password"
-                    borderRadius="md"
-                    _placeholder={{ color: "#A1A1AA", opacity: 1 }}
-                    css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setPassFilled(value.length > 0);
-                      setPassword(value);
-                      setPasswordError("");
-                    }}
-                  />
-                </InputGroup>
-                <Field.ErrorText>
-                  {passwordError || "Please enter a valid password."}
-                </Field.ErrorText>
-              </Field.Root>
+            <Box w="30vw" minW="320px" maxW="460px">
+              <Text
+                fontSize={{ base: "13px", md: "14px" }}
+                fontWeight="bold"
+                color="black"
+                mb="6px"
+              >
+                Password
+                <Box as="span" color="#991919"> *</Box>
+              </Text>
+              <Flex
+                align="center"
+                border="1px solid"
+                borderColor={passwordError ? "red.400" : "#E4E4E7"}
+                borderRadius="6px"
+                px="12px"
+                h={{ base: "40px", md: "44px" }}
+                gap="8px"
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter Password"
+                  border="none"
+                  outline="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                  value={password}
+                  css={{ "&::-ms-reveal, &::-ms-clear": { display: "none" } }}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPassFilled(value.length > 0);
+                    setPassword(value);
+                    setPasswordError("");
+                  }}
+                />
+                {passFilled && (
+                  <IconButton
+                    variant="ghost"
+                    boxSize="20px"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label="Toggle password visibility"
+                    _hover={{ bg: "transparent" }}
+                  >
+                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                  </IconButton>
+                )}
+              </Flex>
+              {passwordError && (
+                <Text fontSize="12px" color="red.500" mt="4px">
+                  {passwordError}
+                </Text>
+              )}
+            </Box>
 
+            <Box w="30vw" minW="320px" maxW="460px" textAlign="right" mt="-4px">
               <Link
                 textDecoration="underline"
                 color="#3182CE"
-                background="white"
                 href="/adminForgotPass?from=admin"
-                alignSelf="flex-end"
-                pb="2%"
+                fontSize={{ base: "13px", md: "14px" }}
               >
                 Forgot Password?
               </Link>
-              <Button
-                position="relative"
-                variant="outline"
-                borderRadius="md"
-                bg="white"
-                w="100%"
-                h="3vw"
-                color="black"
-                _hover={{ bg: "#F4F4F5" }}
-                css={{
-                  "&:active": {
-                    background: "black !important",
-                    color: "white !important",
-                  },
-                }}
-                onClick={handleAdminLogin}
-              >
-                Login
-                <Icon
-                  as={FaArrowRight}
-                  position="absolute"
-                  right="16px"
-                  top="50%"
-                  transform="translateY(-50%)"
-                />
-              </Button>
-            </VStack>
+            </Box>
 
-            <VStack w="30vw" minW="320px" align="stretch" mt={4}>
-              <Text fontSize="md" fontWeight="bold" pb="4%" textAlign="center">
+            <Button
+              bg="white"
+              borderColor="#E4E4E7"
+              borderWidth="1px"
+              color="black"
+              h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              justifyContent="center"
+              px="20px"
+              onClick={handleAdminLogin}
+              position="relative"
+            >
+              Login
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
+            </Button>
+
+            <Flex
+              align="center"
+              gap="3"
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
+              <Separator
+                flex="1"
+                borderColor="#E4E4E7"
+              />
+              <Text
+                fontSize={{ base: "12px", md: "14px" }}
+                color="black"
+                fontWeight="bold"
+              >
                 or continue with
               </Text>
-              <Button
-                variant="outline"
-                bg="white"
-                borderWidth="2px"
-                borderRadius="md"
-                w="100%"
-                alignSelf="center"
-                h="50px"
-                color="black"
-                _hover={{ bg: "#F4F4F5" }}
-                css={{
-                  "&:active": {
-                    background: "black !important",
-                    color: "white !important",
-                  },
-                }}
-                onClick={handleGoogleSso}
-              >
-                <Image 
-                  src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" 
-                  alt="Google" 
-                  boxSize="20px"
-                  position="absolute" 
-                  left="16px" 
-                  top="50%" 
-                  transform="translateY(-50%)" 
-                />
+              <Separator
+                flex="1"
+                borderColor="#E4E4E7"
+              />
+            </Flex>
+
+            <Button
+              bg="white"
+              borderColor="#E4E4E7"
+              borderWidth="1px"
+              color="black"
+              h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              position="relative"
+              px="20px"
+              onClick={handleGoogleSso}
+            >
+              <Box position="absolute" left="16px">
+                <FcGoogle size={18} />
+              </Box>
+
+              <Text textAlign="center" w="100%">
                 Google
-                <Icon as={FaArrowRight} position="absolute" right="16px" top="50%" transform="translateY(-50%)" />
-              </Button>
-              <Button
-                variant="outline"
-                bg="white"
-                borderWidth="2px"
-                borderRadius="md"
-                w="100%"
-                alignSelf="center"
-                h="50px"
-                color="black"
-                _hover={{ bg: "#F4F4F5" }}
-                css={{
-                  "&:active": {
-                    background: "black !important",
-                    color: "white !important",
-                  },
-                }}
-                onClick={handleMicrosoftSso}
-              >
-                <Image 
-                  src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" 
-                  alt="Microsoft" 
-                  boxSize="20px"
-                  position="absolute" 
-                  left="16px" 
-                  top="50%" 
-                  transform="translateY(-50%)" 
-                />
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
+            </Button>
+
+            <Button
+              bg="white"
+              borderColor="#E4E4E7"
+              borderWidth="1px"
+              color="black"
+              h={{ base: "40px", md: "48px" }}
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              borderRadius="6px"
+              fontSize={{ base: "13px", md: "14px" }}
+              fontWeight={500}
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
+                bg: "#F4F4F5",
+                _active: {
+                  bg: "black",
+                  color: "white",
+                },
+              }}
+              position="relative"
+              px="20px"
+              onClick={handleMicrosoftSso}
+            >
+              <Box position="absolute" left="16px">
+                <Image src={microsoft} alt="Microsoft logo" boxSize="18px" />
+              </Box>
+
+              <Text textAlign="center" w="100%">
                 Microsoft
-                <Icon as={FaArrowRight} position="absolute" right="16px" top="50%" transform="translateY(-50%)" />
-              </Button>
-              <Field.Root invalid={!!ssoError}>
-                <Field.ErrorText textAlign="center">{ssoError}</Field.ErrorText>
-              </Field.Root>
-            </VStack>
-          </VStack>
+              </Text>
+
+              <Box position="absolute" right="16px">
+                <LuArrowRight size={16} />
+              </Box>
+            </Button>
+
+            {ssoError && (
+              <Text fontSize="12px" color="red.500" mt="4px" textAlign="center">
+                {ssoError}
+              </Text>
+            )}
+          </Flex>
         </Flex>
-        <Flex w="100%" bg="#F6F6F6" h="70px" />
-      </VStack>
-    </Flex>
+
+        <Box
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+        />
+      </Flex>
+    </LoginLayout>
   );
-}
+};
