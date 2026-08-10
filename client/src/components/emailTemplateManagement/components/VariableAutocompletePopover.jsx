@@ -215,6 +215,10 @@ export const VariableAutocompletePopover = ({
                   cursor="pointer"
                   bg={isSelected ? "#E0F2FE" : "transparent"}
                   _hover={{ bg: "#F0F9FF" }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onSelectOption(item);
+                  }}
                   onClick={() => onSelectOption(item)}
                 >
                   <Flex align="center" gap="8px" minW={0}>
@@ -272,6 +276,10 @@ export const VariableAutocompletePopover = ({
                   cursor="pointer"
                   bg={isSelected ? "#F3E8FF" : "transparent"}
                   _hover={{ bg: "#FAF5FF" }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onSelectOption(item);
+                  }}
                   onClick={() => onSelectOption(item)}
                 >
                   <Flex align="center" gap="8px" minW={0}>

@@ -177,8 +177,14 @@ export const NewTemplateSection = ({
     }
   };
 
-  const handleSubjectBlur = () => {
-    // Delay slightly to allow option click handlers to execute before closing
+  const handleSubjectBlur = (e) => {
+    if (
+      e?.relatedTarget &&
+      (e.relatedTarget.closest("#variable-autocomplete-listbox") ||
+        e.relatedTarget.closest("[role='listbox']"))
+    ) {
+      return;
+    }
     setTimeout(() => {
       setSubjectPopover((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
     }, 150);
@@ -276,6 +282,13 @@ export const NewTemplateSection = ({
   // Close popovers on outside clicks
   useEffect(() => {
     const handleGlobalMouseDown = (e) => {
+      // Ignore clicks inside the autocomplete popover listbox
+      if (
+        e.target.closest("#variable-autocomplete-listbox") ||
+        e.target.closest("[role='listbox']")
+      ) {
+        return;
+      }
       if (
         subjectContainerRef.current &&
         !subjectContainerRef.current.contains(e.target)
@@ -378,6 +391,30 @@ export const NewTemplateSection = ({
     immediatelyRender: false,
   });
 
+  // Update popover coordinates on scroll or window resize
+  useEffect(() => {
+    if (!subjectPopover.isOpen && !editorPopover.isOpen) return;
+
+    const handleScrollOrResize = () => {
+      if (subjectPopover.isOpen && subjectInputRef.current) {
+        const rect = subjectInputRef.current.getBoundingClientRect();
+        const top = rect.bottom + 4;
+        const left = Math.max(8, Math.min(rect.left, window.innerWidth - 330));
+        setSubjectPopover((prev) => ({ ...prev, position: { top, left } }));
+      }
+      if (editorPopover.isOpen && editor?.view) {
+        checkEditorAutocomplete(editor);
+      }
+    };
+
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [subjectPopover.isOpen, editorPopover.isOpen, checkEditorAutocomplete, editor]);
+
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(isEditable);
@@ -394,7 +431,10 @@ export const NewTemplateSection = ({
   if (!editor) return null;
 
   const currentSubjectFiltered = getFilteredOptions(subjectPopover.query);
-  const currentSubjectSelected = currentSubjectFiltered[subjectPopover.selectedIndex];
+  const isSubjectPopoverVisible = subjectPopover.isOpen && currentSubjectFiltered.length > 0;
+  const currentSubjectSelected = isSubjectPopoverVisible
+    ? currentSubjectFiltered[subjectPopover.selectedIndex]
+    : null;
 
   return (
     <Box
@@ -422,10 +462,10 @@ export const NewTemplateSection = ({
             onClick={handleSubjectClick}
             onBlur={handleSubjectBlur}
             aria-autocomplete="list"
-            aria-expanded={subjectPopover.isOpen}
-            aria-controls={subjectPopover.isOpen ? "variable-autocomplete-listbox" : undefined}
+            aria-expanded={isSubjectPopoverVisible}
+            aria-controls={isSubjectPopoverVisible ? "variable-autocomplete-listbox" : undefined}
             aria-activedescendant={
-              subjectPopover.isOpen && currentSubjectSelected
+              isSubjectPopoverVisible && currentSubjectSelected
                 ? `variable-option-${subjectPopover.selectedIndex}`
                 : undefined
             }
