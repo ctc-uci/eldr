@@ -14,3 +14,4 @@ export { DeleteTemplateModal } from "./DeleteTemplateModal";
 export { RenameFolderDialog } from "./RenameFolderDialog";
 export { ContextMenu } from "./ContextMenu";
 export { RenameDialog } from "./RenameDialog";
+export { VariableAutocompletePopover, AVAILABLE_VARIABLES } from "./VariableAutocompletePopover";
