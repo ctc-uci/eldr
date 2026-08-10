@@ -44,12 +44,20 @@ export const NewTemplateSection = ({
     if (lastOpenIndex !== -1) {
       const textBetween = textBefore.slice(lastOpenIndex + 2);
       if (!textBetween.includes("}") && !textBetween.includes("\n")) {
+        let top = 0;
+        let left = 0;
+        if (subjectInputRef.current) {
+          const rect = subjectInputRef.current.getBoundingClientRect();
+          top = rect.bottom + 4;
+          left = Math.max(8, Math.min(rect.left, window.innerWidth - 330));
+        }
+
         setSubjectPopover((prev) => ({
           ...prev,
           isOpen: true,
           query: textBetween,
           selectedIndex: 0,
-          position: { top: 44, left: 0 }, // Position right beneath input box
+          position: { top, left },
         }));
         return;
       }
@@ -66,8 +74,13 @@ export const NewTemplateSection = ({
     const lastOpenIndex = textBefore.lastIndexOf("{{");
     if (lastOpenIndex === -1) return;
 
+    // Detect and consume any existing suffix and closing braces '}}'
     let afterIndex = selectionStart;
-    if (value.slice(selectionStart, selectionStart + 2) === "}}") {
+    const textAfter = value.slice(selectionStart);
+    const closingMatch = textAfter.match(/^([^}\s]*\}\})/);
+    if (closingMatch) {
+      afterIndex = selectionStart + closingMatch[0].length;
+    } else if (textAfter.startsWith("}}")) {
       afterIndex = selectionStart + 2;
     }
 
@@ -164,6 +177,13 @@ export const NewTemplateSection = ({
     }
   };
 
+  const handleSubjectBlur = () => {
+    // Delay slightly to allow option click handlers to execute before closing
+    setTimeout(() => {
+      setSubjectPopover((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+    }, 150);
+  };
+
   // ----------------------------------------------------
   // Rich Text Editor (Tiptap) State & Logic
   // ----------------------------------------------------
@@ -198,10 +218,8 @@ export const NewTemplateSection = ({
       const queryText = textBefore.slice(lastOpenIndex + 2);
       if (!queryText.includes("}") && !queryText.includes("\n")) {
         const coords = view.coordsAtPos(from);
-        const containerRect = editorBoxRef.current.getBoundingClientRect();
-
-        const top = coords.bottom - containerRect.top + 4;
-        const left = Math.max(0, Math.min(coords.left - containerRect.left, containerRect.width - 330));
+        const top = coords.bottom + 4;
+        const left = Math.max(8, Math.min(coords.left, window.innerWidth - 330));
 
         setEditorPopover({
           isOpen: true,
@@ -229,9 +247,14 @@ export const NewTemplateSection = ({
 
     const startPos = from - (textBefore.length - lastOpenIndex);
 
+    // Consume any existing suffix and closing '}}' in editor text
+    const maxCheck = Math.min(state.doc.content.size, from + 100);
+    const textAfter = state.doc.textBetween(from, maxCheck);
     let endPos = from;
-    const textAfter = state.doc.textBetween(from, Math.min(state.doc.content.size, from + 2));
-    if (textAfter === "}}") {
+    const closingMatch = textAfter.match(/^([^}\n]*\}\})/);
+    if (closingMatch) {
+      endPos = from + closingMatch[0].length;
+    } else if (textAfter.startsWith("}}")) {
       endPos = from + 2;
     }
 
@@ -248,6 +271,27 @@ export const NewTemplateSection = ({
     viewInstance.focus();
 
     setEditorPopover({ isOpen: false, query: "", selectedIndex: 0, position: { top: 0, left: 0 } });
+  }, []);
+
+  // Close popovers on outside clicks
+  useEffect(() => {
+    const handleGlobalMouseDown = (e) => {
+      if (
+        subjectContainerRef.current &&
+        !subjectContainerRef.current.contains(e.target)
+      ) {
+        setSubjectPopover((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+      }
+      if (
+        editorBoxRef.current &&
+        !editorBoxRef.current.contains(e.target)
+      ) {
+        setEditorPopover((prev) => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+      }
+    };
+
+    document.addEventListener("mousedown", handleGlobalMouseDown);
+    return () => document.removeEventListener("mousedown", handleGlobalMouseDown);
   }, []);
 
   // Rich text editor setup
@@ -349,6 +393,9 @@ export const NewTemplateSection = ({
 
   if (!editor) return null;
 
+  const currentSubjectFiltered = getFilteredOptions(subjectPopover.query);
+  const currentSubjectSelected = currentSubjectFiltered[subjectPopover.selectedIndex];
+
   return (
     <Box
       width="100%"
@@ -373,6 +420,15 @@ export const NewTemplateSection = ({
             onChange={handleSubjectChange}
             onKeyDown={handleSubjectKeyDown}
             onClick={handleSubjectClick}
+            onBlur={handleSubjectBlur}
+            aria-autocomplete="list"
+            aria-expanded={subjectPopover.isOpen}
+            aria-controls={subjectPopover.isOpen ? "variable-autocomplete-listbox" : undefined}
+            aria-activedescendant={
+              subjectPopover.isOpen && currentSubjectSelected
+                ? `variable-option-${subjectPopover.selectedIndex}`
+                : undefined
+            }
             placeholder="Enter subject line (type {{ for variables)"
             readOnly={!isEditable}
             cursor={isEditable ? "text" : "default"}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Box, Flex, Text, Badge } from "@chakra-ui/react";
+import { Box, Flex, Text, Badge, Portal } from "@chakra-ui/react";
 import { User, Building2, Variable } from "lucide-react";
 
 export const AVAILABLE_VARIABLES = [
@@ -30,6 +30,16 @@ export const AVAILABLE_VARIABLES = [
     category: "Volunteer",
     table: "volunteers",
     description: "Volunteer's email address",
+    badgeBg: "#E0F2FE",
+    badgeColor: "#0369A1",
+    icon: User,
+  },
+  {
+    key: "volunteer email",
+    label: "volunteer email",
+    category: "Volunteer",
+    table: "volunteers",
+    description: "Alias for volunteer's email address",
     badgeBg: "#E0F2FE",
     badgeColor: "#0369A1",
     icon: User,
@@ -144,144 +154,155 @@ export const VariableAutocompletePopover = ({
   let globalIndexCounter = 0;
 
   return (
-    <Box
-      ref={containerRef}
-      position="absolute"
-      top={`${position.top}px`}
-      left={`${position.left}px`}
-      zIndex={9999}
-      width="320px"
-      maxH="280px"
-      overflowY="auto"
-      bg="white"
-      borderRadius="8px"
-      border="1px solid #E4E4E7"
-      boxShadow="0px 10px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)"
-      py="6px"
-      px="4px"
-      onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking
-    >
-      <Flex
-        px="10px"
-        py="4px"
-        align="center"
-        gap="6px"
-        borderBottom="1px solid #F4F4F5"
-        mb="4px"
+    <Portal>
+      <Box
+        ref={containerRef}
+        role="listbox"
+        id="variable-autocomplete-listbox"
+        aria-label="Insert Template Variable"
+        position="fixed"
+        top={`${position.top}px`}
+        left={`${position.left}px`}
+        zIndex={99999}
+        width="320px"
+        maxH="280px"
+        overflowY="auto"
+        bg="white"
+        borderRadius="8px"
+        border="1px solid #E4E4E7"
+        boxShadow="0px 10px 25px -5px rgba(0, 0, 0, 0.15), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)"
+        py="6px"
+        px="4px"
+        onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking options
       >
-        <Variable size={13} color="#71717A" />
-        <Text fontSize="11px" fontWeight="600" color="#71717A" letterSpacing="0.5px" textTransform="uppercase">
-          Insert Template Variable
-        </Text>
-      </Flex>
-
-      {/* Volunteer Section */}
-      {volunteerItems.length > 0 && (
-        <Box mb="6px">
-          <Text px="10px" py="3px" fontSize="11px" fontWeight="700" color="#0369A1" bg="#F0F9FF">
-            👤 VOLUNTEER TABLE
+        <Flex
+          px="10px"
+          py="4px"
+          align="center"
+          gap="6px"
+          borderBottom="1px solid #F4F4F5"
+          mb="4px"
+        >
+          <Variable size={13} color="#71717A" />
+          <Text fontSize="11px" fontWeight="600" color="#71717A" letterSpacing="0.5px" textTransform="uppercase">
+            Insert Template Variable
           </Text>
-          {volunteerItems.map((item) => {
-            const currentIndex = globalIndexCounter++;
-            const isSelected = currentIndex === selectedIndex;
-            const IconComp = item.icon;
-            return (
-              <Flex
-                key={item.key}
-                data-option-index={currentIndex}
-                align="center"
-                justify="space-between"
-                px="10px"
-                py="6px"
-                my="1px"
-                borderRadius="6px"
-                cursor="pointer"
-                bg={isSelected ? "#E0F2FE" : "transparent"}
-                _hover={{ bg: "#F0F9FF" }}
-                onClick={() => onSelectOption(item)}
-              >
-                <Flex align="center" gap="8px" minW={0}>
-                  <IconComp size={14} color="#0284C7" style={{ flexShrink: 0 }} />
-                  <Box minW={0}>
-                    <Text fontSize="13px" fontWeight="600" color="#0F172A" truncate>
-                      {`{{${item.label}}}`}
-                    </Text>
-                    <Text fontSize="11px" color="#64748B" truncate>
-                      {item.description}
-                    </Text>
-                  </Box>
-                </Flex>
-                <Badge
-                  fontSize="10px"
-                  fontWeight="600"
-                  px="6px"
-                  py="1px"
-                  borderRadius="4px"
-                  bg={item.badgeBg}
-                  color={item.badgeColor}
-                  flexShrink={0}
-                >
-                  Volunteer
-                </Badge>
-              </Flex>
-            );
-          })}
-        </Box>
-      )}
+        </Flex>
 
-      {/* Clinic Section */}
-      {clinicItems.length > 0 && (
-        <Box>
-          <Text px="10px" py="3px" fontSize="11px" fontWeight="700" color="#6B21A8" bg="#FAF5FF">
-            🏥 CLINIC TABLE
-          </Text>
-          {clinicItems.map((item) => {
-            const currentIndex = globalIndexCounter++;
-            const isSelected = currentIndex === selectedIndex;
-            const IconComp = item.icon;
-            return (
-              <Flex
-                key={item.key}
-                data-option-index={currentIndex}
-                align="center"
-                justify="space-between"
-                px="10px"
-                py="6px"
-                my="1px"
-                borderRadius="6px"
-                cursor="pointer"
-                bg={isSelected ? "#F3E8FF" : "transparent"}
-                _hover={{ bg: "#FAF5FF" }}
-                onClick={() => onSelectOption(item)}
-              >
-                <Flex align="center" gap="8px" minW={0}>
-                  <IconComp size={14} color="#9333EA" style={{ flexShrink: 0 }} />
-                  <Box minW={0}>
-                    <Text fontSize="13px" fontWeight="600" color="#0F172A" truncate>
-                      {`{{${item.label}}}`}
-                    </Text>
-                    <Text fontSize="11px" color="#64748B" truncate>
-                      {item.description}
-                    </Text>
-                  </Box>
-                </Flex>
-                <Badge
-                  fontSize="10px"
-                  fontWeight="600"
-                  px="6px"
-                  py="1px"
-                  borderRadius="4px"
-                  bg={item.badgeBg}
-                  color={item.badgeColor}
-                  flexShrink={0}
+        {/* Volunteer Section */}
+        {volunteerItems.length > 0 && (
+          <Box mb="6px">
+            <Text px="10px" py="3px" fontSize="11px" fontWeight="700" color="#0369A1" bg="#F0F9FF">
+              👤 VOLUNTEER TABLE
+            </Text>
+            {volunteerItems.map((item) => {
+              const currentIndex = globalIndexCounter++;
+              const isSelected = currentIndex === selectedIndex;
+              const IconComp = item.icon;
+              return (
+                <Flex
+                  key={item.key}
+                  role="option"
+                  id={`variable-option-${currentIndex}`}
+                  aria-selected={isSelected}
+                  data-option-index={currentIndex}
+                  align="center"
+                  justify="space-between"
+                  px="10px"
+                  py="6px"
+                  my="1px"
+                  borderRadius="6px"
+                  cursor="pointer"
+                  bg={isSelected ? "#E0F2FE" : "transparent"}
+                  _hover={{ bg: "#F0F9FF" }}
+                  onClick={() => onSelectOption(item)}
                 >
-                  Clinic
-                </Badge>
-              </Flex>
-            );
-          })}
-        </Box>
-      )}
-    </Box>
+                  <Flex align="center" gap="8px" minW={0}>
+                    <IconComp size={14} color="#0284C7" style={{ flexShrink: 0 }} />
+                    <Box minW={0}>
+                      <Text fontSize="13px" fontWeight="600" color="#0F172A" truncate>
+                        {`{{${item.label}}}`}
+                      </Text>
+                      <Text fontSize="11px" color="#64748B" truncate>
+                        {item.description}
+                      </Text>
+                    </Box>
+                  </Flex>
+                  <Badge
+                    fontSize="10px"
+                    fontWeight="600"
+                    px="6px"
+                    py="1px"
+                    borderRadius="4px"
+                    bg={item.badgeBg}
+                    color={item.badgeColor}
+                    flexShrink={0}
+                  >
+                    Volunteer
+                  </Badge>
+                </Flex>
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Clinic Section */}
+        {clinicItems.length > 0 && (
+          <Box>
+            <Text px="10px" py="3px" fontSize="11px" fontWeight="700" color="#6B21A8" bg="#FAF5FF">
+              🏥 CLINIC TABLE
+            </Text>
+            {clinicItems.map((item) => {
+              const currentIndex = globalIndexCounter++;
+              const isSelected = currentIndex === selectedIndex;
+              const IconComp = item.icon;
+              return (
+                <Flex
+                  key={item.key}
+                  role="option"
+                  id={`variable-option-${currentIndex}`}
+                  aria-selected={isSelected}
+                  data-option-index={currentIndex}
+                  align="center"
+                  justify="space-between"
+                  px="10px"
+                  py="6px"
+                  my="1px"
+                  borderRadius="6px"
+                  cursor="pointer"
+                  bg={isSelected ? "#F3E8FF" : "transparent"}
+                  _hover={{ bg: "#FAF5FF" }}
+                  onClick={() => onSelectOption(item)}
+                >
+                  <Flex align="center" gap="8px" minW={0}>
+                    <IconComp size={14} color="#9333EA" style={{ flexShrink: 0 }} />
+                    <Box minW={0}>
+                      <Text fontSize="13px" fontWeight="600" color="#0F172A" truncate>
+                        {`{{${item.label}}}`}
+                      </Text>
+                      <Text fontSize="11px" color="#64748B" truncate>
+                        {item.description}
+                      </Text>
+                    </Box>
+                  </Flex>
+                  <Badge
+                    fontSize="10px"
+                    fontWeight="600"
+                    px="6px"
+                    py="1px"
+                    borderRadius="4px"
+                    bg={item.badgeBg}
+                    color={item.badgeColor}
+                    flexShrink={0}
+                  >
+                    Clinic
+                  </Badge>
+                </Flex>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
+    </Portal>
   );
 };
