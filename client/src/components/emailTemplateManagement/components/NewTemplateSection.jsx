@@ -12,6 +12,20 @@ import { TextSelection } from "@tiptap/pm/state";
 
 import { VariableAutocompletePopover, AVAILABLE_VARIABLES } from "./VariableAutocompletePopover";
 
+const POPOVER_WIDTH = 320;
+const POPOVER_MARGIN = 8;
+const POPOVER_OFFSET_Y = 4;
+
+const computePopoverPosition = (targetRect) => {
+  if (!targetRect) return { top: 0, left: 0 };
+  const top = targetRect.bottom + POPOVER_OFFSET_Y;
+  const left = Math.max(
+    POPOVER_MARGIN,
+    Math.min(targetRect.left, window.innerWidth - POPOVER_WIDTH - 10)
+  );
+  return { top, left };
+};
+
 export const NewTemplateSection = ({
   templateSubject,
   setTemplateSubject,
@@ -44,20 +58,16 @@ export const NewTemplateSection = ({
     if (lastOpenIndex !== -1) {
       const textBetween = textBefore.slice(lastOpenIndex + 2);
       if (!textBetween.includes("}") && !textBetween.includes("\n")) {
-        let top = 0;
-        let left = 0;
-        if (subjectInputRef.current) {
-          const rect = subjectInputRef.current.getBoundingClientRect();
-          top = rect.bottom + 4;
-          left = Math.max(8, Math.min(rect.left, window.innerWidth - 330));
-        }
+        const position = subjectInputRef.current
+          ? computePopoverPosition(subjectInputRef.current.getBoundingClientRect())
+          : { top: 0, left: 0 };
 
         setSubjectPopover((prev) => ({
           ...prev,
           isOpen: true,
           query: textBetween,
           selectedIndex: 0,
-          position: { top, left },
+          position,
         }));
         return;
       }
@@ -223,15 +233,13 @@ export const NewTemplateSection = ({
     if (lastOpenIndex !== -1) {
       const queryText = textBefore.slice(lastOpenIndex + 2);
       if (!queryText.includes("}") && !queryText.includes("\n")) {
-        const coords = view.coordsAtPos(from);
-        const top = coords.bottom + 4;
-        const left = Math.max(8, Math.min(coords.left, window.innerWidth - 330));
+        const position = computePopoverPosition(view.coordsAtPos(from));
 
         setEditorPopover({
           isOpen: true,
           query: queryText,
           selectedIndex: 0,
-          position: { top, left },
+          position,
         });
         return;
       }
@@ -248,11 +256,9 @@ export const NewTemplateSection = ({
 
     if (!empty) return;
 
-    const coords = view.coordsAtPos(from);
-    const top = coords.bottom + 4;
-    const left = Math.max(8, Math.min(coords.left, window.innerWidth - 330));
+    const position = computePopoverPosition(view.coordsAtPos(from));
 
-    setEditorPopover((prev) => (prev.isOpen ? { ...prev, position: { top, left } } : prev));
+    setEditorPopover((prev) => (prev.isOpen ? { ...prev, position } : prev));
   }, []);
 
   const selectEditorOption = useCallback((option, viewInstance) => {
@@ -412,10 +418,8 @@ export const NewTemplateSection = ({
 
     const handleScrollOrResize = () => {
       if (subjectPopover.isOpen && subjectInputRef.current) {
-        const rect = subjectInputRef.current.getBoundingClientRect();
-        const top = rect.bottom + 4;
-        const left = Math.max(8, Math.min(rect.left, window.innerWidth - 330));
-        setSubjectPopover((prev) => ({ ...prev, position: { top, left } }));
+        const position = computePopoverPosition(subjectInputRef.current.getBoundingClientRect());
+        setSubjectPopover((prev) => ({ ...prev, position }));
       }
       if (editorPopover.isOpen && editor?.view) {
         updateEditorPopoverPosition(editor);
