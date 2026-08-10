@@ -90,11 +90,13 @@ cron.schedule("0 * * * *", async () => {
       const renderedSubject = clinic
         ? renderClinicEmailTemplate(email.subject, clinic, {
             name: primaryRegistrant?.name,
+            email: primaryRegistrant?.email ?? email.to_email,
           })
         : email.subject;
       const renderedBody = clinic
         ? renderClinicEmailTemplate(bodyHtml, clinic, {
             name: primaryRegistrant?.name,
+            email: primaryRegistrant?.email ?? email.to_email,
           })
         : bodyHtml;
 
@@ -116,11 +118,13 @@ cron.schedule("0 * * * *", async () => {
             const perRecipientSubject = clinic
               ? renderClinicEmailTemplate(email.subject, clinic, {
                   name: recipient.name,
+                  email: recipient.email,
                 })
               : email.subject;
             const perRecipientBody = clinic
               ? renderClinicEmailTemplate(bodyHtml, clinic, {
                   name: recipient.name,
+                  email: recipient.email,
                 })
               : bodyHtml;
             try {

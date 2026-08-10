@@ -94,6 +94,7 @@ export const EmailTemplateManagement = () => {
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDiscardChangesModal, setShowDiscardChangesModal] = useState(false);
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [showMoveTemplateModal, setShowMoveTemplateModal] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState("");
@@ -332,7 +333,30 @@ export const EmailTemplateManagement = () => {
     normalizeEditorContent,
   ]);
 
-  const showEditModeDeleteButton = isEditingTemplate && !hasUnsavedChanges;
+  const handleConfirmCancelEdit = () => {
+    setTemplateName(initialTemplateSnapshot.name);
+    setTemplateSubject(initialTemplateSnapshot.subject);
+    setTemplateContent(initialTemplateSnapshot.content);
+    setIsEditingTemplate(false);
+
+    if (urlTemplateId && urlTemplateId.startsWith("new-")) {
+      resetTemplateForm();
+      if (activeFolderId) {
+        navigate(`/email/folder/${activeFolderId}`);
+      } else {
+        navigate("/email");
+      }
+    }
+    setShowDiscardChangesModal(false);
+  };
+
+  const handleCancelEditClick = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardChangesModal(true);
+    } else {
+      handleConfirmCancelEdit();
+    }
+  };
 
   const openMoveTemplateModalWithDefaultFolder = () => {
     const firstAvailableFolder = folders.find(
@@ -551,6 +575,7 @@ export const EmailTemplateManagement = () => {
   const handleRenameTemplate = async (templateId, newName) => {
     if (!templateId) {
       setTemplateName(newName);
+      setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
       return;
     }
 
@@ -564,7 +589,10 @@ export const EmailTemplateManagement = () => {
         subject: existing?.subject ?? null,
       });
 
-      setTemplateName((prev) => (String(currentTemplateId) === String(templateId) ? newName : prev));
+      if (String(currentTemplateId) === String(templateId)) {
+        setTemplateName(newName);
+        setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
+      }
       setTemplates((prev) =>
         prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
       );
@@ -1110,51 +1138,45 @@ export const EmailTemplateManagement = () => {
                     {hasUnsavedChanges ? <Save size={16} /> : <Pencil size={16} />}
                     {hasUnsavedChanges ? "Save" : "Edit"}
                   </Button>
-
-                  <Button
-                    variant={showEditModeDeleteButton ? "solid" : "outline"}
-                    h="40px"
-                    px="16px"
-                    fontSize="14px"
-                    fontWeight="500"
-                    borderRadius="4px"
-                    borderWidth="1px"
-                    display="flex"
-                    gap="8px"
-                    alignItems="center"
-                    color={
-                      showEditModeDeleteButton
-                        ? "#18181B"
-                        : showMoveTemplateModal || showRenameDialog
-                          ? "black"
-                          : "#991919"
-                    }
-                    borderColor={
-                      showEditModeDeleteButton
-                        ? "#E4E4E7"
-                        : showMoveTemplateModal || showRenameDialog
-                          ? "#E4E4E7"
-                          : "#FECACA"
-                    }
-                    bg={
-                      showEditModeDeleteButton
-                        ? "#E4E4E7"
-                        : showMoveTemplateModal || showRenameDialog
-                          ? "#E4E4E7"
-                          : "transparent"
-                    }
-                    _hover={
-                      showEditModeDeleteButton
-                        ? { bg: "#E4E4E7" }
-                        : showMoveTemplateModal || showRenameDialog
-                          ? { bg: "#E4E4E7" }
-                          : { bg: "#FEE2E2" }
-                    }
-                    onClick={() => setShowDeleteModal(true)}
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </Button>
+                  {isTemplateEditable ? (
+                    <Button
+                      variant="outline"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      borderColor="#E4E4E7"
+                      color="#27272A"
+                      bg="white"
+                      _hover={{ bg: "#F4F4F5" }}
+                      onClick={handleCancelEditClick}
+                    >
+                      Cancel
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      display="flex"
+                      gap="8px"
+                      alignItems="center"
+                      color="#991919"
+                      borderColor="#FECACA"
+                      bg="transparent"
+                      _hover={{ bg: "#FEE2E2" }}
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </Button>
+                  )}
                 </HStack>
               </HStack>
             </>
@@ -1385,6 +1407,58 @@ export const EmailTemplateManagement = () => {
         onClose={() => setShowDeleteModal(false)}
         onDelete={handleDeleteTemplate}
       />
+
+      {/* Discard Unsaved Changes Modal when Cancelling Edit Mode */}
+      <Dialog.Root
+        open={showDiscardChangesModal}
+        onOpenChange={(e) => setShowDiscardChangesModal(e.open)}
+        placement="center"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              w="380px"
+              boxShadow="xl"
+              borderRadius="md"
+              p={0}
+              bg="white"
+            >
+              <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
+                <CloseButton size="sm" onClick={() => setShowDiscardChangesModal(false)} />
+              </Dialog.CloseTrigger>
+              <Dialog.Body p={6}>
+                <VStack align="stretch" gap={4}>
+                  <Text fontSize="md" fontWeight="bold">
+                    Discard unsaved changes?
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Are you sure you want to cancel? Any unsaved edits will be lost.
+                  </Text>
+                  <HStack gap={3} justify="flex-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDiscardChangesModal(false)}
+                    >
+                      Keep Editing
+                    </Button>
+                    <Button
+                      bg="#DC2626"
+                      color="white"
+                      size="sm"
+                      _hover={{ bg: "#B91C1C" }}
+                      onClick={handleConfirmCancelEdit}
+                    >
+                      Discard Changes
+                    </Button>
+                  </HStack>
+                </VStack>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       {/* Confirm Delete Folder Dialog (top-level so it works from both header button and context menu) */}
       <Dialog.Root

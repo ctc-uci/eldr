@@ -641,7 +641,7 @@ clinicsRouter.post(
             <p>Thanks for volunteering!</p>
           `,
               clinicInfo,
-              { name: safeName }
+              { name: safeName, email: volunteer.email }
             ),
           });
         }
