@@ -340,6 +340,7 @@ export const EmailTemplateManagement = () => {
     setIsEditingTemplate(false);
 
     if (urlTemplateId && urlTemplateId.startsWith("new-")) {
+      resetTemplateForm();
       if (activeFolderId) {
         navigate(`/email/folder/${activeFolderId}`);
       } else {
@@ -574,6 +575,7 @@ export const EmailTemplateManagement = () => {
   const handleRenameTemplate = async (templateId, newName) => {
     if (!templateId) {
       setTemplateName(newName);
+      setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
       return;
     }
 
@@ -587,7 +589,10 @@ export const EmailTemplateManagement = () => {
         subject: existing?.subject ?? null,
       });
 
-      setTemplateName((prev) => (String(currentTemplateId) === String(templateId) ? newName : prev));
+      if (String(currentTemplateId) === String(templateId)) {
+        setTemplateName(newName);
+        setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
+      }
       setTemplates((prev) =>
         prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
       );

@@ -219,7 +219,6 @@ export const VariableAutocompletePopover = ({
                     e.preventDefault();
                     onSelectOption(item);
                   }}
-                  onClick={() => onSelectOption(item)}
                 >
                   <Flex align="center" gap="8px" minW={0}>
                     <IconComp size={14} color="#0284C7" style={{ flexShrink: 0 }} />
@@ -280,7 +279,6 @@ export const VariableAutocompletePopover = ({
                     e.preventDefault();
                     onSelectOption(item);
                   }}
-                  onClick={() => onSelectOption(item)}
                 >
                   <Flex align="center" gap="8px" minW={0}>
                     <IconComp size={14} color="#9333EA" style={{ flexShrink: 0 }} />

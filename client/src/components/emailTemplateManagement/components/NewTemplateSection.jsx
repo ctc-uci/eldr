@@ -240,6 +240,21 @@ export const NewTemplateSection = ({
     setEditorPopover((prev) => ({ ...prev, isOpen: false }));
   }, []);
 
+  const updateEditorPopoverPosition = useCallback((editorInstance) => {
+    if (!editorInstance || !editorBoxRef.current) return;
+    const { state, view } = editorInstance;
+    const { selection } = state;
+    const { from, empty } = selection;
+
+    if (!empty) return;
+
+    const coords = view.coordsAtPos(from);
+    const top = coords.bottom + 4;
+    const left = Math.max(8, Math.min(coords.left, window.innerWidth - 330));
+
+    setEditorPopover((prev) => (prev.isOpen ? { ...prev, position: { top, left } } : prev));
+  }, []);
+
   const selectEditorOption = useCallback((option, viewInstance) => {
     if (!viewInstance || !option) return;
 
@@ -403,7 +418,7 @@ export const NewTemplateSection = ({
         setSubjectPopover((prev) => ({ ...prev, position: { top, left } }));
       }
       if (editorPopover.isOpen && editor?.view) {
-        checkEditorAutocomplete(editor);
+        updateEditorPopoverPosition(editor);
       }
     };
 
@@ -413,7 +428,7 @@ export const NewTemplateSection = ({
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
     };
-  }, [subjectPopover.isOpen, editorPopover.isOpen, checkEditorAutocomplete, editor]);
+  }, [subjectPopover.isOpen, editorPopover.isOpen, updateEditorPopoverPosition, editor]);
 
   useEffect(() => {
     if (!editor) return;
