@@ -341,12 +341,13 @@ export const SortAndFilter = ({
                 <Button
                   flex={2}
                   minW="fit-content"
-                  bg="#487C9E"
+                  bg="#002992"
                   color="white"
                   fontSize="14px"
-                  fontWeight={500}
+                  fontFamily="heading"
+                  fontWeight={600}
                   size="xl"
-                  _hover={{ bg: "#5c86a3" }}
+                  _hover={{ bg: "#001E6C" }}
                   onClick={handleApply}
                   disabled={first || filteredCount === 0 || isUnchanged}
                 >

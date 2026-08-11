@@ -65,16 +65,17 @@ export function StaffSidebar() {
                 px="23px"
                 py="16px"
                 borderRadius="8px"
-                bg={isActive ? "#d8f1ff" : "transparent"}
+                bg={isActive ? "#E8F6FC" : "transparent"}
                 cursor="pointer"
-                _hover={{ bg: isActive ? "#d8f1ff" : "#f4f4f5" }}
+                _hover={{ bg: isActive ? "#E8F6FC" : "#f4f4f5" }}
                 textDecoration="none"
               >
-                <Icon size={23} color="#294a5f" />
+                <Icon size={23} color={isActive ? "#002992" : "#4A5568"} />
                 <Text
                   fontSize="16px"
-                  fontWeight="bold"
-                  color="#294a5f"
+                  fontWeight={isActive ? "bold" : "600"}
+                  fontFamily="heading"
+                  color={isActive ? "#002992" : "#4A5568"}
                   lineHeight="24px"
                 >
                   {item.label}

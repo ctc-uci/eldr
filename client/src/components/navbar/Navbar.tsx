@@ -22,10 +22,10 @@ export const Navbar = () => {
     >
       {/* Logo */}
       <Image
-        src="/cc-logo-vertical.svg"
-        alt="Elder Law & Disability Rights Center"
-        maxH="55px"
-        maxW="140px"
+        src="/cc-logo-horizontal.svg"
+        alt="Community Counsel"
+        maxH="48px"
+        maxW="260px"
         objectFit="contain"
       />
 
@@ -37,9 +37,10 @@ export const Navbar = () => {
           alignItems="center"
           gap="8px"
           fontSize="14px"
-          fontWeight={500}
-          color="#173DA6"
-          _hover={{ color: "#245eff", textDecoration: "none" }}
+          fontWeight={600}
+          fontFamily="heading"
+          color="#002992"
+          _hover={{ color: "#15A9EA", textDecoration: "none" }}
         >
           <ClipboardList size={16} />
           <Text>Event Catalog</Text>

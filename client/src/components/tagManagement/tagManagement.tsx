@@ -199,14 +199,15 @@ export const TagManagement = () => {
             />
 
             <Button
-              bg="#5797bd"
+              bg="#002992"
               color="white"
               h="40px"
               px="16px"
               borderRadius="4px"
               fontSize="14px"
-              fontWeight={500}
-              _hover={{ bg: "#4a86a8" }}
+              fontWeight={600}
+              fontFamily="heading"
+              _hover={{ bg: "#001E6C" }}
               flexShrink={0}
               onClick={() => navigate("/manage-tags/create")}
             >

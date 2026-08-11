@@ -14,10 +14,10 @@ const navIconButtonProps = {
   minW: "40px",
   p: 2,
   borderRadius: "md",
-  color: "#294A5F",
+  color: "#4A5568",
   _hover: {
-    bg: "blue.50",
-    color: "blue.700",
+    bg: "#E8F6FC",
+    color: "#002992",
   },
 };
 

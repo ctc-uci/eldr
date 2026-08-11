@@ -349,7 +349,7 @@ export const AddProfileView = () => {
             <Text
               fontSize="lg"
               fontWeight="semibold"
-              color="#294A5F"
+              color="#002992"
               mb={6}
             >
               Profile Information
@@ -483,9 +483,10 @@ export const AddProfileView = () => {
 
             <Flex justify="flex-end">
               <Button
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
-                _hover={{ bg: "#294A5F" }}
+                fontFamily="heading"
+                _hover={{ bg: "#001E6C" }}
                 onClick={handleContinue}
               >
                 Continue
@@ -515,15 +516,17 @@ export const AddProfileView = () => {
               <Text
                 fontSize="lg"
                 fontWeight="semibold"
-                color="#294A5F"
+                fontFamily="heading"
+                color="#002992"
               >
                 Occupation & Credentials
               </Text>
               <Flex gap={3}>
                 <Button
-                  bg="#5F80A0"
+                  bg="#002992"
                   color="white"
-                  _hover={{ bg: "#487C9E" }}
+                  fontFamily="heading"
+                  _hover={{ bg: "#001E6C" }}
                   gap={2}
                   onClick={handleSubmit(onCreateProfile)}
                 >

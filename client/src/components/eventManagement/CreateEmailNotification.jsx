@@ -480,12 +480,14 @@ export const CreateEmailNotification = () => {
             Cancel
           </Button>
           <Button
-            bg="#487C9E"
+            bg="#002992"
             color="white"
+            fontFamily="heading"
+            fontWeight={600}
             borderRadius="md"
             px={6}
             fontSize="sm"
-            _hover={selectedTemplate && !saving ? { bg: "#3a6685" } : {}}
+            _hover={selectedTemplate && !saving ? { bg: "#001E6C" } : {}}
             type="button"
             disabled={!selectedTemplate || saving}
             opacity={selectedTemplate && !saving ? 1 : 0.5}

@@ -141,18 +141,18 @@ export const TopBar = ({
           {isMobile ? (
             <IconButton
               aria-label="Filter"
-              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
-              color={hasAppliedFilters ? "#173DA6" : "black"}
+              backgroundColor={hasAppliedFilters ? "#E8F6FC" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#002992" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+                hasAppliedFilters ? "1px solid #15A9EA" : "1px solid #E4E4E7"
               }
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
               _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+                backgroundColor: hasAppliedFilters ? "#B8E5F7" : "#E4E4E7",
               }}
               onClick={() => setFilterOpen(true)}
             >
@@ -160,11 +160,11 @@ export const TopBar = ({
             </IconButton>
           ) : (
             <Button
-              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
-              color={hasAppliedFilters ? "#173DA6" : "black"}
+              backgroundColor={hasAppliedFilters ? "#E8F6FC" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#002992" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+                hasAppliedFilters ? "1px solid #15A9EA" : "1px solid #E4E4E7"
               }
               px="16px"
               h="40px"

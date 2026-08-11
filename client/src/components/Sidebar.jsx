@@ -17,20 +17,20 @@ const SidebarNavItem = ({ icon, label, active, onClick }) => (
     px={4}
     py={3}
     borderRadius="lg"
-    bg={active ? "#D8F1FF" : "transparent"}
-    color="#294A5F"
-    fontWeight={active ? "bold" : "normal"}
+    bg={active ? "#E8F6FC" : "transparent"}
+    color={active ? "#002992" : "#4A5568"}
+    fontWeight={active ? "bold" : "600"}
     cursor="pointer"
-    _hover={{ bg: "#E3F0F9" }}
+    _hover={{ bg: active ? "#E8F6FC" : "#F4F4F5" }}
     transition="background 0.2s"
     onClick={onClick}
   >
     <Icon
       as={icon}
       boxSize={5}
-      color={active ? "#5797bd" : "#294A5F"}
+      color={active ? "#002992" : "#4A5568"}
     />
-    <Text fontSize="md">{label}</Text>
+    <Text fontSize="md" fontFamily="heading">{label}</Text>
   </HStack>
 );
 

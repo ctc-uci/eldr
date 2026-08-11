@@ -134,7 +134,11 @@ export const EventInfo = ({
               Browse to find an offering that fits your schedule!
             </Text>
             <Button
-              bg="#487C9E"
+              bg="#002992"
+              color="white"
+              fontFamily="heading"
+              fontWeight={600}
+              _hover={{ bg: "#001E6C" }}
               p={6}
               onClick={() => navigate("/event-catalog/all-events")}
             >
@@ -247,7 +251,7 @@ export const EventInfo = ({
                 bottom="100%"
                 right={0}
                 mb={2}
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
                 rounded="md"
                 fontWeight={500}
@@ -466,7 +470,7 @@ export const EventInfo = ({
             <Button
               variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
-              bg={!event.isRegistered && "#487C9E"}
+              bg={!event.isRegistered && "#002992"}
               px="18px"
               py="6px"
               onClick={handleRegistration}

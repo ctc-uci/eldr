@@ -1041,11 +1041,11 @@ export const EmailTemplateManagement = () => {
                       lineHeight="1.2"
                       border="none"
                       borderBottom="2px solid"
-                      borderColor="#487C9E"
+                      borderColor="#002992"
                       borderRadius="0"
                       px="0"
                       bg="transparent"
-                      _focus={{ boxShadow: "none", borderColor: "#294A5F" }}
+                      _focus={{ boxShadow: "none", borderColor: "#001E6C" }}
                       autoFocus
                       h="auto"
                       minW="200px"
@@ -1098,8 +1098,8 @@ export const EmailTemplateManagement = () => {
                       showRenameDialog || showDeleteModal
                         ? "#E4E4E7"
                         : showMoveTemplateModal
-                          ? "#294A5F"
-                          : "#487C9E"
+                          ? "#001E6C"
+                          : "#002992"
                     }
                     color={showRenameDialog || showDeleteModal ? "black" : "white"}
                     _hover={{
@@ -1107,8 +1107,8 @@ export const EmailTemplateManagement = () => {
                         showRenameDialog || showDeleteModal
                           ? "#E4E4E7"
                           : showMoveTemplateModal
-                            ? "#294A5F"
-                            : "#294A5F",
+                            ? "#001E6C"
+                            : "#001E6C",
                     }}
                     onClick={async () => {
                       if (hasUnsavedChanges) {
@@ -1385,11 +1385,12 @@ export const EmailTemplateManagement = () => {
                   h="40px"
                   px="16px"
                   fontSize="14px"
-                  fontWeight="500"
+                  fontWeight="600"
+                  fontFamily="heading"
                   borderRadius="4px"
-                  bg="#487C9E"
+                  bg="#002992"
                   color="white"
-                  _hover={{ bg: "#3D6B89" }}
+                  _hover={{ bg: "#001E6C" }}
                   onClick={handleMoveTemplate}
                   disabled={!moveFolderId || isMovingTemplate}
                 >
