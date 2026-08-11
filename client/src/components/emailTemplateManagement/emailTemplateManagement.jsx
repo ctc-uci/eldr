@@ -125,11 +125,11 @@ export const EmailTemplateManagement = () => {
 
   useEffect(() => {
     if (view === "newTemplate") {
-      document.title = `Community Counsel - ${templateName || "Untitled Template"}`;
+      document.title = `${templateName || "Untitled Template"} | Community Counsel`;
     } else if (view === "folderView" && currentFolder) {
-      document.title = `Community Counsel - ${currentFolder.name || "Folder"}`;
+      document.title = `${currentFolder.name || "Folder"} | Community Counsel`;
     } else {
-      document.title = "Community Counsel - Email Templates";
+      document.title = "Email Templates | Community Counsel";
     }
   }, [view, templateName, currentFolder]);
 

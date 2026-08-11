@@ -65,19 +65,19 @@ const RouteTitleHandler = () => {
   useEffect(() => {
     const path = location.pathname;
     if (path.startsWith("/events")) {
-      document.title = "Community Counsel - Events";
+      document.title = "Events | Community Counsel";
     } else if (path.startsWith("/email")) {
-      document.title = "Community Counsel - Email Templates";
+      document.title = "Email Templates | Community Counsel";
     } else if (path.startsWith("/volunteer-management")) {
-      document.title = "Community Counsel - Volunteer Management";
+      document.title = "Volunteer Management | Community Counsel";
     } else if (path.startsWith("/tags") || path.startsWith("/manage-tags")) {
-      document.title = "Community Counsel - Tag Management";
+      document.title = "Tag Management | Community Counsel";
     } else if (path.startsWith("/event-catalog")) {
-      document.title = "Community Counsel - Event Catalog";
+      document.title = "Event Catalog | Community Counsel";
     } else if (path.startsWith("/login")) {
-      document.title = "Community Counsel - Login";
+      document.title = "Login | Community Counsel";
     } else if (path.startsWith("/admin-profile") || path.startsWith("/volunteer-profile")) {
-      document.title = "Community Counsel - Profile";
+      document.title = "Profile | Community Counsel";
     } else {
       document.title = "Community Counsel";
     }

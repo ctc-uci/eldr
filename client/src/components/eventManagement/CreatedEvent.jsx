@@ -53,7 +53,7 @@ export const CreatedEvent = () => {
 
   useEffect(() => {
     if (eventData?.name) {
-      document.title = `Community Counsel - ${eventData.name}`;
+      document.title = `${eventData.name} | Community Counsel`;
     }
   }, [eventData?.name]);
 
