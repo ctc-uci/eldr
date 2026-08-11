@@ -100,7 +100,6 @@ export const RenameDialog = ({ isOpen, onClose, currentName = "", title = "Renam
                 h="40px"
                 px="16px"
                 fontSize="14px"
-                fontWeight="500"
                 borderRadius="4px"
                 bg="#002992"
                 color="white"

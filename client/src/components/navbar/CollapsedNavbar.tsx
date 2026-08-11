@@ -7,6 +7,7 @@ import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/r
 import { LuTags, LuMails } from "react-icons/lu";
 import { ClipboardList, Users } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { getLogoRootPath } from "@/utils/navigation";
 
 const navIconButtonProps = {
   variant: "ghost" as const,
@@ -25,15 +26,6 @@ export const CollapsedNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getLogoRootPath = () => {
-    const p = location.pathname;
-    if (p.startsWith("/email")) return "/email";
-    if (p.startsWith("/events")) return "/events";
-    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
-    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
-    return "/events";
-  };
-
   return (
     <Flex
       direction="column"
@@ -47,7 +39,7 @@ export const CollapsedNavbar = () => {
       justify="space-between"
     >
       <VStack gap={10} w="full" justifyContent="left">
-        <Box cursor="pointer" onClick={() => navigate(getLogoRootPath())}>
+        <Box cursor="pointer" onClick={() => navigate(getLogoRootPath(location.pathname))}>
           <Image
             src="/cc-logo.svg"
             alt="Logo"

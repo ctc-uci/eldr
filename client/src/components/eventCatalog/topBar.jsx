@@ -172,7 +172,7 @@ export const TopBar = ({
               fontWeight={500}
               flexShrink={0}
               _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+                backgroundColor: hasAppliedFilters ? "#B8E5F7" : "#E4E4E7",
               }}
               onClick={() => setFilterOpen(true)}
             >

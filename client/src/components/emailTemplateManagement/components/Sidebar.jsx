@@ -52,7 +52,7 @@ export const Sidebar = () => {
             maxW="100%"
             maxH="80px"
             mx="auto"
-            alt="Elder Law & Disability Rights Center"
+            alt="Community Counsel"
             objectFit="contain"
             mb={10}
             _hover={{ opacity: 0.85 }}

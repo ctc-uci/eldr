@@ -10,23 +10,24 @@ const sidebarNav = [
   { label: "Manage Profiles", icon: FaUser, active: false },
 ];
 
-const SidebarNavItem = ({ icon, label, active, onClick }) => (
+import { getLogoRootPath } from "../utils/navigation";
+
+const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
   <HStack
+    as="button"
     w="100%"
-    spacing={3}
     px={4}
     py={3}
-    borderRadius="lg"
+    borderRadius="md"
     bg={active ? "#E8F6FC" : "transparent"}
     color={active ? "#002992" : "#4A5568"}
-    fontWeight={active ? "bold" : "600"}
-    cursor="pointer"
-    _hover={{ bg: active ? "#E8F6FC" : "#F4F4F5" }}
-    transition="background 0.2s"
+    fontWeight={active ? "600" : "medium"}
+    _hover={{ bg: active ? "#E8F6FC" : "#F7FAFC" }}
     onClick={onClick}
+    cursor="pointer"
+    gap={3}
   >
     <Icon
-      as={icon}
       boxSize={5}
       color={active ? "#002992" : "#4A5568"}
     />
@@ -37,15 +38,6 @@ const SidebarNavItem = ({ icon, label, active, onClick }) => (
 export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const getLogoRootPath = () => {
-    const p = location.pathname;
-    if (p.startsWith("/email")) return "/email";
-    if (p.startsWith("/events")) return "/events";
-    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
-    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
-    return "/events";
-  };
 
   return (
     <Box
@@ -59,13 +51,13 @@ export const Sidebar = () => {
       justifyContent="space-between"
     >
       <Box>
-        <Link to={getLogoRootPath()} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+        <Link to={getLogoRootPath(location.pathname)} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Image
             src="/cc-logo-vertical.svg"
             maxW="100%"
             maxH="80px"
             mx="auto"
-            alt="Elder Law & Disability Rights Center"
+            alt="Community Counsel"
             objectFit="contain"
             mb={10}
             _hover={{ opacity: 0.85 }}

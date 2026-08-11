@@ -452,13 +452,13 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#002992"
+              bg="brand.navy"
               color="white"
               borderRadius="4px"
               px={5}
               fontFamily="heading"
               fontWeight={600}
-              _hover={{ bg: "#001E6C" }}
+              _hover={{ bg: "primary.500" }}
               onClick={() => navigate("/events/create/header")}
             >
               <LuClipboardPlus />

@@ -74,8 +74,18 @@ const RouteTitleHandler = () => {
       document.title = "Tag Management | Community Counsel";
     } else if (path.startsWith("/event-catalog")) {
       document.title = "Event Catalog | Community Counsel";
-    } else if (path.startsWith("/login")) {
-      document.title = "Login | Community Counsel";
+    } else if (path === "/admin") {
+      document.title = "Admin Console | Community Counsel";
+    } else if (path === "/signup") {
+      document.title = "Sign Up | Community Counsel";
+    } else if (path === "/adminForgotPass" || path === "/adminPassReset") {
+      document.title = "Reset Password | Community Counsel";
+    } else if (path.startsWith("/login") || path === "/adminLogin") {
+      document.title = "Sign In | Community Counsel";
+    } else if (path === "/dashboard") {
+      document.title = "Dashboard | Community Counsel";
+    } else if (path === "/playground") {
+      document.title = "Playground | Community Counsel";
     } else if (path.startsWith("/admin-profile") || path.startsWith("/volunteer-profile")) {
       document.title = "Profile | Community Counsel";
     } else {

@@ -7,25 +7,17 @@ import { useLocation, Link as RouterLink } from "react-router-dom";
 import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
 import { ClipboardList, Users } from "lucide-react";
 import { LuTags, LuMails } from "react-icons/lu";
+import { getLogoRootPath } from "@/utils/navigation";
 
 export const AdminNavbar = () => {
   const location = useLocation();
-
-  const getLogoRootPath = () => {
-    const p = location.pathname;
-    if (p.startsWith("/email")) return "/email";
-    if (p.startsWith("/events")) return "/events";
-    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
-    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
-    return "/events";
-  };
 
   // Array of mapping icons
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
     { name: "Email Templates", icon: LuMails, path: "/email" },
     { name: "Profiles", icon: Users, path: "/volunteer-management" },
-    { name: "Tags", icon: LuTags, path: "/tags" }
+    { name: "Tags", icon: LuTags, path: "/manage-tags" }
   ];
 
   return (
@@ -48,7 +40,7 @@ export const AdminNavbar = () => {
       >
         {/* ELDR Logo */}
         <Box px={6} display="flex" justifyContent="center" w="full">
-          <RouterLink to={getLogoRootPath()} style={{ display: "block", width: "100%" }}>
+          <RouterLink to={getLogoRootPath(location.pathname)} style={{ display: "block", width: "100%" }}>
             <Image
               src="/cc-logo-vertical.svg"
               alt="Community Counsel"
