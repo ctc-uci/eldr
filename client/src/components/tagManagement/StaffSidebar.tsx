@@ -58,32 +58,34 @@ export function StaffSidebar() {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (
-              <Flex
+              <Link
                 key={item.label}
-                as="a"
-                href={item.path}
-                align="center"
-                gap="12px"
-                w="full"
-                px="23px"
-                py="16px"
-                borderRadius="8px"
-                bg={isActive ? "#E8F6FC" : "transparent"}
-                cursor="pointer"
-                _hover={{ bg: isActive ? "#E8F6FC" : "#f4f4f5" }}
-                textDecoration="none"
+                to={item.path}
+                style={{ textDecoration: "none", width: "100%" }}
               >
-                <Icon size={23} color={isActive ? "#002992" : "#4A5568"} />
-                <Text
-                  fontSize="16px"
-                  fontWeight={isActive ? "bold" : "600"}
-                  fontFamily="heading"
-                  color={isActive ? "#002992" : "#4A5568"}
-                  lineHeight="24px"
+                <Flex
+                  align="center"
+                  gap="12px"
+                  w="full"
+                  px="23px"
+                  py="16px"
+                  borderRadius="8px"
+                  bg={isActive ? "#E8F6FC" : "transparent"}
+                  cursor="pointer"
+                  _hover={{ bg: isActive ? "#E8F6FC" : "#f4f4f5" }}
                 >
-                  {item.label}
-                </Text>
-              </Flex>
+                  <Icon size={23} color={isActive ? "#002992" : "#4A5568"} />
+                  <Text
+                    fontSize="16px"
+                    fontWeight={isActive ? "bold" : "600"}
+                    fontFamily="heading"
+                    color={isActive ? "#002992" : "#4A5568"}
+                    lineHeight="24px"
+                  >
+                    {item.label}
+                  </Text>
+                </Flex>
+              </Link>
             );
           })}
         </VStack>
