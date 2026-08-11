@@ -39,8 +39,10 @@ export const CollapsedNavbar = () => {
       <VStack gap={10} w="full" justifyContent="left">
         <Box>
           <Image
-            src="/eldr-logo-small.png"
+            src="/cc-logo.svg"
+            alt="Logo"
             h="44px"
+            maxW="full"
             objectFit="contain"
           />
           <Box w="32px" h="32px" />

@@ -50,10 +50,12 @@ export const Sidebar = () => {
       justifyContent="space-between"
     >
       <Box>
-        <Link to="/">
+        <Link to="/" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Image
-            src="/logo.png"
-            h="60px"
+            src="/cc-logo-vertical.svg"
+            maxW="100%"
+            maxH="80px"
+            mx="auto"
             alt="Elder Law & Disability Rights Center"
             objectFit="contain"
             mb={10}

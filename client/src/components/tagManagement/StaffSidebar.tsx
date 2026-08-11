@@ -39,13 +39,16 @@ export function StaffSidebar() {
       justifyContent="space-between"
     >
       <VStack align="start" gap="38px">
-        <Image
-          src="/eldr-logo.png"
-          alt="Elder Law & Disability Rights Center"
-          h="60px"
-          w="168px"
-          objectFit="contain"
-        />
+        <Flex justify="center" w="full">
+          <Image
+            src="/cc-logo-vertical.svg"
+            alt="Elder Law & Disability Rights Center"
+            maxW="180px"
+            maxH="80px"
+            mx="auto"
+            objectFit="contain"
+          />
+        </Flex>
 
         <VStack gap="24px" w="full">
           {NAV_ITEMS.map((item) => {

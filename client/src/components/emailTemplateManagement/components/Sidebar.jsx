@@ -35,60 +35,63 @@ const SidebarNavItem = ({ icon, label, active }) => (
 export const Sidebar = () => {
   const { pathname } = useLocation();
   return (
-  <Box
-    w="260px"
-    borderRight="1px solid #E0E0E0"
-    py={8}
-    px={4}
-    minH="100vh"
-    display="flex"
-    flexDirection="column"
-    justifyContent="space-between"
-  >
-    <Box>
-      <Link to="/">
-        <Image
-          src="/logo.png"
-          alt="Elder Law & Disability Rights Center"
-          objectFit="contain"
-          mb={10}
-          _hover={{ opacity: 0.85 }}
-        />
-      </Link>
-      <VStack
-        align="stretch"
-        gap={10}
-      >
-        {sidebarNav.map((item) => (
-          <SidebarNavItem
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            active={pathname.startsWith(item.path)}
-          />
-        ))}
-      </VStack>
-    </Box>
     <Box
-      px={2}
-      pb={2}
+      w="260px"
+      borderRight="1px solid #E0E0E0"
+      py={8}
+      px={4}
+      minH="100vh"
+      display="flex"
+      flexDirection="column"
+      justifyContent="space-between"
     >
-      {/* User avatar placeholder, bottom left */}
+      <Box>
+        <Link to="/" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <Image
+            src="/cc-logo-vertical.svg"
+            maxW="100%"
+            maxH="80px"
+            mx="auto"
+            alt="Elder Law & Disability Rights Center"
+            objectFit="contain"
+            mb={10}
+            _hover={{ opacity: 0.85 }}
+          />
+        </Link>
+        <VStack
+          align="stretch"
+          gap={10}
+        >
+          {sidebarNav.map((item) => (
+            <SidebarNavItem
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              active={pathname.startsWith(item.path)}
+            />
+          ))}
+        </VStack>
+      </Box>
       <Box
-        boxSize="36px"
-        borderRadius="full"
-        overflow="hidden"
-        cursor="pointer"
+        px={2}
+        pb={2}
       >
-        {/** @TODO: replace with actual user avatar */}
-        <Image
-          src="https://randomuser.me/api/portraits/men/67.jpg"
-          alt="User"
-          boxSize="100%"
-          objectFit="cover"
-        />
+        {/* User avatar placeholder, bottom left */}
+        <Box
+          boxSize="36px"
+          borderRadius="full"
+          overflow="hidden"
+          cursor="pointer"
+        >
+          {/** @TODO: replace with actual user avatar */}
+          <Image
+            src="https://randomuser.me/api/portraits/men/67.jpg"
+            alt="User"
+            boxSize="100%"
+            objectFit="cover"
+          />
+        </Box>
       </Box>
     </Box>
-  </Box>
   );
 };

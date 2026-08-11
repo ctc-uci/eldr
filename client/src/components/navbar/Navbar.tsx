@@ -22,9 +22,10 @@ export const Navbar = () => {
     >
       {/* Logo */}
       <Image
-        src="/eldr-logo.png"
+        src="/cc-logo-vertical.svg"
         alt="Elder Law & Disability Rights Center"
-        h="60px"
+        maxH="55px"
+        maxW="140px"
         objectFit="contain"
       />
 

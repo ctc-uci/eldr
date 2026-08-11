@@ -38,11 +38,13 @@ export const AdminNavbar = () => {
         align="stretch"
       >
         {/* ELDR Logo */}
-        <Box px={6}>
+        <Box px={6} display="flex" justifyContent="center" w="full">
           <Image
-            src="/eldr-logo.png"
+            src="/cc-logo-vertical.svg"
             alt="Elder Law & Disability Rights Center"
-            h="clamp(48px, 4vw, 52px)"
+            maxW="100%"
+            maxH="72px"
+            mx="auto"
             objectFit="contain"
           />
         </Box>
