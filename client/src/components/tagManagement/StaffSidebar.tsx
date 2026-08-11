@@ -12,7 +12,7 @@ import {
   Mail,
   Tag,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 const NAV_ITEMS = [
   { label: "Event Catalog", icon: ClipboardList, path: "/event-catalog" },
@@ -24,6 +24,15 @@ const NAV_ITEMS = [
 
 export function StaffSidebar() {
   const location = useLocation();
+
+  const getLogoRootPath = () => {
+    const p = location.pathname;
+    if (p.startsWith("/email")) return "/email";
+    if (p.startsWith("/event-catalog")) return "/event-catalog";
+    if (p.startsWith("/manage-profiles")) return "/manage-profiles";
+    if (p.startsWith("/manage-tags") || p.startsWith("/tags")) return "/manage-tags";
+    return "/manage-tags";
+  };
 
   return (
     <Flex
@@ -40,14 +49,16 @@ export function StaffSidebar() {
     >
       <VStack align="start" gap="38px">
         <Flex justify="center" w="full">
-          <Image
-            src="/cc-logo-vertical.svg"
-            alt="Elder Law & Disability Rights Center"
-            maxW="180px"
-            maxH="80px"
-            mx="auto"
-            objectFit="contain"
-          />
+          <Link to={getLogoRootPath()} style={{ display: "block", width: "100%" }}>
+            <Image
+              src="/cc-logo-vertical.svg"
+              alt="Community Counsel"
+              maxW="180px"
+              maxH="80px"
+              mx="auto"
+              objectFit="contain"
+            />
+          </Link>
         </Flex>
 
         <VStack gap="24px" w="full">

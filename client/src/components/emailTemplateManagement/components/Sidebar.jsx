@@ -46,7 +46,7 @@ export const Sidebar = () => {
       justifyContent="space-between"
     >
       <Box>
-        <Link to="/" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+        <Link to="/email" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Image
             src="/cc-logo-vertical.svg"
             maxW="100%"

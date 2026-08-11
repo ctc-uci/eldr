@@ -4,10 +4,19 @@ Implement on all associated volunteer pages
 */
 
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
-
 import { ClipboardList } from "lucide-react";
+import { useLocation, Link as RouterLink } from "react-router-dom";
 
 export const Navbar = () => {
+  const location = useLocation();
+
+  const getLogoRootPath = () => {
+    const p = location.pathname;
+    if (p.startsWith("/volunteer-profile")) return "/volunteer-profile";
+    if (p.startsWith("/event-catalog")) return "/event-catalog/all-events";
+    return "/event-catalog/all-events";
+  };
+
   return (
     <Flex
       as="nav"
@@ -21,13 +30,15 @@ export const Navbar = () => {
       flexShrink={0}
     >
       {/* Logo */}
-      <Image
-        src="/cc-logo-horizontal.svg"
-        alt="Community Counsel"
-        maxH="48px"
-        maxW="260px"
-        objectFit="contain"
-      />
+      <RouterLink to={getLogoRootPath()}>
+        <Image
+          src="/cc-logo-horizontal.svg"
+          alt="Community Counsel"
+          maxH="48px"
+          maxW="260px"
+          objectFit="contain"
+        />
+      </RouterLink>
 
       {/* Right side nav items */}
       <HStack gap="32px">

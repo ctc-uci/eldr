@@ -6,7 +6,7 @@ Implement on event creation ONLY (potentially case creation too??)
 import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/react";
 import { LuTags, LuMails } from "react-icons/lu";
 import { ClipboardList, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const navIconButtonProps = {
   variant: "ghost" as const,
@@ -23,6 +23,16 @@ const navIconButtonProps = {
 
 export const CollapsedNavbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getLogoRootPath = () => {
+    const p = location.pathname;
+    if (p.startsWith("/email")) return "/email";
+    if (p.startsWith("/events")) return "/events";
+    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
+    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
+    return "/events";
+  };
 
   return (
     <Flex
@@ -37,7 +47,7 @@ export const CollapsedNavbar = () => {
       justify="space-between"
     >
       <VStack gap={10} w="full" justifyContent="left">
-        <Box>
+        <Box cursor="pointer" onClick={() => navigate(getLogoRootPath())}>
           <Image
             src="/cc-logo.svg"
             alt="Logo"

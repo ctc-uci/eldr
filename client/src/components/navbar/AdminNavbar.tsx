@@ -11,6 +11,15 @@ import { LuTags, LuMails } from "react-icons/lu";
 export const AdminNavbar = () => {
   const location = useLocation();
 
+  const getLogoRootPath = () => {
+    const p = location.pathname;
+    if (p.startsWith("/email")) return "/email";
+    if (p.startsWith("/events")) return "/events";
+    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
+    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
+    return "/events";
+  };
+
   // Array of mapping icons
   const navItems = [
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
@@ -39,14 +48,16 @@ export const AdminNavbar = () => {
       >
         {/* ELDR Logo */}
         <Box px={6} display="flex" justifyContent="center" w="full">
-          <Image
-            src="/cc-logo-vertical.svg"
-            alt="Elder Law & Disability Rights Center"
-            maxW="100%"
-            maxH="72px"
-            mx="auto"
-            objectFit="contain"
-          />
+          <RouterLink to={getLogoRootPath()} style={{ display: "block", width: "100%" }}>
+            <Image
+              src="/cc-logo-vertical.svg"
+              alt="Community Counsel"
+              maxW="100%"
+              maxH="72px"
+              mx="auto"
+              objectFit="contain"
+            />
+          </RouterLink>
         </Box>
 
         {/* Nav Links */}

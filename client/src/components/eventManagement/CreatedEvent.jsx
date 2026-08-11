@@ -52,6 +52,12 @@ export const CreatedEvent = () => {
   };
 
   useEffect(() => {
+    if (eventData?.name) {
+      document.title = `Community Counsel - ${eventData.name}`;
+    }
+  }, [eventData?.name]);
+
+  useEffect(() => {
     if (locationState?.editFeedback === "saved") {
       toaster.success({
         title: "Edits to this event have been saved successfully.",

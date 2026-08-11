@@ -123,6 +123,16 @@ export const EmailTemplateManagement = () => {
     return folders.find(f => String(f.id) === activeFolderId) || null;
   }, [activeFolderId, folders]);
 
+  useEffect(() => {
+    if (view === "newTemplate") {
+      document.title = `Community Counsel - ${templateName || "Untitled Template"}`;
+    } else if (view === "folderView" && currentFolder) {
+      document.title = `Community Counsel - ${currentFolder.name || "Folder"}`;
+    } else {
+      document.title = "Community Counsel - Email Templates";
+    }
+  }, [view, templateName, currentFolder]);
+
   // fetch folders from backend on mount
   // callback to avoid refetching on every render
   const fetchFolders = useCallback(async () => {

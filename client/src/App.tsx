@@ -33,11 +33,13 @@ import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
 import { Spinner } from "@chakra-ui/react";
+import { useEffect } from "react";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
+  useLocation,
 } from "react-router-dom";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useRoleContext } from "@/contexts/hooks/useRoleContext";
@@ -57,6 +59,33 @@ const DashboardLanding = () => {
   return <Dashboard />;
 };
 
+const RouteTitleHandler = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/events")) {
+      document.title = "Community Counsel - Events";
+    } else if (path.startsWith("/email")) {
+      document.title = "Community Counsel - Email Templates";
+    } else if (path.startsWith("/volunteer-management")) {
+      document.title = "Community Counsel - Volunteer Management";
+    } else if (path.startsWith("/tags") || path.startsWith("/manage-tags")) {
+      document.title = "Community Counsel - Tag Management";
+    } else if (path.startsWith("/event-catalog")) {
+      document.title = "Community Counsel - Event Catalog";
+    } else if (path.startsWith("/login")) {
+      document.title = "Community Counsel - Login";
+    } else if (path.startsWith("/admin-profile") || path.startsWith("/volunteer-profile")) {
+      document.title = "Community Counsel - Profile";
+    } else {
+      document.title = "Community Counsel";
+    }
+  }, [location]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <CookiesProvider>
@@ -64,6 +93,7 @@ const App = () => {
         <AuthProvider>
           <RoleProvider>
             <Router>
+              <RouteTitleHandler />
               <Routes>
                 {/* DEV-MADE ROUTES! */}
                 {/* Staff: full AdminNavbar (email, events landing, tags, admin) */}

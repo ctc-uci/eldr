@@ -38,6 +38,15 @@ export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const getLogoRootPath = () => {
+    const p = location.pathname;
+    if (p.startsWith("/email")) return "/email";
+    if (p.startsWith("/events")) return "/events";
+    if (p.startsWith("/volunteer-management")) return "/volunteer-management";
+    if (p.startsWith("/tags") || p.startsWith("/manage-tags")) return "/tags";
+    return "/events";
+  };
+
   return (
     <Box
       w="260px"
@@ -50,7 +59,7 @@ export const Sidebar = () => {
       justifyContent="space-between"
     >
       <Box>
-        <Link to="/" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+        <Link to={getLogoRootPath()} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Image
             src="/cc-logo-vertical.svg"
             maxW="100%"
