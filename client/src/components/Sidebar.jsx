@@ -1,7 +1,7 @@
 import { Box, HStack, Icon, Image, Text, VStack } from "@chakra-ui/react";
-
 import { FaBriefcase, FaClipboard, FaMailBulk, FaUser } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getLogoRootPath } from "../utils/navigation";
 
 const sidebarNav = [
   { label: "Event Catalog", icon: FaClipboard, path: "/events" },
@@ -10,9 +10,7 @@ const sidebarNav = [
   { label: "Manage Profiles", icon: FaUser, active: false },
 ];
 
-import { getLogoRootPath } from "../utils/navigation";
-
-const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
+const SidebarNavItem = ({ icon: Icon, label, active, onClick }) => (
   <HStack
     as="button"
     w="100%"
