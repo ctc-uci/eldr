@@ -188,13 +188,14 @@ const WelcomeStep = ({ onNext }: Props) => {
               </Text>
 
               <Button
-                bg="#3182CE"
+                bg="brand.navy"
                 color="white"
+                fontFamily="heading"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                fontWeight={600}
+                _hover={{ bg: "primary.500" }}
                 justifyContent="space-between"
                 px="20px"
               >
@@ -206,13 +207,14 @@ const WelcomeStep = ({ onNext }: Props) => {
               </Button>
 
               <Button
-                bg="#3182CE"
+                bg="brand.navy"
                 color="white"
+                fontFamily="heading"
                 h={{ base: "44px", md: "52px" }}
                 borderRadius="6px"
                 fontSize={{ base: "13px", md: "14px" }}
-                fontWeight={500}
-                _hover={{ bg: "#5797BD" }}
+                fontWeight={600}
+                _hover={{ bg: "primary.500" }}
                 justifyContent="space-between"
                 px="20px"
                 onClick={onNext}

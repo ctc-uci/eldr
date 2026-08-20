@@ -4,10 +4,13 @@ Implement on all associated volunteer pages
 */
 
 import { Avatar, Flex, HStack, Image, Link, Text } from "@chakra-ui/react";
-
 import { ClipboardList } from "lucide-react";
+import { useLocation, Link as RouterLink } from "react-router-dom";
+import { getLogoRootPath } from "@/utils/navigation";
 
 export const Navbar = () => {
+  const location = useLocation();
+
   return (
     <Flex
       as="nav"
@@ -21,12 +24,15 @@ export const Navbar = () => {
       flexShrink={0}
     >
       {/* Logo */}
-      <Image
-        src="/eldr-logo.png"
-        alt="Elder Law & Disability Rights Center"
-        h="60px"
-        objectFit="contain"
-      />
+      <RouterLink to={getLogoRootPath(location.pathname)}>
+        <Image
+          src="/cc-logo-horizontal.svg"
+          alt="Community Counsel"
+          maxH="48px"
+          maxW="260px"
+          objectFit="contain"
+        />
+      </RouterLink>
 
       {/* Right side nav items */}
       <HStack gap="32px">
@@ -36,9 +42,10 @@ export const Navbar = () => {
           alignItems="center"
           gap="8px"
           fontSize="14px"
-          fontWeight={500}
-          color="#173DA6"
-          _hover={{ color: "#245eff", textDecoration: "none" }}
+          fontWeight={600}
+          fontFamily="heading"
+          color="#002992"
+          _hover={{ color: "#15A9EA", textDecoration: "none" }}
         >
           <ClipboardList size={16} />
           <Text>Event Catalog</Text>

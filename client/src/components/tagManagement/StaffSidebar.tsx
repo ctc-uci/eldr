@@ -12,7 +12,8 @@ import {
   Mail,
   Tag,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
+import { getLogoRootPath } from "@/utils/navigation";
 
 const NAV_ITEMS = [
   { label: "Event Catalog", icon: ClipboardList, path: "/event-catalog" },
@@ -39,44 +40,52 @@ export function StaffSidebar() {
       justifyContent="space-between"
     >
       <VStack align="start" gap="38px">
-        <Image
-          src="/eldr-logo.png"
-          alt="Elder Law & Disability Rights Center"
-          h="60px"
-          w="168px"
-          objectFit="contain"
-        />
+        <Flex justify="center" w="full">
+          <Link to={getLogoRootPath(location.pathname)} style={{ display: "block", width: "100%" }}>
+            <Image
+              src="/cc-logo-vertical.svg"
+              alt="Community Counsel"
+              maxW="180px"
+              maxH="80px"
+              mx="auto"
+              objectFit="contain"
+            />
+          </Link>
+        </Flex>
 
         <VStack gap="24px" w="full">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (
-              <Flex
+              <Link
                 key={item.label}
-                as="a"
-                href={item.path}
-                align="center"
-                gap="12px"
-                w="full"
-                px="23px"
-                py="16px"
-                borderRadius="8px"
-                bg={isActive ? "#d8f1ff" : "transparent"}
-                cursor="pointer"
-                _hover={{ bg: isActive ? "#d8f1ff" : "#f4f4f5" }}
-                textDecoration="none"
+                to={item.path}
+                style={{ textDecoration: "none", width: "100%" }}
               >
-                <Icon size={23} color="#294a5f" />
-                <Text
-                  fontSize="16px"
-                  fontWeight="bold"
-                  color="#294a5f"
-                  lineHeight="24px"
+                <Flex
+                  align="center"
+                  gap="12px"
+                  w="full"
+                  px="23px"
+                  py="16px"
+                  borderRadius="8px"
+                  bg={isActive ? "#E8F6FC" : "transparent"}
+                  cursor="pointer"
+                  _hover={{ bg: isActive ? "#E8F6FC" : "#f4f4f5" }}
                 >
-                  {item.label}
-                </Text>
-              </Flex>
+                  <Icon size={23} color={isActive ? "#002992" : "#4A5568"} />
+                  <Text
+                    fontSize="16px"
+                    fontWeight={isActive ? "bold" : "600"}
+                    fontFamily="heading"
+                    color={isActive ? "#002992" : "#4A5568"}
+                    lineHeight="24px"
+                  >
+                    {item.label}
+                  </Text>
+                </Flex>
+              </Link>
             );
           })}
         </VStack>

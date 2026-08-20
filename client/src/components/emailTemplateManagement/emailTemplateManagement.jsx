@@ -45,9 +45,9 @@ export const EmailTemplateManagement = () => {
   const [itemsPerPage, setItemsPerPage] = useState(7);
   const listContainerRef = useRef(null);
   // dynamic listing based on browswer size
-  // card height: py=15*2 + lineHeight=24 + border=2 = 56px; gap between cards = 16px
+  // card height: py=15*2 + lineHeight=24 + border=2 = 56px; gap between cards = 30px
   const CARD_HEIGHT = 56;
-  const CARD_GAP = 16;
+  const CARD_GAP = 30;
 
   useEffect(() => {
     const el = listContainerRef.current;
@@ -94,6 +94,7 @@ export const EmailTemplateManagement = () => {
   const [isLoadingFolders, setIsLoadingFolders] = useState(true);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDiscardChangesModal, setShowDiscardChangesModal] = useState(false);
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [showMoveTemplateModal, setShowMoveTemplateModal] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState("");
@@ -107,8 +108,13 @@ export const EmailTemplateManagement = () => {
 
   // inline title editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isRenamingFolder, setIsRenamingFolder] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState("");
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const titleInputRef = useRef(null);
+
+  const isTemplateEditable =
+    isEditingTemplate || isNewTemplate || urlTemplateId?.startsWith("new-");
 
   // derive currentFolder from URL params
   const activeFolderId = urlFolderId || folderIdFromQuery;
@@ -116,6 +122,16 @@ export const EmailTemplateManagement = () => {
     if (!activeFolderId || folders.length === 0) return null;
     return folders.find(f => String(f.id) === activeFolderId) || null;
   }, [activeFolderId, folders]);
+
+  useEffect(() => {
+    if (view === "newTemplate") {
+      document.title = `${templateName || "Untitled Template"} | Community Counsel`;
+    } else if (view === "folderView" && currentFolder) {
+      document.title = `${currentFolder.name || "Folder"} | Community Counsel`;
+    } else {
+      document.title = "Email Templates | Community Counsel";
+    }
+  }, [view, templateName, currentFolder]);
 
   // fetch folders from backend on mount
   // callback to avoid refetching on every render
@@ -168,6 +184,7 @@ export const EmailTemplateManagement = () => {
       if (urlTemplateId) {
         // skip fetching for new unsaved templates (temp IDs start with 'new-')
         if (urlTemplateId.startsWith('new-')) {
+          setIsEditingTemplate(true);
           return;
         }
         try {
@@ -184,6 +201,7 @@ export const EmailTemplateManagement = () => {
             content,
           });
           setIsNewTemplate(false);
+          setIsEditingTemplate(false);
         } catch (error) {
           console.error('Error fetching template:', error);
           // navigate back to folders if template not found
@@ -303,6 +321,7 @@ export const EmailTemplateManagement = () => {
     });
     setCurrentTemplateId(null);
     setIsNewTemplate(false);
+    setIsEditingTemplate(false);
   };
 
   const normalizeEditorContent = useCallback((content = "") => {
@@ -323,6 +342,31 @@ export const EmailTemplateManagement = () => {
     initialTemplateSnapshot,
     normalizeEditorContent,
   ]);
+
+  const handleConfirmCancelEdit = () => {
+    setTemplateName(initialTemplateSnapshot.name);
+    setTemplateSubject(initialTemplateSnapshot.subject);
+    setTemplateContent(initialTemplateSnapshot.content);
+    setIsEditingTemplate(false);
+
+    if (urlTemplateId && urlTemplateId.startsWith("new-")) {
+      resetTemplateForm();
+      if (activeFolderId) {
+        navigate(`/email/folder/${activeFolderId}`);
+      } else {
+        navigate("/email");
+      }
+    }
+    setShowDiscardChangesModal(false);
+  };
+
+  const handleCancelEditClick = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardChangesModal(true);
+    } else {
+      handleConfirmCancelEdit();
+    }
+  };
 
   const openMoveTemplateModalWithDefaultFolder = () => {
     const firstAvailableFolder = folders.find(
@@ -387,6 +431,8 @@ export const EmailTemplateManagement = () => {
       if (shouldOpenMoveModal) {
         openMoveTemplateModalWithDefaultFolder();
       }
+
+      setIsEditingTemplate(false);
     } catch (error) {
       alert("Failed to save template. Please try again.");
     }
@@ -434,6 +480,7 @@ export const EmailTemplateManagement = () => {
         subject: "",
         content,
       });
+      setIsEditingTemplate(true);
       setShowFolderViewTemplatePopover(false);
       navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
     } catch (error) {
@@ -482,6 +529,7 @@ export const EmailTemplateManagement = () => {
           content: "",
         });
         setIsNewTemplate(false);
+        setIsEditingTemplate(true);
         setShowNewTemplatePopover(false);
         navigate(`/email/template/${createdTemplate.id}?folderId=${currentFolder.id}`);
       } else {
@@ -498,6 +546,7 @@ export const EmailTemplateManagement = () => {
           content: "",
         });
         setIsNewTemplate(true);
+        setIsEditingTemplate(true);
         setShowNewTemplatePopover(false);
         navigate(`/email/template/${tempId}`);
       }
@@ -536,6 +585,7 @@ export const EmailTemplateManagement = () => {
   const handleRenameTemplate = async (templateId, newName) => {
     if (!templateId) {
       setTemplateName(newName);
+      setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
       return;
     }
 
@@ -549,7 +599,10 @@ export const EmailTemplateManagement = () => {
         subject: existing?.subject ?? null,
       });
 
-      setTemplateName((prev) => (String(currentTemplateId) === String(templateId) ? newName : prev));
+      if (String(currentTemplateId) === String(templateId)) {
+        setTemplateName(newName);
+        setInitialTemplateSnapshot((prev) => ({ ...prev, name: newName }));
+      }
       setTemplates((prev) =>
         prev.map((t) => (t.id === templateId ? { ...t, name: newName } : t))
       );
@@ -855,6 +908,7 @@ export const EmailTemplateManagement = () => {
                   <RenameFolderDialog
                     folderName={currentFolder.name}
                     onRename={handleRenameFolder}
+                    setIsRenaming={setIsRenamingFolder}
                   />
                 )}
               </Flex>
@@ -867,7 +921,7 @@ export const EmailTemplateManagement = () => {
                       isOpen={showNewTemplatePopover}
                       onOpenChange={setShowNewTemplatePopover}
                       onSubmit={handleCreateTemplateFromPopover}
-                      buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500" }}
+                      buttonProps={{ h: "40px", fontSize: "14px", px: "16px", fontWeight: "500"}}
                     />
                     <NewFolderPopover
                       isOpen={showNewFolderPopover}
@@ -887,28 +941,38 @@ export const EmailTemplateManagement = () => {
                       fontSize: "14px",
                       px: "16px",
                       fontWeight: "500",
-                      ...(showDeleteFolderModal
+                      disabled: isRenamingFolder,
+                      ...(isRenamingFolder
                         ? {
-                            backgroundColor: "#E4E4E7",
-                            color: "black",
-                            _hover: { bg: "#E4E4E7" },
+                            backgroundColor: "#D4D4D8",
+                            color: "#18181B",
+                            borderColor: "#D4D4D8",
+                            _hover: { bg: "#D4D4D8" },
                           }
-                        : {}),
+                        : showDeleteFolderModal
+                          ? {
+                              backgroundColor: "#E4E4E7",
+                              color: "black",
+                              _hover: { bg: "#E4E4E7" },
+                            }
+                          : {}),
                     }}
                   />
                 )}
                 {view === "folderView" && 
                   (templates.length === 0 ?
                     <Button
-                      bg="#DC2626"
-                      color="white"
+                      disabled={isRenamingFolder}
+                      bg={isRenamingFolder ? "#E4E4E7" : "#DC2626"}
+                      color={isRenamingFolder ? "#71717A" : "white"}
                       h="40px"
                       px="16px"
                       fontSize="14px"
                       fontWeight="500"
                       borderRadius="4px"
                       borderWidth="1px"
-                      borderColor="#DC2626"
+                      borderColor={isRenamingFolder ? "#E4E4E7" : "#DC2626"}
+                      _hover={isRenamingFolder ? { bg: "#E4E4E7" } : { bg: "#B91C1C" }}
                       onClick={() => setShowDeleteFolderModal(true)}
                       display="flex"
                       gap="8px"
@@ -919,16 +983,35 @@ export const EmailTemplateManagement = () => {
                     </Button>
                   :
                     <Button
-                      bg={showNewTemplatePopover ? "#E4E4E7" : "white"}
-                      color={showNewTemplatePopover ? "black" : "#991919"}
+                      disabled={isRenamingFolder}
+                      bg={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? "#E4E4E7"
+                          : "white"
+                      }
+                      color={
+                        isRenamingFolder
+                          ? "#71717A"
+                          : showNewTemplatePopover
+                            ? "black"
+                            : "#991919"
+                      }
                       h="40px"
                       px="16px"
                       fontSize="14px"
                       fontWeight="500"
                       borderRadius="4px"
                       borderWidth="1px"
-                      borderColor={showNewTemplatePopover ? "#E4E4E7" : "#FECACA"}
-                      _hover={showNewTemplatePopover ? { bg: "#E4E4E7" } : { bg: "#FEE2E2" }}
+                      borderColor={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? "#E4E4E7"
+                          : "#FECACA"
+                      }
+                      _hover={
+                        isRenamingFolder || showNewTemplatePopover
+                          ? { bg: "#E4E4E7" }
+                          : { bg: "#FEE2E2" }
+                      }
                       onClick={() => setShowDeleteFolderModal(true)}
                       display="flex"
                       gap="8px"
@@ -968,11 +1051,11 @@ export const EmailTemplateManagement = () => {
                       lineHeight="1.2"
                       border="none"
                       borderBottom="2px solid"
-                      borderColor="#487C9E"
+                      borderColor="#002992"
                       borderRadius="0"
                       px="0"
                       bg="transparent"
-                      _focus={{ boxShadow: "none", borderColor: "#294A5F" }}
+                      _focus={{ boxShadow: "none", borderColor: "#001E6C" }}
                       autoFocus
                       h="auto"
                       minW="200px"
@@ -982,27 +1065,33 @@ export const EmailTemplateManagement = () => {
                       fontSize="3xl"
                       fontWeight="600"
                       lineHeight="1.2"
-                      cursor="text"
-                      onDoubleClick={() => {
-                        setEditingTitleValue(templateName);
-                        setIsEditingTitle(true);
-                      }}
-                      title="Double-click to rename"
+                      cursor={isTemplateEditable ? "text" : "default"}
+                      onDoubleClick={
+                        isTemplateEditable
+                          ? () => {
+                              setEditingTitleValue(templateName);
+                              setIsEditingTitle(true);
+                            }
+                          : undefined
+                      }
+                      title={isTemplateEditable ? "Double-click to rename" : undefined}
                     >
                       {templateName}
                     </Text>
                   )}
-                  <Pencil
-                    size={20}
-                    cursor="pointer"
-                    onClick={() => {
-                      setRenameTarget({
-                        type: "template",
-                        item: { id: currentTemplateId, name: templateName },
-                      });
-                      setShowRenameDialog(true);
-                    }}
-                  />
+                  {isTemplateEditable && (
+                    <Pencil
+                      size={20}
+                      cursor="pointer"
+                      onClick={() => {
+                        setRenameTarget({
+                          type: "template",
+                          item: { id: currentTemplateId, name: templateName },
+                        });
+                        setShowRenameDialog(true);
+                      }}
+                    />
+                  )}
                 </HStack>
                 
                 <HStack spacing={4} ml="auto">
@@ -1019,8 +1108,8 @@ export const EmailTemplateManagement = () => {
                       showRenameDialog || showDeleteModal
                         ? "#E4E4E7"
                         : showMoveTemplateModal
-                          ? "#294A5F"
-                          : "#487C9E"
+                          ? "#001E6C"
+                          : "#002992"
                     }
                     color={showRenameDialog || showDeleteModal ? "black" : "white"}
                     _hover={{
@@ -1028,42 +1117,76 @@ export const EmailTemplateManagement = () => {
                         showRenameDialog || showDeleteModal
                           ? "#E4E4E7"
                           : showMoveTemplateModal
-                            ? "#294A5F"
-                            : "#294A5F",
+                            ? "#001E6C"
+                            : "#001E6C",
                     }}
                     onClick={async () => {
                       if (hasUnsavedChanges) {
                         await handleSaveButtonClick();
                         return;
                       }
-                      try {
-                        const templateIdToCheck =
-                          currentTemplateId ||
-                          (urlTemplateId && !urlTemplateId.startsWith("new-") ? urlTemplateId : null);
-                        const shouldOpenMoveModal = await hasNoLinkedFolders(templateIdToCheck);
-                        if (shouldOpenMoveModal) {
-                          openMoveTemplateModalWithDefaultFolder();
+                      const isEnteringEditMode = !isEditingTemplate;
+                      setIsEditingTemplate((prev) => !prev);
+                      // When entering edit mode, prompt to move/link orphaned templates
+                      if (isEnteringEditMode) {
+                        try {
+                          const templateIdToCheck =
+                            currentTemplateId ||
+                            (urlTemplateId && !urlTemplateId.startsWith("new-")
+                              ? urlTemplateId
+                              : null);
+                          const shouldOpenMoveModal = await hasNoLinkedFolders(templateIdToCheck);
+                          if (shouldOpenMoveModal) {
+                            openMoveTemplateModalWithDefaultFolder();
+                          }
+                        } catch (error) {
+                          // don't block user flow on lookup errors
                         }
-                      } catch (error) {
-                        // don't block user flow on lookup errors
                       }
                     }}
                   >
                     {hasUnsavedChanges ? <Save size={16} /> : <Pencil size={16} />}
                     {hasUnsavedChanges ? "Save" : "Edit"}
                   </Button>
-
-                  <Button
-                    variant="outline"
-                    color={showMoveTemplateModal || showRenameDialog ? "black" : "#991919"}
-                    borderColor={showMoveTemplateModal || showRenameDialog ? "#E4E4E7" : "#FECACA"}
-                    bg={showMoveTemplateModal || showRenameDialog ? "#E4E4E7" : "transparent"}
-                    _hover={showMoveTemplateModal || showRenameDialog ? { bg: "#E4E4E7" } : { bg: "#FEE2E2" }}
-                    onClick={() => setShowDeleteModal(true)}
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </Button>
+                  {isTemplateEditable ? (
+                    <Button
+                      variant="outline"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      borderColor="#E4E4E7"
+                      color="#27272A"
+                      bg="white"
+                      _hover={{ bg: "#F4F4F5" }}
+                      onClick={handleCancelEditClick}
+                    >
+                      Cancel
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      h="40px"
+                      px="16px"
+                      fontSize="14px"
+                      fontWeight="500"
+                      borderRadius="4px"
+                      borderWidth="1px"
+                      display="flex"
+                      gap="8px"
+                      alignItems="center"
+                      color="#991919"
+                      borderColor="#FECACA"
+                      bg="transparent"
+                      _hover={{ bg: "#FEE2E2" }}
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </Button>
+                  )}
                 </HStack>
               </HStack>
             </>
@@ -1072,7 +1195,7 @@ export const EmailTemplateManagement = () => {
 
         {/* Folder List View */}
         {view === "folders" && (
-          <VStack ref={listContainerRef} align="stretch" spacing={4} mb={8} flex="1" overflow="hidden">
+          <VStack ref={listContainerRef} align="stretch" gap="30px" mb={8} flex="1" overflow="hidden">
             {isLoadingFolders ? (
               <Text>Loading folders...</Text>
             ) : folders.length === 0 ? (
@@ -1104,7 +1227,7 @@ export const EmailTemplateManagement = () => {
                 onCreateTemplate={handleCreateTemplateFromFolderView}
               />
             ) : (
-              <VStack align="stretch" spacing={4} width="100%">
+              <VStack align="stretch" gap="30px" width="100%">
                 {paginatedTemplates.map((template) => (
                   <TemplateCard
                     key={template.id}
@@ -1129,6 +1252,7 @@ export const EmailTemplateManagement = () => {
               setTemplateSubject={setTemplateSubject}
               templateContent={templateContent}
               setTemplateContent={setTemplateContent}
+              isEditable={isTemplateEditable}
             />
           </Box>
         )}
@@ -1271,11 +1395,12 @@ export const EmailTemplateManagement = () => {
                   h="40px"
                   px="16px"
                   fontSize="14px"
-                  fontWeight="500"
+                  fontWeight="600"
+                  fontFamily="heading"
                   borderRadius="4px"
-                  bg="#487C9E"
+                  bg="#002992"
                   color="white"
-                  _hover={{ bg: "#3D6B89" }}
+                  _hover={{ bg: "#001E6C" }}
                   onClick={handleMoveTemplate}
                   disabled={!moveFolderId || isMovingTemplate}
                 >
@@ -1293,6 +1418,58 @@ export const EmailTemplateManagement = () => {
         onClose={() => setShowDeleteModal(false)}
         onDelete={handleDeleteTemplate}
       />
+
+      {/* Discard Unsaved Changes Modal when Cancelling Edit Mode */}
+      <Dialog.Root
+        open={showDiscardChangesModal}
+        onOpenChange={(e) => setShowDiscardChangesModal(e.open)}
+        placement="center"
+      >
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.400" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              w="380px"
+              boxShadow="xl"
+              borderRadius="md"
+              p={0}
+              bg="white"
+            >
+              <Dialog.CloseTrigger position="absolute" top="0" right="0" asChild>
+                <CloseButton size="sm" onClick={() => setShowDiscardChangesModal(false)} />
+              </Dialog.CloseTrigger>
+              <Dialog.Body p={6}>
+                <VStack align="stretch" gap={4}>
+                  <Text fontSize="md" fontWeight="bold">
+                    Discard unsaved changes?
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Are you sure you want to cancel? Any unsaved edits will be lost.
+                  </Text>
+                  <HStack gap={3} justify="flex-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDiscardChangesModal(false)}
+                    >
+                      Keep Editing
+                    </Button>
+                    <Button
+                      bg="#DC2626"
+                      color="white"
+                      size="sm"
+                      _hover={{ bg: "#B91C1C" }}
+                      onClick={handleConfirmCancelEdit}
+                    >
+                      Discard Changes
+                    </Button>
+                  </HStack>
+                </VStack>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       {/* Confirm Delete Folder Dialog (top-level so it works from both header button and context menu) */}
       <Dialog.Root

@@ -207,12 +207,14 @@ export const AdminForgotPass: React.FC = () => {
               position="relative"
               variant="outline"
               borderRadius="md"
-              background={email ? "#3182CE" : "#D4D4D8"}
+              background={email ? "brand.navy" : "#D4D4D8"}
               w="30vw"
               h="3vw"
               color="white"
+              fontFamily="heading"
+              fontWeight={600}
               disabled={!email}
-              _hover={email ? { bg: "#5797BD" } : {}}
+              _hover={email ? { bg: "primary.500" } : {}}
               mb={4}
               onClick={() => {
                 const valid = verifyEmail(email, currUsers);

@@ -5,15 +5,23 @@ const FilterTag = ({ label, onRemove }) => {
   return (
     <Box
       bg="#F3F4F6"
-      borderRadius="10px"
-      px="14px"
-      py="10px"
-      minH="44px"
+      borderRadius="sm"
+      px={2}
+      py={1}
       transition="background 0.15s"
       _hover={{ bg: "#E5E7EB" }}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      minH="2rem"
     >
-      <HStack gap="10px">
-        <Text color="#111827" fontSize="15px" fontWeight={500}>
+      <HStack gap={1} align="center">
+        <Text
+          color="#111827"
+          fontSize="sm"
+          fontWeight="500"
+          lineHeight="1"
+        >
           {label}
         </Text>
 
@@ -21,16 +29,15 @@ const FilterTag = ({ label, onRemove }) => {
           aria-label={`Remove ${label}`}
           onClick={onRemove}
           variant="ghost"
-          size="sm"
-          minW="24px"
-          h="24px"
+          size="xs"
           p={0}
+          minW="auto"
+          h="auto"
           borderRadius="full"
-          cursor="pointer"
           color="#6B7280"
           _hover={{ bg: "#D1D5DB", color: "#111827" }}
         >
-          <X size={18} />
+          <X size={14} />
         </IconButton>
       </HStack>
     </Box>

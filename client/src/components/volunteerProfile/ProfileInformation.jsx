@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import {
   Avatar,
   Badge,
@@ -7,14 +9,15 @@ import {
   Flex,
   Heading,
   HStack,
+  IconButton,
   Input,
   NativeSelect,
   SimpleGrid,
-  Tag,
+  Textarea,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuFileText, LuPencil, LuTriangleAlert } from "react-icons/lu";
+import { LuFileText, LuPencil, LuTriangleAlert, LuX } from "react-icons/lu";
 import InputMask from "react-input-mask";
 
 import {
@@ -22,7 +25,6 @@ import {
   PROFICIENCY_OPTIONS,
 } from "./profileState.js";
 
-const primaryBlue = "#3182CE";
 
 const FieldLabel = ({ children }) => (
   <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={1}>
@@ -36,6 +38,8 @@ const ReadValue = ({ children, muted }) => (
   </Text>
 );
 
+const editBlue = "#3B6F8F";
+
 export const ProfileInformation = ({
   data,
   setData,
@@ -44,12 +48,23 @@ export const ProfileInformation = ({
   onEdit,
   onSave,
   onCancel,
+  onPhotoSelect,
   isSaving = false,
+  photoError = "",
   errorMessage = "",
   languageOptions = [],
   areaOptions = [],
 }) => {
+  const photoInputRef = useRef(null);
   const defaultLanguage = languageOptions[0] ?? "";
+
+  const handlePhotoInputChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file && onPhotoSelect) {
+      onPhotoSelect(file);
+    }
+  };
 
   const update = (patch) => {
     if (!setData) return;
@@ -81,24 +96,13 @@ export const ProfileInformation = ({
     }));
   };
 
-  const removeInterest = (tag) => {
+  const removeLanguageRow = (id) => {
     if (!setData) return;
     setData((prev) => ({
       ...prev,
-      interests: prev.interests.filter((t) => t !== tag),
+      languages: prev.languages.filter((row) => row.id !== id),
     }));
   };
-
-  const addInterest = (value) => {
-    const v = value.trim();
-    if (!v || !setData) return;
-    setData((prev) =>
-      prev.interests.includes(v)
-        ? prev
-        : { ...prev, interests: [...prev.interests, v] },
-    );
-  };
-  const availableAreaOptions = areaOptions.filter((option) => !data.interests.includes(option));
 
   return (
     <Box
@@ -118,7 +122,7 @@ export const ProfileInformation = ({
       >
         <Box>
           <HStack flexWrap="wrap" gap={2} mb={2}>
-            <Heading size="2xl" lineHeight="snug" fontWeight="bold" color="gray.900">
+            <Heading size="2xl" lineHeight="snug" fontWeight="semibold" color="gray.900">
               Profile Information
             </Heading>
             {isEditing ? (
@@ -172,7 +176,7 @@ export const ProfileInformation = ({
           {isEditing ? (
             <>
               <Button
-                bg={primaryBlue}
+                bg={editBlue}
                 color="white"
                 size="sm"
                 minW="120px"
@@ -200,16 +204,16 @@ export const ProfileInformation = ({
             </>
           ) : (
             <Button
-              bg={primaryBlue}
+              bg={editBlue}
               color="white"
               size="sm"
               borderRadius="md"
               _hover={{ bg: "#2B6CB0" }}
               onClick={onEdit}
             >
-              <HStack gap={1}>
-                <LuPencil size={14} />
+              <HStack gap={2}>
                 <Text fontSize="sm">Edit</Text>
+                <LuPencil size={14} />
               </HStack>
             </Button>
           )}
@@ -219,7 +223,7 @@ export const ProfileInformation = ({
       <VStack gap={8} align="stretch">
         {/* Personal Info — 3 columns: Photo | First+Phone | Last+Email */}
         <Box>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Personal Info
           </Text>
           <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} mt={8} mb={10} alignItems="start">
@@ -251,14 +255,30 @@ export const ProfileInformation = ({
                   </Avatar.Root>
                 </Box>
                 {isEditing ? (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    colorPalette="blue"
-                    disabled
-                  >
-                    Change Photo
-                  </Button>
+                  <>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      hidden
+                      onChange={handlePhotoInputChange}
+                    />
+                    <Button
+                      size="xs"
+                      variant="solid"
+                      bg={editBlue}
+                      color="white"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={isSaving}
+                    >
+                      Change Photo
+                    </Button>
+                    {photoError ? (
+                      <Text fontSize="xs" color="red.600" textAlign="center" maxW="12rem">
+                        {photoError}
+                      </Text>
+                    ) : null}
+                  </>
                 ) : null}
               </VStack>
             </Box>
@@ -338,7 +358,7 @@ export const ProfileInformation = ({
 
         {/* Occupation & Credentials */}
         <Box mb={6}>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Occupation & Credentials
           </Text>
           <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={12}>
@@ -383,13 +403,13 @@ export const ProfileInformation = ({
           </SimpleGrid>
         </Box>
 
-        {/* Experience: Languages + Interests / Areas */}
-        <Box>
-          <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.900">
+        {/* Experience: Languages + Listed Experience */}
+        <Box minW={0}>
+          <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Experience
           </Text>
-          <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start">
-          <Box flex="1" w="100%">
+          <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start" minW={0}>
+          <Box flex="1" minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
@@ -400,92 +420,100 @@ export const ProfileInformation = ({
               p={4}
             >
             {isEditing ? (
-              <Text fontSize="xs" color="gray.600" mb={3}>
+              <Text fontSize="sm" color="#A1A1AA" mb={3} fontWeight="normal">
                 Select the languages and your proficiency level.
               </Text>
             ) : null}
             {!isEditing && data.languages.length === 0 ? (
               <Text fontSize="sm" color="gray.600">
-                No languages found, please click &quot;Edit&quot; to add more
+                No languages found, please click &quot;Edit&quot; to add more.
               </Text>
             ) : (
             <VStack gap={2} align="stretch">
-              {data.languages.map((row) => (
-                <SimpleGrid
-                  key={row.id}
-                  columns={2}
-                  gap={2}
-                  minChildWidth="0"
-                >
-                  {isEditing ? (
-                    <>
-                      <NativeSelect.Root size="sm">
-                        <NativeSelect.Field
-                          value={row.language}
-                          onChange={(e) =>
-                            updateLanguage(row.id, {
-                              language: e.target.value,
-                            })
-                          }
-                        >
-                          {languageOptions.map((o) => (
-                            <option key={o} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                      </NativeSelect.Root>
-                      <NativeSelect.Root size="sm">
-                        <NativeSelect.Field
-                          value={row.proficiency}
-                          onChange={(e) =>
-                            updateLanguage(row.id, {
-                              proficiency: e.target.value,
-                            })
-                          }
-                        >
-                          {PROFICIENCY_OPTIONS.map((o) => (
-                            <option key={o} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                      </NativeSelect.Root>
-                    </>
-                  ) : (
-                    <>
-                      <Field.Root>
-                        <Input
-                          size="sm"
-                          readOnly
-                          value={row.language}
-                          bg="white"
-                          borderColor="gray.200"
-                          color="gray.900"
-                          cursor="default"
-                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                          _readOnly={{ opacity: 1, cursor: "default" }}
-                        />
-                      </Field.Root>
-                      <Field.Root>
-                        <Input
-                          size="sm"
-                          readOnly
-                          value={row.proficiency}
-                          bg="white"
-                          borderColor="gray.200"
-                          color="gray.900"
-                          cursor="default"
-                          _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                          _readOnly={{ opacity: 1, cursor: "default" }}
-                        />
-                      </Field.Root>
-                    </>
-                  )}
-                </SimpleGrid>
-              ))}
+              {data.languages.map((row) =>
+                isEditing ? (
+                  <Flex key={row.id} gap={2} align="center" minW={0}>
+                    <NativeSelect.Root size="sm" flex={1} minW={0}>
+                      <NativeSelect.Field
+                        value={row.language}
+                        onChange={(e) =>
+                          updateLanguage(row.id, {
+                            language: e.target.value,
+                          })
+                        }
+                      >
+                        {languageOptions.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    <NativeSelect.Root size="sm" flex={1} minW={0}>
+                      <NativeSelect.Field
+                        value={row.proficiency}
+                        onChange={(e) =>
+                          updateLanguage(row.id, {
+                            proficiency: e.target.value,
+                          })
+                        }
+                      >
+                        {PROFICIENCY_OPTIONS.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                    <IconButton
+                      aria-label={`Remove ${row.language}`}
+                      variant="ghost"
+                      size="xs"
+                      color="gray.500"
+                      flexShrink={0}
+                      onClick={() => removeLanguageRow(row.id)}
+                    >
+                      <LuX size={14} />
+                    </IconButton>
+                  </Flex>
+                ) : (
+                  <SimpleGrid
+                    key={row.id}
+                    columns={2}
+                    gap={2}
+                    minChildWidth="0"
+                  >
+                    <Field.Root>
+                      <Input
+                        size="sm"
+                        readOnly
+                        value={row.language}
+                        bg="white"
+                        borderColor="gray.200"
+                        color="gray.900"
+                        cursor="default"
+                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                        _readOnly={{ opacity: 1, cursor: "default" }}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Input
+                        size="sm"
+                        readOnly
+                        value={row.proficiency}
+                        bg="white"
+                        borderColor="gray.200"
+                        color="gray.900"
+                        cursor="default"
+                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
+                        _readOnly={{ opacity: 1, cursor: "default" }}
+                      />
+                    </Field.Root>
+                  </SimpleGrid>
+                ),
+              )}
             </VStack>
             )}
             {isEditing ? (
@@ -505,81 +533,52 @@ export const ProfileInformation = ({
             </Box>
           </Box>
 
-          <Box flex="1" w="100%">
+          <Box flex="1" minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
-              Interests(s)
+              Listed Experience
             </Text>
-            <Flex
-              flexWrap="wrap"
-              gap={2}
-              align="center"
-              minH="44px"
-              p={2}
-              bg="white"
-              borderWidth="1px"
-              borderColor="gray.200"
-              borderRadius="md"
-            >
-              {!isEditing && data.interests.length === 0 ? (
-                <Text fontSize="sm" color="gray.600" px={1}>
-                  No interests found, please click &quot;Edit&quot; to add more
+            {isEditing ? (
+              <Textarea
+                size="sm"
+                value={data.listedExperience ?? ""}
+                onChange={(e) => update({ listedExperience: e.target.value })}
+                placeholder="Enter listed experience."
+                _placeholder={{ color: "#A1A1AA" }}
+                minH="96px"
+                resize="none"
+                p={4}
+                bg="white"
+                borderWidth="1px"
+                borderColor="gray.200"
+                borderRadius="md"
+                w="100%"
+                whiteSpace="pre-wrap"
+                wordBreak="break-word"
+                overflowWrap="anywhere"
+              />
+            ) : (
+              <Box
+                p={4}
+                w="100%"
+                minW={0}
+                bg="white"
+                borderWidth="1px"
+                borderColor="gray.200"
+                borderRadius="md"
+                overflow="hidden"
+              >
+                <Text
+                  fontSize="sm"
+                  lineHeight="short"
+                  whiteSpace="pre-wrap"
+                  wordBreak="break-word"
+                  overflowWrap="anywhere"
+                  color={data.listedExperience?.trim() ? "gray.900" : "gray.600"}
+                >
+                  {data.listedExperience?.trim() || 'No experience found, please click "Edit" to add more.'}
                 </Text>
-              ) : (
-                <>
-                  {data.interests.map((tag) => (
-                    <Tag.Root
-                      key={tag}
-                      size="sm"
-                      bg="gray.100"
-                      color="gray.900"
-                    >
-                      <Tag.Label>{tag}</Tag.Label>
-                      <Tag.EndElement>
-                        <Tag.CloseTrigger
-                          disabled={!isEditing}
-                          aria-label={isEditing ? `Remove ${tag}` : undefined}
-                          onClick={
-                            isEditing
-                              ? () => removeInterest(tag)
-                              : undefined
-                          }
-                        />
-                      </Tag.EndElement>
-                    </Tag.Root>
-                  ))}
-                  {isEditing ? (
-                    <NativeSelect.Root size="sm" minW="160px" maxW="160px">
-                      <NativeSelect.Field
-                        defaultValue=""
-                        border="none"
-                        bg="transparent"
-                        px={2}
-                        _focus={{ boxShadow: "none", borderColor: "transparent", outline: "none" }}
-                        _focusVisible={{
-                          boxShadow: "none",
-                          borderColor: "transparent",
-                          outline: "none",
-                        }}
-                        onChange={(e) => {
-                          addInterest(e.target.value);
-                          e.target.value = "";
-                        }}
-                      >
-                        <option value="" disabled>
-                          Add tag...
-                        </option>
-                        {availableAreaOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                  ) : null}
-                </>
-              )}
-            </Flex>
+              </Box>
+            )}
           </Box>
         </Flex>
         </Box>

@@ -1,11 +1,12 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const casesRouter = Router();
 
 //GET /cases - Get all cases
-casesRouter.get("/", async (req, res) => {
+casesRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const cases = await db.query(`SELECT * FROM cases ORDER BY id ASC`);
 
@@ -16,7 +17,7 @@ casesRouter.get("/", async (req, res) => {
 });
 
 //GET /cases/{id} - Get one case based on id
-casesRouter.get("/:id", async (req, res) => {
+casesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -31,7 +32,7 @@ casesRouter.get("/:id", async (req, res) => {
 });
 
 //DELETE /cases/{id} - Delete a case by id
-casesRouter.delete("/:id", async (req, res) => {
+casesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -46,7 +47,7 @@ casesRouter.delete("/:id", async (req, res) => {
 });
 
 // POST /cases - Create case
-casesRouter.post("/", async (req, res) => {
+casesRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const { title, description, emailContact } = req.body;
 
@@ -70,7 +71,7 @@ casesRouter.post("/", async (req, res) => {
 });
 
 // PUT /cases/:id - Update a single case by id
-casesRouter.put("/:id", async (req, res) => {
+casesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, emailContact } = req.body;
@@ -98,7 +99,7 @@ casesRouter.put("/:id", async (req, res) => {
 // Areas of Practice Routes
 // POST: assign an area to a case
 // /cases/{caseId}/areas-of-practice
-casesRouter.post("/:caseId/areas-of-practice", async (req, res) => {
+casesRouter.post("/:caseId/areas-of-practice", verifyRole("staff"), async (req, res) => {
   try {
     const { areaOfPracticeId } = req.body;
     const { caseId } = req.params;
@@ -120,7 +121,7 @@ casesRouter.post("/:caseId/areas-of-practice", async (req, res) => {
 
 // DELETE: remove an area from a case
 // /cases/{caseId}/areas-of-practice/{areaId}
-casesRouter.delete("/:caseId/areas-of-practice/:areaId", async (req, res) => {
+casesRouter.delete("/:caseId/areas-of-practice/:areaId", verifyRole("staff"), async (req, res) => {
   try {
     const { caseId, areaId } = req.params;
 
@@ -141,7 +142,7 @@ casesRouter.delete("/:caseId/areas-of-practice/:areaId", async (req, res) => {
 
 // GET: list all areas for a case
 // /cases/{caseId}/areas-of-practice
-casesRouter.get("/:caseId/areas-of-practice", async (req, res) => {
+casesRouter.get("/:caseId/areas-of-practice", verifyRole("volunteer"), async (req, res) => {
   try {
     const { caseId } = req.params;
 
@@ -161,7 +162,7 @@ casesRouter.get("/:caseId/areas-of-practice", async (req, res) => {
 
 // Case Languages Routes
 // Assign a language to a case
-casesRouter.post("/:caseId/languages", async (req, res) => {
+casesRouter.post("/:caseId/languages", verifyRole("staff"), async (req, res) => {
   try {
     const { caseId } = req.params;
     const { languageId, proficiency } = req.body;
@@ -178,7 +179,7 @@ casesRouter.post("/:caseId/languages", async (req, res) => {
 });
 
 // Delete a language from a case
-casesRouter.delete("/:caseId/languages/:languageId", async (req, res) => {
+casesRouter.delete("/:caseId/languages/:languageId", verifyRole("staff"), async (req, res) => {
   try {
     const { caseId, languageId } = req.params;
 
@@ -200,7 +201,7 @@ casesRouter.delete("/:caseId/languages/:languageId", async (req, res) => {
 });
 
 // Get all languages for a case
-casesRouter.get("/:caseId/languages", async (req, res) => {
+casesRouter.get("/:caseId/languages", verifyRole("volunteer"), async (req, res) => {
   try {
     const { caseId } = req.params;
 

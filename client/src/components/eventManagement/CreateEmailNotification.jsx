@@ -259,11 +259,10 @@ export const CreateEmailNotification = () => {
     >
       <HStack
         fontSize="lg"
-        gap={1}
+        gap={5}
         flexWrap="wrap"
       >
         <Text
-          fontWeight="semibold"
           color="gray.700"
           cursor="pointer"
           onClick={() => navigate("/events")}
@@ -274,7 +273,6 @@ export const CreateEmailNotification = () => {
         <Text
           color="black"
           cursor="pointer"
-          fontWeight="semibold"
           onClick={() => navigate(`/events/${eventId}`)}
         >
           View Event
@@ -282,7 +280,6 @@ export const CreateEmailNotification = () => {
         <Text color="gray.400">›</Text>
         <Text
           color="blue.500"
-          fontWeight="semibold"
         >
           {isEditing ? "Edit Email Notification" : "Create Email Notification"}
         </Text>
@@ -322,7 +319,7 @@ export const CreateEmailNotification = () => {
                 fontWeight="semibold"
                 color="gray.700"
               >
-                Timing
+                Time Before Event Start
               </Text>
               <Text
                 as="span"
@@ -483,12 +480,14 @@ export const CreateEmailNotification = () => {
             Cancel
           </Button>
           <Button
-            bg="#487C9E"
+            bg="#002992"
             color="white"
+            fontFamily="heading"
+            fontWeight={600}
             borderRadius="md"
             px={6}
             fontSize="sm"
-            _hover={selectedTemplate && !saving ? { bg: "#3a6685" } : {}}
+            _hover={selectedTemplate && !saving ? { bg: "#001E6C" } : {}}
             type="button"
             disabled={!selectedTemplate || saving}
             opacity={selectedTemplate && !saving ? 1 : 0.5}

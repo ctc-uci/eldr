@@ -1,26 +1,36 @@
+import { useEffect, useState } from "react";
+
 import {
   Box,
   Button,
   Flex,
   Heading,
   Input,
+  Link,
   Progress,
   Text,
 } from "@chakra-ui/react";
 
-import { useEffect, useState } from "react";
-
 import { LuArrowRight } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
-import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import LoginLayout from "./BackgroundLayout";
 
 type Props = {
   onComplete: () => Promise<void>;
   isSubmitting: boolean;
+  submitError?: string | null;
+  onDismissError: () => void;
 };
 
-const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
+const BackgroundStep = ({
+  onComplete,
+  isSubmitting,
+  submitError,
+  onDismissError,
+}: Props) => {
+  const navigate = useNavigate();
   const [gradYear, setGradYear] = useState("");
   const [gradError, setGradError] = useState(false);
   const [employer, setEmployer] = useState("");
@@ -34,6 +44,8 @@ const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
   }, []);
 
   const handleSubmit = async () => {
+    onDismissError();
+
     const isValidYear = /^\d{4}$/.test(gradYear);
 
     if (!isValidYear) {
@@ -132,6 +144,36 @@ const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
               </Progress.Track>
             </Progress.Root>
 
+            {submitError && (
+              <Box
+                w="100%"
+                border="1px solid"
+                borderColor="red.200"
+                bg="red.50"
+                p="10px"
+                borderRadius="8px"
+              >
+                <Text
+                  color="red.700"
+                  fontSize="14px"
+                >
+                  {submitError}
+                </Text>
+                <Link
+                  color="blue.600"
+                  textDecoration="underline"
+                  fontSize="14px"
+                  mt="8px"
+                  display="inline-block"
+                  onClick={() =>
+                    navigate("/login/volunteer", { replace: true })
+                  }
+                >
+                  Go to login
+                </Link>
+              </Box>
+            )}
+
             <Box>
               <Text
                 fontSize={{ base: "13px", md: "16px" }}
@@ -139,7 +181,14 @@ const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
                 mb="8px"
                 fontWeight="bold"
               >
-                Graduation Year <Box as="span" color="#991919"> *</Box>
+                Graduation Year{" "}
+                <Box
+                  as="span"
+                  color="#991919"
+                >
+                  {" "}
+                  *
+                </Box>
               </Text>
               <Input
                 placeholder="20XX"
@@ -169,7 +218,14 @@ const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
                 mb="8px"
                 fontWeight="bold"
               >
-                Employer <Box as="span" color="#991919"> *</Box>
+                Employer{" "}
+                <Box
+                  as="span"
+                  color="#991919"
+                >
+                  {" "}
+                  *
+                </Box>
               </Text>
               <Input
                 placeholder="Enter your company name"
@@ -217,23 +273,27 @@ const BackgroundStep = ({ onComplete, isSubmitting }: Props) => {
               onClick={handleSubmit}
               loading={isSubmitting}
             >
-              <Box w="100%" textAlign="center">
+              <Box
+                w="100%"
+                textAlign="center"
+              >
                 Create Account
               </Box>
-              <Box position="absolute" right="12px">
+              <Box
+                position="absolute"
+                right="12px"
+              >
                 <LuArrowRight size={16} />
               </Box>
             </Button>
-
           </Flex>
         </Flex>
-
         <Box
-          w="100%"
-          h="70px"
-          bg="#F6F6F6"
-          flexShrink={0}
-        />
+        w="100%"
+        h="70px"
+        bg="#F6F6F6"
+        flexShrink={0}
+      />
       </Flex>
     </LoginLayout>
   );

@@ -49,6 +49,13 @@ const buildClinicTemplateVariables = (clinic, recipient = {}) => {
     typeof recipient.name === "string" && recipient.name.trim() !== ""
       ? recipient.name.trim()
       : null;
+  const recipientEmail =
+    typeof recipient.email === "string" && recipient.email.trim() !== ""
+      ? recipient.email.trim()
+      : null;
+
+  const nameVal = recipientName ? escapeHtml(recipientName) : "";
+  const emailVal = recipientEmail ? escapeHtml(recipientEmail) : "";
 
   const vars = {
     "clinic name": escapeHtml(clinic?.name),
@@ -58,7 +65,10 @@ const buildClinicTemplateVariables = (clinic, recipient = {}) => {
     location: escapeHtml(buildLocation(clinic) || "TBD"),
     parking: escapeHtml(clinic?.parking),
     "meeting link": escapeHtml(clinic?.meeting_link),
-    name: recipientName ? escapeHtml(recipientName) : "",
+    name: nameVal,
+    "volunteer name": nameVal,
+    email: emailVal,
+    "volunteer email": emailVal,
   };
 
   return vars;

@@ -24,20 +24,34 @@ export const TopBar = ({
   selectedFilters,
   setSelectedFilters,
   filteredCount,
+  onApplyFilters,
   events,
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState([]);
 
   const hasAppliedFilters = useMemo(() => {
-    if (!selectedFilters) return false;
-    return Object.values(selectedFilters).some((value) => {
-      if (Array.isArray(value)) return value.length > 0;
-      return value !== null && value !== undefined && value !== "";
-    });
-  }, [selectedFilters]);
+    return appliedFilters.length > 0;
+  }, [appliedFilters]);
 
   const showSearch = !isMobile || !showDetails;
+
+  // Snapshots selected filters into appliedFilters and triggers the fetch.
+  // Takes the filters explicitly rather than only reading the `selectedFilters`
+  // prop, since a caller may have just queued a setSelectedFilters update in
+  // the same tick (that prop wouldn't reflect it yet on this render).
+  const handleApply = (filtersToApply = selectedFilters) => {
+    setAppliedFilters(filtersToApply);
+    onApplyFilters();
+  };
+
+  // Removes a chip, updates both states, and immediately re-fetches
+  const handleRemoveFilter = (updatedFilters) => {
+    setSelectedFilters(updatedFilters);
+    setAppliedFilters(updatedFilters);
+    onApplyFilters();
+  };
 
   return (
     <Flex
@@ -127,18 +141,18 @@ export const TopBar = ({
           {isMobile ? (
             <IconButton
               aria-label="Filter"
-              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
-              color={hasAppliedFilters ? "#173DA6" : "black"}
+              backgroundColor={hasAppliedFilters ? "#E8F6FC" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#002992" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+                hasAppliedFilters ? "1px solid #15A9EA" : "1px solid #E4E4E7"
               }
               size="md"
               w="44px"
               h="44px"
               flexShrink={0}
               _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+                backgroundColor: hasAppliedFilters ? "#B8E5F7" : "#E4E4E7",
               }}
               onClick={() => setFilterOpen(true)}
             >
@@ -146,11 +160,11 @@ export const TopBar = ({
             </IconButton>
           ) : (
             <Button
-              backgroundColor={hasAppliedFilters ? "#DBEAFE" : "#F4F4F5"}
-              color={hasAppliedFilters ? "#173DA6" : "black"}
+              backgroundColor={hasAppliedFilters ? "#E8F6FC" : "#F4F4F5"}
+              color={hasAppliedFilters ? "#002992" : "black"}
               borderRadius="8px"
               border={
-                hasAppliedFilters ? "1px solid #BFDBFE" : "1px solid #E4E4E7"
+                hasAppliedFilters ? "1px solid #15A9EA" : "1px solid #E4E4E7"
               }
               px="16px"
               h="40px"
@@ -158,7 +172,7 @@ export const TopBar = ({
               fontWeight={500}
               flexShrink={0}
               _hover={{
-                backgroundColor: hasAppliedFilters ? "#BFDBFE" : "#E4E4E7",
+                backgroundColor: hasAppliedFilters ? "#B8E5F7" : "#E4E4E7",
               }}
               onClick={() => setFilterOpen(true)}
             >
@@ -173,6 +187,8 @@ export const TopBar = ({
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
             filteredCount={filteredCount}
+            onApplyFilters={handleApply}
+            appliedFilters={appliedFilters}
           />
 
           <SearchBar
@@ -184,11 +200,11 @@ export const TopBar = ({
         </Flex>
       )}
 
-      {/* Applied filter chips row - returns null when no filters active */}
+      {/* Applied filter chips row - renders based on committed filters only */}
       {showSearch && (
         <AppliedFilters
-          selectedFilters={selectedFilters}
-          setSelectedFilters={setSelectedFilters}
+          selectedFilters={appliedFilters}
+          setSelectedFilters={handleRemoveFilter}
         />
       )}
     </Flex>

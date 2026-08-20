@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Box, Button, Checkbox, Drawer, Flex, Icon, Text } from "@chakra-ui/react";
-import { FiX, FiChevronUp, FiChevronDown, FiSliders } from "react-icons/fi";
+import { FiX, FiChevronUp, FiChevronDown } from "react-icons/fi";
+import { MdFilterList } from "react-icons/md";
+
+import { Volunteer } from "@/types/volunteer";
 
 // TODO Need to change data to more applicable to app
 const ROLES = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
@@ -17,9 +20,22 @@ export interface FilterState {
 interface FilterDrawerProps {
   open: boolean;
   onClose: () => void;
-  totalCount: number;
+  volunteers: Volunteer[];
   onApply?: (filters: FilterState) => void;
 }
+
+const computeCount = (
+  volunteers: Volunteer[],
+  roles: Set<string>,
+  interests: Set<string>,
+  languages: Set<string>
+) =>
+  volunteers.filter((v) => {
+    if (roles.size > 0 && !v.roles?.some((r) => roles.has(r))) return false;
+    if (interests.size > 0 && !v.areasOfPractice?.some((a) => interests.has(a))) return false;
+    if (languages.size > 0 && !v.languages?.some((l) => languages.has(l))) return false;
+    return true;
+  }).length;
 
 interface FilterSectionProps {
   label: string;
@@ -74,7 +90,7 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
   );
 };
 
-export const FilterDrawer = ({ open, onClose, totalCount, onApply }: FilterDrawerProps) => {
+export const FilterDrawer = ({ open, onClose, volunteers, onApply }: FilterDrawerProps) => {
   const [checkedRoles, setCheckedRoles] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
   const [checkedLanguages, setCheckedLanguages] = useState<Set<string>>(new Set());
@@ -92,6 +108,8 @@ export const FilterDrawer = ({ open, onClose, totalCount, onApply }: FilterDrawe
     ...checkedInterests,
     ...checkedLanguages,
   ];
+
+  const resultCount = computeCount(volunteers, checkedRoles, checkedInterests, checkedLanguages);
 
   const removeFilter = (f: string) => {
     if (checkedRoles.has(f)) toggle(setCheckedRoles)(f);
@@ -164,17 +182,18 @@ export const FilterDrawer = ({ open, onClose, totalCount, onApply }: FilterDrawe
                 Clear
               </Button>
               <Button
-                bg="#52525B"
+                bg={allSelected.length > 0 ? "#002992" : "#A1A1AA"}
                 color="white"
-                _hover={{ bg: "#3F3F46" }}
+                fontFamily="heading"
+                _hover={{ bg: allSelected.length > 0 ? "#001E6C" : "#71717A" }}
                 gap={2}
                 onClick={() => {
                   onApply?.({ roles: checkedRoles, interests: checkedInterests, languages: checkedLanguages });
                   onClose();
                 }}
               >
-                <FiSliders />
-                See Results
+                <MdFilterList />
+                {allSelected.length > 0 ? `See ${resultCount} Results` : "See Results"}
               </Button>
             </Flex>
           </Drawer.Footer>

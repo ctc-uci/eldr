@@ -1,18 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Box, Flex, Heading, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Box, Heading, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
+import { LuActivity, LuSlidersHorizontal, LuUser } from "react-icons/lu";
 
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
-import { AccountManagement } from "./AccountManagement";
+import {
+  uploadProfilePictureToS3,
+  validateProfilePictureFile,
+} from "@/utils/uploadProfilePicture";
+
+import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
 import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
-import { Sidebar } from "./Sidebar";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
-const VALID_SECTIONS = new Set(["information", "activity", "settings"]);
+const PROFILE_TABS = [
+  { value: "information", label: "Profile Information", icon: LuUser },
+  { value: "activity", label: "Activity", icon: LuActivity },
+  { value: "preferences", label: "Preferences", icon: LuSlidersHorizontal  },
+];
+
+const VALID_SECTIONS = new Set(["information", "activity", "preferences"]);
 const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Proficient";
 const toDisplayProficiency = (value) => {
   const normalized = normalizeText(value);
@@ -56,13 +67,25 @@ export const ProfileManagement = () => {
   const [savedLanguageIds, setSavedLanguageIds] = useState([]);
   const [savedAreaIds, setSavedAreaIds] = useState([]);
   const [showUpdatedBadge, setShowUpdatedBadge] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState(null);
+  const [photoError, setPhotoError] = useState("");
+  const photoPreviewUrlRef = useRef(null);
   const section = VALID_SECTIONS.has(tab) ? tab : "information";
+
+  const revokePhotoPreview = useCallback(() => {
+    if (photoPreviewUrlRef.current) {
+      URL.revokeObjectURL(photoPreviewUrlRef.current);
+      photoPreviewUrlRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!tab || !VALID_SECTIONS.has(tab)) {
       navigate("/volunteer-profile/information", { replace: true });
     }
   }, [tab, navigate]);
+
+  useEffect(() => () => revokePhotoPreview(), [revokePhotoPreview]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -118,7 +141,8 @@ export const ProfileManagement = () => {
           lastName: volunteer.lastName ?? "",
           phone: volunteer.phoneNumber ?? "",
           email: volunteer.email ?? userRow.email ?? "",
-          photoUrl: prev.photoUrl,
+          photoUrl: userRow.profilePictureUrl ?? "",
+          listedExperience: volunteer.listedExperience ?? "",
           notary: volunteer.isNotary ? "Active" : "Inactive",
           occupation: "Volunteer",
           lawSchoolYear: "N/A",
@@ -148,15 +172,39 @@ export const ProfileManagement = () => {
   }, [backend, volunteerId]);
 
   const cancelEdit = useCallback(() => {
+    revokePhotoPreview();
+    setPendingPhotoFile(null);
+    setPhotoError("");
     setDraft(null);
     setIsEditing(false);
-  }, []);
+  }, [revokePhotoPreview]);
 
   const startEdit = useCallback(() => {
+    revokePhotoPreview();
+    setPendingPhotoFile(null);
     setDraft({ ...profile });
     setIsEditing(true);
     setShowUpdatedBadge(false);
-  }, [profile]);
+    setPhotoError("");
+  }, [profile, revokePhotoPreview]);
+
+  const handlePhotoSelect = useCallback(
+    (file) => {
+      const validationError = validateProfilePictureFile(file);
+      if (validationError) {
+        setPhotoError(validationError);
+        return;
+      }
+
+      setPhotoError("");
+      revokePhotoPreview();
+      const previewUrl = URL.createObjectURL(file);
+      photoPreviewUrlRef.current = previewUrl;
+      setPendingPhotoFile(file);
+      setDraft((prev) => (prev ? { ...prev, photoUrl: previewUrl } : prev));
+    },
+    [revokePhotoPreview],
+  );
 
   const saveEdit = useCallback(async () => {
     if (!draft || !volunteerId || !currentUser?.uid) return;
@@ -178,12 +226,31 @@ export const ProfileManagement = () => {
         email: draft.email,
         phone_number: draft.phone,
         is_notary: draft.notary === "Active",
+        listed_experience: draft.listedExperience?.trim() ? draft.listedExperience.trim() : null,
       });
 
-      await backend.put("/users/update", {
-        email: draft.email,
-        firebaseUid: currentUser.uid,
-      });
+      let savedPhotoUrl = profile.photoUrl;
+      if (pendingPhotoFile) {
+        const profilePictureKey = await uploadProfilePictureToS3(
+          backend,
+          pendingPhotoFile,
+          currentUser.uid,
+        );
+
+        const updateResp = await backend.put("/users/update", {
+          email: draft.email,
+          firebaseUid: currentUser.uid,
+          profilePictureKey,
+        });
+
+        const updatedUser = updateResp?.data?.[0];
+        savedPhotoUrl = updatedUser?.profilePictureUrl ?? profile.photoUrl;
+      } else {
+        await backend.put("/users/update", {
+          email: draft.email,
+          firebaseUid: currentUser.uid,
+        });
+      }
 
       const uniqueLanguageRows = [];
       const seenLanguageNames = new Set();
@@ -272,8 +339,11 @@ export const ProfileManagement = () => {
       const normalizedLanguages =
         uniqueLanguageRows.length > 0 ? uniqueLanguageRows : [];
 
+      revokePhotoPreview();
+      setPendingPhotoFile(null);
       setProfile({
         ...draft,
+        photoUrl: savedPhotoUrl,
         occupation: "Volunteer",
         lawSchoolYear: "N/A",
         stateBarState: "N/A",
@@ -300,6 +370,9 @@ export const ProfileManagement = () => {
     currentUser?.uid,
     draft,
     languageCatalog,
+    pendingPhotoFile,
+    profile.photoUrl,
+    revokePhotoPreview,
     savedAreaIds,
     savedLanguageIds,
     volunteerId,
@@ -319,74 +392,130 @@ export const ProfileManagement = () => {
 
   return (
     <Box flex="1" minH="100vh" bg="white">
-      <Box px={{ base: 4, md: 10 }} py={{ base: 8, md: 12 }} maxW="1320px" mx="auto">
+      <Box px={{ base: 4, md: 10 }} py={{ base: 8, md: 12 }} maxW="960px" mx="auto" w="100%">
         <Heading
           as="h1"
           fontSize={{ base: "22px", md: "26px" }}
           fontWeight="700"
           color="#111111"
-          mb={{ base: 6, md: 8 }}
+          mb={{ base: 5, md: 6 }}
         >
           Account Management
         </Heading>
 
-        <Flex
-          gap={{ base: 6, md: 12 }}
-          align="flex-start"
-          direction={{ base: "column", md: "row" }}
+        <Tabs.Root
+          value={section}
+          onValueChange={(e) => handleSectionChange(e.value)}
+          variant="plain"
         >
-          <Sidebar activeId={section} onSelect={handleSectionChange} />
-
-          <Box
-            flex="1"
-            minW={0}
-            w="100%"
-            bg="#F7F7F7"
-            p={{ base: 4, md: 8 }}
-            borderRadius="2px"
+          <Tabs.List
+            borderBottom="1px solid"
+            borderColor="gray.200"
+            gap={0}
+            mb={0}
+            flexWrap="wrap"
           >
-            {section === "information" ? (
-              <>
-                {isLoadingProfile ? (
-                  <VStack py={16} gap={3}>
-                    <Spinner color="blue.500" />
-                    <Text color="gray.600" fontSize="sm">
-                      Loading profile...
-                    </Text>
-                  </VStack>
-                ) : (
-                  <ProfileInformation
-                    data={display}
-                    setData={isEditing ? setDraft : undefined}
-                    isEditing={isEditing}
-                    showUpdatedBadge={showUpdatedBadge}
-                    onEdit={startEdit}
-                    onSave={saveEdit}
-                    onCancel={cancelEdit}
-                    isSaving={isSavingProfile}
-                    errorMessage={loadError}
-                    languageOptions={Array.from(
-                      new Set([
-                        ...languageCatalog.map((row) => row.language),
-                        ...display.languages.map((row) => row.language),
-                      ]),
-                    )}
-                    areaOptions={Array.from(
-                      new Set([
-                        ...areaCatalog.map((row) => row.areasOfPractice),
-                        ...display.interests,
-                      ]),
-                    )}
-                  />
+            {PROFILE_TABS.map(({ value, label, icon: Icon }) => {
+              const isActive = section === value;
+              return (
+                <Tabs.Trigger
+                  key={value}
+                  value={value}
+                  gap={2}
+                  px={4}
+                  py={2}
+                  fontSize="13px"
+                  fontWeight={400}
+                  color="gray.600"
+                  bg={isActive ? "white" : "transparent"}
+                  borderTop={isActive ? "1px solid" : "none"}
+                  borderLeft={isActive ? "1px solid" : "none"}
+                  borderRight={isActive ? "1px solid" : "none"}
+                  borderBottom={isActive ? "1px solid white" : "none"}
+                  borderColor={isActive ? "gray.200" : "transparent"}
+                  borderTopRadius="6px"
+                  borderBottomRadius={0}
+                  mb="-1px"
+                  position="relative"
+                  zIndex={isActive ? 1 : 0}
+                  _hover={{ bg: isActive ? "white" : "gray.50" }}
+                  _selected={{
+                    bg: "white",
+                    color: "gray.600",
+                    fontWeight: 400,
+                    borderTop: "1px solid",
+                    borderLeft: "1px solid",
+                    borderRight: "1px solid",
+                    borderBottom: "1px solid white",
+                    borderColor: "gray.200",
+                    borderBottomColor: "white",
+                    boxShadow: "none",
+                  }}
+                >
+                  <Icon size={16} />
+                  <Text as="span" fontSize="13px" fontWeight={400}>
+                    {label}
+                  </Text>
+                </Tabs.Trigger>
+              );
+            })}
+          </Tabs.List>
+
+          <Tabs.Content value="information" p={0}>
+            {isLoadingProfile ? (
+              <VStack py={16} gap={3}>
+                <Spinner color="blue.500" />
+                <Text color="gray.600" fontSize="sm">
+                  Loading profile...
+                </Text>
+              </VStack>
+            ) : (
+              <ProfileInformation
+                data={display}
+                setData={isEditing ? setDraft : undefined}
+                isEditing={isEditing}
+                showUpdatedBadge={showUpdatedBadge}
+                onEdit={startEdit}
+                onSave={saveEdit}
+                onCancel={cancelEdit}
+                onPhotoSelect={handlePhotoSelect}
+                isSaving={isSavingProfile}
+                photoError={photoError}
+                errorMessage={loadError}
+                languageOptions={Array.from(
+                  new Set([
+                    ...languageCatalog.map((row) => row.language),
+                    ...display.languages.map((row) => row.language),
+                  ]),
                 )}
-              </>
-            ) : null}
+                areaOptions={Array.from(
+                  new Set([
+                    ...areaCatalog.map((row) => row.areasOfPractice),
+                    ...display.interests,
+                  ]),
+                )}
+              />
+            )}
+          </Tabs.Content>
 
-            {section === "activity" ? <VolunteerActivity volunteerId={volunteerId} /> : null}
+          <Tabs.Content value="activity" p={0}>
+            <VolunteerActivity volunteerId={volunteerId} />
+          </Tabs.Content>
 
-            {section === "settings" ? <AccountManagement /> : null}
-          </Box>
-        </Flex>
+          <Tabs.Content value="preferences" p={0}>
+            <Preferences
+              volunteerId={volunteerId}
+              interests={profile.interests}
+              savedAreaIds={savedAreaIds}
+              areaCatalog={areaCatalog}
+              onInterestsUpdated={({ interests, savedAreaIds: nextSavedAreaIds, areaCatalog: nextAreaCatalog }) => {
+                setProfile((prev) => ({ ...prev, interests }));
+                setSavedAreaIds(nextSavedAreaIds);
+                if (nextAreaCatalog) setAreaCatalog(nextAreaCatalog);
+              }}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
       </Box>
     </Box>
   );

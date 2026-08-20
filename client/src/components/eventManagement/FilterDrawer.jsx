@@ -183,9 +183,10 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
                 Clear
               </Button>
               <Button
-                bg={allSelected.length > 0 ? "#487C9E" : "#A1A1AA"}
+                bg={allSelected.length > 0 ? "#002992" : "#A1A1AA"}
                 color="white"
-                _hover={{ bg: allSelected.length > 0 ? "#294A5F" : "#71717A" }}
+                fontFamily="heading"
+                _hover={{ bg: allSelected.length > 0 ? "#001E6C" : "#71717A" }}
                 gap={2}
                 onClick={handleApply}
               >

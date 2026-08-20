@@ -31,6 +31,9 @@ export const EventCatalog = () => {
   const { backend } = useBackendContext();
   const { currentUser } = useAuthContext();
 
+  const [applyToken, setApplyToken] = useState(0);
+  const [filteredCount, setFilteredCount] = useState(0);
+
   const { view: catalogView, eventId: parsedEventId } = parseEventCatalogPath(
     location.pathname
   );
@@ -95,6 +98,34 @@ export const EventCatalog = () => {
     );
   };
 
+  // Helper: build filter query params from selectedFilters
+  const buildFilterParams = (filters) => {
+    const areaIds = [];
+    const langIds = [];
+    const roleIds = [];
+    const locs = [];
+
+    filters.forEach((filter) => {
+      if (filter.id.startsWith("areasOfPracticeId")) {
+        areaIds.push(filter.id.replace("areasOfPracticeId", ""));
+      } else if (filter.id.startsWith("languageId")) {
+        langIds.push(filter.id.replace("languageId", ""));
+      } else if (filter.id.startsWith("roleId")) {
+        roleIds.push(filter.id.replace("roleId", ""));
+      } else {
+        locs.push(filter.id);
+      }
+    });
+
+    const params = new URLSearchParams();
+    if (areaIds.length > 0) params.set("areaOfPracticeIds", areaIds.join(","));
+    if (langIds.length > 0) params.set("languageIds", langIds.join(","));
+    if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
+    if (locs.length > 0) params.set("locations", locs.join(","));
+
+    return params;
+  };
+
   // Initial fetch - get volunteer ID and all events
   useEffect(() => {
     const fetchFullEventData = async () => {
@@ -113,6 +144,94 @@ export const EventCatalog = () => {
 
     fetchFullEventData();
   }, [backend, currentUser?.uid]);
+
+  // Update the count preview whenever filters change (no button press needed)
+  useEffect(() => {
+    const fetchFilteredCount = async () => {
+      if (!volunteerId) {
+        setFilteredCount(0);
+        return;
+      }
+
+      try {
+        const now = new Date();
+        let data;
+
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          data = res.data;
+        } else {
+          const res = await backend.get("/clinics");
+          data = res.data;
+        }
+
+        let candidates = data.filter((e) => {
+          if (catalogView === "catalog") {
+            if (!e.endTime) return true;
+            return new Date(e.endTime) > now;
+          }
+          return true;
+        });
+
+        // "My Events" only shows events the volunteer is registered for —
+        // mirror that here so the preview count matches what Apply will show.
+        if (catalogView === "my") {
+          const registered = await Promise.all(
+            candidates.map((e) =>
+              backend
+                .get(`/clinics/${e.id}/registrations`)
+                .then((regRes) =>
+                  regRes.data.some((reg) => reg.id === volunteerId)
+                )
+            )
+          );
+          candidates = candidates.filter((_, i) => registered[i]);
+        }
+
+        setFilteredCount(candidates.length);
+      } catch (error) {
+        console.error("Failed to fetch filtered event count:", error);
+        setFilteredCount(0);
+      }
+    };
+
+    fetchFilteredCount();
+  }, [selectedFilters, volunteerId, catalogView]);
+
+  // Fetch and apply filtered events only when the apply button is pressed.
+  // `applyToken` is a counter rather than a boolean so that two applies
+  // requested back-to-back (before the first fetch resolves) each still
+  // produce a distinct value and reliably re-trigger this effect.
+  useEffect(() => {
+    if (applyToken === 0 || !volunteerId) return;
+
+    let cancelled = false;
+
+    const fetchFilteredEvents = async () => {
+      try {
+        let enrichedEvents;
+        if (selectedFilters.length > 0) {
+          const params = buildFilterParams(selectedFilters);
+          const res = await backend.get(`/clinics/search?${params.toString()}`);
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
+        } else {
+          const res = await backend.get("/clinics");
+          enrichedEvents = await enrichEvents(res.data, volunteerId);
+        }
+        // Ignore results from a stale apply that resolved after a newer one.
+        if (!cancelled) setEvents(enrichedEvents);
+      } catch (error) {
+        console.error("Failed to fetch filtered events:", error);
+      }
+    };
+
+    fetchFilteredEvents();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyToken, volunteerId]);
 
   // Events filtered by tab/time but NOT search, used for suggestions
   const tabEvents = useMemo(() => {
@@ -208,65 +327,6 @@ export const EventCatalog = () => {
     }
   };
 
-  // fetch filtered events when filters change
-  useEffect(() => {
-    const fetchFilteredEvents = async () => {
-      if (!volunteerId) return;
-
-      try {
-        // group filter IDs by category for making API query params
-        const areaIds = [];
-        const langIds = [];
-        const roleIds = [];
-        const locs = [];
-
-        selectedFilters.forEach((filter) => {
-          if (filter.id.startsWith("areasOfPracticeId")) {
-            areaIds.push(filter.id.replace("areasOfPracticeId", ""));
-          } else if (filter.id.startsWith("languageId")) {
-            langIds.push(filter.id.replace("languageId", ""));
-          } else if (filter.id.startsWith("roleId")) {
-            roleIds.push(filter.id.replace("roleId", ""));
-          } else {
-            locs.push(filter.id);
-          }
-        });
-
-        // build query params with comma-separated values
-        const params = new URLSearchParams();
-        if (areaIds.length > 0)
-          params.set("areaOfPracticeIds", areaIds.join(","));
-        if (langIds.length > 0) params.set("languageIds", langIds.join(","));
-        if (roleIds.length > 0) params.set("roleIds", roleIds.join(","));
-        if (locs.length > 0) params.set("locations", locs.join(","));
-
-        const res = await backend.get(`/clinics/search?${params.toString()}`);
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
-      } catch (error) {
-        console.error("Failed to fetch filtered events:", error);
-      }
-    };
-
-    const fetchAllEvents = async () => {
-      if (!volunteerId) return;
-
-      try {
-        const res = await backend.get("/clinics");
-        const enrichedEvents = await enrichEvents(res.data, volunteerId);
-        setEvents(enrichedEvents);
-      } catch (error) {
-        console.error("Failed to fetch all events:", error);
-      }
-    };
-
-    if (selectedFilters.length > 0) {
-      fetchFilteredEvents();
-    } else if (volunteerId) {
-      fetchAllEvents();
-    }
-  }, [selectedFilters, volunteerId, backend]);
-
   const [registrationPending, setRegistrationPending] = useState(null);
 
   const handleRegister = async (clinicId) => {
@@ -335,7 +395,8 @@ export const EventCatalog = () => {
             setSearchQuery={setSearchQuery}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
-            filteredCount={filteredEvents.length}
+            filteredCount={filteredCount}
+            onApplyFilters={() => setApplyToken((t) => t + 1)}
             events={tabEvents}
           />
 
@@ -368,6 +429,7 @@ export const EventCatalog = () => {
           direction="column"
           overflow="hidden"
           align="start"
+          bg="white"
           px={{ base: "12px", md: "none" }}
         >
           {/* Back Button */}

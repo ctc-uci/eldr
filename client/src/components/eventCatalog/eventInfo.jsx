@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Badge,
@@ -30,6 +30,8 @@ import { LuCalendarDays } from "react-icons/lu";
 import { formatLocationTypeTag, getClinicLocationDisplay } from "./clinicLocationFormat";
 import RegStatus from "./regStatus";
 
+import { useNavigate } from "react-router-dom";
+
 export const EventInfo = ({
   event,
   activeTab,
@@ -40,6 +42,8 @@ export const EventInfo = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [showCopyMessage, setShowCopyMessage] = useState(false);
+  const [scrollState, setScrollState] = useState({ top: true, bottom: false });
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     if (showCopyMessage) {
@@ -49,6 +53,28 @@ export const EventInfo = ({
       return () => clearTimeout(timer);
     }
   }, [showCopyMessage]);
+
+  // Re-check scroll state whenever event changes
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    checkScroll(el);
+  }, [event]);
+
+  const checkScroll = (el) => {
+    const atTop = el.scrollTop <= 4;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 4;
+    setScrollState({ top: atTop, bottom: atBottom });
+  };
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkScroll(el);
+  };
+
+  const navigate = useNavigate();
 
   const handleRegistration = () => {
     if (event.isRegistered) {
@@ -108,8 +134,13 @@ export const EventInfo = ({
               Browse to find an offering that fits your schedule!
             </Text>
             <Button
-              bg="#487C9E"
+              bg="#002992"
+              color="white"
+              fontFamily="heading"
+              fontWeight={600}
+              _hover={{ bg: "#001E6C" }}
               p={6}
+              onClick={() => navigate("/event-catalog/all-events")}
             >
               <LuCalendarDays />
               View All Events
@@ -120,7 +151,6 @@ export const EventInfo = ({
     );
   }
 
-  // Determine if this is a past event using the same logic as MyEventsList
   const getEventEndDateTime = () => {
     const dateObj = event.date ? new Date(event.date) : null;
     if (dateObj && event.endTime) {
@@ -178,199 +208,237 @@ export const EventInfo = ({
   return (
     <Flex
       direction="column"
-      py={{ base: 7, md: "50px" }}
-      px={{ base: 4, md: 8 }}
       w="full"
       h="full"
-      justify="space-between"
-      flex="1"
       overflow="hidden"
+      position="relative"
     >
-      <HStack
-        justify="space-between"
-        mb="20px"
+      <Box
+        ref={scrollRef}
+        onScroll={handleScroll}
+        overflowY="auto"
+        flex="1"
+        scrollbar="hidden"
+        py={{ base: 7, md: "50px" }}
+        px={{ base: 4, md: 8 }}
+        bg = "white"
       >
-        <Text
-          flexShrink={0}
-          fontSize="26px"
-          fontWeight="bold"
-          lineHeight="44px"
-          letterSpacing="-2.5%"
-          color="#000000"
+        {/* Title + share button */}
+        <HStack
+          justify="space-between"
+          align="flex-start"
+          mb="20px"
+          gap={3}
+          minW={0}
         >
-          {event.name}
-        </Text>
-
-        {activeTab === "catalog" && (
-          <Box position="relative">
-            <Box
-              position="absolute"
-              bottom="100%"
-              right={0}
-              mb={2}
-              bg="#487C9E"
-              color="white"
-              rounded="md"
-              fontWeight={500}
-              fontSize="xs"
-              px={2}
-              py={0.5}
-              whiteSpace="nowrap"
-              zIndex={10}
-              transition="all 0.2s ease-out"
-              opacity={showCopyMessage ? 1 : 0}
-              transform={showCopyMessage ? "translateY(0)" : "translateY(5px)"}
-              pointerEvents="none"
-            >
-              Link copied!
-            </Box>
-
-            <IconButton
-              variant="outline"
-              colorPalette="gray"
-              onClick={handleShare}
-            >
-              <Share />
-            </IconButton>
-          </Box>
-        )}
-      </HStack>
-
-      {/* Event metadata */}
-      <VStack
-        flexShrink={0}
-        align="flex-start"
-        gap="12px"
-        w="full"
-        fontSize="14px"
-        px="4px"
-      >
-        <Text
-          display="flex"
-          alignItems="center"
-          gap="18px"
-        >
-          <CalendarDays />
-          {event.displayDate}
-        </Text>
-        <Separator
-          w="full"
-          size="xs"
-        />
-        <Text
-          display="flex"
-          alignItems="center"
-          gap="18px"
-        >
-          <CalendarClock /> {event.displayTime}
-        </Text>
-        <Separator
-          w="full"
-          size="xs"
-        />
-        <Flex
-          alignItems="flex-start"
-          gap="18px"
-        >
-          <Box
-            flexShrink={0}
-            mt="2px"
-          >
-            <MapPin />
-          </Box>
-          <VStack
-            align="flex-start"
-            gap="4px"
+          <Text
+            fontSize={{ base: "20px", md: "26px" }}
+            fontWeight="bold"
+            lineHeight={{ base: "28px", md: "44px" }}
+            letterSpacing="-2.5%"
+            color="#000000"
+            wordBreak="break-word"
+            minW={0}
             flex="1"
           >
-            <Text lineHeight="1.4">{localityLine}</Text>
-            {showMeetingLink ? (
-              <Text
-                as="a"
-                href={meetingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                color="#2563EB"
-                fontSize="13px"
+            {event.name}
+          </Text>
+
+          {activeTab === "catalog" && (
+            <Box position="relative" flexShrink={0}>
+              <Box
+                position="absolute"
+                bottom="100%"
+                right={0}
+                mb={2}
+                bg="#002992"
+                color="white"
+                rounded="md"
                 fontWeight={500}
-                textDecoration="underline"
+                fontSize="xs"
+                px={2}
+                py={0.5}
+                whiteSpace="nowrap"
+                zIndex={10}
+                transition="all 0.2s ease-out"
+                opacity={showCopyMessage ? 1 : 0}
+                transform={showCopyMessage ? "translateY(0)" : "translateY(5px)"}
+                pointerEvents="none"
               >
-                Meeting link
-              </Text>
-            ) : null}
-          </VStack>
-        </Flex>
-        <Separator
+                Link copied!
+              </Box>
+
+              <IconButton
+                variant="outline"
+                colorPalette="gray"
+                onClick={handleShare}
+              >
+                <Share />
+              </IconButton>
+            </Box>
+          )}
+        </HStack>
+
+        {/* Event metadata */}
+        <VStack
+          flexShrink={0}
+          align="flex-start"
+          gap="12px"
           w="full"
-          size="xs"
-        />
-        <Text
-          display="flex"
-          alignItems="center"
-          gap="18px"
+          fontSize="14px"
+          px="4px"
         >
-          <Users /> {event.attendees}/{event.capacity} spots filled
-        </Text>
-      </VStack>
-
-      {/* Event tags */}
-      <HStack
-        flexShrink={0}
-        flexWrap="wrap"
-        my={6}
-        fontSize="12px"
-        fontWeight={500}
-        gap="10px"
-      >
-        {activeTab === "my" && (
-          <RegStatus
-            statusColor={statusColor}
-            statusLabel={statusLabel}
-          />
-        )}
-        {[
-          event.type,
-          ...event.tags,
-          locationTypeTag,
-          ...event.languages,
-        ]
-          .filter(Boolean)
-          .map((item, i) => (
-          <Badge
-            key={i}
-            variant="solid"
-            border="1px solid #E4E4E7"
-            color="#27272A"
-            bg="#F4F4F5"
-            px="10px"
-            py="4px"
+          <Text
+            display="flex"
+            alignItems="center"
+            gap="18px"
+            wordBreak="break-word"
+            minW={0}
+            w="full"
           >
-            {item}
-          </Badge>
-        ))}
-      </HStack>
+            <Box flexShrink={0}><CalendarDays /></Box>
+            {event.displayDate}
+          </Text>
+          <Separator w="full" size="xs" />
+          <Text
+            display="flex"
+            alignItems="center"
+            gap="18px"
+            wordBreak="break-word"
+            minW={0}
+            w="full"
+          >
+            <Box flexShrink={0}><CalendarClock /></Box>
+            {event.displayTime}
+          </Text>
+          <Separator w="full" size="xs" />
+          <Flex
+            alignItems="flex-start"
+            gap="18px"
+            w="full"
+            minW={0}
+          >
+            <Box flexShrink={0} mt="2px">
+              <MapPin />
+            </Box>
+            <VStack align="flex-start" gap="4px" flex="1" minW={0}>
+              <Text lineHeight="1.4" wordBreak="break-word">{localityLine}</Text>
+              {showMeetingLink ? (
+                <Text
+                  as="a"
+                  href={meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  color="#2563EB"
+                  fontSize="13px"
+                  fontWeight={500}
+                  textDecoration="underline"
+                  wordBreak="break-all"
+                >
+                  Meeting link
+                </Text>
+              ) : null}
+            </VStack>
+          </Flex>
+          <Separator w="full" size="xs" />
+          <Text
+            display="flex"
+            alignItems="center"
+            gap="18px"
+            wordBreak="break-word"
+            minW={0}
+            w="full"
+          >
+            <Box flexShrink={0}><Users /></Box>
+            {event.attendees}/{event.capacity} spots filled
+          </Text>
+        </VStack>
 
-      {/* Event description */}
-      <Box
-        w="full"
-        overflowY="auto"
-        scrollbar="hidden"
-        flex="1"
-        minH={0}
-      >
-        <Text whiteSpace="pre-line">{event.description}</Text>
+        {/* Event tags */}
+        <HStack
+          flexShrink={0}
+          flexWrap="wrap"
+          my={6}
+          fontSize="12px"
+          fontWeight={500}
+          gap="10px"
+        >
+          {activeTab === "my" && (
+            <RegStatus
+              statusColor={statusColor}
+              statusLabel={statusLabel}
+            />
+          )}
+          {[
+            event.type,
+            ...event.tags,
+            locationTypeTag,
+            ...event.languages,
+          ]
+            .filter(Boolean)
+            .map((item, i) => (
+            <Badge
+              key={i}
+              variant="solid"
+              border="1px solid #E4E4E7"
+              color="#27272A"
+              bg="#F4F4F5"
+              px="10px"
+              py="4px"
+            >
+              {item}
+            </Badge>
+          ))}
+        </HStack>
+
+        {/* Event description */}
+        <Text whiteSpace="pre-line" wordBreak="break-word">
+          {event.description}
+        </Text>
+
+        <Box h="24px" />
       </Box>
 
-      {/* Register Button */}
+      {!scrollState.top && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          height="80px"
+          bgGradient="to-b"
+          gradientFrom="white"
+          gradientTo="transparent"
+          pointerEvents="none"
+          zIndex={1}
+        />
+      )}
+
+      {!scrollState.bottom && (
+        <Box
+          position="absolute"
+          bottom="60px"
+          left={0}
+          right={0}
+          height="80px"
+          bgGradient="to-b"
+          gradientFrom="transparent"
+          gradientTo="white"
+          pointerEvents="none"
+          zIndex={1}
+        />
+      )}
+
       <Flex
         flexShrink={0}
         direction="column"
         align="center"
         justify="center"
-        alignSelf="center"
         zIndex={2}
-        mt={3}
-        mb={{ base: 5, md: 1 }}
+        bg="white"
+        pb={{ base: 5, md: 4 }}
+        pt={2}
+        px={{ base: 4, md: 8 }}
       >
         {isPastEvent ? (
           <Button
@@ -402,7 +470,7 @@ export const EventInfo = ({
             <Button
               variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
-              bg={!event.isRegistered && "#487C9E"}
+              bg={!event.isRegistered && "#002992"}
               px="18px"
               py="6px"
               onClick={handleRegistration}
@@ -426,7 +494,7 @@ export const EventInfo = ({
                   <Dialog.Header>
                     <Dialog.Title>Unregister from event?</Dialog.Title>
                   </Dialog.Header>
-                  <Dialog.Body>
+                  <Dialog.Body px={{ base: 6, md: 4 }}>
                     <p>
                       At Community Counsel, your role is vital for providing
                       justice for your neighbors. Are you sure you need to
@@ -453,19 +521,6 @@ export const EventInfo = ({
           </Dialog.Root>
         )}
       </Flex>
-
-      {/* Gradient overlay - fixed at bottom */}
-      <Box
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        height="40%"
-        bgGradient="to-b"
-        gradientFrom="transparent"
-        gradientTo="white"
-        pointerEvents="none"
-      />
     </Flex>
   );
 };

@@ -33,11 +33,13 @@ import { BackendProvider } from "@/contexts/BackendContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { CookiesProvider } from "react-cookie";
 import { Spinner } from "@chakra-ui/react";
+import { useEffect } from "react";
 import {
   Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
+  useLocation,
 } from "react-router-dom";
 import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useRoleContext } from "@/contexts/hooks/useRoleContext";
@@ -57,6 +59,43 @@ const DashboardLanding = () => {
   return <Dashboard />;
 };
 
+const RouteTitleHandler = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/events")) {
+      document.title = "Events | Community Counsel";
+    } else if (path.startsWith("/email")) {
+      document.title = "Email Templates | Community Counsel";
+    } else if (path.startsWith("/volunteer-management")) {
+      document.title = "Volunteer Management | Community Counsel";
+    } else if (path.startsWith("/tags") || path.startsWith("/manage-tags")) {
+      document.title = "Tag Management | Community Counsel";
+    } else if (path.startsWith("/event-catalog")) {
+      document.title = "Event Catalog | Community Counsel";
+    } else if (path === "/admin") {
+      document.title = "Admin Console | Community Counsel";
+    } else if (path === "/signup") {
+      document.title = "Sign Up | Community Counsel";
+    } else if (path === "/adminForgotPass" || path === "/adminPassReset") {
+      document.title = "Reset Password | Community Counsel";
+    } else if (path.startsWith("/login") || path === "/adminLogin") {
+      document.title = "Sign In | Community Counsel";
+    } else if (path === "/dashboard") {
+      document.title = "Dashboard | Community Counsel";
+    } else if (path === "/playground") {
+      document.title = "Playground | Community Counsel";
+    } else if (path.startsWith("/admin-profile") || path.startsWith("/volunteer-profile")) {
+      document.title = "Profile | Community Counsel";
+    } else {
+      document.title = "Community Counsel";
+    }
+  }, [location]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <CookiesProvider>
@@ -64,6 +103,7 @@ const App = () => {
         <AuthProvider>
           <RoleProvider>
             <Router>
+              <RouteTitleHandler />
               <Routes>
                 {/* DEV-MADE ROUTES! */}
                 {/* Staff: full AdminNavbar (email, events landing, tags, admin) */}

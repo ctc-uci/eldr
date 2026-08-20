@@ -1,9 +1,9 @@
 import { db } from "@/db/db-pgp";
 import schedule from "node-schedule";
 
+import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
 import { sendEmail } from "./emailService.js";
 import { parseAndStripScheduledEmailEventMarker } from "./scheduledEmailEventMarker.js";
-import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
 
 async function distinctRegistrantEmails(clinicId) {
   const rows = await db.query(
@@ -52,7 +52,7 @@ async function getClinicEmailContext(clinicId) {
  * Deletes each row before sending.
  * Optional `<!--eldr-event:ID-->` prefix in body fans the same HTML out to registered volunteers.
  */
-schedule.scheduleJob("* * * * *", async () => {
+cron.schedule("0 * * * *", async () => {
   try {
     // Process one row per iteration to avoid long locks; loop until none due.
     // eslint-disable-next-line no-constant-condition
@@ -76,16 +76,28 @@ schedule.scheduleJob("* * * * *", async () => {
       const parsed = parseAndStripScheduledEmailEventMarker(email.body);
       const clinicId = email.clinic_id ?? parsed.clinicId;
       const bodyHtml = parsed.html;
-      const clinic = clinicId != null ? await getClinicEmailContext(clinicId) : null;
-      const registrants = clinicId != null ? await distinctRegistrantEmails(clinicId) : [];
+      const clinic =
+        clinicId != null ? await getClinicEmailContext(clinicId) : null;
+      const registrants =
+        clinicId != null ? await distinctRegistrantEmails(clinicId) : [];
       const primaryRegistrant = registrants.find(
-        (r) => r.email.toLowerCase() === String(email.to_email ?? "").trim().toLowerCase()
+        (r) =>
+          r.email.toLowerCase() ===
+          String(email.to_email ?? "")
+            .trim()
+            .toLowerCase()
       );
       const renderedSubject = clinic
-        ? renderClinicEmailTemplate(email.subject, clinic, { name: primaryRegistrant?.name })
+        ? renderClinicEmailTemplate(email.subject, clinic, {
+            name: primaryRegistrant?.name,
+            email: primaryRegistrant?.email ?? email.to_email,
+          })
         : email.subject;
       const renderedBody = clinic
-        ? renderClinicEmailTemplate(bodyHtml, clinic, { name: primaryRegistrant?.name })
+        ? renderClinicEmailTemplate(bodyHtml, clinic, {
+            name: primaryRegistrant?.name,
+            email: primaryRegistrant?.email ?? email.to_email,
+          })
         : bodyHtml;
 
       try {
@@ -104,10 +116,16 @@ schedule.scheduleJob("* * * * *", async () => {
           let ok = 0;
           for (const recipient of registrants) {
             const perRecipientSubject = clinic
-              ? renderClinicEmailTemplate(email.subject, clinic, { name: recipient.name })
+              ? renderClinicEmailTemplate(email.subject, clinic, {
+                  name: recipient.name,
+                  email: recipient.email,
+                })
               : email.subject;
             const perRecipientBody = clinic
-              ? renderClinicEmailTemplate(bodyHtml, clinic, { name: recipient.name })
+              ? renderClinicEmailTemplate(bodyHtml, clinic, {
+                  name: recipient.name,
+                  email: recipient.email,
+                })
               : bodyHtml;
             try {
               await sendEmail({
@@ -128,12 +146,21 @@ schedule.scheduleJob("* * * * *", async () => {
           );
         }
       } catch (sendError) {
-        console.error(`❌ Failed to send scheduled email ID: ${email.id}`, sendError);
+        console.error(
+          `❌ Failed to send scheduled email ID: ${email.id}`,
+          sendError
+        );
         try {
           await db.query(
             `INSERT INTO scheduled_emails (clinic_id, to_email, subject, body, send_at)
              VALUES ($1, $2, $3, $4, $5)`,
-            [email.clinic_id ?? null, email.to_email, email.subject, email.body, email.send_at]
+            [
+              email.clinic_id ?? null,
+              email.to_email,
+              email.subject,
+              email.body,
+              email.send_at,
+            ]
           );
           console.log(`↩ Re-queued failed email (was ID ${email.id})`);
         } catch (requeueErr) {

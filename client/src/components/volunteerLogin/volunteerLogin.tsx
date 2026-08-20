@@ -1,4 +1,4 @@
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -93,6 +93,14 @@ export const VolunteerLogin = () => {
     if (n) goToStep(n);
   }, [step, goToStep]);
 
+  const emailAlreadyInUseError = (e: unknown): boolean => {  
+    const err = e as {
+      code?: string;
+      message?: string;
+    };
+    return (err.code === "auth/email-already-in-use") || (err.message?.toLowerCase().includes("email already in use") ?? false);
+  };
+
   const handleCompleteSignup = useCallback(async () => {
     const d = loadDraft();
     if (!d || !hasSignupBasics(d)) {
@@ -111,9 +119,9 @@ export const VolunteerLogin = () => {
         response?: { data?: { message?: string } | string };
         message?: string;
       };
-      if (err.code === "auth/email-already-in-use") {
+      if (emailAlreadyInUseError(e)) {
         setCompleteError(
-          "An account with this email already exists. Please log in."
+          "An account with this email already exists. Please log in instead, or contact support if you believe this is an error."
         );
         return;
       }
@@ -136,20 +144,6 @@ export const VolunteerLogin = () => {
       minH="100vh"
       direction="column"
     >
-      {completeError && step === "background" && (
-        <Text
-          role="alert"
-          px={4}
-          py={2}
-          bg="red.50"
-          color="red.800"
-          fontSize="sm"
-          borderBottomWidth="1px"
-          borderColor="red.200"
-        >
-          {completeError}
-        </Text>
-      )}
       {step === "login" && (
         <LoginStep onNavigateToCreateAccount={() => goToStep("create-account")} />
       )}
@@ -175,6 +169,8 @@ export const VolunteerLogin = () => {
         <BackgroundStep
           onComplete={handleCompleteSignup}
           isSubmitting={isCompleting}
+          submitError={completeError}
+          onDismissError={() => setCompleteError(null)}
         />
       )}
       {step === "success" && (

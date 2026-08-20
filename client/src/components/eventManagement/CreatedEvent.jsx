@@ -52,6 +52,12 @@ export const CreatedEvent = () => {
   };
 
   useEffect(() => {
+    if (eventData?.name) {
+      document.title = `${eventData.name} | Community Counsel`;
+    }
+  }, [eventData?.name]);
+
+  useEffect(() => {
     if (locationState?.editFeedback === "saved") {
       toaster.success({
         title: "Edits to this event have been saved successfully.",
@@ -159,10 +165,9 @@ export const CreatedEvent = () => {
       {/* Breadcrumb */}
       <HStack
         fontSize="lg"
-        gap={1}
+        gap={5}
       >
         <Text
-          fontWeight="semibold"
           color="gray.800"
           cursor="pointer"
           onClick={() => navigate("/events")}
@@ -208,7 +213,7 @@ export const CreatedEvent = () => {
                 bottom="calc(100% + 6px)"
                 left="50%"
                 transform="translateX(-50%)"
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
                 fontSize="xs"
                 fontWeight="medium"
@@ -240,12 +245,14 @@ export const CreatedEvent = () => {
           </Button>
 
           <Button
-            bg="#487C9E"
+            bg="#002992"
             color="white"
+            fontFamily="heading"
+            fontWeight={600}
             borderRadius="4px"
             gap={2}
             px={4}
-            _hover={{ bg: "#294A5F" }}
+            _hover={{ bg: "#001E6C" }}
             onClick={() => navigate(`/events/${eventId}/edit/header`)}
           >
             <LuPencil />
@@ -381,7 +388,7 @@ export const CreatedEvent = () => {
 
         {activeTab === "volunteers" && (
           <Box w="100%" bg="white" borderLeft="1px solid" borderRight="1px solid" borderBottom="1px solid" borderColor="gray.200" borderRadius="0 0 6px 6px" p={8}>
-            <EventVolunteerList eventId={eventId} />
+            <EventVolunteerList eventId={eventId} eventName={name}/>
           </Box>
         )}
 

@@ -1,6 +1,7 @@
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
@@ -12,7 +13,7 @@ const normalizeNullableText = (value) => {
 };
 
 // Create a new volunteer
-volunteersRouter.post("/", async (req, res) => {
+volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
     const {
       firebaseUid,
@@ -29,6 +30,7 @@ volunteersRouter.post("/", async (req, res) => {
       law_school_year,
       state_bar_certificate,
       state_bar_number,
+      listed_experience,
     } = req.body;
 
     const normalizedEmail = normalizeNullableText(email);
@@ -39,10 +41,14 @@ volunteersRouter.post("/", async (req, res) => {
     const normalizedFirstName = normalizeNullableText(first_name);
     const normalizedLastName = normalizeNullableText(last_name);
     const normalizedPhoneNumber = normalizeNullableText(phone_number);
-    const normalizedAffiliatedEmployer = normalizeNullableText(affiliated_employer);
+    const normalizedAffiliatedEmployer =
+      normalizeNullableText(affiliated_employer);
     const normalizedLawSchoolYear = normalizeNullableText(law_school_year);
-    const normalizedStateBarCertificate = normalizeNullableText(state_bar_certificate);
+    const normalizedStateBarCertificate = normalizeNullableText(
+      state_bar_certificate
+    );
     const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
+    const normalizedListedExperience = normalizeNullableText(listed_experience);
 
     const result = await db.tx(async (t) => {
       const userResult = await t.one(
@@ -76,9 +82,10 @@ volunteersRouter.post("/", async (req, res) => {
             affiliated_employer,
             law_school_year,
             state_bar_certificate,
-            state_bar_number
+            state_bar_number,
+            listed_experience
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           ON CONFLICT (id) DO UPDATE
             SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
                 last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
@@ -92,7 +99,8 @@ volunteersRouter.post("/", async (req, res) => {
                 affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
                 law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
                 state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
-                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number)
+                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number),
+                listed_experience = COALESCE(EXCLUDED.listed_experience, volunteers.listed_experience)
           RETURNING *;
         `,
         [
@@ -110,6 +118,7 @@ volunteersRouter.post("/", async (req, res) => {
           normalizedLawSchoolYear,
           normalizedStateBarCertificate,
           normalizedStateBarNumber,
+          normalizedListedExperience,
         ]
       );
 
@@ -126,7 +135,7 @@ volunteersRouter.post("/", async (req, res) => {
 });
 
 // Get all active (non-archived) volunteers
-volunteersRouter.get("/", async (req, res) => {
+volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const volunteersQuery = await db.query(
       `
@@ -249,7 +258,7 @@ volunteersRouter.patch("/:id/unarchive", async (req, res) => {
 });
 
 // Get a single volunteer via ID
-volunteersRouter.get("/:id", async (req, res) => {
+volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -269,7 +278,7 @@ volunteersRouter.get("/:id", async (req, res) => {
 });
 
 // Delete a volunteer via ID
-volunteersRouter.delete("/:id", async (req, res) => {
+volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -277,6 +286,10 @@ volunteersRouter.delete("/:id", async (req, res) => {
       `SELECT firebase_uid FROM users WHERE id = $1`,
       [id]
     );
+
+    if (!userRow.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
 
     await db.tx(async (t) => {
       await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
@@ -300,7 +313,7 @@ volunteersRouter.delete("/:id", async (req, res) => {
 });
 
 // Update a volunteer's information via ID
-volunteersRouter.put("/:id", async (req, res) => {
+volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -318,7 +331,16 @@ volunteersRouter.put("/:id", async (req, res) => {
       law_school_year,
       state_bar_certificate,
       state_bar_number,
+      listed_experience,
     } = req.body;
+
+    const hasListedExperience = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "listed_experience"
+    );
+    const listedExperienceClause = hasListedExperience
+      ? "listed_experience = $15"
+      : "listed_experience = listed_experience";
 
     await db.query(
       `
@@ -335,7 +357,8 @@ volunteersRouter.put("/:id", async (req, res) => {
             affiliated_employer = COALESCE($11, affiliated_employer),
             law_school_year = COALESCE($12, law_school_year),
             state_bar_certificate = COALESCE($13, state_bar_certificate),
-            state_bar_number = COALESCE($14, state_bar_number)
+            state_bar_number = COALESCE($14, state_bar_number),
+            ${listedExperienceClause}
         WHERE id = $1;
       `,
       [
@@ -353,37 +376,11 @@ volunteersRouter.put("/:id", async (req, res) => {
         law_school_year ?? null,
         state_bar_certificate ?? null,
         state_bar_number ?? null,
+        hasListedExperience ? normalizeNullableText(listed_experience) : null,
       ]
     );
 
     res.status(200).send(`Volunteer ${id} updated successfully`);
-  } catch (e) {
-    res.status(500).send(e.message);
-  }
-});
-
-// Delete a single volunteer via ID
-volunteersRouter.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const userResult = await db.query(
-      `SELECT firebase_uid FROM users WHERE id = $1`,
-      [id]
-    );
-
-    if (!userResult.length) {
-      return res.status(404).send(`Volunteer ${id} not found`);
-    }
-
-    const { firebase_uid } = userResult[0];
-
-    // Deleting from users cascades to volunteers and all junction tables
-    await db.query(`DELETE FROM users WHERE id = $1`, [id]);
-
-    await admin.auth().deleteUser(firebase_uid);
-
-    res.status(200).send(`Volunteer ${id} deleted successfully`);
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -396,17 +393,22 @@ volunteersRouter.delete("/:id", async (req, res) => {
 // Assign an area of practice to a volunteer
 // POST /volunteers/:volunteerId/areas-of-practice
 // body: { areaOfPracticeId }
-volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { areaOfPracticeId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/areas-of-practice",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { areaOfPracticeId } = req.body;
 
-    if (!areaOfPracticeId) {
-      return res.status(400).json({ message: "areaOfPracticeId is required" });
-    }
+      if (!areaOfPracticeId) {
+        return res
+          .status(400)
+          .json({ message: "areaOfPracticeId is required" });
+      }
 
-    const areaAssignment = await db.query(
-      `
+      const areaAssignment = await db.query(
+        `
         INSERT INTO volunteer_areas_of_practice (
           volunteer_id,
           area_of_practice_id
@@ -416,29 +418,33 @@ volunteersRouter.post("/:volunteerId/areas-of-practice", async (req, res) => {
         DO NOTHING
         RETURNING *;
       `,
-      [volunteerId, areaOfPracticeId]
-    );
+        [volunteerId, areaOfPracticeId]
+      );
 
-    if (!areaAssignment.length) {
-      return res
-        .status(200)
-        .json({ message: "Area of practice already assigned" });
+      if (!areaAssignment.length) {
+        return res
+          .status(200)
+          .json({ message: "Area of practice already assigned" });
+      }
+
+      res.status(201).json(keysToCamel(areaAssignment[0]));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(201).json(keysToCamel(areaAssignment[0]));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
 // List all areas of practice for a volunteer
 // GET /volunteers/:volunteerId/areas-of-practice
-volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/areas-of-practice",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const areasOfPractice = await db.query(
-      `
+      const areasOfPractice = await db.query(
+        `
         SELECT
           aop.id AS area_of_practice_id,
           aop.areas_of_practice
@@ -447,19 +453,21 @@ volunteersRouter.get("/:volunteerId/areas-of-practice", async (req, res) => {
         WHERE vs.volunteer_id = $1
         ORDER BY aop.areas_of_practice ASC;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(areasOfPractice));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(areasOfPractice));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Remove an area of practice from a volunteer
 // DELETE /volunteers/:volunteerId/areas-of-practice/:areaOfPracticeId
 volunteersRouter.delete(
   "/:volunteerId/areas-of-practice/:areaOfPracticeId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { volunteerId, areaOfPracticeId } = req.params;
@@ -490,64 +498,78 @@ volunteersRouter.delete(
 // Volunteer Tags Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/tags", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { tagId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/tags",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { tagId } = req.body;
 
-    const volunteerResult = await db.query(
-      `
+      const volunteerResult = await db.query(
+        `
         INSERT INTO volunteer_tags (volunteer_id, tag_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, tagId]
-    );
+        [volunteerId, tagId]
+      );
 
-    res.status(201).json(keysToCamel(volunteerResult));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(volunteerResult));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.delete("/:volunteerId/tags/:tagId", async (req, res) => {
-  try {
-    const { volunteerId, tagId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/tags/:tagId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, tagId } = req.params;
 
-    await db.query(
-      `
+      await db.query(
+        `
         DELETE
         FROM volunteer_tags
         WHERE volunteer_id = $1 AND tag_id = $2;
       `,
-      [volunteerId, tagId]
-    );
+        [volunteerId, tagId]
+      );
 
-    res.status(200).send(`Tag ${tagId} deleted from volunteer ${volunteerId}`);
-  } catch (e) {
-    res.status(500).send(e.message);
+      res
+        .status(200)
+        .send(`Tag ${tagId} deleted from volunteer ${volunteerId}`);
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/tags",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const volunteerResult = await db.query(
-      `
+      const volunteerResult = await db.query(
+        `
         SELECT t.id, t.tag
         FROM volunteer_tags vt
         JOIN tags t ON t.id = vt.tag_id
         WHERE vt.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(volunteerResult));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(volunteerResult));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // -----------------------------
 // Volunteer Languages Routes (join table + is_literate)
@@ -556,48 +578,51 @@ volunteersRouter.get("/:volunteerId/tags", async (req, res) => {
 // Batch upsert languages for a volunteer
 // POST /volunteers/:volunteerId/languages
 // body: { languages: [{ languageId, proficiency?, isLiterate? }] }
-volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { languages } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/languages",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { languages } = req.body;
 
-    if (!Array.isArray(languages) || languages.length === 0) {
-      return res.status(400).json({ message: "languages array is required" });
-    }
-
-    for (const entry of languages) {
-      if (!entry?.languageId) {
-        return res.status(400).json({
-          message: "Each language must include languageId",
-        });
+      if (!Array.isArray(languages) || languages.length === 0) {
+        return res.status(400).json({ message: "languages array is required" });
       }
-    }
 
-    const valuesSql = languages
-      .map(
-        (_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`
-      )
-      .join(", ");
+      for (const entry of languages) {
+        if (!entry?.languageId) {
+          return res.status(400).json({
+            message: "Each language must include languageId",
+          });
+        }
+      }
 
-    const params = [volunteerId];
-    for (const entry of languages) {
-      const normalizedProficiency = String(entry?.proficiency ?? "")
-        .trim()
-        .toLowerCase();
-      const proficiency = [
-        "proficient",
-        "professional",
-        "native/fluent",
-      ].includes(normalizedProficiency)
-        ? normalizedProficiency
-        : "proficient";
-      const isLiterate =
-        typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
-      params.push(entry.languageId, isLiterate, proficiency);
-    }
+      const valuesSql = languages
+        .map(
+          (_, idx) => `($1, $${idx * 3 + 2}, $${idx * 3 + 3}, $${idx * 3 + 4})`
+        )
+        .join(", ");
 
-    const result = await db.query(
-      `
+      const params = [volunteerId];
+      for (const entry of languages) {
+        const normalizedProficiency = String(entry?.proficiency ?? "")
+          .trim()
+          .toLowerCase();
+        const proficiency = [
+          "proficient",
+          "professional",
+          "native/fluent",
+        ].includes(normalizedProficiency)
+          ? normalizedProficiency
+          : "proficient";
+        const isLiterate =
+          typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
+        params.push(entry.languageId, isLiterate, proficiency);
+      }
+
+      const result = await db.query(
+        `
         INSERT INTO volunteer_language (volunteer_id, language_id, is_literate, proficiency)
         VALUES ${valuesSql}
         ON CONFLICT (volunteer_id, language_id)
@@ -606,40 +631,46 @@ volunteersRouter.post("/:volunteerId/languages", async (req, res) => {
           proficiency = EXCLUDED.proficiency
         RETURNING *;
       `,
-      params
-    );
+        params
+      );
 
-    res.status(201).json(keysToCamel(result));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(result));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // List all languages for a volunteer (joins to languages.language)
-volunteersRouter.get("/:volunteerId/languages", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/languages",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const languages = await db.query(
-      `
+      const languages = await db.query(
+        `
         SELECT l.id, l.language, vl.proficiency
         FROM volunteer_language vl
         JOIN languages l ON l.id = vl.language_id
         WHERE vl.volunteer_id = $1
         ORDER BY l.language ASC;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(languages));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(languages));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // Remove a language from a volunteer
 volunteersRouter.delete(
   "/:volunteerId/languages/:languageId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { volunteerId, languageId } = req.params;
@@ -670,105 +701,122 @@ volunteersRouter.delete(
 // Volunteer Roles Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/roles", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { roleId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/roles",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { roleId } = req.body;
 
-    if (!roleId) {
-      return res.status(400).json({ message: "roleId is required" });
-    }
+      if (!roleId) {
+        return res.status(400).json({ message: "roleId is required" });
+      }
 
-    const newRelationship = await db.query(
-      `
+      const newRelationship = await db.query(
+        `
         INSERT INTO volunteer_roles (volunteer_id, role_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, roleId]
-    );
+        [volunteerId, roleId]
+      );
 
-    res.status(201).json(keysToCamel(newRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
-volunteersRouter.delete("/:volunteerId/roles/:roleId", async (req, res) => {
-  try {
-    const { volunteerId, roleId } = req.params;
+volunteersRouter.delete(
+  "/:volunteerId/roles/:roleId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, roleId } = req.params;
 
-    const deletedRelationship = await db.query(
-      `
+      const deletedRelationship = await db.query(
+        `
         DELETE FROM volunteer_roles
         WHERE volunteer_id = $1 AND role_id = $2
         RETURNING *;
       `,
-      [volunteerId, roleId]
-    );
+        [volunteerId, roleId]
+      );
 
-    if (deletedRelationship.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Role not assigned to this volunteer" });
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Role not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
     }
-
-    res.status(200).json(keysToCamel(deletedRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
   }
-});
+);
 
-volunteersRouter.get("/:volunteerId/roles", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/roles",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const listAll = await db.query(
-      `
+      const listAll = await db.query(
+        `
         SELECT r.id, r.role_name
         FROM volunteer_roles vr
         JOIN roles r ON vr.role_id = r.id
         WHERE vr.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 // -----------------------------
 // Volunteer Locations Routes
 // -----------------------------
 
-volunteersRouter.post("/:volunteerId/locations", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
-    const { locationId } = req.body;
+volunteersRouter.post(
+  "/:volunteerId/locations",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { locationId } = req.body;
 
-    if (!locationId) {
-      return res.status(400).json({ message: "locationId is required" });
-    }
+      if (!locationId) {
+        return res.status(400).json({ message: "locationId is required" });
+      }
 
-    const newRelationship = await db.query(
-      `
+      const newRelationship = await db.query(
+        `
         INSERT INTO volunteer_locations (volunteer_id, location_id)
         VALUES ($1, $2)
         RETURNING *;
       `,
-      [volunteerId, locationId]
-    );
+        [volunteerId, locationId]
+      );
 
-    res.status(201).json(keysToCamel(newRelationship));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);
 
 volunteersRouter.delete(
   "/:volunteerId/locations/:locationId",
+  verifyRole("volunteer"),
   async (req, res) => {
     try {
       const { volunteerId, locationId } = req.params;
@@ -795,22 +843,26 @@ volunteersRouter.delete(
   }
 );
 
-volunteersRouter.get("/:volunteerId/locations", async (req, res) => {
-  try {
-    const { volunteerId } = req.params;
+volunteersRouter.get(
+  "/:volunteerId/locations",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
 
-    const listAll = await db.query(
-      `
-        SELECT l.id, l.location_name
+      const listAll = await db.query(
+        `
+        SELECT l.id, l.city, l.state, l.zip_code
         FROM volunteer_locations vl
         JOIN locations l ON vl.location_id = l.id
         WHERE vl.volunteer_id = $1;
       `,
-      [volunteerId]
-    );
+        [volunteerId]
+      );
 
-    res.status(200).json(keysToCamel(listAll));
-  } catch (e) {
-    res.status(500).send(e.message);
+      res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
   }
-});
+);

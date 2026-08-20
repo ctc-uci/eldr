@@ -1,12 +1,13 @@
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
+import { verifyRole } from "@/middleware";
 import { Router } from "express";
 
 export const areasOfPracticeRouter = Router();
 
 // GET: get all areas of practice
 // {port}/areas-of-practice
-areasOfPracticeRouter.get("/", async (req, res) => {
+areasOfPracticeRouter.get("/", verifyRole("volunteer"), async (req, res) => {
     try {
         const areasOfPractice = await db.query("SELECT * FROM areas_of_practice");
         res.status(200).json(keysToCamel(areasOfPractice));
@@ -17,7 +18,7 @@ areasOfPracticeRouter.get("/", async (req, res) => {
 
 // GET: get an area of practice by id
 // {port}/areas-of-practice/:id
-areasOfPracticeRouter.get("/:id", async (req, res) => {
+areasOfPracticeRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
     try {
         const { id } = req.params;
         const areaOfPractice = await db.query("SELECT * FROM areas_of_practice WHERE id = $1", [id]);
@@ -35,7 +36,7 @@ areasOfPracticeRouter.get("/:id", async (req, res) => {
 
 // POST: create a new area of practice
 // {port}/areas-of-practice
-areasOfPracticeRouter.post("/", async (req, res) => {
+areasOfPracticeRouter.post("/", verifyRole("staff"), async (req, res) => {
     try {
         const { areaOfPractice } = req.body;
 
@@ -62,7 +63,7 @@ areasOfPracticeRouter.post("/", async (req, res) => {
 
 // PUT: update an area of practice by id
 // {port}/areas-of-practice/:id
-areasOfPracticeRouter.put("/:id", async (req, res) => {
+areasOfPracticeRouter.put("/:id", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
         const { areaOfPractice } = req.body;
@@ -84,7 +85,7 @@ areasOfPracticeRouter.put("/:id", async (req, res) => {
 
 // DELETE: delete an area of practice by id
 // {port}/areas-of-practice/:id
-areasOfPracticeRouter.delete("/:id", async (req, res) => {
+areasOfPracticeRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
         const deletedAreaOfPractice = await db.query(
