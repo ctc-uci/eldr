@@ -139,12 +139,14 @@ export const AdminPassReset: React.FC = () => {
 
                 <Button
                   position="relative"
-                  bg="#3182CE"
+                  bg="#002992"
                   color="white"
+                  fontFamily="heading"
+                  fontWeight={600}
                   w="80%"
                   h="50px"
                   borderRadius="md"
-                  _hover={{ bg: "#5797BD" }}
+                  _hover={{ bg: "#001E6C" }}
                   mb={4}
                   onClick={() => navigate(loginRoute)}
                 >
@@ -239,12 +241,14 @@ export const AdminPassReset: React.FC = () => {
                     position="relative"
                     variant="outline"
                     borderRadius="md"
-                    background={newPassword && confirmPassword ? "#3182CE" : "#D4D4D8"}
+                    background={newPassword && confirmPassword ? "#002992" : "#D4D4D8"}
                     w="100%"
                     h="50px"
                     color="white"
+                    fontFamily="heading"
+                    fontWeight={600}
                     disabled={!newPassword || !confirmPassword}
-                    _hover={newPassword && confirmPassword ? { bg: "#5797BD" } : {}}
+                    _hover={newPassword && confirmPassword ? { bg: "#001E6C" } : {}}
                     onClick={async () => {
                       if (!matching) {
                         setMismatchError(true);

@@ -52,6 +52,12 @@ export const CreatedEvent = () => {
   };
 
   useEffect(() => {
+    if (eventData?.name) {
+      document.title = `${eventData.name} | Community Counsel`;
+    }
+  }, [eventData?.name]);
+
+  useEffect(() => {
     if (locationState?.editFeedback === "saved") {
       toaster.success({
         title: "Edits to this event have been saved successfully.",
@@ -207,7 +213,7 @@ export const CreatedEvent = () => {
                 bottom="calc(100% + 6px)"
                 left="50%"
                 transform="translateX(-50%)"
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
                 fontSize="xs"
                 fontWeight="medium"
@@ -239,12 +245,14 @@ export const CreatedEvent = () => {
           </Button>
 
           <Button
-            bg="#487C9E"
+            bg="#002992"
             color="white"
+            fontFamily="heading"
+            fontWeight={600}
             borderRadius="4px"
             gap={2}
             px={4}
-            _hover={{ bg: "#294A5F" }}
+            _hover={{ bg: "#001E6C" }}
             onClick={() => navigate(`/events/${eventId}/edit/header`)}
           >
             <LuPencil />

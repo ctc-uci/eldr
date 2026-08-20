@@ -42,8 +42,11 @@ export const FolderNotFoundModal = ({
                   Cancel
                 </Button>
                 <Button
-                  backgroundColor="#5797BD"
+                  backgroundColor="#002992"
                   color="white"
+                  fontFamily="heading"
+                  fontWeight={600}
+                  _hover={{ bg: "#001E6C" }}
                   size="sm"
                   onClick={onCreateFolder}
                 >

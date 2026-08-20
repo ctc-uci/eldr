@@ -7,6 +7,7 @@ import { useLocation, Link as RouterLink } from "react-router-dom";
 import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
 import { ClipboardList, Users } from "lucide-react";
 import { LuTags, LuMails } from "react-icons/lu";
+import { getLogoRootPath } from "@/utils/navigation";
 
 export const AdminNavbar = () => {
   const location = useLocation();
@@ -16,7 +17,7 @@ export const AdminNavbar = () => {
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
     { name: "Email Templates", icon: LuMails, path: "/email" },
     { name: "Profiles", icon: Users, path: "/volunteer-management" },
-    { name: "Tags", icon: LuTags, path: "/tags" }
+    { name: "Tags", icon: LuTags, path: "/manage-tags" }
   ];
 
   return (
@@ -38,13 +39,17 @@ export const AdminNavbar = () => {
         align="stretch"
       >
         {/* ELDR Logo */}
-        <Box px={6}>
-          <Image
-            src="/eldr-logo.png"
-            alt="Elder Law & Disability Rights Center"
-            h="clamp(48px, 4vw, 52px)"
-            objectFit="contain"
-          />
+        <Box px={6} display="flex" justifyContent="center" w="full">
+          <RouterLink to={getLogoRootPath(location.pathname)} style={{ display: "block", width: "100%" }}>
+            <Image
+              src="/cc-logo-vertical.svg"
+              alt="Community Counsel"
+              maxW="100%"
+              maxH="72px"
+              mx="auto"
+              objectFit="contain"
+            />
+          </RouterLink>
         </Box>
 
         {/* Nav Links */}
@@ -67,15 +72,16 @@ export const AdminNavbar = () => {
                   borderRadius="md"
                   cursor="pointer"
                   gap={3}
-                  bg={isActive ? "blue.50" : "transparent"}
-                  color={isActive ? "blue.700" : "#294A5F"}
+                  bg={isActive ? "#E8F6FC" : "transparent"}
+                  color={isActive ? "#002992" : "#4A5568"}
                   _hover={{
-                    bg: isActive ? "#D8F1FF" : "gray.100",
+                    bg: isActive ? "#E8F6FC" : "gray.100",
                   }}
                 >
-                  <IconComponent size="clamp(18px, 1.5vw, 20px)" />
+                  <IconComponent size="clamp(18px, 1.5vw, 20px)" color={isActive ? "#002992" : "#4A5568"} />
                   <Text
-                    fontWeight="bold"
+                    fontWeight={isActive ? "bold" : "600"}
+                    fontFamily="heading"
                     fontSize="clamp(14px, 1.2vw, 16px)"
                     whiteSpace="nowrap"
                     overflow="hidden"

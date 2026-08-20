@@ -51,9 +51,10 @@ export const InputDialog = ({
     >
       <Dialog.Trigger asChild>
         <Button
-          backgroundColor={isOpen ? "#294A5F" : "#487C9E"}
+          backgroundColor={isOpen ? "#001E6C" : "#002992"}
           color="white"
-          _hover={{ bg: "#294A5F" }}
+          fontFamily="heading"
+          _hover={{ bg: "#001E6C" }}
           onClick={handleTriggerClick}
           {...buttonProps}
         >
@@ -162,11 +163,12 @@ export const InputDialog = ({
                 h="40px"
                 px="16px"
                 fontSize="14px"
-                fontWeight="500"
                 borderRadius="4px"
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
-                _hover={{ bg: "#294A5F" }}
+                fontFamily="heading"
+                fontWeight="600"
+                _hover={{ bg: "#001E6C" }}
                 onClick={handleSubmit}
                 disabled={!inputValue.trim()}
               >

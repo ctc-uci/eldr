@@ -1,7 +1,7 @@
 import { Box, HStack, Icon, Image, Text, VStack } from "@chakra-ui/react";
-
 import { FaBriefcase, FaClipboard, FaMailBulk, FaUser } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getLogoRootPath } from "../utils/navigation";
 
 const sidebarNav = [
   { label: "Event Catalog", icon: FaClipboard, path: "/events" },
@@ -10,27 +10,26 @@ const sidebarNav = [
   { label: "Manage Profiles", icon: FaUser, active: false },
 ];
 
-const SidebarNavItem = ({ icon, label, active, onClick }) => (
+const SidebarNavItem = ({ icon: Icon, label, active, onClick }) => (
   <HStack
+    as="button"
     w="100%"
-    spacing={3}
     px={4}
     py={3}
-    borderRadius="lg"
-    bg={active ? "#D8F1FF" : "transparent"}
-    color="#294A5F"
-    fontWeight={active ? "bold" : "normal"}
-    cursor="pointer"
-    _hover={{ bg: "#E3F0F9" }}
-    transition="background 0.2s"
+    borderRadius="md"
+    bg={active ? "#E8F6FC" : "transparent"}
+    color={active ? "#002992" : "#4A5568"}
+    fontWeight={active ? "600" : "medium"}
+    _hover={{ bg: active ? "#E8F6FC" : "#F7FAFC" }}
     onClick={onClick}
+    cursor="pointer"
+    gap={3}
   >
     <Icon
-      as={icon}
       boxSize={5}
-      color={active ? "#5797bd" : "#294A5F"}
+      color={active ? "#002992" : "#4A5568"}
     />
-    <Text fontSize="md">{label}</Text>
+    <Text fontSize="md" fontFamily="heading">{label}</Text>
   </HStack>
 );
 
@@ -50,11 +49,13 @@ export const Sidebar = () => {
       justifyContent="space-between"
     >
       <Box>
-        <Link to="/">
+        <Link to={getLogoRootPath(location.pathname)} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
           <Image
-            src="/logo.png"
-            h="60px"
-            alt="Elder Law & Disability Rights Center"
+            src="/cc-logo-vertical.svg"
+            maxW="100%"
+            maxH="80px"
+            mx="auto"
+            alt="Community Counsel"
             objectFit="contain"
             mb={10}
             _hover={{ opacity: 0.85 }}

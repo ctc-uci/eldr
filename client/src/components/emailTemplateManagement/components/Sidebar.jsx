@@ -16,79 +16,82 @@ const SidebarNavItem = ({ icon, label, active }) => (
     px={4}
     py={3}
     borderRadius="lg"
-    bg={active ? "#D8F1FF" : "transparent"}
-    color="#294A5F"
-    fontWeight={active ? "bold" : "normal"}
+    bg={active ? "#E8F6FC" : "transparent"}
+    color={active ? "#002992" : "#4A5568"}
+    fontWeight={active ? "bold" : "600"}
     cursor="pointer"
-    _hover={{ bg: "#E3F0F9" }}
+    _hover={{ bg: active ? "#E8F6FC" : "#F4F4F5" }}
     transition="background 0.2s"
   >
     <Icon
       as={icon}
       boxSize={5}
-      color={active ? "#5797bd" : "#294A5F"}
+      color={active ? "#002992" : "#4A5568"}
     />
-    <Text fontSize="md">{label}</Text>
+    <Text fontSize="md" fontFamily="heading">{label}</Text>
   </HStack>
 );
 
 export const Sidebar = () => {
   const { pathname } = useLocation();
   return (
-  <Box
-    w="260px"
-    borderRight="1px solid #E0E0E0"
-    py={8}
-    px={4}
-    minH="100vh"
-    display="flex"
-    flexDirection="column"
-    justifyContent="space-between"
-  >
-    <Box>
-      <Link to="/">
-        <Image
-          src="/logo.png"
-          alt="Elder Law & Disability Rights Center"
-          objectFit="contain"
-          mb={10}
-          _hover={{ opacity: 0.85 }}
-        />
-      </Link>
-      <VStack
-        align="stretch"
-        gap={10}
-      >
-        {sidebarNav.map((item) => (
-          <SidebarNavItem
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            active={pathname.startsWith(item.path)}
-          />
-        ))}
-      </VStack>
-    </Box>
     <Box
-      px={2}
-      pb={2}
+      w="260px"
+      borderRight="1px solid #E0E0E0"
+      py={8}
+      px={4}
+      minH="100vh"
+      display="flex"
+      flexDirection="column"
+      justifyContent="space-between"
     >
-      {/* User avatar placeholder, bottom left */}
+      <Box>
+        <Link to="/email" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <Image
+            src="/cc-logo-vertical.svg"
+            maxW="100%"
+            maxH="80px"
+            mx="auto"
+            alt="Community Counsel"
+            objectFit="contain"
+            mb={10}
+            _hover={{ opacity: 0.85 }}
+          />
+        </Link>
+        <VStack
+          align="stretch"
+          gap={10}
+        >
+          {sidebarNav.map((item) => (
+            <SidebarNavItem
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              active={pathname.startsWith(item.path)}
+            />
+          ))}
+        </VStack>
+      </Box>
       <Box
-        boxSize="36px"
-        borderRadius="full"
-        overflow="hidden"
-        cursor="pointer"
+        px={2}
+        pb={2}
       >
-        {/** @TODO: replace with actual user avatar */}
-        <Image
-          src="https://randomuser.me/api/portraits/men/67.jpg"
-          alt="User"
-          boxSize="100%"
-          objectFit="cover"
-        />
+        {/* User avatar placeholder, bottom left */}
+        <Box
+          boxSize="36px"
+          borderRadius="full"
+          overflow="hidden"
+          cursor="pointer"
+        >
+          {/** @TODO: replace with actual user avatar */}
+          <Image
+            src="https://randomuser.me/api/portraits/men/67.jpg"
+            alt="User"
+            boxSize="100%"
+            objectFit="cover"
+          />
+        </Box>
       </Box>
     </Box>
-  </Box>
   );
 };

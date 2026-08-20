@@ -94,7 +94,7 @@ export function CreateTagView({
           h="48px"
           fontSize="16px"
           fontWeight="bold"
-          color="#5797bd"
+          color="#15A9EA"
           borderRadius="4px"
           textDecoration="underline"
         >
@@ -110,7 +110,7 @@ export function CreateTagView({
         pl="0"
         mb="50px"
       >
-        <Text fontSize="30px" fontWeight="bold" lineHeight="38px" color="#294a5f">
+        <Text fontSize="30px" fontWeight="bold" fontFamily="heading" lineHeight="38px" color="#002992">
           {pageTitle}
         </Text>
       </Box>
@@ -227,14 +227,15 @@ export function CreateTagView({
 
       <Flex justify="flex-end" gap="23px" mt="50px">
         <Button
-          bg="#5797bd"
+          bg="#002992"
           color="white"
           h="48px"
           px="20px"
           borderRadius="4px"
           fontSize="16px"
-          fontWeight={500}
-          _hover={{ bg: "#4a86a8" }}
+          fontFamily="heading"
+          fontWeight={600}
+          _hover={{ bg: "#001E6C" }}
           onClick={handleSubmit}
           loading={isSaving}
           loadingText="Saving..."

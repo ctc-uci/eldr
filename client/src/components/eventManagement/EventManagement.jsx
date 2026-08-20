@@ -281,6 +281,7 @@ export const EventManagement = () => {
             <Text
               fontSize="lg"
               fontWeight="bold"
+              fontFamily="heading"
             >
               {clinic.name}
             </Text>
@@ -451,11 +452,13 @@ export const EventManagement = () => {
             </InputGroup>
 
             <Button
-              bg="#487C9E"
+              bg="brand.navy"
               color="white"
               borderRadius="4px"
               px={5}
-              _hover={{ bg: "#294A5F" }}
+              fontFamily="heading"
+              fontWeight={600}
+              _hover={{ bg: "primary.500" }}
               onClick={() => navigate("/events/create/header")}
             >
               <LuClipboardPlus />
@@ -489,7 +492,9 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      color="gray.800"
+                      fontFamily="heading"
+                      fontWeight="600"
+                      color="#002992"
                     >
                       Upcoming Events
                     </Text>
@@ -510,7 +515,9 @@ export const EventManagement = () => {
                   >
                     <Text
                       fontSize="lg"
-                      color="gray.800"
+                      fontFamily="heading"
+                      fontWeight="600"
+                      color="#002992"
                     >
                       Past Events
                     </Text>

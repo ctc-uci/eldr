@@ -497,7 +497,7 @@ export const NewTemplateSection = ({
             borderRadius="5px"
             bg="white"
             _readOnly={{ bg: "white", opacity: 1, cursor: "default" }}
-            _focusVisible={{ borderColor: "#487C9E", boxShadow: "0 0 0 1px #487C9E" }}
+            _focusVisible={{ borderColor: "#002992", boxShadow: "0 0 0 1px #002992" }}
           />
 
           {/* Autocomplete popover for Subject line */}

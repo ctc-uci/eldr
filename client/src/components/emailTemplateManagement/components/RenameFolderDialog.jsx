@@ -144,11 +144,12 @@ export const RenameFolderDialog = ({ folderName = "", onRename, setIsRenaming })
                 h="40px"
                 px="16px"
                 fontSize="14px"
-                fontWeight="500"
                 borderRadius="4px"
-                bg="#487C9E"
+                bg="#002992"
                 color="white"
-                _hover={{ bg: "#3D6B89" }}
+                fontFamily="heading"
+                fontWeight="600"
+                _hover={{ bg: "#001E6C" }}
                 onClick={handleSubmit}
                 disabled={!inputValue.trim()}
               >
