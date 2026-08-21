@@ -65,8 +65,6 @@ export const verifyRole = (requiredRole: string | string[]) => {
 
       res.locals.decodedToken = decodedToken;
 
-      res.locals.decodedToken = decodedToken;
-
       const users = await db.query(
         "SELECT * FROM users WHERE firebase_uid = $1 LIMIT 1",
         [decodedToken.uid]
