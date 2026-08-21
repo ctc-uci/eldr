@@ -17,7 +17,7 @@ export const AdminNavbar = () => {
     { name: "Event Catalog", icon: ClipboardList, path: "/events" },
     { name: "Email Templates", icon: LuMails, path: "/email" },
     { name: "Profiles", icon: Users, path: "/volunteer-management" },
-    { name: "Tags", icon: LuTags, path: "/manage-tags" }
+    { name: "Tags", icon: LuTags, path: "/tags" } // TODO: should be manage-tags once tags is fixed... hahaha... 
   ];
 
   return (
