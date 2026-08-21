@@ -1,5 +1,5 @@
 import { db } from "@/db/db-pgp";
-import schedule from "node-schedule";
+import cron from "node-cron";
 
 import { renderClinicEmailTemplate } from "../common/clinicEmailTemplate.js";
 import { sendEmail } from "./emailService.js";
