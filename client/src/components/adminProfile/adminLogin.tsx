@@ -66,16 +66,22 @@ export const AdminLogin: React.FC = () => {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const usersResponse = await backend.get("/users");
-      const latestUsers = (usersResponse.data ?? []) as UserRecord[];
+      // 1. Authenticate with Firebase first
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
 
-      if (!isAdmin(normalizedEmail, latestUsers)) {
-        setEmailError("Email not found. Please try again.");
+      // 2. Retrieve user role securely using their specific UID
+      const response = await backend.get(`/users/${userCredential.user.uid}`);
+      const userData = Array.isArray(response.data) ? response.data[0] : response.data;
+      const userRole = userData?.role;
+
+      if (userRole !== "staff" && userRole !== "supervisor") {
+        // Not authorized as admin, sign out and show error
+        await signOut(auth);
+        setEmailError("Email not found or not authorized. Please try again.");
         return;
       }
 
-      await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      navigate("/adminDashboard");
+      navigate("/events");
     } catch (error: unknown) {
       const firebaseError = error as { code?: string; message?: string };
 
@@ -122,17 +128,18 @@ export const AdminLogin: React.FC = () => {
 
         await refreshToken();
 
-        const usersResponse = await backend.get("/users");
-        const latestUsers = (usersResponse.data ?? []) as UserRecord[];
+        const response = await backend.get(`/users/${result.user.uid}`);
+        const userData = Array.isArray(response.data) ? response.data[0] : response.data;
+        const userRole = userData?.role;
 
-        if (!isAdmin(ssoEmail, latestUsers)) {
+        if (userRole !== "staff" && userRole !== "supervisor") {
           await signOut(auth);
           clearCookies(new Cookies());
           setSsoError("No staff account exists with those credentials.");
           return;
         }
 
-        navigate("/adminDashboard");
+        navigate("/events");
       } catch (error: unknown) {
         const firebaseError = error as { message?: string };
         await signOut(auth);
