@@ -9,19 +9,19 @@ const isDev = process.env.NODE_ENV === "development";
 
 const host = isDev
   ? process.env.DEV_DB_HOSTNAME
-  : (process.env.PROD_DB_HOSTNAME || process.env.DEV_DB_HOSTNAME);
+  : process.env.PROD_DB_HOSTNAME;
 const user = isDev
   ? process.env.DEV_DB_USERNAME
-  : (process.env.PROD_DB_USERNAME || process.env.DEV_DB_USERNAME);
+  : process.env.PROD_DB_USERNAME;
 const password = isDev
   ? process.env.DEV_DB_PASSWORD
-  : (process.env.PROD_DB_PASSWORD || process.env.DEV_DB_PASSWORD);
+  : process.env.PROD_DB_PASSWORD;
 const database = isDev
   ? process.env.DEV_DB_NAME
-  : (process.env.PROD_DB_NAME || process.env.DEV_DB_NAME);
+  : process.env.PROD_DB_NAME;
 const port = isDev
   ? process.env.DEV_DB_PORT
-  : (process.env.PROD_DB_PORT || process.env.DEV_DB_PORT);
+  : process.env.PROD_DB_PORT;
 
 export const pgp = pgPromise({});
 
