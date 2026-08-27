@@ -15,7 +15,7 @@ const normalizeNullableText = (value) => {
 // Create a new volunteer
 volunteersRouter.post("/", verifyToken, async (req, res) => {
   try {
-    const {
+    let {
       firebaseUid,
       first_name,
       last_name,
@@ -32,6 +32,31 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       state_bar_number,
       listed_experience,
     } = req.body;
+
+    const callerUid = res.locals.decodedToken?.uid;
+    const callerEmail = res.locals.decodedToken?.email;
+
+    // Check if the caller is a staff/supervisor
+    let isStaffOrSupervisor = false;
+    if (callerUid) {
+      const callerRows = await db.query(
+        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+        [callerUid]
+      );
+      const role = callerRows[0]?.role;
+      if (role === "staff" || role === "supervisor") {
+        isStaffOrSupervisor = true;
+      }
+    }
+
+    if (!isStaffOrSupervisor) {
+      // Self-registration: override request body inputs with token details to prevent account manipulation/hijacking
+      if (!callerUid || !callerEmail) {
+        return res.status(401).send("Unauthorized: Invalid session token");
+      }
+      firebaseUid = callerUid;
+      email = callerEmail;
+    }
 
     const normalizedEmail = normalizeNullableText(email);
     if (!normalizedEmail) {
