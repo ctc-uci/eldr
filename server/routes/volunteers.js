@@ -1,7 +1,7 @@
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
-import { verifyRole } from "@/middleware";
+import { verifyRole, verifyToken } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
@@ -13,9 +13,9 @@ const normalizeNullableText = (value) => {
 };
 
 // Create a new volunteer
-volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
+volunteersRouter.post("/", verifyToken, async (req, res) => {
   try {
-    const {
+    let {
       firebaseUid,
       first_name,
       last_name,
@@ -33,9 +33,53 @@ volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
       listed_experience,
     } = req.body;
 
-    const normalizedEmail = normalizeNullableText(email);
+    const callerUid = res.locals.decodedToken?.uid;
+    const callerEmail = res.locals.decodedToken?.email;
+
+    // Check if the caller is a staff/supervisor
+    let isStaffOrSupervisor = false;
+    if (callerUid) {
+      const callerRows = await db.query(
+        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+        [callerUid]
+      );
+      const role = callerRows[0]?.role;
+      if (role === "staff" || role === "supervisor") {
+        isStaffOrSupervisor = true;
+      }
+    }
+
+    if (!isStaffOrSupervisor) {
+      // Self-registration: override request body inputs with token details to prevent account manipulation/hijacking
+      if (!callerUid || !callerEmail) {
+        return res.status(401).send("Unauthorized: Invalid session token");
+      }
+      firebaseUid = callerUid;
+      email = callerEmail;
+    }
+
+    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
     if (!normalizedEmail) {
       return res.status(400).send("email are required");
+    }
+
+    if (!isStaffOrSupervisor) {
+      const existingUser = await db.query(
+        "SELECT id, firebase_uid, role FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+        [normalizedEmail]
+      );
+      if (existingUser.length > 0) {
+        const existing = existingUser[0];
+        if (
+          existing.role === "staff" ||
+          existing.role === "supervisor" ||
+          (existing.firebase_uid && existing.firebase_uid !== firebaseUid)
+        ) {
+          return res.status(409).json({
+            message: "Conflict: This email is already registered to another account.",
+          });
+        }
+      }
     }
 
     const normalizedFirstName = normalizeNullableText(first_name);

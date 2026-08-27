@@ -34,21 +34,36 @@ const enrichUsersWithProfilePicture = async (users: UserRecord[]) =>
 // Create a Firebase custom token for an existing user
 usersRouter.post("/custom-token", async (req, res) => {
   try {
-    const { firebaseUid, email } = req.body as {
+    const { firebaseUid, email, firstName, lastName } = req.body as {
       firebaseUid?: string;
       email?: string;
+      firstName?: string;
+      lastName?: string;
     };
 
     let resolvedFirebaseUid = firebaseUid?.trim();
 
     if (!resolvedFirebaseUid && email?.trim()) {
-      const userByEmail = await db.query(
-        "SELECT firebase_uid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
-        [email.trim()]
-      );
+      let query = "SELECT u.firebase_uid FROM users u";
+      let params = [email.trim()];
+
+      if (firstName?.trim() && lastName?.trim()) {
+        query += `
+          JOIN volunteers v ON u.id = v.id
+          WHERE LOWER(u.email) = LOWER($1)
+            AND LOWER(v.first_name) = LOWER($2)
+            AND LOWER(v.last_name) = LOWER($3)
+          LIMIT 1
+        `;
+        params.push(firstName.trim(), lastName.trim());
+      } else {
+        query += " WHERE LOWER(u.email) = LOWER($1) LIMIT 1";
+      }
+
+      const userByEmail = await db.query(query, params);
 
       if (userByEmail.length === 0) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "User not found or credentials mismatch" });
       }
 
       const row = keysToCamel(userByEmail[0]) as { firebaseUid?: string };

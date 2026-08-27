@@ -59,47 +59,15 @@ const LoginStep: React.FC<Props> = ({ onNavigateToCreateAccount }) => {
         return;
       }
 
-      const response = await backend.get("/volunteers");
-      const volunteers = (response.data ?? []) as VolunteerLookupRow[];
-
-      const f = firstName.trim().toLowerCase();
-      const l = lastName.trim().toLowerCase();
-      const e = email.trim().toLowerCase();
-
-      const match = volunteers.find((v) => {
-        const vf = (v.firstName ?? v.first_name ?? "").toLowerCase().trim();
-        const vl = (v.lastName ?? v.last_name ?? "").toLowerCase().trim();
-        const ve = (v.email ?? "").toLowerCase().trim();
-
-        return vf === f && vl === l && ve === e;
-      });
-
-      if (!match) {
-        const firstExists = volunteers.some(
-          (v) => (v.firstName ?? v.first_name ?? "").toLowerCase().trim() === f
-        );
-
-        const lastExists = volunteers.some(
-          (v) => (v.lastName ?? v.last_name ?? "").toLowerCase().trim() === l
-        );
-
-        const emailExists = volunteers.some(
-          (v) => (v.email ?? "").toLowerCase().trim() === e
-        );
-
-        setFirstNameError(!firstExists);
-        setLastNameError(firstExists && !lastExists);
-        setEmailError(firstExists && lastExists && !emailExists);
-
-        if (!firstExists) setFirstName("");
-        if (firstExists && !lastExists) setLastName("");
-        if (firstExists && lastExists && !emailExists) setEmail("");
-
-        return;
-      }
-
       const tokenResponse = await backend.post("/users/custom-token", {
-        email: match.email!.toLowerCase().trim(),
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      }).catch((err: any) => {
+        if (err.response?.status === 404) {
+          throw new Error("No account found matching this first name, last name, and email.");
+        }
+        throw err;
       });
 
       const customToken = tokenResponse.data?.customToken;

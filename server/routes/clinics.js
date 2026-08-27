@@ -493,21 +493,48 @@ clinicsRouter.get(
 // Workshop Registration Routes
 clinicsRouter.get(
   "/:clinicId/registrations",
-  verifyRole("staff"),
+  verifyRole(["volunteer", "staff"]),
   async (req, res) => {
     try {
       const { clinicId } = req.params;
-      const data = await db.query(
-        `
-        SELECT 
-            v.*, cr.has_attended
-        FROM clinics c
-        JOIN clinic_registration cr ON cr.clinic_id = c.id
-        JOIN volunteers v ON v.id = cr.volunteer_id
-        WHERE c.id = $1;
-        `,
-        [clinicId]
-      );
+
+      let user = res.locals.user;
+      if (!user && res.locals.decodedToken?.uid) {
+        const users = await db.query(
+          "SELECT * FROM users WHERE firebase_uid = $1 LIMIT 1",
+          [res.locals.decodedToken.uid]
+        );
+        user = users[0];
+      }
+
+      const role = user?.role;
+
+      let data;
+      if (role === "volunteer") {
+        data = await db.query(
+          `
+          SELECT 
+              v.id, v.first_name, v.last_name, v.email, cr.has_attended
+          FROM clinics c
+          JOIN clinic_registration cr ON cr.clinic_id = c.id
+          JOIN volunteers v ON v.id = cr.volunteer_id
+          WHERE c.id = $1 AND v.id = $2;
+          `,
+          [clinicId, user.id]
+        );
+      } else {
+        data = await db.query(
+          `
+          SELECT 
+              v.*, cr.has_attended
+          FROM clinics c
+          JOIN clinic_registration cr ON cr.clinic_id = c.id
+          JOIN volunteers v ON v.id = cr.volunteer_id
+          WHERE c.id = $1;
+          `,
+          [clinicId]
+        );
+      }
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
