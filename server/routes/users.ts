@@ -47,18 +47,18 @@ usersRouter.post("/custom-token", async (req, res) => {
       let query = "SELECT u.firebase_uid FROM users u";
       let params = [email.trim()];
 
-      if (firstName?.trim() && lastName?.trim()) {
-        query += `
+      if (!firstName?.trim() || !lastName?.trim()) {
+        return res.status(400).json({ message: "firstName and lastName are required" });
+      }
+
+      query += `
           JOIN volunteers v ON u.id = v.id
           WHERE LOWER(u.email) = LOWER($1)
             AND LOWER(v.first_name) = LOWER($2)
             AND LOWER(v.last_name) = LOWER($3)
           LIMIT 1
         `;
-        params.push(firstName.trim(), lastName.trim());
-      } else {
-        query += " WHERE LOWER(u.email) = LOWER($1) LIMIT 1";
-      }
+      params.push(firstName.trim(), lastName.trim());
 
       const userByEmail = await db.query(query, params);
 
