@@ -75,6 +75,7 @@ export const verifyRole = (requiredRole: string | string[]) => {
 
       // supervisors can access all protected routes
       if (dbRole === "supervisor" || (dbRole !== undefined && allowedRoles.includes(dbRole))) {
+        res.locals.user = users.at(0);
         next();
       } else {
         res

@@ -1,42 +1,106 @@
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
-import { verifyRole } from "@/middleware";
+import { verifyRole, verifyToken } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
 
 const normalizeNullableText = (value) => {
-  if (value == null) return null;
+  if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
   return normalized === "" ? null : normalized;
 };
 
 // Create a new volunteer
-volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
+volunteersRouter.post("/", verifyToken, async (req, res) => {
   try {
     const {
-      firebaseUid,
+      firebaseUid: reqFirebaseUid,
       first_name,
       last_name,
-      email,
+      email: reqEmail,
       phone_number,
       form_completed,
       form_link,
-      is_signed_confidentiality,
-      is_attorney,
-      is_notary,
+      is_signed_confidentiality: reqIsSignedConfidentiality,
+      is_attorney: reqIsAttorney,
+      is_notary: reqIsNotary,
       affiliated_employer,
-      law_school_year,
-      state_bar_certificate,
-      state_bar_number,
+      law_school_year: reqLawSchoolYear,
+      state_bar_certificate: reqStateBarCertificate,
+      state_bar_number: reqStateBarNumber,
       listed_experience,
     } = req.body;
 
-    const normalizedEmail = normalizeNullableText(email);
+    let firebaseUid = reqFirebaseUid;
+    let email = reqEmail;
+    let is_attorney = reqIsAttorney;
+    let is_notary = reqIsNotary;
+    let state_bar_certificate = reqStateBarCertificate;
+    let state_bar_number = reqStateBarNumber;
+    let law_school_year = reqLawSchoolYear;
+    let is_signed_confidentiality = reqIsSignedConfidentiality;
+
+    const callerUid = res.locals.decodedToken?.uid;
+    const callerEmail = res.locals.decodedToken?.email;
+
+    // Check if the caller is a staff/supervisor
+    let isStaffOrSupervisor = false;
+    if (callerUid) {
+      const callerRows = await db.query(
+        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+        [callerUid]
+      );
+      const role = callerRows[0]?.role;
+      if (role === "staff" || role === "supervisor") {
+        isStaffOrSupervisor = true;
+      }
+    }
+
+    if (!isStaffOrSupervisor) {
+      // Self-registration: override request body inputs with token details to prevent account manipulation/hijacking
+      if (!callerUid || !callerEmail) {
+        return res.status(401).send("Unauthorized: Invalid session token");
+      }
+      firebaseUid = callerUid;
+      email = callerEmail;
+
+      // Prevent self-asserting credentials/confidentiality fields during self-registration
+      is_attorney = false;
+      is_notary = false;
+      state_bar_certificate = null;
+      state_bar_number = null;
+      law_school_year = null;
+      is_signed_confidentiality = false;
+    }
+
+    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
     if (!normalizedEmail) {
       return res.status(400).send("email are required");
     }
+
+    // Always query if a user with this email exists case-insensitively
+    const existingUserRows = await db.query(
+      "SELECT id, firebase_uid, role, email FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+      [normalizedEmail]
+    );
+    const existingUser = existingUserRows[0];
+
+    if (!isStaffOrSupervisor && existingUser) {
+      if (
+        existingUser.role === "staff" ||
+        existingUser.role === "supervisor" ||
+        (existingUser.firebase_uid && existingUser.firebase_uid !== firebaseUid)
+      ) {
+        return res.status(409).json({
+          message: "Conflict: This email is already registered to another account.",
+        });
+      }
+    }
+
+    // Use the exact database casing of the email if it exists, to avoid constraint mismatches and duplicate rows
+    const emailToUse = existingUser ? existingUser.email : normalizedEmail;
 
     const normalizedFirstName = normalizeNullableText(first_name);
     const normalizedLastName = normalizeNullableText(last_name);
@@ -56,15 +120,20 @@ volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
           INSERT INTO users (email, firebase_uid, role)
           VALUES ($1, $2, 'volunteer')
           ON CONFLICT (email) DO UPDATE
-            SET firebase_uid = EXCLUDED.firebase_uid,
+            SET firebase_uid = COALESCE(users.firebase_uid, EXCLUDED.firebase_uid),
                 role = CASE
                   WHEN users.role = 'guest' THEN 'volunteer'
                   ELSE users.role
                 END
           RETURNING id, email, firebase_uid, role;
         `,
-        [normalizedEmail, firebaseUid ?? null]
+        [emailToUse, firebaseUid ?? null]
       );
+
+      // Verify that the firebase_uid matches (atomic ownership decision)
+      if (firebaseUid && userResult.firebase_uid !== firebaseUid) {
+        throw new Error("Conflict: This email is already linked to another account.");
+      }
 
       const volunteerResult = await t.one(
         `
@@ -107,7 +176,7 @@ volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
           userResult.id,
           normalizedFirstName,
           normalizedLastName,
-          normalizedEmail,
+          emailToUse,
           normalizedPhoneNumber,
           form_completed ?? null,
           normalizeNullableText(form_link),
@@ -130,6 +199,9 @@ volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(result.volunteer));
   } catch (e) {
+    if (e.message?.includes("Conflict:")) {
+      return res.status(409).send(e.message);
+    }
     res.status(500).send(e.message);
   }
 });
