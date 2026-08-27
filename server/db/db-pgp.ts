@@ -5,26 +5,11 @@ import pgPromise from "pg-promise";
 
 dotenv.config();
 
-const host =
-  process.env.NODE_ENV === "development"
-    ? process.env.DEV_DB_HOSTNAME
-    : process.env.PROD_DB_HOSTNAME;
-const user =
-  process.env.NODE_ENV === "development"
-    ? process.env.DEV_DB_USERNAME
-    : process.env.PROD_DB_USERNAME;
-const password =
-  process.env.NODE_ENV === "development"
-    ? process.env.DEV_DB_PASSWORD
-    : process.env.PROD_DB_PASSWORD;
-const database =
-  process.env.NODE_ENV === "development"
-    ? process.env.DEV_DB_NAME
-    : process.env.PROD_DB_NAME;
-const port =
-  process.env.NODE_ENV === "development"
-    ? process.env.DEV_DB_PORT
-    : process.env.PROD_DB_PORT;
+const host = process.env.PROD_DB_HOSTNAME || process.env.DEV_DB_HOSTNAME;
+const user = process.env.PROD_DB_USERNAME || process.env.DEV_DB_USERNAME;
+const password = process.env.PROD_DB_PASSWORD || process.env.DEV_DB_PASSWORD;
+const database = process.env.PROD_DB_NAME || process.env.DEV_DB_NAME;
+const port = process.env.PROD_DB_PORT || process.env.DEV_DB_PORT;
 
 export const pgp = pgPromise({});
 

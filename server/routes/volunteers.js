@@ -1,7 +1,7 @@
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
-import { verifyRole } from "@/middleware";
+import { verifyRole, verifyToken } from "@/middleware";
 import { Router } from "express";
 
 export const volunteersRouter = Router();
@@ -13,7 +13,7 @@ const normalizeNullableText = (value) => {
 };
 
 // Create a new volunteer
-volunteersRouter.post("/", verifyRole("staff"), async (req, res) => {
+volunteersRouter.post("/", verifyToken, async (req, res) => {
   try {
     const {
       firebaseUid,
