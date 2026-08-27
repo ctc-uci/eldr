@@ -45,7 +45,7 @@ usersRouter.post("/custom-token", async (req, res) => {
 
     if (!resolvedFirebaseUid && email?.trim()) {
       let query = "SELECT u.firebase_uid FROM users u";
-      let params = [email.trim()];
+      const params = [email.trim()];
 
       if (!firstName?.trim() || !lastName?.trim()) {
         return res.status(400).json({ message: "firstName and lastName are required" });
