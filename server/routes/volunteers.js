@@ -58,9 +58,28 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       email = callerEmail;
     }
 
-    const normalizedEmail = normalizeNullableText(email);
+    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
     if (!normalizedEmail) {
       return res.status(400).send("email are required");
+    }
+
+    if (!isStaffOrSupervisor) {
+      const existingUser = await db.query(
+        "SELECT id, firebase_uid, role FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+        [normalizedEmail]
+      );
+      if (existingUser.length > 0) {
+        const existing = existingUser[0];
+        if (
+          existing.role === "staff" ||
+          existing.role === "supervisor" ||
+          (existing.firebase_uid && existing.firebase_uid !== firebaseUid)
+        ) {
+          return res.status(409).json({
+            message: "Conflict: This email is already registered to another account.",
+          });
+        }
+      }
     }
 
     const normalizedFirstName = normalizeNullableText(first_name);
