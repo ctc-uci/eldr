@@ -99,7 +99,7 @@ export const TopBar = ({
               }}
             >
               <LuCalendarDays size={16} />
-              All Events
+              All Opportunities
             </Tabs.Trigger>
 
             <Tabs.Trigger
@@ -122,7 +122,7 @@ export const TopBar = ({
               }}
             >
               <LuUserCheck size={16} />
-              My Events
+              My Opportunities
             </Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>

@@ -1,13 +1,20 @@
-import { Box, Flex, Heading, Link, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Image, Link, Text } from "@chakra-ui/react";
 import React from "react";
 import { LuExternalLink } from "react-icons/lu";
 
 type Props = {
   children: React.ReactNode;
   rightPy?: string | object;
+  heading?: string;
+  subtitle?: string;
 };
 
-export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) => {
+export const LoginCardLayout: React.FC<Props> = ({
+  children,
+  rightPy = "10%",
+  heading = "Community Counsel Pro Bono Volunteer Portal",
+  subtitle = "Need help? Visit our website ",
+}) => {
   return (
     <Flex
       w="80vw"
@@ -28,7 +35,14 @@ export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) 
         align="center"
         px="2%"
         py="1%"
-      />
+      >
+        <Image
+          src="/cc-logo-horizontal.svg"
+          alt="Community Counsel"
+          h={{ base: "32px", md: "42px" }}
+          objectFit="contain"
+        />
+      </Flex>
 
       <Flex flex="1" direction={{ base: "column", md: "row" }}>
         <Flex
@@ -50,13 +64,13 @@ export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) 
               mb="12px"
               lineHeight="1.2"
             >
-              Community Counsel's Event Portal
+              {heading}
             </Heading>
             <Text
               fontSize={{ base: "14px", md: "16px", lg: "18px" }}
               color="black"
             >
-              Need help? Visit our website{" "}
+              {subtitle}
               <Link
                 href="https://eldrcenter.org/"
                 display="inline-flex"

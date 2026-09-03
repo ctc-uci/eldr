@@ -125,7 +125,7 @@ export const EventInfo = ({
               fontWeight={600}
               fontSize="lg"
             >
-              You aren't registered for any upcoming events yet.
+              You aren't registered for any upcoming pro bono opportunities yet.
             </Text>
             <Text
               fontSize="sm"
@@ -143,7 +143,7 @@ export const EventInfo = ({
               onClick={() => navigate("/event-catalog/all-events")}
             >
               <LuCalendarDays />
-              View All Events
+              View All Opportunities
             </Button>
           </>
         )}

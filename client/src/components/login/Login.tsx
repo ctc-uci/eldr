@@ -32,7 +32,7 @@ export const Login: React.FC = () => {
             mb={{ base: "24px", md: "32px" }}
             fontStyle="italic"
           >
-            Indicate if you're a staff member or volunteer.
+            Indicate whether you are a staff member or pro bono volunteer.
           </Text>
 
           <Button
@@ -104,7 +104,7 @@ export const Login: React.FC = () => {
             >
               <LuUser size={16} />
             </Box>
-            <Text textAlign="center">Volunteer</Text>
+            <Text textAlign="center">Pro Bono Volunteer</Text>
             <Box
               position="absolute"
               right="20px"

@@ -6,6 +6,7 @@ import {
   Select,
   Flex,
   Heading,
+  Image,
   Progress,
   Text,
   createListCollection,
@@ -71,6 +72,12 @@ const RoleStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
 
         <Flex
@@ -96,13 +103,13 @@ const RoleStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Volunteer Account Creation
+                Pro Bono Volunteer Registration
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Please select your role from the choices provided.
+                Please select your professional role for pro bono volunteer opportunities.
               </Text>
             </Box>
           </Flex>

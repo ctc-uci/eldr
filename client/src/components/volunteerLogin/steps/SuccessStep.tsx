@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   Heading,
+  Image,
   Progress,
   Text,
 } from "@chakra-ui/react";
@@ -38,6 +39,12 @@ const SuccessStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
 
         <Flex
@@ -63,13 +70,13 @@ const SuccessStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Account Creation
+                Registration Complete!
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="black"
               >
-                Your account has been created.
+                Your pro bono volunteer account has been created.
               </Text>
             </Box>
 
@@ -117,7 +124,7 @@ const SuccessStep = ({ onNext }: Props) => {
                     </Text>
 
                     <Text fontSize="14px" color="#116932" fontWeight="medium">
-                      Use your new credentials to log in to the portal.
+                      Use your new credentials to log in to the Pro Bono Volunteer Portal.
                     </Text>
                   </Box>
 

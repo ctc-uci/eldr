@@ -9,7 +9,6 @@ import {
   HStack,
   Image,
   Input,
-  Link,
   Progress,
   Text,
 } from "@chakra-ui/react";
@@ -18,7 +17,6 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import {
   LuArrowRight,
-  LuChevronDown,
   LuX,
   LuSearch,
 } from "react-icons/lu";
@@ -374,6 +372,12 @@ const LawInterestStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
 
         <Flex
@@ -399,13 +403,13 @@ const LawInterestStep = ({ onNext }: Props) => {
                 color="black"
                 mb="25px"
               >
-                Volunteer Account Creation
+                Pro Bono Practice Areas
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="black"
               >
-                Select areas of law you have prior experience in or are interested in assisting cases for. 
+                Select areas of law you have prior experience in or are interested in volunteering for during pro bono clinics.
               </Text>
             </Box>
           </Flex>

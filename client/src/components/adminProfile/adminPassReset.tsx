@@ -28,7 +28,6 @@ import { MdOutlineEmail } from "react-icons/md";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import logo from "./ELDR_Logo.png";
 
 export const AdminPassReset: React.FC = () => {
   const navigate = useNavigate();
@@ -71,8 +70,13 @@ export const AdminPassReset: React.FC = () => {
         zIndex={0}
       />
       <VStack minH="80vh" borderRadius="sm" borderWidth="1px" borderColor="#E4E4E7" zIndex={1} gap={0}>
-        <Flex w="80vw" bg="#F6F6F6" h="70px" align="left" px="2%" py="1%">
-          <Image src={logo} />
+        <Flex w="80vw" bg="#F6F6F6" h="70px" align="center" px="2%" py="1%">
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
 
         <Flex flex="1" w="100%" bg="white">

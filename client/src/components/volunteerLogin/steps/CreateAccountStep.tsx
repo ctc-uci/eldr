@@ -5,6 +5,7 @@ import {
   Button,
   Flex,
   Heading,
+  Image,
   Input,
   Link,
   Text,
@@ -87,7 +88,14 @@ const CreateAccountStep = ({ onNext }: Props) => {
           align="center"
           px="2%"
           py="1%"
-        />
+        >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
+        </Flex>
 
         <Flex
           flex="1"
@@ -112,14 +120,13 @@ const CreateAccountStep = ({ onNext }: Props) => {
                 mb="20px"
                 lineHeight="1.2"
               >
-                Community Counsel's Event Portal
+                Pro Bono Volunteer Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "24px" }}
                 color="black"
               >
-                Fill out the following information to start your account creation
-                process{" "}
+                Fill out the following information to create your pro bono volunteer account and get started with Community Counsel{" "}
                 <Link
                   href="https://eldrcenter.org/"
                   display="inline-flex"

@@ -153,7 +153,7 @@ export const AdminLogin: React.FC = () => {
 
   return (
     <LoginLayout>
-      <LoginCardLayout>
+      <LoginCardLayout heading="Community Counsel Staff & Admin Portal">
         <LoginFormField
           label="Email"
           required

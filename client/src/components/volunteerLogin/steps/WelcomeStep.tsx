@@ -20,7 +20,6 @@ import {
   LuUser,
 } from "react-icons/lu";
 
-import logo from "../../../assets/EldrLogo.png";
 import LoginLayout from "./BackgroundLayout";
 
 type Props = {
@@ -52,9 +51,9 @@ const WelcomeStep = ({ onNext }: Props) => {
           py="1%"
         >
           <Image
-            src={logo}
-            alt="ELDR Logo"
-            h={{ base: "32px", md: "45px" }}
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
             objectFit="contain"
           />
         </Flex>
@@ -81,13 +80,13 @@ const WelcomeStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Welcome to CC Login Portal by Community Counsel
+                Welcome to the Pro Bono Volunteer Portal
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "18px" }}
                 color="gray.600"
               >
-                Indicate whether you are a staff member or volunteer
+                Sign in or register to discover pro bono legal opportunities and volunteer clinics with Community Counsel.
               </Text>
             </Box>
 

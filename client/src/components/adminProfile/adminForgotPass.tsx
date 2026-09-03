@@ -23,7 +23,6 @@ import { FiFacebook, FiLinkedin } from "react-icons/fi";
 import { MdOutlineEmail } from "react-icons/md";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import logo from "./ELDR_Logo.png";
 
 export const AdminForgotPass: React.FC = () => {
   const navigate = useNavigate();
@@ -94,11 +93,16 @@ export const AdminForgotPass: React.FC = () => {
           w="80vw"
           bg="#F6F6F6"
           h="70px"
-          align="left"
+          align="center"
           px="2%"
           py="1%"
         >
-          <Image src={logo} />
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
         <Flex
           flex="1"
@@ -120,7 +124,7 @@ export const AdminForgotPass: React.FC = () => {
               Account Confirmation Verification
             </Text>
             <Text mb={6} pb="15%">
-              Enter your ELDR account email and we'll send you a link to reset
+              Enter your Community Counsel account email and we'll send you a link to reset
               your password.
             </Text>
             <Text fontWeight="bold">Need help?</Text>

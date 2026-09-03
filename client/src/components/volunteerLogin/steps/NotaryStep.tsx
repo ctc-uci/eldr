@@ -6,6 +6,7 @@ import {
   Select,
   Flex,
   Heading,
+  Image,
   Progress,
   Text,
   useListCollection,
@@ -75,6 +76,12 @@ const NotaryStep = ({ onNext }: Props) => {
           px="2%"
           py="1%"
         >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
         </Flex>
 
         <Flex
@@ -100,13 +107,13 @@ const NotaryStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Volunteer Account Creation
+                Pro Bono Volunteer Registration
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Please indicate whether or not you are an active notary.
+                Please indicate whether you are an active notary to support pro bono clients.
               </Text>
             </Box>
           </Flex>

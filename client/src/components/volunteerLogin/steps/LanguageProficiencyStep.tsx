@@ -5,6 +5,7 @@ import {
   Button,
   Flex,
   Heading,
+  Image,
   Progress,
   Text,
 } from "@chakra-ui/react";
@@ -215,7 +216,14 @@ const LanguageProficiencyStep = ({ onNext }: Props) => {
         overflow="hidden"
       >
         {/* Top bar */}
-        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%">
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
+        </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
@@ -237,10 +245,10 @@ const LanguageProficiencyStep = ({ onNext }: Props) => {
                 color="black"
                 mb="12px"
               >
-                Volunteer Account Creation
+                Pro Bono Language Skills
               </Heading>
               <Text fontSize={{ base: "14px", md: "16px", lg: "20px" }} color="black">
-                Indicate your level of proficiency for each language selected.
+                Indicate your level of proficiency for each language selected to support pro bono clients.
               </Text>
             </Box>
           </Flex>

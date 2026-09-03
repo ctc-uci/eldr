@@ -6,6 +6,7 @@ import {
   Checkbox,
   Flex,
   Heading,
+  Image,
   Input,
   Progress,
   Text,
@@ -408,7 +409,14 @@ const LanguageStep = ({ onNext }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%">
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
+        </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
@@ -430,12 +438,12 @@ const LanguageStep = ({ onNext }: Props) => {
                 color="black"
                 mb="28px"
               >
-                Volunteer Account Creation
+                Pro Bono Language Skills
               </Heading>
               <Text fontSize={{ base: "14px", md: "16px", lg: "20px" }} color="black">
-                Select any languages you speak and your level of proficiency.
+                Select any languages you speak to support diverse pro bono legal clients.
                 <br /><br />
-                Be as accurate as possible. Volunteers may be asked to assist/dictate in languages they indicate.
+                Be as accurate as possible. Volunteers may be asked to assist or translate in languages they indicate.
               </Text>
             </Box>
           </Flex>

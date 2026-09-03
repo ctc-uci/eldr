@@ -5,6 +5,7 @@ import {
   Button,
   Flex,
   Heading,
+  Image,
   Input,
   Link,
   Progress,
@@ -91,7 +92,14 @@ const BackgroundStep = ({
           align="center"
           px="2%"
           py="1%"
-        />
+        >
+          <Image
+            src="/cc-logo-horizontal.svg"
+            alt="Community Counsel"
+            h={{ base: "32px", md: "42px" }}
+            objectFit="contain"
+          />
+        </Flex>
 
         <Flex
           flex="1"
@@ -116,13 +124,13 @@ const BackgroundStep = ({
                 color="black"
                 mb="12px"
               >
-                Account Creation
+                Volunteer Disclosures & Background
               </Heading>
               <Text
                 fontSize={{ base: "14px", md: "16px", lg: "22px" }}
                 color="gray.600"
               >
-                Fill out the following information.
+                Complete your pro bono volunteer onboarding by confirming required disclosures.
               </Text>
             </Box>
           </Flex>

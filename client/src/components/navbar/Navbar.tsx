@@ -48,7 +48,7 @@ export const Navbar = () => {
           _hover={{ color: "#15A9EA", textDecoration: "none" }}
         >
           <ClipboardList size={16} />
-          <Text>Event Catalog</Text>
+          <Text>Pro Bono Opportunities</Text>
         </Link>
 
         {/* TODO: wire Avatar.Image to the volunteer's real profile photo */}

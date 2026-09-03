@@ -73,7 +73,7 @@ const RouteTitleHandler = () => {
     } else if (path.startsWith("/tags") || path.startsWith("/manage-tags")) {
       document.title = "Tag Management | Community Counsel";
     } else if (path.startsWith("/event-catalog")) {
-      document.title = "Event Catalog | Community Counsel";
+      document.title = "Pro Bono Opportunities | Community Counsel";
     } else if (path === "/admin") {
       document.title = "Admin Console | Community Counsel";
     } else if (path === "/signup") {
