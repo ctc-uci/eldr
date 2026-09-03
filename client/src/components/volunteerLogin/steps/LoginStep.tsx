@@ -195,7 +195,7 @@ const LoginStep: React.FC<Props> = ({ onNavigateToCreateAccount }) => {
         <Text fontSize="13px" color="gray.500" textAlign="center">
           <Link
             href="#"
-            color="#3182CE"
+            color="#15A9EA"
             textDecoration="underline"
             onClick={(e) => {
               e.preventDefault();

@@ -20,7 +20,6 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { buildAppliedTo, type TagItem } from "./types";
-import { StaffSidebar } from "./StaffSidebar";
 import { TagRow } from "./TagRow";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CreateTagView } from "./CreateTagView";
@@ -166,9 +165,7 @@ export const TagManagement = () => {
   }, [location.pathname, tagFromState, navigate]);
 
   return (
-    <Flex h="100vh" bg="white">
-      <StaffSidebar />
-
+    <Box minH="100vh" bg="white" w="full">
       {isCreateRoute ? (
         <CreateTagView
           onCancel={handleCancelCreate}
@@ -189,7 +186,7 @@ export const TagManagement = () => {
           submitLabel="Save Changes"
         />
       ) : (
-        <Box flex={1} overflow="auto" px="70px" py="60px">
+        <Box px="70px" py="60px">
           <Flex align="center" gap="20px" mb="10px">
             <SearchAutocomplete
               searchQuery={searchQuery}
@@ -332,6 +329,6 @@ export const TagManagement = () => {
           </Box>
         </Box>
       )}
-    </Flex>
+    </Box>
   );
 };

@@ -176,7 +176,7 @@ export const CreatedEvent = () => {
         </Text>
         <Text color="gray.400">›</Text>
         <Text
-          color="blue.600"
+          color="#002992"
         >
           View Event
         </Text>

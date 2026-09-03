@@ -130,7 +130,7 @@ const NotaryStep = ({ onNext }: Props) => {
               mb="24px"
             >
               <Progress.Track>
-                <Progress.Range bg="#0088FF" />
+                <Progress.Range bg="#002992" />
               </Progress.Track>
             </Progress.Root>
 
@@ -179,7 +179,7 @@ const NotaryStep = ({ onNext }: Props) => {
                   bg="white"
                   fontSize="14px"
                   _hover={{ borderColor: "#CBD5E1" }}
-                  _focus={{ borderColor: "#3182CE", boxShadow: "0 0 0 1px #3182CE" }}
+                  _focus={{ borderColor: "#15A9EA", boxShadow: "0 0 0 1px #15A9EA" }}
                 >
                   <Select.ValueText placeholder="Select status" />
 

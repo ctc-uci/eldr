@@ -88,7 +88,7 @@ const SuccessStep = ({ onNext }: Props) => {
               size="xs"
             >
               <Progress.Track>
-                <Progress.Range bg="#0088FF" />
+                <Progress.Range bg="#002992" />
               </Progress.Track>
             </Progress.Root>
 

@@ -127,7 +127,7 @@ export const AdminForgotPass: React.FC = () => {
             <Text fontWeight="bold">Visit our website</Text>
             <Link
               textDecoration="underline"
-              color="#3182CE"
+              color="#15A9EA"
               bg="white"
               href="https://eldrcenter.org/"
               pt="2%"
@@ -239,7 +239,7 @@ export const AdminForgotPass: React.FC = () => {
               <Text fontSize="sm">
                 Go back to{" "}
                 <Link
-                  color="#3182CE"
+                  color="#15A9EA"
                   textDecoration="underline"
                   href={loginRoute}
                 >

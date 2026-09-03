@@ -109,7 +109,7 @@ const WelcomeStep = ({ onNext }: Props) => {
               </Text>
               <Link
                 href="https://eldrcenter.org/"
-                color="#3182CE"
+                color="#15A9EA"
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 textDecoration="underline"
               >

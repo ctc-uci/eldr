@@ -204,11 +204,11 @@ export const StaffList = ({
             <Table.Row
               key={member.id}
               bg={
-                !isList && checkedIds.has(member.id) ? "blue.50" : "transparent"
+                !isList && checkedIds.has(member.id) ? "#EFF6FF" : "transparent"
               }
               boxShadow={
                 selectedId === member.id
-                  ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)"
+                  ? "inset 0 0 0 1.5px #15A9EA"
                   : undefined
               }
               _hover={{ bg: "gray.50", cursor: "pointer" }}

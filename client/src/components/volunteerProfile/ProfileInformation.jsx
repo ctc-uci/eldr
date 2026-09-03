@@ -38,7 +38,7 @@ const ReadValue = ({ children, muted }) => (
   </Text>
 );
 
-const editBlue = "#3B6F8F";
+const editBlue = "#002992";
 
 export const ProfileInformation = ({
   data,
@@ -181,7 +181,7 @@ export const ProfileInformation = ({
                 size="sm"
                 minW="120px"
                 borderRadius="md"
-                _hover={{ bg: "#2B6CB0" }}
+                _hover={{ bg: "#001E6C" }}
                 onClick={onSave}
                 loading={isSaving}
                 disabled={isSaving}
@@ -208,7 +208,7 @@ export const ProfileInformation = ({
               color="white"
               size="sm"
               borderRadius="md"
-              _hover={{ bg: "#2B6CB0" }}
+              _hover={{ bg: "#001E6C" }}
               onClick={onEdit}
             >
               <HStack gap={2}>

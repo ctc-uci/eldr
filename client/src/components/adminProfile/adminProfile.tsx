@@ -64,7 +64,7 @@ const lastNameLooksLikeRoleLabel = (last: string, userRole: string): boolean => 
   return LEGACY_ROLE_LABEL_LAST_NAMES.has(lower);
 };
 
-const editBlue = "#3B6F8F";
+const editBlue = "#002992";
 
 export const AdminProfile = () => {
   const navigate = useNavigate();
@@ -360,7 +360,7 @@ export const AdminProfile = () => {
                   <Button
                     bg={editBlue}
                     color="white"
-                    _hover={{ bg: editBlue }}
+                    _hover={{ bg: "#001E6C" }}
                     borderRadius="4px"
                     h="36px"
                     px={6}
@@ -393,7 +393,7 @@ export const AdminProfile = () => {
                 <Button
                   bg={editBlue}
                   color="white"
-                  _hover={{ bg: editBlue }}
+                  _hover={{ bg: "#001E6C" }}
                   borderRadius="4px"
                   px={4}
                   py={4}

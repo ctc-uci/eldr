@@ -125,7 +125,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
                   display="inline-flex"
                   alignItems="center"
                 >
-                  <LuExternalLink size={20} color="#2563EB" />
+                  <LuExternalLink size={20} color="#15A9EA" />
                 </Link>
               </Text>
             </Box>

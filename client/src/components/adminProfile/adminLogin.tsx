@@ -198,7 +198,7 @@ export const AdminLogin: React.FC = () => {
         <Box w="30vw" minW="320px" maxW="460px" textAlign="right" mt="-4px">
           <Link
             textDecoration="underline"
-            color="#3182CE"
+            color="#15A9EA"
             href="/adminForgotPass?from=admin"
             fontSize={{ base: "13px", md: "14px" }}
           >

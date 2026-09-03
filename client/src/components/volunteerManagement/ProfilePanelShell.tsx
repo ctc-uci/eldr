@@ -71,7 +71,7 @@ export const ProfilePanelShell = ({
         </Breadcrumb.Item>
         <Breadcrumb.Separator />
         <Breadcrumb.Item>
-          <Breadcrumb.CurrentLink color="#2563EB">{name}</Breadcrumb.CurrentLink>
+          <Breadcrumb.CurrentLink color="#002992">{name}</Breadcrumb.CurrentLink>
         </Breadcrumb.Item>
       </Breadcrumb.List>
     </Breadcrumb.Root>

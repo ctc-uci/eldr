@@ -68,10 +68,10 @@ export const Playground = () => {
                   borderRadius="md"
                   cursor="pointer"
                   gap={3}
-                  bg={isActive ? "#D8F1FF" : "transparent"}
-                  color={isActive ? "#5797BD" : "#294A5F"}
+                  bg={isActive ? "#E8F6FC" : "transparent"}
+                  color={isActive ? "#002992" : "#4A5568"}
                   _hover={{ 
-                    bg: isActive ? "#D8F1FF" : "gray.100",
+                    bg: isActive ? "#E8F6FC" : "gray.100",
                   }}
                 >
                   <IconComponent size="clamp(18px, 1.5vw, 20px)" />

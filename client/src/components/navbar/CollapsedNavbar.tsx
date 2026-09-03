@@ -82,7 +82,7 @@ export const CollapsedNavbar = () => {
             title="Tags"
             aria-label="Tags"
             {...navIconButtonProps}
-            onClick={() => navigate("/tags")}
+            onClick={() => navigate("/manage-tags")}
           >
             <LuTags size={22} />
           </IconButton>

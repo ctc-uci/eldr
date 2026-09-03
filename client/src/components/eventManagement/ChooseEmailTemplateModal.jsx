@@ -244,10 +244,10 @@ const FolderTemplatesCollapsible = ({
                   fontWeight="normal"
                   color="gray.700"
                   rounded="none"
-                  bg={selected ? "blue.50" : "transparent"}
+                  bg={selected ? "#E8F6FC" : "transparent"}
                   borderLeftWidth={selected ? "3px" : "0"}
-                  borderLeftColor="blue.500"
-                  _hover={{ bg: selected ? "blue.50" : "gray.50" }}
+                  borderLeftColor="#002992"
+                  _hover={{ bg: selected ? "#E8F6FC" : "gray.50" }}
                   onClick={() => onSelectTemplate(t)}
                 >
                   {t.name}

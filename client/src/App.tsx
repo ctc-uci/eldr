@@ -129,6 +129,8 @@ const App = () => {
                   />
                   <Route path="/events" element={<EventManagement />} />
                   <Route path="/manage-tags/*" element={<TagManagement />} />
+                  <Route path="/tags/*" element={<Navigate to="/manage-tags" replace />} />
+                  <Route path="/tags" element={<Navigate to="/manage-tags" replace />} />
                   <Route
                     path="/admin"
                     element={

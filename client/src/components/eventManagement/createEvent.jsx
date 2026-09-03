@@ -328,7 +328,7 @@ export const CreateEvent = () => {
     h: "44px",
     color: "gray.500",
     _placeholder: { color: "gray.400" },
-    _focus: { borderColor: "blue.400", boxShadow: "none" },
+    _focus: { borderColor: "#15A9EA", boxShadow: "none" },
   };
 
   const formatTime = (value) => {
@@ -480,13 +480,13 @@ export const CreateEvent = () => {
         </Text>
         <Text color="gray.400">›</Text>
         {isEditing ? (
-          <Text color="blue.600">Edit Event</Text>
+          <Text color="#002992">Edit Event</Text>
         ) : isDuplicating ? (
-          <Text color="blue.500" cursor="pointer" onClick={() => navigate("/events")}>
+          <Text color="#002992" cursor="pointer" onClick={() => navigate("/events")}>
             Duplicate Event
           </Text>
         ) : (
-          <Text color="blue.600">Create New Event</Text>
+          <Text color="#002992">Create New Event</Text>
         )}
       </HStack>
 
@@ -837,7 +837,7 @@ export const CreateEvent = () => {
               p={3}
               color="gray.700"
               _placeholder={{ color: "gray.400" }}
-              _focus={{ borderColor: "blue.400", boxShadow: "none" }}
+              _focus={{ borderColor: "#15A9EA", boxShadow: "none" }}
             />
           </VStack>
         </VStack>
@@ -860,12 +860,14 @@ export const CreateEvent = () => {
       {/* Action buttons */}
       <HStack w="100%" justify="flex-end" gap={3} pt={0}>
         <Button
-          bg="#4A7FA5"
+          bg="#002992"
           color="white"
+          fontFamily="heading"
+          fontWeight={600}
           borderRadius="4px"
           px={6}
           fontSize="sm"
-          _hover={{ bg: "#2C5282" }}
+          _hover={{ bg: "#001E6C" }}
           onClick={handleSubmit}
         >
           {isEditing ? "Save Event" : "Create & Save Event"}

@@ -480,7 +480,7 @@ export const EventManagement = () => {
                 justify="center"
                 align="center"
               >
-                <Spinner size="lg" color="blue.500" />
+                <Spinner size="lg" color="#002992" />
               </Flex>
             ) : (
               <>

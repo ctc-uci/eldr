@@ -398,11 +398,11 @@ export const VolunteerList = ({
                       onSelect?.(volunteer);
                     }}
                     bg={
-                      checkedIds.has(volunteer.id) ? "blue.50" : "transparent"
+                      checkedIds.has(volunteer.id) ? "#EFF6FF" : "transparent"
                     }
                     boxShadow={
                       selectedId === volunteer.id
-                        ? "inset 0 0 0 1px var(--chakra-colors-blue-400)"
+                        ? "inset 0 0 0 1px #15A9EA"
                         : undefined
                     }
                     _hover={{

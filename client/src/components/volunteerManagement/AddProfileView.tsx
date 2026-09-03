@@ -844,7 +844,7 @@ export const AddProfileView = () => {
                   <Button
                     size="xs"
                     variant="ghost"
-                    color="blue.500"
+                    color="#002992"
                     mt={2}
                     gap={1}
                     onClick={() =>

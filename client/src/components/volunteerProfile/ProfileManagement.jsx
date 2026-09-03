@@ -464,7 +464,7 @@ export const ProfileManagement = () => {
           <Tabs.Content value="information" p={0}>
             {isLoadingProfile ? (
               <VStack py={16} gap={3}>
-                <Spinner color="blue.500" />
+                <Spinner color="#002992" />
                 <Text color="gray.600" fontSize="sm">
                   Loading profile...
                 </Text>

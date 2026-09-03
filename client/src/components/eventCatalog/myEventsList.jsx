@@ -117,7 +117,7 @@ const EventSection = ({ isUpcoming, events, onSelect, selectedEvent }) => {
                 key={event.id}
                 borderWidth="1px"
                 borderStyle="solid"
-                borderColor={isSelected ? "#3B82F6" : "#E5E7EB"}
+                borderColor={isSelected ? "#15A9EA" : "#E5E7EB"}
                 borderRadius="8px"
                 bg="white"
                 textAlign="left"
@@ -127,7 +127,7 @@ const EventSection = ({ isUpcoming, events, onSelect, selectedEvent }) => {
                 _hover={{ bg: "#F9FAFB", opacity: isUpcoming ? 1 : 0.8 }}
                 _focus={{ outline: "none" }}
                 _focusVisible={{ outline: "none" }}
-                boxShadow={isSelected ? "0 0 0 1px #3B82F6" : "none"}
+                boxShadow={isSelected ? "0 0 0 1px #15A9EA" : "none"}
                 onClick={() => onSelect(event)}
                 transition="all 0.15s ease"
               >

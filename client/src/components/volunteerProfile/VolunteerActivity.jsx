@@ -268,8 +268,8 @@ export const VolunteerActivity = ({ volunteerId }) => {
 
         <Table.ScrollArea>
           <Table.Root size="sm" variant="line" borderWidth={1}>
-            <Table.Header bg="blue.50">
-              <Table.Row bg="blue.50" fontWeight="semibold">
+            <Table.Header bg="#EFF6FF">
+              <Table.Row bg="#EFF6FF" fontWeight="semibold">
                 <Table.ColumnHeader fontWeight="semibold">Event</Table.ColumnHeader>
                 <Table.ColumnHeader fontWeight="semibold">Date</Table.ColumnHeader>
                 <Table.ColumnHeader fontWeight="semibold">Hours</Table.ColumnHeader>

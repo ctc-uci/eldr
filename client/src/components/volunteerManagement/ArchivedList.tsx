@@ -156,8 +156,8 @@ export const ArchivedList = ({
           {pageSlice.map((volunteer) => (
             <Table.Row
               key={volunteer.listKey}
-              bg={!isList && checkedKeys.has(volunteer.listKey) ? "blue.50" : "transparent"}
-              boxShadow={selectedKey === volunteer.listKey ? "inset 0 0 0 1.5px var(--chakra-colors-blue-400)" : undefined}
+              bg={!isList && checkedKeys.has(volunteer.listKey) ? "#EFF6FF" : "transparent"}
+              boxShadow={selectedKey === volunteer.listKey ? "inset 0 0 0 1.5px #15A9EA" : undefined}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); onSelect?.(volunteer); }}
             >

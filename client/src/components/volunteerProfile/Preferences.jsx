@@ -286,7 +286,7 @@ export const Preferences = ({
         p={{ base: 5, md: 8 }}
       >
         <VStack py={16} gap={3}>
-          <Spinner color="blue.500" />
+          <Spinner color="#002992" />
           <Text color="gray.600" fontSize="sm">
             Loading preferences...
           </Text>

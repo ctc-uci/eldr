@@ -62,7 +62,7 @@ export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) 
                 display="inline-flex"
                 alignItems="center"
               >
-                <LuExternalLink size={20} color="#2563EB" />
+                <LuExternalLink size={20} color="#15A9EA" />
               </Link>
             </Text>
           </Box>

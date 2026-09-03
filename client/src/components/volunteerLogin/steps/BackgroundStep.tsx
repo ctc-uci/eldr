@@ -140,7 +140,7 @@ const BackgroundStep = ({
               size="xs"
             >
               <Progress.Track>
-                <Progress.Range bg="#0088FF" />
+                <Progress.Range bg="#002992" />
               </Progress.Track>
             </Progress.Root>
 
@@ -160,7 +160,7 @@ const BackgroundStep = ({
                   {submitError}
                 </Text>
                 <Link
-                  color="blue.600"
+                  color="#15A9EA"
                   textDecoration="underline"
                   fontSize="14px"
                   mt="8px"

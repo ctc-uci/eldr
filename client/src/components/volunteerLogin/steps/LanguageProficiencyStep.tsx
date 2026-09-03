@@ -73,7 +73,7 @@ const ProficiencyDropdown = ({
         align="center"
         justify="space-between"
         border="1px solid"
-        borderColor={open ? "#3182CE" : "#E4E4E7"}
+        borderColor={open ? "#15A9EA" : "#E4E4E7"}
         borderRadius="6px"
         px="14px"
         h="44px"
@@ -256,7 +256,7 @@ const LanguageProficiencyStep = ({ onNext }: Props) => {
             >
             <Progress.Root value={35} size="xs">
                 <Progress.Track>
-                <Progress.Range bg="#0088FF" />
+                <Progress.Range bg="#002992" />
                 </Progress.Track>
             </Progress.Root>
 

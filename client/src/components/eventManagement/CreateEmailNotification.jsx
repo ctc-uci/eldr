@@ -279,7 +279,7 @@ export const CreateEmailNotification = () => {
         </Text>
         <Text color="gray.400">›</Text>
         <Text
-          color="blue.500"
+          color="#002992"
         >
           {isEditing ? "Edit Email Notification" : "Create Email Notification"}
         </Text>

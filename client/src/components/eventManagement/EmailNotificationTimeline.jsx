@@ -232,13 +232,13 @@ export const EmailNotificationTimeline = ({ eventId }) => {
                         as={Link}
                         to={`/email/template/${row.templateId}`}
                         fontSize="sm"
-                        color="blue.600"
+                        color="#15A9EA"
                         fontWeight="medium"
                         maxW="280px"
                         display="inline-flex"
                         alignItems="center"
                         gap={1.5}
-                        _hover={{ color: "blue.800", textDecoration: "underline" }}
+                        _hover={{ color: "#002992", textDecoration: "underline" }}
                       >
                         {templateLabel} <span>&rarr;</span>
                       </Text>
