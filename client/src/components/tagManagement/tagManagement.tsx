@@ -20,7 +20,6 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { buildAppliedTo, type TagItem } from "./types";
-import { StaffSidebar } from "./StaffSidebar";
 import { TagRow } from "./TagRow";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CreateTagView } from "./CreateTagView";
@@ -167,8 +166,6 @@ export const TagManagement = () => {
 
   return (
     <Flex h="100vh" bg="white">
-      <StaffSidebar />
-
       {isCreateRoute ? (
         <CreateTagView
           onCancel={handleCancelCreate}
