@@ -22,13 +22,14 @@ export const StaffLayout = ({ navbar = "expanded" }: StaffLayoutProps) => {
 
   return (
     <Flex
-      minH="100vh"
+      h="100vh"
       bg="#FAFBFC"
     >
       <Sidebar />
       <Box
         flex="1"
-        overflow="auto"
+        minH={0}
+        overflowY="auto"
       >
         <Outlet />
       </Box>
