@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, Input, Text, VStack } from "@chakra-ui/react";
-import { ChevronDown } from "lucide-react";
-import { APPLY_TO_OPTIONS } from "./types";
+import { Check, ChevronDown } from "lucide-react";
+import { TAG_CATEGORY_OPTIONS } from "./types";
 
 type CreateTagPayload = {
   name: string;
@@ -16,7 +16,31 @@ export function CreateTagPopover({
 }) {
   const [tagName, setTagName] = useState("");
   const [applyTo, setApplyTo] = useState("");
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        categoryMenuRef.current &&
+        !categoryMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsCategoryMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleSubmit = async () => {
     if (!tagName.trim() || !applyTo) return;
@@ -59,43 +83,85 @@ export function CreateTagPopover({
           <Text mb="6px" fontSize="14px" fontWeight={500} color="#18181b">
             Tag Category
           </Text>
-          <Box position="relative">
-            <select
+          <Box ref={categoryMenuRef} position="relative">
+            <Button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={isCategoryMenuOpen}
               aria-label="Tag Category"
-              value={applyTo}
-              onChange={(event) => setApplyTo(event.target.value)}
-              style={{
-                width: "100%",
-                height: "40px",
-                appearance: "none",
-                padding: "0 38px 0 12px",
-                border: "1px solid #d4d4d8",
-                borderRadius: "4px",
-                color: applyTo ? "#3f3f46" : "#71717a",
-                background: "white",
-                fontSize: "14px",
-                outline: "none",
-              }}
+              w="full"
+              h="40px"
+              justifyContent="space-between"
+              px="12px"
+              bg="white"
+              border="1px solid #d4d4d8"
+              borderRadius="4px"
+              color={applyTo ? "#3f3f46" : "#71717a"}
+              fontSize="14px"
+              fontWeight={400}
+              _hover={{ bg: "white" }}
+              _focusVisible={{ borderColor: "#71717a", boxShadow: "0 0 0 1px #71717a" }}
+              onClick={() => setIsCategoryMenuOpen((isOpen) => !isOpen)}
             >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {APPLY_TO_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={18}
-              color="#27272a"
-              style={{
-                position: "absolute",
-                right: "12px",
-                top: "11px",
-                pointerEvents: "none",
-              }}
-            />
+              {applyTo || "Select a category"}
+              <ChevronDown
+                size={18}
+                color="#27272a"
+                style={{
+                  transform: isCategoryMenuOpen ? "rotate(180deg)" : "none",
+                  transition: "transform 120ms ease",
+                }}
+              />
+            </Button>
+
+            {isCategoryMenuOpen && (
+              <Box
+                as="ul"
+                role="listbox"
+                aria-label="Tag categories"
+                position="absolute"
+                top="44px"
+                left="0"
+                right="0"
+                zIndex={2}
+                m="0"
+                p="4px 0"
+                bg="white"
+                border="1px solid #e4e4e7"
+                borderRadius="4px"
+                boxShadow="0 4px 8px rgba(0, 0, 0, 0.12)"
+              >
+                {TAG_CATEGORY_OPTIONS.map((option) => {
+                  const isSelected = applyTo === option;
+
+                  return (
+                    <Box
+                      as="li"
+                      key={option}
+                      role="option"
+                      aria-selected={isSelected}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      minH="40px"
+                      px="10px"
+                      cursor="pointer"
+                      color="#18181b"
+                      fontSize="14px"
+                      bg={isSelected ? "#f4f4f5" : "white"}
+                      _hover={{ bg: "#f4f4f5" }}
+                      onClick={() => {
+                        setApplyTo(option);
+                        setIsCategoryMenuOpen(false);
+                      }}
+                    >
+                      {option}
+                      {isSelected && <Check size={17} strokeWidth={2} />}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
           </Box>
         </Box>
 

@@ -18,7 +18,12 @@ export const APPLIED_BORDER_COLORS: Record<AppliedType, string> = {
   Profiles: "#2563eb",
 };
 
-export const APPLY_TO_OPTIONS = ["Cases", "Events", "Profiles"] as const;
+export const TAG_CATEGORY_OPTIONS = [
+  "Areas of Practice",
+  "Languages",
+  "Roles",
+  "Miscellaneous",
+] as const;
 
 export function buildAppliedTo(raw: {
   caseCount: number;
