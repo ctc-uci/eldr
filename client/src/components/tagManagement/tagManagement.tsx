@@ -1,288 +1,322 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  HStack,
-  Tabs,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
-import {
-  Info,
-  ListFilter,
-  ListPlus,
-  Plus,
-  SquarePlus,
-  Tag,
-  Tags,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Box, Button, Flex, Input, InputGroup } from "@chakra-ui/react";
+import { Search } from "lucide-react";
+import { TbTag } from "react-icons/tb";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { buildAppliedTo, type TagItem } from "./types";
-import { TagRow } from "./TagRow";
-import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CreateTagPopover } from "./CreateTagPopover";
+import { MultiSelectActionBar } from "./MultiSelectActionBar";
+import { TagSectionTable } from "./TagSectionTable";
+
+type TagRow = {
+  name: string;
+  clinicCount: number;
+  volunteerCount: number;
+};
+
+type Section = {
+  title: string;
+  rows: TagRow[];
+};
 
 type TagFormValues = {
   name: string;
   category: string;
 };
 
-type BackendTag = {
-  id: number;
-  tag: string;
-  description: string | null;
-  caseCount: number;
-  clinicCount: number;
-  volunteerCount: number;
+const initialSections: Section[] = [
+  { title: "Areas of Practice", rows: [] },
+  { title: "Languages", rows: [] },
+  { title: "Roles", rows: [] },
+  { title: "Miscellaneous", rows: [] },
+];
+
+const sectionAliasMap: Record<string, string> = {
+  "Areas of Practice": "Areas of Practice",
+  Languages: "Languages",
+  Roles: "Roles",
+  Miscellaneous: "Miscellaneous",
 };
 
 export const TagManagement = () => {
   const { backend } = useBackendContext();
-  const [tags, setTags] = useState<TagItem[]>([]);
+  const [sections, setSections] = useState<Section[]>(initialSections);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [clinicSortDirection, setClinicSortDirection] = useState<"asc" | "desc">("asc");
+  const [volunteerSortDirection, setVolunteerSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
 
-  const sortParam =
-    activeTab === "most-used"
-      ? "most-used"
-      : activeTab === "recent"
-        ? "recent"
-        : undefined;
-
-  const fetchTags = useCallback(async () => {
-    try {
-      const params: Record<string, string> = {};
-      if (searchQuery.trim()) params.search = searchQuery.trim();
-      if (sortParam) params.sort = sortParam;
-
-      const { data } = await backend.get("/tags", { params });
-
-      const mapped: TagItem[] = (data as BackendTag[]).map((t) => ({
-        id: t.id,
-        name: t.tag,
-        description: t.description ?? "",
-        appliedTo: buildAppliedTo(t),
-      }));
-
-      setTags(mapped);
-    } catch (e) {
-      console.error("Failed to fetch tags", e);
-    }
-  }, [backend, searchQuery, sortParam]);
-
   useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
+    const fetchTagGroups = async () => {
+      try {
+        const [areasRes, languagesRes, rolesRes, tagsRes] = await Promise.all([
+          backend.get("/areas-of-practice"),
+          backend.get("/languages"),
+          backend.get("/roles"),
+          backend.get("/tags"),
+        ]);
 
-  const suggestions = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
+        const safeAreas = Array.isArray(areasRes?.data) ? areasRes.data : [];
+        const safeLanguages = Array.isArray(languagesRes?.data) ? languagesRes.data : [];
+        const safeRoles = Array.isArray(rolesRes?.data) ? rolesRes.data : [];
+        const safeTags = Array.isArray(tagsRes?.data) ? tagsRes.data : [];
 
-    return tags
-      .filter((t) => t.name.toLowerCase().includes(q))
-      .map((t) => t.name)
-      .slice(0, 5);
-  }, [tags, searchQuery]);
+        setSections([
+          {
+            title: "Areas of Practice",
+            rows: safeAreas.map((entry: { areasOfPractice?: string; areaOfPractice?: string; name?: string }) => ({
+              name: entry.areasOfPractice ?? entry.areaOfPractice ?? entry.name ?? "",
+              clinicCount: 0,
+              volunteerCount: 0,
+            })),
+          },
+          {
+            title: "Languages",
+            rows: safeLanguages.map((entry: { language?: string; name?: string }) => ({
+              name: entry.language ?? entry.name ?? "",
+              clinicCount: 0,
+              volunteerCount: 0,
+            })),
+          },
+          {
+            title: "Roles",
+            rows: safeRoles.map((entry: { roleName?: string; name?: string }) => ({
+              name: entry.roleName ?? entry.name ?? "",
+              clinicCount: 0,
+              volunteerCount: 0,
+            })),
+          },
+          {
+            title: "Miscellaneous",
+            rows: safeTags.map((entry: { tag?: string; name?: string }) => ({
+              name: entry.tag ?? entry.name ?? "",
+              clinicCount: 0,
+              volunteerCount: 0,
+            })),
+          },
+        ]);
+      } catch (error) {
+        console.error("Failed to load tag groups", error);
+      }
+    };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await backend.delete(`/tags/${id}`);
-      setTags((prev) => prev.filter((t) => t.id !== id));
-      setExpandedId(null);
+    fetchTagGroups();
+  }, [backend]);
 
-    } catch (e) {
-      console.error("Failed to delete tag", e);
+  const getRowKey = (sectionTitle: string, rowName: string) => `${sectionTitle}::${rowName}`;
+
+  const selectedRows = useMemo(
+    () =>
+      sections.flatMap((section) =>
+        section.rows
+          .filter((row) => selectedRowKeys.includes(getRowKey(section.title, row.name)))
+          .map((row) => ({ sectionTitle: section.title, row })),
+      ),
+    [sections, selectedRowKeys],
+  );
+
+  const filteredSections = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return sections
+      .map((section) => ({
+        ...section,
+        rows: [...section.rows]
+          .filter((row) => row.name.toLowerCase().includes(query) || query.length === 0)
+          .sort((a, b) => {
+            const comparison = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+            return sortDirection === "asc" ? comparison : -comparison;
+          }),
+      }))
+      .filter((section) => section.rows.length > 0);
+  }, [searchQuery, sections, sortDirection]);
+
+  const sortSectionRows = (sectionTitle: string, field: "clinicCount" | "volunteerCount") => {
+    setSections((prev) =>
+      prev.map((section) => {
+        if (section.title !== sectionTitle) return section;
+
+        const direction = field === "clinicCount" ? clinicSortDirection : volunteerSortDirection;
+
+        return {
+          ...section,
+          rows: [...section.rows].sort((a, b) => {
+            const comparison = a[field] - b[field];
+            return direction === "asc" ? comparison : -comparison;
+          }),
+        };
+      }),
+    );
+
+    if (field === "clinicCount") {
+      setClinicSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setVolunteerSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     }
   };
 
-  const handleToggleExpand = (id: number) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+  const toggleRowSelection = (sectionTitle: string, rowName: string) => {
+    const rowKey = getRowKey(sectionTitle, rowName);
+
+    setSelectedRowKeys((prev) =>
+      prev.includes(rowKey) ? prev.filter((key) => key !== rowKey) : [...prev, rowKey],
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedRowKeys.length === 0) return;
+
+    setSections((prev) =>
+      prev.map((section) => ({
+        ...section,
+        rows: section.rows.filter(
+          (row) => !selectedRowKeys.includes(getRowKey(section.title, row.name)),
+        ),
+      })),
+    );
+    setSelectedRowKeys([]);
+  };
+
+  const toggleSectionSelection = (sectionTitle: string, rows: Section["rows"]) => {
+    const sectionKeys = rows.map((row) => getRowKey(sectionTitle, row.name));
+    const allSelected = sectionKeys.every((key) => selectedRowKeys.includes(key));
+
+    setSelectedRowKeys((prev) => {
+      if (allSelected) {
+        return prev.filter((key) => !sectionKeys.includes(key));
+      }
+
+      return [...new Set([...prev, ...sectionKeys])];
+    });
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRows.length !== 1) return;
+
+    const selected = selectedRows[0];
+    if (!selected) return;
+
+    const { sectionTitle, row } = selected;
+    const nextName = window.prompt("Edit tag name", row.name)?.trim();
+
+    if (!nextName) return;
+
+    setSections((prev) =>
+      prev.map((section) =>
+        section.title === sectionTitle
+          ? {
+              ...section,
+              rows: section.rows.map((item) =>
+                item.name === row.name ? { ...item, name: nextName } : item,
+              ),
+            }
+          : section,
+      ),
+    );
+
+    setSelectedRowKeys([]);
   };
 
   const handleCreateTag = async (newTag: TagFormValues) => {
     if (!newTag.category || !newTag.name.trim()) return;
 
-    try {
-      switch (newTag.category) {
-        case "Areas of Practice":
-          await backend.post("/areas-of-practice", {
-            areaOfPractice: newTag.name.trim(),
-          });
-          break;
-        case "Languages":
-          await backend.post("/languages", { language: newTag.name.trim() });
-          break;
-        case "Roles":
-          await backend.post("/roles", { roleName: newTag.name.trim() });
-          break;
-        case "Miscellaneous":
-          await backend.post("/tags", {
-            text: newTag.name.trim(),
-          });
-          break;
-        default:
-          return;
-      }
+    const targetSection = sectionAliasMap[newTag.category] ?? "Areas of Practice";
 
-      await fetchTags();
-      setIsCreatePopoverOpen(false);
-    } catch (e) {
-      console.error("Failed to create tag", e);
-    }
+    setSections((prev) =>
+      prev.map((section) =>
+        section.title === targetSection
+          ? {
+              ...section,
+              rows: [
+                {
+                  name: newTag.name.trim(),
+                  clinicCount: 0,
+                  volunteerCount: 0,
+                },
+                ...section.rows,
+              ],
+            }
+          : section,
+      ),
+    );
+
+    setIsCreatePopoverOpen(false);
   };
 
   return (
-    <Flex h="100vh" bg="white">
-      <Box flex={1} overflow="auto" px="70px" py="60px">
-          <Flex align="center" gap="20px" mb="10px">
-            <SearchAutocomplete
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              suggestions={suggestions}
-              onSelectSuggestion={(val) => setSearchQuery(val)}
-            />
+    <Flex h="100vh" bg="white" justify="center">
+      <Box w="100%" maxW="1280px" px="24px" py="18px">
+        <Flex justify="space-between" align="center" gap="18px" mb="18px">
+          <Box flex={1} />
 
-            <Box position="relative">
+          <Flex align="center" gap="16px" ml="auto" w="100%">
+            <Box position="relative" flex={1}>
+              <InputGroup endElement={<Search size={16} color="#a1a1aa" />}>
+                <Input
+                  placeholder="Search for a tag..."
+                  h="48px"
+                  borderColor="#ccccd1"
+                  borderRadius="4px"
+                  bg="white"
+                  fontSize="16px"
+                  _placeholder={{ color: "#a1a1aa" }}
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </InputGroup>
+            </Box>
+
+            <Box position="relative" flexShrink={0}>
               <Button
-                bg="#002992"
+                bg="brand.navy"
                 color="white"
                 h="40px"
-                px="16px"
+                px="18px"
                 borderRadius="4px"
                 fontSize="14px"
                 fontWeight={600}
-                fontFamily="heading"
-                _hover={{ bg: "#001E6C" }}
-                flexShrink={0}
+                _hover={{ bg: "primary.500" }}
                 onClick={() => setIsCreatePopoverOpen((prev) => !prev)}
               >
-                <Plus size={20} />
+                <TbTag size={18} style={{ marginRight: "8px" }} />
                 Create Tag
               </Button>
 
               {isCreatePopoverOpen && (
-                <CreateTagPopover onSave={handleCreateTag} />
+                <Box position="absolute" top="48px" right={0} zIndex={2}>
+                  <CreateTagPopover onSave={handleCreateTag} />
+                </Box>
               )}
             </Box>
           </Flex>
+        </Flex>
 
-          <VStack align="start" gap="16px" py="10px" mb="10px">
-            <Tabs.Root
-              value={activeTab}
-              onValueChange={(e) => setActiveTab(e.value)}
-              variant="plain"
-            >
-              <Tabs.List bg="white" borderRadius="4px" h="36px" gap={0}>
-                <Tabs.Trigger
-                  value="all"
-                  px="12px"
-                  py="4px"
-                  gap="10px"
-                  fontSize="14px"
-                  color="#52525b"
-                  borderRadius="4px"
-                  border="none"
-                  _selected={{ bg: "#f4f4f5", color: "#27272a" }}
-                >
-                  <Tag size={16} />
-                  All
-                </Tabs.Trigger>
+        <MultiSelectActionBar
+          selectedRows={selectedRows}
+          onEdit={handleEditSelected}
+          onDelete={handleDeleteSelected}
+          onClear={() => setSelectedRowKeys([])}
+        />
 
-                <Tabs.Trigger
-                  value="most-used"
-                  px="12px"
-                  py="4px"
-                  gap="10px"
-                  fontSize="14px"
-                  color="#52525b"
-                  borderRadius="4px"
-                  border="none"
-                  _selected={{ bg: "#f4f4f5", color: "#27272a" }}
-                >
-                  <Tags size={16} />
-                  Most Used
-                </Tabs.Trigger>
-
-                <Tabs.Trigger
-                  value="recent"
-                  px="12px"
-                  py="4px"
-                  gap="10px"
-                  fontSize="14px"
-                  color="#52525b"
-                  borderRadius="4px"
-                  border="none"
-                  _selected={{ bg: "#f4f4f5", color: "#27272a" }}
-                >
-                  <SquarePlus size={16} />
-                  Recently Added
-                </Tabs.Trigger>
-              </Tabs.List>
-            </Tabs.Root>
-
-            <Text fontSize="20px" fontWeight={500} lineHeight="30px" color="black">
-              Tags
-            </Text>
-
-            <Button
-              bg="#e4e4e7"
-              color="black"
-              h="32px"
-              px="10px"
-              borderRadius="4px"
-              fontSize="12px"
-              fontWeight={500}
-            >
-              <ListFilter size={16} />
-              Filter & Sort
-            </Button>
-          </VStack>
-
-          <Flex
-            align="center"
-            gap="10px"
-            px="10px"
-            py="10px"
-            borderBottomWidth="1px"
-            borderColor="#e4e4e7"
-          >
-            <HStack px="16px" w="257px" flexShrink={0} gap="8px">
-              <Tag size={20} color="black" />
-              <Text fontSize="14px" fontWeight={500} color="black">
-                Name
-              </Text>
-            </HStack>
-
-            <HStack px="16px" w="300px" flexShrink={0} gap="8px">
-              <Info size={20} color="black" />
-              <Text fontSize="14px" fontWeight={500} color="black">
-                Description
-              </Text>
-            </HStack>
-
-            <HStack px="16px" flex={1} gap="8px">
-              <ListPlus size={20} color="black" />
-              <Text fontSize="14px" fontWeight={500} color="black">
-                Applied to
-              </Text>
-            </HStack>
-          </Flex>
-
-          <Box>
-            {tags.map((tag) => (
-              <TagRow
-                key={tag.id}
-                tag={tag}
-                expandedId={expandedId}
-                onToggleExpand={handleToggleExpand}
-                onDelete={handleDelete}
-              />
-            ))}
-          </Box>
+        <Box borderTop="1px solid #e4e4e7">
+          {filteredSections.map((section) => (
+            <TagSectionTable
+              key={section.title}
+              sectionTitle={section.title}
+              rows={section.rows}
+              selectedRowKeys={selectedRowKeys}
+              sortDirection={sortDirection}
+              onToggleRowSelection={toggleRowSelection}
+              onToggleSectionSelection={toggleSectionSelection}
+              onNameSortClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+              onClinicSortClick={() => sortSectionRows(section.title, "clinicCount")}
+              onVolunteerSortClick={() => sortSectionRows(section.title, "volunteerCount")}
+              getRowKey={getRowKey}
+            />
+          ))}
         </Box>
+      </Box>
     </Flex>
   );
 };
