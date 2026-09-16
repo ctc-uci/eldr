@@ -23,6 +23,7 @@ import { buildAppliedTo, type TagItem } from "./types";
 import { TagRow } from "./TagRow";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CreateTagView } from "./CreateTagView";
+import { CreateTagPopover } from "./CreateTagPopover";
 
 type TagFormValues = {
   name: string;
@@ -47,6 +48,7 @@ export const TagManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
   const tagFromState = (location.state as { tag?: TagItem } | null)?.tag ?? null;
   const editingTag = tagFromState;
 
@@ -125,7 +127,7 @@ export const TagManagement = () => {
       });
 
       await fetchTags();
-      navigate("/manage-tags");
+      setIsCreatePopoverOpen(false);
     } catch (e) {
       console.error("Failed to create tag", e);
     }
@@ -147,15 +149,10 @@ export const TagManagement = () => {
     }
   };
 
-  const handleCancelCreate = () => {
-    navigate("/manage-tags");
-  };
-
   const handleCancelEdit = () => {
     navigate("/manage-tags");
   };
 
-  const isCreateRoute = location.pathname.endsWith("/create");
   const isEditRoute = location.pathname.endsWith("/edit") && !!editingTag;
 
   useEffect(() => {
@@ -166,14 +163,7 @@ export const TagManagement = () => {
 
   return (
     <Flex h="100vh" bg="white">
-      {isCreateRoute ? (
-        <CreateTagView
-          onCancel={handleCancelCreate}
-          onSave={handleCreateTag}
-          pageTitle="Create New Tag"
-          submitLabel="Create & Save"
-        />
-      ) : isEditRoute && editingTag ? (
+      {isEditRoute && editingTag ? (
         <CreateTagView
           onCancel={handleCancelEdit}
           onSave={handleUpdateTag}
@@ -195,22 +185,28 @@ export const TagManagement = () => {
               onSelectSuggestion={(val) => setSearchQuery(val)}
             />
 
-            <Button
-              bg="#002992"
-              color="white"
-              h="40px"
-              px="16px"
-              borderRadius="4px"
-              fontSize="14px"
-              fontWeight={600}
-              fontFamily="heading"
-              _hover={{ bg: "#001E6C" }}
-              flexShrink={0}
-              onClick={() => navigate("/manage-tags/create")}
-            >
-              <Plus size={20} />
-              Create Tag
-            </Button>
+            <Box position="relative">
+              <Button
+                bg="#002992"
+                color="white"
+                h="40px"
+                px="16px"
+                borderRadius="4px"
+                fontSize="14px"
+                fontWeight={600}
+                fontFamily="heading"
+                _hover={{ bg: "#001E6C" }}
+                flexShrink={0}
+                onClick={() => setIsCreatePopoverOpen((prev) => !prev)}
+              >
+                <Plus size={20} />
+                Create Tag
+              </Button>
+
+              {isCreatePopoverOpen && (
+                <CreateTagPopover onSave={handleCreateTag} />
+              )}
+            </Box>
           </Flex>
 
           <VStack align="start" gap="16px" py="10px" mb="10px">
