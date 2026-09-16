@@ -5,8 +5,7 @@ import { TAG_CATEGORY_OPTIONS } from "./types";
 
 type CreateTagPayload = {
   name: string;
-  applyTo: string;
-  description: string;
+  category: string;
 };
 
 export function CreateTagPopover({
@@ -15,7 +14,7 @@ export function CreateTagPopover({
   onSave: (tag: CreateTagPayload) => Promise<void> | void;
 }) {
   const [tagName, setTagName] = useState("");
-  const [applyTo, setApplyTo] = useState("");
+  const [category, setCategory] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
@@ -43,11 +42,11 @@ export function CreateTagPopover({
   }, []);
 
   const handleSubmit = async () => {
-    if (!tagName.trim() || !applyTo) return;
+    if (!tagName.trim() || !category) return;
 
     try {
       setIsSaving(true);
-      await onSave({ name: tagName.trim(), applyTo, description: "" });
+      await onSave({ name: tagName.trim(), category });
     } finally {
       setIsSaving(false);
     }
@@ -96,14 +95,14 @@ export function CreateTagPopover({
               bg="white"
               border="1px solid #d4d4d8"
               borderRadius="4px"
-              color={applyTo ? "#3f3f46" : "#71717a"}
+              color={category ? "#3f3f46" : "#71717a"}
               fontSize="14px"
               fontWeight={400}
               _hover={{ bg: "white" }}
               _focusVisible={{ borderColor: "#71717a", boxShadow: "0 0 0 1px #71717a" }}
               onClick={() => setIsCategoryMenuOpen((isOpen) => !isOpen)}
             >
-              {applyTo || "Select a category"}
+              {category || "Select a category"}
               <ChevronDown
                 size={18}
                 color="#27272a"
@@ -132,7 +131,7 @@ export function CreateTagPopover({
                 boxShadow="0 4px 8px rgba(0, 0, 0, 0.12)"
               >
                 {TAG_CATEGORY_OPTIONS.map((option) => {
-                  const isSelected = applyTo === option;
+                  const isSelected = category === option;
 
                   return (
                     <Box
@@ -151,7 +150,7 @@ export function CreateTagPopover({
                       bg={isSelected ? "#f4f4f5" : "white"}
                       _hover={{ bg: "#f4f4f5" }}
                       onClick={() => {
-                        setApplyTo(option);
+                        setCategory(option);
                         setIsCategoryMenuOpen(false);
                       }}
                     >

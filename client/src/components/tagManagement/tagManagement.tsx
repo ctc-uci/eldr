@@ -17,18 +17,15 @@ import {
   Tag,
   Tags,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { buildAppliedTo, type TagItem } from "./types";
 import { TagRow } from "./TagRow";
 import { SearchAutocomplete } from "./SearchAutocomplete";
-import { CreateTagView } from "./CreateTagView";
 import { CreateTagPopover } from "./CreateTagPopover";
 
 type TagFormValues = {
   name: string;
-  applyTo: string;
-  description: string;
+  category: string;
 };
 
 type BackendTag = {
@@ -42,15 +39,11 @@ type BackendTag = {
 
 export const TagManagement = () => {
   const { backend } = useBackendContext();
-  const location = useLocation();
-  const navigate = useNavigate();
   const [tags, setTags] = useState<TagItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
-  const tagFromState = (location.state as { tag?: TagItem } | null)?.tag ?? null;
-  const editingTag = tagFromState;
 
   const sortParam =
     activeTab === "most-used"
@@ -100,19 +93,9 @@ export const TagManagement = () => {
       setTags((prev) => prev.filter((t) => t.id !== id));
       setExpandedId(null);
 
-      if (editingTag?.id === id) {
-        navigate("/manage-tags");
-      }
     } catch (e) {
       console.error("Failed to delete tag", e);
     }
-  };
-
-  const handleEdit = (id: number) => {
-    const selectedTag = tags.find((t) => t.id === id);
-    if (!selectedTag) return;
-
-    navigate("/manage-tags/edit", { state: { tag: selectedTag } });
   };
 
   const handleToggleExpand = (id: number) => {
@@ -120,11 +103,29 @@ export const TagManagement = () => {
   };
 
   const handleCreateTag = async (newTag: TagFormValues) => {
+    if (!newTag.category || !newTag.name.trim()) return;
+
     try {
-      await backend.post("/tags", {
-        text: newTag.name,
-        description: newTag.description,
-      });
+      switch (newTag.category) {
+        case "Areas of Practice":
+          await backend.post("/areas-of-practice", {
+            areaOfPractice: newTag.name.trim(),
+          });
+          break;
+        case "Languages":
+          await backend.post("/languages", { language: newTag.name.trim() });
+          break;
+        case "Roles":
+          await backend.post("/roles", { roleName: newTag.name.trim() });
+          break;
+        case "Miscellaneous":
+          await backend.post("/tags", {
+            text: newTag.name.trim(),
+          });
+          break;
+        default:
+          return;
+      }
 
       await fetchTags();
       setIsCreatePopoverOpen(false);
@@ -133,50 +134,9 @@ export const TagManagement = () => {
     }
   };
 
-  const handleUpdateTag = async (updatedTag: TagFormValues) => {
-    if (!editingTag) return;
-
-    try {
-      await backend.put(`/tags/${editingTag.id}`, {
-        text: updatedTag.name,
-        description: updatedTag.description,
-      });
-
-      await fetchTags();
-      navigate("/manage-tags");
-    } catch (e) {
-      console.error("Failed to update tag", e);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    navigate("/manage-tags");
-  };
-
-  const isEditRoute = location.pathname.endsWith("/edit") && !!editingTag;
-
-  useEffect(() => {
-    if (location.pathname.endsWith("/edit") && !tagFromState) {
-      navigate("/manage-tags", { replace: true });
-    }
-  }, [location.pathname, tagFromState, navigate]);
-
   return (
     <Flex h="100vh" bg="white">
-      {isEditRoute && editingTag ? (
-        <CreateTagView
-          onCancel={handleCancelEdit}
-          onSave={handleUpdateTag}
-          initialValues={{
-            name: editingTag.name,
-            applyTo: "",
-            description: editingTag.description,
-          }}
-          pageTitle="Edit Tag"
-          submitLabel="Save Changes"
-        />
-      ) : (
-        <Box flex={1} overflow="auto" px="70px" py="60px">
+      <Box flex={1} overflow="auto" px="70px" py="60px">
           <Flex align="center" gap="20px" mb="10px">
             <SearchAutocomplete
               searchQuery={searchQuery}
@@ -319,12 +279,10 @@ export const TagManagement = () => {
                 expandedId={expandedId}
                 onToggleExpand={handleToggleExpand}
                 onDelete={handleDelete}
-                onEdit={handleEdit}
               />
             ))}
           </Box>
         </Box>
-      )}
     </Flex>
   );
 };

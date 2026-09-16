@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
-  TriangleAlert,
 } from "lucide-react";
 import { APPLIED_BORDER_COLORS, type TagAppliedTo, type TagItem } from "./types";
 
@@ -37,13 +36,11 @@ export function TagRow({
   expandedId,
   onToggleExpand,
   onDelete,
-  onEdit,
 }: {
   tag: TagItem;
   expandedId: number | null;
   onToggleExpand: (id: number) => void;
   onDelete: (id: number) => void;
-  onEdit: (id: number) => void;
 }) {
   const isExpanded = expandedId === tag.id;
 
@@ -120,22 +117,6 @@ export function TagRow({
             </Text>
           </Box>
           <HStack gap="12px">
-            <Button
-              size="sm"
-              h="32px"
-              px="12px"
-              bg="#fefce8"
-              border="1px solid #fef08a"
-              color="#27272a"
-              fontSize="12px"
-              fontWeight={500}
-              borderRadius="4px"
-              _hover={{ bg: "#fef9c3" }}
-              onClick={() => onEdit(tag.id)}
-            >
-              <TriangleAlert size={14} />
-              Edit
-            </Button>
             <Button
               size="sm"
               h="32px"
