@@ -22,6 +22,7 @@ import {
 } from "./volunteerSignupDraft";
 import {
   nextStep,
+  prevStep,
   pathForStep,
   type VolunteerLoginStep,
   VOLUNTEER_LOGIN_BASE,
@@ -93,6 +94,22 @@ export const VolunteerLogin = () => {
     if (n) goToStep(n);
   }, [step, goToStep]);
 
+  const goBack = useCallback(() => {
+    if (step === "create-account") {
+      goToStep("login");
+      return;
+    }
+    if (step === "law-interests") {
+      const d = loadDraft();
+      if (!d?.selectedLanguageNames?.length) {
+        goToStep("languages");
+        return;
+      }
+    }
+    const p = prevStep(step);
+    if (p) goToStep(p);
+  }, [step, goToStep]);
+
   const emailAlreadyInUseError = (e: unknown): boolean => {  
     const err = e as {
       code?: string;
@@ -148,26 +165,27 @@ export const VolunteerLogin = () => {
         <LoginStep onNavigateToCreateAccount={() => goToStep("create-account")} />
       )}
       {step === "create-account" && (
-        <CreateAccountStep onNext={goNext} />
+        <CreateAccountStep onNext={goNext} onBack={goBack} />
       )}
       {step === "languages" && (
-        <LanguageStep onNext={goNext} />
+        <LanguageStep onNext={goNext} onBack={goBack} />
       )}
       {step === "language-proficiency" && (
-        <LanguageProficiencyStep onNext={goNext} />
+        <LanguageProficiencyStep onNext={goNext} onBack={goBack} />
       )}
       {step === "law-interests" && (
-        <LawInterestStep onNext={goNext} />
+        <LawInterestStep onNext={goNext} onBack={goBack} />
       )}
       {step === "notary" && (
-        <NotaryStep onNext={goNext} />
+        <NotaryStep onNext={goNext} onBack={goBack} />
       )}
       {step === "role" && (
-        <RoleStep onNext={goNext} />
+        <RoleStep onNext={goNext} onBack={goBack} />
       )}
       {step === "background" && (
         <BackgroundStep
           onComplete={handleCompleteSignup}
+          onBack={goBack}
           isSubmitting={isCompleting}
           submitError={completeError}
           onDismissError={() => setCompleteError(null)}

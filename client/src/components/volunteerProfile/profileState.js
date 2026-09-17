@@ -23,7 +23,9 @@ export const LANGUAGE_OPTIONS = [
   "Korean",
 ];
 export const PROFICIENCY_OPTIONS = [
-  "Proficient",
+  "Native/Bilingual",
   "Professional",
-  "Native/Fluent",
+  "Limited Working",
+  "Elementary",
 ];
+

@@ -5,7 +5,7 @@ import {
   removeAttendee,
   updateCalendarEvent,
 } from "@/common/calendar";
-import { keysToCamel } from "@/common/utils";
+import { keysToCamel, normalizeProficiency } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
@@ -232,7 +232,8 @@ clinicsRouter.get("/with-languages", async (req, res) => {
             json_build_object(
               'id', l.id,
               'language', l.language,
-              'proficiency', wl.proficiency
+              'verbalProficiency', wl.verbal_proficiency,
+              'writtenProficiency', wl.written_proficiency
             )
             ORDER BY l.language
           ) FILTER (WHERE l.id IS NOT NULL),
@@ -424,13 +425,25 @@ clinicsRouter.post(
   async (req, res) => {
     try {
       const { clinicId } = req.params;
-      const { languageId, proficiency } = req.body;
+      const {
+        languageId,
+        verbalProficiency,
+        writtenProficiency,
+        proficiency,
+      } = req.body;
+
+      const verbal = normalizeProficiency(
+        verbalProficiency ?? req.body.verbal_proficiency ?? proficiency
+      );
+      const written = normalizeProficiency(
+        writtenProficiency ?? req.body.written_proficiency ?? proficiency
+      );
 
       const result = await db.query(
-        `INSERT INTO clinic_languages (clinic_id, language_id, proficiency)
-       VALUES ($1, $2, $3)
+        `INSERT INTO clinic_languages (clinic_id, language_id, verbal_proficiency, written_proficiency)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-        [clinicId, languageId, proficiency]
+        [clinicId, languageId, verbal, written]
       );
 
       res.status(201).json(keysToCamel(result[0]));
@@ -476,7 +489,7 @@ clinicsRouter.get(
       const { clinicId } = req.params;
 
       const languages = await db.query(
-        `SELECT l.*, wl.proficiency
+        `SELECT l.*, wl.verbal_proficiency, wl.written_proficiency
        FROM languages l
        JOIN clinic_languages wl ON wl.language_id = l.id
        WHERE wl.clinic_id = $1`,

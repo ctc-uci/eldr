@@ -12,12 +12,14 @@ import {
 } from "@chakra-ui/react";
  
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuArrowRight, LuSearch, LuX } from "react-icons/lu";
+import { LuSearch, LuX } from "react-icons/lu";
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
  
 type LanguageRow = {
@@ -294,7 +296,7 @@ const LanguageMultiSelect = ({
   );
 };
  
-const LanguageStep = ({ onNext }: Props) => {
+const LanguageStep = ({ onNext, onBack }: Props) => {
   const { backend } = useBackendContext();
 
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
@@ -408,7 +410,16 @@ const LanguageStep = ({ onNext }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+        <Flex
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+          align="center"
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton onClick={onBack} />
+        </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
@@ -493,26 +504,7 @@ const LanguageStep = ({ onNext }: Props) => {
               placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
  
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "16px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{ bg: "#F4F4F5", _active: { bg: "black", color: "white" } }}
-              position="relative"
-              w="100%"
-              px="20px"
-              onClick={handleContinue}
-            >
-              <Box w="100%" textAlign="center">Continue</Box>
-              <Box position="absolute" right="12px">
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            <StepNavButtons onBack={onBack} onContinue={handleContinue} />
 
           </Flex>
         </Flex>

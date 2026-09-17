@@ -1,4 +1,4 @@
-import { keysToCamel } from "@/common/utils";
+import { keysToCamel, normalizeProficiency } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
@@ -165,11 +165,23 @@ casesRouter.get("/:caseId/areas-of-practice", verifyRole("volunteer"), async (re
 casesRouter.post("/:caseId/languages", verifyRole("staff"), async (req, res) => {
   try {
     const { caseId } = req.params;
-    const { languageId, proficiency } = req.body;
+    const {
+      languageId,
+      verbalProficiency,
+      writtenProficiency,
+      proficiency,
+    } = req.body;
+
+    const verbal = normalizeProficiency(
+      verbalProficiency ?? req.body.verbal_proficiency ?? proficiency
+    );
+    const written = normalizeProficiency(
+      writtenProficiency ?? req.body.written_proficiency ?? proficiency
+    );
 
     const caseLanguage = await db.query(
-      "INSERT INTO case_languages (case_id, language_id, proficiency) VALUES ($1, $2, $3) RETURNING *",
-      [caseId, languageId, proficiency]
+      "INSERT INTO case_languages (case_id, language_id, verbal_proficiency, written_proficiency) VALUES ($1, $2, $3, $4) RETURNING *",
+      [caseId, languageId, verbal, written]
     );
 
     res.status(201).json(keysToCamel(caseLanguage));
@@ -206,7 +218,7 @@ casesRouter.get("/:caseId/languages", verifyRole("volunteer"), async (req, res) 
     const { caseId } = req.params;
 
     const caseLanguages = await db.query(
-      `SELECT l.*, cl.proficiency
+      `SELECT l.*, cl.verbal_proficiency, cl.written_proficiency
        FROM languages l 
         JOIN case_languages cl ON cl.language_id = l.id 
       WHERE cl.case_id = $1`,
