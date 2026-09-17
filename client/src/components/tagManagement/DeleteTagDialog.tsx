@@ -56,7 +56,7 @@ export const DeleteTagDialog = ({
               <Dialog.Title
                 fontSize="16px"
                 fontWeight="600"
-                color="#18181b"
+                color="gray.900"
               >
                 Delete {label}
               </Dialog.Title>
@@ -69,7 +69,7 @@ export const DeleteTagDialog = ({
             >
               <Text
                 fontSize="12px"
-                color="#52525b"
+                color="gray.600"
               >
                 Are you sure? You can&apos;t undo this action afterwards.
               </Text>
@@ -87,7 +87,7 @@ export const DeleteTagDialog = ({
                   variant="outline"
                   h="32px"
                   px="14px"
-                  borderColor="#e4e4e7"
+                  borderColor="gray.200"
                   borderRadius="4px"
                   fontSize="12px"
                   fontWeight="500"
@@ -100,14 +100,14 @@ export const DeleteTagDialog = ({
               <Button
                 h="32px"
                 px="14px"
-                bg="#e52424"
+                bg="red.600"
                 color="white"
                 borderRadius="4px"
                 fontSize="12px"
                 fontWeight="500"
                 loading={isDeleting}
                 loadingText="Deleting..."
-                _hover={{ bg: "#c81e1e" }}
+                _hover={{ bg: "red.700" }}
                 onClick={() => void onConfirm()}
               >
                 Yes, Delete

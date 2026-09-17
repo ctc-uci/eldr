@@ -81,7 +81,7 @@ export const EditTagDialog = ({
               <Dialog.Title
                 fontSize="16px"
                 fontWeight="600"
-                color="#18181b"
+                color="gray.900"
               >
                 Edit Tag Name
               </Dialog.Title>
@@ -99,7 +99,7 @@ export const EditTagDialog = ({
                 <Text
                   fontSize="12px"
                   fontWeight="600"
-                  color="#27272a"
+                  color="gray.800"
                 >
                   Tag Name
                 </Text>
@@ -115,9 +115,9 @@ export const EditTagDialog = ({
                   h="34px"
                   px="10px"
                   fontSize="12px"
-                  borderColor="#d4d4d8"
+                  borderColor="gray.300"
                   borderRadius="4px"
-                  _placeholder={{ color: "#a1a1aa" }}
+                  _placeholder={{ color: "gray.400" }}
                 />
               </Flex>
             </Dialog.Body>
@@ -134,7 +134,7 @@ export const EditTagDialog = ({
                   variant="outline"
                   h="32px"
                   px="14px"
-                  borderColor="#e4e4e7"
+                  borderColor="gray.200"
                   borderRadius="4px"
                   fontSize="12px"
                   fontWeight="500"
@@ -146,7 +146,7 @@ export const EditTagDialog = ({
               <Button
                 h="32px"
                 px="14px"
-                bg="#002992"
+                bg="brand.navy"
                 color="white"
                 borderRadius="4px"
                 fontSize="12px"
@@ -154,7 +154,7 @@ export const EditTagDialog = ({
                 loading={isSaving}
                 loadingText="Saving..."
                 disabled={!name.trim()}
-                _hover={{ bg: "#001e6c" }}
+                _hover={{ bg: "primary.500" }}
                 onClick={() => void handleSave()}
               >
                 Save Changes

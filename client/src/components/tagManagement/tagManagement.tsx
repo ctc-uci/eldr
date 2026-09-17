@@ -309,15 +309,15 @@ export const TagManagement = () => {
 
           <Flex align="center" gap="16px" ml="auto" w="100%">
             <Box position="relative" flex={1}>
-              <InputGroup endElement={<Search size={16} color="#a1a1aa" />}>
+              <InputGroup endElement={<Search size={16} color="gray.400" />}>
                 <Input
                   placeholder="Search for a tag..."
                   h="48px"
-                  borderColor="#ccccd1"
+                  borderColor="gray.300"
                   borderRadius="4px"
                   bg="white"
                   fontSize="16px"
-                  _placeholder={{ color: "#a1a1aa" }}
+                  _placeholder={{ color: "gray.400" }}
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
@@ -356,7 +356,7 @@ export const TagManagement = () => {
           onClear={() => setSelectedRowKeys([])}
         />
 
-        <Box borderTop="1px solid #e4e4e7">
+        <Box borderTop="1px solid" borderColor="gray.200">
           {filteredSections.map((section) => (
             <TagSectionTable
               key={section.title}

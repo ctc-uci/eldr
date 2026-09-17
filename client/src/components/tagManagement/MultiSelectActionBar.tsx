@@ -40,12 +40,13 @@ export function MultiSelectActionBar({
         px="12px"
         py="10px"
         borderWidth="1px"
-        border="1px solid #d4d4d8"
+        border="1px solid"
+        borderColor="gray.300"
         borderRadius="4px"
         bg="white"
-        boxShadow="0 8px 24px rgba(15, 23, 42, 0.12)"
+        boxShadow="lg"
       >
-        <Text fontSize="14px" fontWeight={500} color="#18181b">
+        <Text fontSize="14px" fontWeight={500} color="gray.900">
           {selectedRows.length} selected
         </Text>
 
@@ -55,12 +56,12 @@ export function MultiSelectActionBar({
             size="sm"
             h="32px"
             px="12px"
-            borderColor="#d4d4d8"
-            color="#18181b"
+            borderColor="gray.300"
+            color="gray.900"
             bg="white"
             fontSize="12px"
             fontWeight={500}
-            _hover={{ bg: "#f4f4f5" }}
+            _hover={{ bg: "gray.100" }}
             onClick={onEdit}
             disabled={selectedRows.length !== 1}
           >
@@ -72,11 +73,11 @@ export function MultiSelectActionBar({
             size="sm"
             h="32px"
             px="12px"
-            bg="#fee2e2"
-            color="#b91c1c"
+            bg="red.100"
+            color="red.700"
             fontSize="12px"
             fontWeight={500}
-            _hover={{ bg: "#fecaca" }}
+            _hover={{ bg: "red.200" }}
             onClick={onDelete}
           >
             <Trash2 size={14} style={{ marginRight: "6px" }} />
@@ -90,11 +91,11 @@ export function MultiSelectActionBar({
             w="32px"
             minW="32px"
             p="0"
-            color="#18181b"
+            color="gray.900"
             bg="white"
             aria-label="Exit multi-select mode"
             title="Exit multi-select mode"
-            _hover={{ bg: "#f4f4f5" }}
+            _hover={{ bg: "gray.100" }}
             onClick={onClear}
           >
             <X size={16} />

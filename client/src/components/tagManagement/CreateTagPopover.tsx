@@ -61,9 +61,10 @@ export function CreateTagPopover({
       w="320px"
       p="20px"
       bg="white"
-      border="1px solid #e4e4e7"
+      border="1px solid"
+      borderColor="gray.200"
       borderRadius="8px"
-      boxShadow="0 8px 20px rgba(0, 0, 0, 0.1)"
+      boxShadow="lg"
       _before={{
         content: '""',
         position: "absolute",
@@ -72,14 +73,16 @@ export function CreateTagPopover({
         w: "12px",
         h: "12px",
         bg: "white",
-        borderLeft: "1px solid #e4e4e7",
-        borderTop: "1px solid #e4e4e7",
+        borderLeft: "1px solid",
+        borderLeftColor: "gray.200",
+        borderTop: "1px solid",
+        borderTopColor: "gray.200",
         transform: "rotate(45deg)",
       }}
     >
       <VStack align="stretch" gap="16px">
         <Box>
-          <Text mb="6px" fontSize="14px" fontWeight={500} color="#18181b">
+          <Text mb="6px" fontSize="14px" fontWeight={500} color="gray.900">
             Tag Category
           </Text>
           <Box ref={categoryMenuRef} position="relative">
@@ -93,19 +96,20 @@ export function CreateTagPopover({
               justifyContent="space-between"
               px="12px"
               bg="white"
-              border="1px solid #d4d4d8"
+              border="1px solid"
+              borderColor="gray.300"
               borderRadius="4px"
-              color={category ? "#3f3f46" : "#71717a"}
+              color={category ? "gray.700" : "gray.500"}
               fontSize="14px"
               fontWeight={400}
               _hover={{ bg: "white" }}
-              _focusVisible={{ borderColor: "#71717a", boxShadow: "0 0 0 1px #71717a" }}
+              _focusVisible={{ borderColor: "gray.500", boxShadow: "0 0 0 1px var(--chakra-colors-gray-500)" }}
               onClick={() => setIsCategoryMenuOpen((isOpen) => !isOpen)}
             >
               {category || "Select a category"}
               <ChevronDown
                 size={18}
-                color="#27272a"
+                color="var(--chakra-colors-gray-800)"
                 style={{
                   transform: isCategoryMenuOpen ? "rotate(180deg)" : "none",
                   transition: "transform 120ms ease",
@@ -126,9 +130,10 @@ export function CreateTagPopover({
                 m="0"
                 p="4px 0"
                 bg="white"
-                border="1px solid #e4e4e7"
+                border="1px solid"
+                borderColor="gray.200"
                 borderRadius="4px"
-                boxShadow="0 4px 8px rgba(0, 0, 0, 0.12)"
+                boxShadow="md"
               >
                 {TAG_CATEGORY_OPTIONS.map((option) => {
                   const isSelected = category === option;
@@ -145,10 +150,10 @@ export function CreateTagPopover({
                       minH="40px"
                       px="10px"
                       cursor="pointer"
-                      color="#18181b"
+                      color="gray.900"
                       fontSize="14px"
-                      bg={isSelected ? "#f4f4f5" : "white"}
-                      _hover={{ bg: "#f4f4f5" }}
+                      bg={isSelected ? "gray.100" : "white"}
+                      _hover={{ bg: "gray.100" }}
                       onClick={() => {
                         setCategory(option);
                         setIsCategoryMenuOpen(false);
@@ -165,7 +170,7 @@ export function CreateTagPopover({
         </Box>
 
         <Box>
-          <Text mb="6px" fontSize="14px" fontWeight={500} color="#18181b">
+          <Text mb="6px" fontSize="14px" fontWeight={500} color="gray.900">
             Tag Name
           </Text>
           <Input
@@ -175,23 +180,23 @@ export function CreateTagPopover({
             onChange={(event) => setTagName(event.target.value)}
             h="40px"
             px="12px"
-            borderColor="#d4d4d8"
+            borderColor="gray.300"
             borderRadius="4px"
             fontSize="14px"
-            _placeholder={{ color: "#a1a1aa" }}
+            _placeholder={{ color: "gray.400" }}
           />
         </Box>
 
         <Button
           alignSelf="flex-end"
-          bg="#002992"
+          bg="brand.navy"
           color="white"
           h="36px"
           px="14px"
           borderRadius="4px"
           fontSize="14px"
           fontWeight={500}
-          _hover={{ bg: "#001E6C" }}
+          _hover={{ bg: "primary.500" }}
           onClick={handleSubmit}
           loading={isSaving}
           loadingText="Creating..."

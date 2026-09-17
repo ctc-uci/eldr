@@ -49,18 +49,19 @@ export const TagSectionTable = ({
 
   return (
     <Box ref={sectionRef} pt="8px" pb="10px">
-      <Text fontSize="18px" fontWeight={400} color="#18181b" mb="8px" pl="10px">
+      <Text fontSize="18px" fontWeight={400} color="gray.900" mb="8px" pl="10px">
         {sectionTitle}
       </Text>
 
-      <Box borderTop="1px solid #e4e4e7">
+      <Box borderTop="1px solid" borderColor="gray.200">
         <Flex
           align="center"
           gap="12px"
           px="10px"
           py="10px"
-          borderBottom="1px solid #e4e4e7"
-          color="#3f3f46"
+          borderBottom="1px solid"
+          borderColor="gray.200"
+          color="gray.700"
           fontSize="13px"
           fontWeight={600}
         >
@@ -73,7 +74,7 @@ export const TagSectionTable = ({
               style={{
                 width: "18px",
                 height: "18px",
-                accentColor: "#3f3f46",
+                accentColor: "var(--chakra-colors-gray-700)",
                 cursor: "pointer",
               }}
             />
@@ -147,8 +148,9 @@ export const TagSectionTable = ({
             gap="12px"
             px="10px"
             py="12px"
-            borderBottom="1px solid #f4f4f5"
-            _hover={{ bg: "#fafafa" }}
+            borderBottom="1px solid"
+            borderColor="gray.100"
+            _hover={{ bg: "gray.50" }}
           >
             <Box w="24px" display="flex" justifyContent="center">
               <input
@@ -159,21 +161,21 @@ export const TagSectionTable = ({
                 style={{
                   width: "18px",
                   height: "18px",
-                  accentColor: "#18181b",
+                  accentColor: "var(--chakra-colors-gray-900)",
                   cursor: "pointer",
                 }}
               />
             </Box>
 
-            <Text flex={1} fontSize="15px" color="#18181b">
+            <Text flex={1} fontSize="15px" color="gray.900">
               {row.name}
             </Text>
 
-            <Text w="120px" textAlign="center" fontSize="15px" color="#18181b">
+            <Text w="120px" textAlign="center" fontSize="15px" color="gray.900">
               {row.clinicCount}
             </Text>
 
-            <Text w="120px" textAlign="center" fontSize="15px" color="#18181b">
+            <Text w="120px" textAlign="center" fontSize="15px" color="gray.900">
               {row.volunteerCount}
             </Text>
           </Flex>
