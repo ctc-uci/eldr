@@ -112,7 +112,11 @@ const isClinicPast = (clinic, now) => {
 // Build location string based on locationType field
 const renderLocation = (clinic) => {
   const mode = (clinic.locationType || "").toLowerCase();
-  const link = clinic.meetingLink;
+  const link = (clinic.meetingLink || "")
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(", ");
   const inPersonAddress = [
     clinic.address,
     clinic.city,
@@ -122,10 +126,10 @@ const renderLocation = (clinic) => {
     .filter(Boolean)
     .join(", ");
 
-  if (mode === "online") return link || "";
+  if (mode === "online") return link || "Online";
   if (mode === "hybrid")
-    return [inPersonAddress, link].filter(Boolean).join(" | ");
-  return inPersonAddress;
+    return [inPersonAddress, link].filter(Boolean).join(" | ") || "Hybrid";
+  return inPersonAddress || "—";
 };
  
 export const EventManagement = () => {
