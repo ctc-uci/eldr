@@ -11,14 +11,15 @@ import {
   Text,
 } from "@chakra-ui/react";
 
-import { LuArrowRight } from "react-icons/lu";
 import { useNavigate } from "react-router-dom";
 
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 import LoginLayout from "./BackgroundLayout";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onComplete: () => Promise<void>;
+  onBack?: () => void;
   isSubmitting: boolean;
   submitError?: string | null;
   onDismissError: () => void;
@@ -26,6 +27,7 @@ type Props = {
 
 const BackgroundStep = ({
   onComplete,
+  onBack,
   isSubmitting,
   submitError,
   onDismissError,
@@ -89,9 +91,10 @@ const BackgroundStep = ({
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
-        />
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton onClick={onBack} disabled={isSubmitting} />
+        </Flex>
 
         <Flex
           flex="1"
@@ -251,41 +254,13 @@ const BackgroundStep = ({
               )}
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              borderRadius="6px"
-              fontSize={{ base: "13px", md: "17px" }}
-              fontWeight={500}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5",
-                _active: {
-                  bg: "black",
-                  color: "white",
-                },
-              }}
-              position="relative"
-              w="100%"
-              px="20px"
-              onClick={handleSubmit}
-              loading={isSubmitting}
-            >
-              <Box
-                w="100%"
-                textAlign="center"
-              >
-                Create Account
-              </Box>
-              <Box
-                position="absolute"
-                right="12px"
-              >
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            <StepNavButtons
+              onBack={onBack}
+              onContinue={handleSubmit}
+              continueLabel="Create Account"
+              isLoading={isSubmitting}
+              isDisabled={isSubmitting}
+            />
           </Flex>
         </Flex>
         <Box

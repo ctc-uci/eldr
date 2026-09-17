@@ -17,7 +17,6 @@ import {
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import {
-  LuArrowRight,
   LuChevronDown,
   LuX,
   LuSearch,
@@ -25,9 +24,11 @@ import {
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
 type Area = {
@@ -295,7 +296,7 @@ const LawMultiSelect = ({
   );
 };
 
-const LawInterestStep = ({ onNext }: Props) => {
+const LawInterestStep = ({ onNext, onBack }: Props) => {
   const { backend } = useBackendContext();
 
   const [areas, setAreas] = useState<Area[]>([]);
@@ -371,9 +372,9 @@ const LawInterestStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
+          px={{ base: "16px", md: "24px" }}
         >
+          <TopBackButton onClick={onBack} />
         </Flex>
 
         <Flex
@@ -470,40 +471,7 @@ const LawInterestStep = ({ onNext }: Props) => {
               placeholder={isLoadingAreas ? "Loading..." : "Search for interests"}
             />
 
-            <HStack
-              gap="8px"
-              w="100%"
-              flexWrap="wrap"
-            >
-              <Button
-                bg="white"
-                borderColor="#E4E4E7"
-                color="black"
-                h={{ base: "40px", md: "48px" }}
-                flex={{ base: "1 1 100%", sm: "1 1 auto" }}
-                borderRadius="8px"
-                fontSize={{ base: "13px", md: "16px" }}
-                fontWeight={600}
-                _active={{ bg: "black", color: "white" }}
-                _hover={{
-                  bg: "#F4F4F5", 
-                  _active: {
-                    bg: "black", 
-                    color: "white",
-                  },
-                }}
-                position="relative"
-                w="100%"
-                px="20px"
-                onClick={handleContinue}
-              >
-                <Box w="100%" textAlign="center">
-                Continue
-                </Box>
-                <LuArrowRight size={16} />
-              </Button>
-
-            </HStack>
+            <StepNavButtons onBack={onBack} onContinue={handleContinue} />
           </Flex>
         </Flex>
 

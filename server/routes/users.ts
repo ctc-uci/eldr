@@ -129,6 +129,51 @@ usersRouter.post("/custom-token", async (req, res) => {
   }
 });
 
+// Check whether an email is already in use by a user in DB or Firebase Auth
+usersRouter.all("/check-email", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.query.email === "string"
+        ? req.query.email
+        : typeof req.body?.email === "string"
+        ? req.body.email
+        : "";
+    const email = rawEmail.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ message: "Email parameter is required" });
+    }
+
+    // 1. Check PostgreSQL users table
+    const existingDbUser = await db.query(
+      "SELECT id, role FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+      [email]
+    );
+
+    if (existingDbUser.length > 0) {
+      return res.status(200).json({ exists: true, message: "Email is already registered" });
+    }
+
+    // 2. Check Firebase Auth
+    try {
+      const fbUser = await admin.auth().getUserByEmail(email);
+      if (fbUser) {
+        return res.status(200).json({ exists: true, message: "Email is already registered in auth" });
+      }
+    } catch (e: unknown) {
+      const fbErr = e as { code?: string };
+      if (fbErr.code !== "auth/user-not-found") {
+        // Not a user-not-found error, ignore and continue
+      }
+    }
+
+    return res.status(200).json({ exists: false });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error checking email";
+    return res.status(500).json({ message });
+  }
+});
+
 // Get all users
 usersRouter.get("/", verifyRole("staff"), async (req, res) => {
   try {

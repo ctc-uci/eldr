@@ -11,23 +11,27 @@ import {
 } from "@chakra-ui/react";
 
 import {
-  LuArrowRight,
   LuExternalLink,
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { TopBackButton, ContinueButton } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
-const CreateAccountStep = ({ onNext }: Props) => {
+const CreateAccountStep = ({ onNext, onBack }: Props) => {
+  const { backend } = useBackendContext();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
 
@@ -45,7 +49,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setErrorMsg(null);
 
     if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
@@ -56,6 +60,24 @@ const CreateAccountStep = ({ onNext }: Props) => {
     if (!isValidEmail(normalizedEmail)) {
       setErrorMsg("Please enter a valid email address.");
       return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const checkResp = await backend.get("/users/check-email", {
+        params: { email: normalizedEmail },
+      });
+      if (checkResp.data?.exists) {
+        setErrorMsg(
+          "An account with this email already exists. Please log in instead, or use a different email."
+        );
+        setIsCheckingEmail(false);
+        return;
+      }
+    } catch {
+      // If check endpoint errors, do not block signup
+    } finally {
+      setIsCheckingEmail(false);
     }
 
     saveDraft({
@@ -85,9 +107,10 @@ const CreateAccountStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
-        />
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton label="Back to Login" onClick={onBack} />
+        </Flex>
 
         <Flex
           flex="1"
@@ -242,33 +265,12 @@ const CreateAccountStep = ({ onNext }: Props) => {
               </Field>
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "14px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5",
-                _active: {
-                  bg: "black",
-                  color: "white",
-                },
-              }}
-              justifyContent="center"
-              px="20px"
-              mt="4px"
+            <ContinueButton
               onClick={handleContinue}
-            >
-              Continue
-              <LuArrowRight size={16} />
-            </Button>
+              loading={isCheckingEmail}
+              disabled={isCheckingEmail}
+              mt="4px"
+            />
 
           </Flex>
         </Flex>
