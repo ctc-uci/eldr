@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { LuChevronsUpDown } from "react-icons/lu";
 import { TbTag } from "react-icons/tb";
@@ -13,6 +14,7 @@ type TagSectionTableProps = {
   sectionTitle: string;
   rows: TagRow[];
   selectedRowKeys: string[];
+  sortField: "name" | "clinicCount" | "volunteerCount";
   sortDirection: "asc" | "desc";
   onToggleRowSelection: (sectionTitle: string, rowName: string) => void;
   onToggleSectionSelection: (sectionTitle: string, rows: TagRow[]) => void;
@@ -26,6 +28,7 @@ export const TagSectionTable = ({
   sectionTitle,
   rows,
   selectedRowKeys,
+  sortField,
   sortDirection,
   onToggleRowSelection,
   onToggleSectionSelection,
@@ -34,10 +37,18 @@ export const TagSectionTable = ({
   onVolunteerSortClick,
   getRowKey,
 }: TagSectionTableProps) => {
+  const sectionRef = useRef<HTMLDivElement>(null);
   const allRowsSelected = rows.length > 0 && rows.every((row) => selectedRowKeys.includes(getRowKey(sectionTitle, row.name)));
 
+  const handleSortClick = (sortCallback: () => void) => {
+    sortCallback();
+    requestAnimationFrame(() => {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   return (
-    <Box pt="8px" pb="10px">
+    <Box ref={sectionRef} pt="8px" pb="10px">
       <Text fontSize="18px" fontWeight={400} color="#18181b" mb="8px" pl="10px">
         {sectionTitle}
       </Text>
@@ -72,12 +83,20 @@ export const TagSectionTable = ({
             flex={1}
             align="center"
             gap="8px"
-            onClick={onNameSortClick}
+            onClick={() => handleSortClick(onNameSortClick)}
             style={{ cursor: "pointer" }}
           >
             <TbTag size={16} />
             <Text>Name</Text>
-            <LuChevronsUpDown size={14} style={{ transform: sortDirection === "asc" ? "rotate(0deg)" : "rotate(180deg)" }} />
+            <LuChevronsUpDown
+              size={14}
+              style={{
+                transform:
+                  sortField === "name" && sortDirection === "desc"
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+              }}
+            />
           </Flex>
 
           <Flex
@@ -85,11 +104,19 @@ export const TagSectionTable = ({
             justify="center"
             align="center"
             gap="6px"
-            onClick={onClinicSortClick}
+            onClick={() => handleSortClick(onClinicSortClick)}
             style={{ cursor: "pointer" }}
           >
             <Text>Clinics</Text>
-            <LuChevronsUpDown size={14} />
+            <LuChevronsUpDown
+              size={14}
+              style={{
+                transform:
+                  sortField === "clinicCount" && sortDirection === "desc"
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+              }}
+            />
           </Flex>
 
           <Flex
@@ -97,11 +124,19 @@ export const TagSectionTable = ({
             justify="center"
             align="center"
             gap="6px"
-            onClick={onVolunteerSortClick}
+            onClick={() => handleSortClick(onVolunteerSortClick)}
             style={{ cursor: "pointer" }}
           >
             <Text>Volunteers</Text>
-            <LuChevronsUpDown size={14} />
+            <LuChevronsUpDown
+              size={14}
+              style={{
+                transform:
+                  sortField === "volunteerCount" && sortDirection === "desc"
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+              }}
+            />
           </Flex>
         </Flex>
 

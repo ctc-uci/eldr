@@ -45,9 +45,8 @@ export const TagManagement = () => {
   const [sections, setSections] = useState<Section[]>(initialSections);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<"name" | "clinicCount" | "volunteerCount">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [clinicSortDirection, setClinicSortDirection] = useState<"asc" | "desc">("asc");
-  const [volunteerSortDirection, setVolunteerSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<{ sectionTitle: string; row: TagRow } | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -71,29 +70,29 @@ export const TagManagement = () => {
         setSections([
           {
             title: "Areas of Practice",
-            rows: safeAreas.map((entry: { id: number; areasOfPractice?: string; areaOfPractice?: string; name?: string }) => ({
+            rows: safeAreas.map((entry: { id: number; areasOfPractice?: string; areaOfPractice?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
               id: entry.id,
               name: entry.areasOfPractice ?? entry.areaOfPractice ?? entry.name ?? "",
-              clinicCount: 0,
-              volunteerCount: 0,
+              clinicCount: entry.clinicCount ?? 0,
+              volunteerCount: entry.volunteerCount ?? 0,
             })),
           },
           {
             title: "Languages",
-            rows: safeLanguages.map((entry: { id: number; language?: string; name?: string }) => ({
+            rows: safeLanguages.map((entry: { id: number; language?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
               id: entry.id,
               name: entry.language ?? entry.name ?? "",
-              clinicCount: 0,
-              volunteerCount: 0,
+              clinicCount: entry.clinicCount ?? 0,
+              volunteerCount: entry.volunteerCount ?? 0,
             })),
           },
           {
             title: "Roles",
-            rows: safeRoles.map((entry: { id: number; roleName?: string; name?: string }) => ({
+            rows: safeRoles.map((entry: { id: number; roleName?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
               id: entry.id,
               name: entry.roleName ?? entry.name ?? "",
-              clinicCount: 0,
-              volunteerCount: 0,
+              clinicCount: entry.clinicCount ?? 0,
+              volunteerCount: entry.volunteerCount ?? 0,
             })),
           },
           {
@@ -135,35 +134,24 @@ export const TagManagement = () => {
         rows: [...section.rows]
           .filter((row) => row.name.toLowerCase().includes(query) || query.length === 0)
           .sort((a, b) => {
-            const comparison = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+            const comparison =
+              sortField === "name"
+                ? a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+                : a[sortField] - b[sortField];
             return sortDirection === "asc" ? comparison : -comparison;
           }),
       }))
       .filter((section) => section.rows.length > 0);
-  }, [searchQuery, sections, sortDirection]);
+  }, [searchQuery, sections, sortDirection, sortField]);
 
-  const sortSectionRows = (sectionTitle: string, field: "clinicCount" | "volunteerCount") => {
-    setSections((prev) =>
-      prev.map((section) => {
-        if (section.title !== sectionTitle) return section;
-
-        const direction = field === "clinicCount" ? clinicSortDirection : volunteerSortDirection;
-
-        return {
-          ...section,
-          rows: [...section.rows].sort((a, b) => {
-            const comparison = a[field] - b[field];
-            return direction === "asc" ? comparison : -comparison;
-          }),
-        };
-      }),
-    );
-
-    if (field === "clinicCount") {
-      setClinicSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setVolunteerSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  const handleSort = (field: "name" | "clinicCount" | "volunteerCount") => {
+    if (field === sortField) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
     }
+
+    setSortField(field);
+    setSortDirection("asc");
   };
 
   const toggleRowSelection = (sectionTitle: string, rowName: string) => {
@@ -375,12 +363,13 @@ export const TagManagement = () => {
               sectionTitle={section.title}
               rows={section.rows}
               selectedRowKeys={selectedRowKeys}
+              sortField={sortField}
               sortDirection={sortDirection}
               onToggleRowSelection={toggleRowSelection}
               onToggleSectionSelection={toggleSectionSelection}
-              onNameSortClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
-              onClinicSortClick={() => sortSectionRows(section.title, "clinicCount")}
-              onVolunteerSortClick={() => sortSectionRows(section.title, "volunteerCount")}
+              onNameSortClick={() => handleSort("name")}
+              onClinicSortClick={() => handleSort("clinicCount")}
+              onVolunteerSortClick={() => handleSort("volunteerCount")}
               getRowKey={getRowKey}
             />
           ))}

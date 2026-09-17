@@ -30,8 +30,20 @@ rolesRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const roles = await db.query(
       `
-        SELECT *
-        FROM roles;
+        SELECT
+          r.*,
+          (
+            SELECT COUNT(DISTINCT cr.clinic_id)::int
+            FROM clinic_roles cr
+            WHERE cr.role_id = r.id
+          ) AS clinic_count,
+          (
+            SELECT COUNT(DISTINCT vr.volunteer_id)::int
+            FROM volunteer_roles vr
+            WHERE vr.role_id = r.id
+          ) AS volunteer_count
+        FROM roles r
+        ORDER BY r.id ASC;
       `
     );
 
