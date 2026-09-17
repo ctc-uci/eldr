@@ -17,7 +17,15 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuMail, LuImageUp, LuTriangleAlert, LuChevronDown } from "react-icons/lu";
+import { toaster } from "@/components/ui/toaster";
+import {
+  LuMail,
+  LuImageUp,
+  LuTriangleAlert,
+  LuChevronDown,
+  LuPlus,
+  LuTrash2,
+} from "react-icons/lu";
 import { useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
@@ -33,6 +41,22 @@ const parseTimeField = (ts) => {
   return { time: `${h}:${String(m).padStart(2, "0")}`, period };
 };
 
+const parseMeetingLinks = (raw) => {
+  if (!raw) return [""];
+  const parts = raw
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [""];
+};
+
+const serializeMeetingLinks = (links) => {
+  return links
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join("\n");
+};
+
 const buildEditBaseline = (c, langNames) => {
   const start = parseTimeField(c.startTime);
   const end = parseTimeField(c.endTime);
@@ -45,7 +69,7 @@ const buildEditBaseline = (c, langNames) => {
     city: c.city ?? "",
     state: c.state ?? "",
     zip: c.zip ?? "",
-    zoomLink: c.meetingLink ?? "",
+    meetingLinksKey: serializeMeetingLinks(parseMeetingLinks(c.meetingLink)),
     date: dateStr,
     startTime: start.time,
     startPeriod: start.period,
@@ -134,7 +158,8 @@ export const CreateEvent = () => {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
-  const [zoomLink, setZoomLink] = useState("");
+  const [meetingLinks, setMeetingLinks] = useState([""]);
+  const [addressSubmitted, setAddressSubmitted] = useState(false);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [startPeriod, setStartPeriod] = useState("AM");
@@ -148,6 +173,25 @@ export const CreateEvent = () => {
   const [allLanguages, setAllLanguages] = useState([]);
   const [initialForm, setInitialForm] = useState(null);
   const [discardOpen, setDiscardOpen] = useState(false);
+
+  const handleAddMeetingLink = () => {
+    setMeetingLinks((prev) => [...prev, ""]);
+  };
+
+  const handleMeetingLinkChange = (index, value) => {
+    setMeetingLinks((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
+
+  const handleRemoveMeetingLink = (index) => {
+    setMeetingLinks((prev) => {
+      if (prev.length <= 1) return [""];
+      return prev.filter((_, idx) => idx !== index);
+    });
+  };
 
   useEffect(() => {
     backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
@@ -173,7 +217,7 @@ export const CreateEvent = () => {
         setCity(c.city ?? "");
         setState(c.state ?? "");
         setZip(c.zip ?? "");
-        setZoomLink(c.meetingLink ?? "");
+        setMeetingLinks(parseMeetingLinks(c.meetingLink));
         setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
         setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
         setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
@@ -210,7 +254,7 @@ export const CreateEvent = () => {
         setCity(c.city ?? "");
         setState(c.state ?? "");
         setZip(c.zip ?? "");
-        setZoomLink(c.meetingLink ?? "");
+        setMeetingLinks(parseMeetingLinks(c.meetingLink));
         setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
         setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
         setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
@@ -234,6 +278,11 @@ export const CreateEvent = () => {
     [languages]
   );
 
+  const currentMeetingLinksKey = useMemo(
+    () => serializeMeetingLinks(meetingLinks),
+    [meetingLinks]
+  );
+
   const isDirty = useMemo(() => {
     if (!isEditing || !initialForm) return false;
     const b = initialForm;
@@ -245,7 +294,7 @@ export const CreateEvent = () => {
       city !== b.city ||
       state !== b.state ||
       zip !== b.zip ||
-      zoomLink !== b.zoomLink ||
+      currentMeetingLinksKey !== b.meetingLinksKey ||
       date !== b.date ||
       startTime !== b.startTime ||
       startPeriod !== b.startPeriod ||
@@ -266,7 +315,7 @@ export const CreateEvent = () => {
     city,
     state,
     zip,
-    zoomLink,
+    currentMeetingLinksKey,
     date,
     startTime,
     startPeriod,
@@ -348,6 +397,16 @@ export const CreateEvent = () => {
 
   const handleSubmit = async () => {
     try {
+      if (locationType === "in-person" && !address.trim()) {
+        setAddressSubmitted(true);
+        toaster.error({
+          title: "Location address is required for in-person events.",
+        });
+        return;
+      }
+
+      const combinedMeetingLinks = serializeMeetingLinks(meetingLinks);
+
       const payload = {
         name: eventName,
         date,
@@ -357,11 +416,11 @@ export const CreateEvent = () => {
         capacity: parseInt(maximum) || 1,
         max_target_roles: null,
         description,
-        address,
-        city,
-        state,
-        zip,
-        meeting_link: zoomLink,
+        address: locationType === "online" ? "" : address,
+        city: locationType === "online" ? "" : city,
+        state: locationType === "online" ? "" : state,
+        zip: locationType === "online" ? "" : zip,
+        meeting_link: locationType === "in-person" ? "" : combinedMeetingLinks,
         location_type: locationType,
         type,
       };
@@ -405,15 +464,25 @@ export const CreateEvent = () => {
       });
     } catch (err) {
       console.error(err);
+      toaster.error({
+        title: "Failed to save event.",
+        description: err.response?.data?.message || err.message,
+      });
     }
   };
 
-  const Label = ({ children }) => (
-    <HStack gap={0} mb={1}>
+  const Label = ({ children, required = true }) => (
+    <HStack gap={1} mb={1} align="center">
       <Text fontSize="sm" fontWeight="semibold" color="gray.700">
         {children}
       </Text>
-      <Text color="red.500" ml="2px">*</Text>
+      {required ? (
+        <Text color="red.500" ml="2px">*</Text>
+      ) : (
+        <Text fontSize="xs" color="gray.400" fontWeight="normal" ml={1}>
+          (Optional)
+        </Text>
+      )}
     </HStack>
   );
 
@@ -577,28 +646,38 @@ export const CreateEvent = () => {
             w="100%"
             gap={{ base: 4, lg: 8 }}
             direction={{ base: "column", lg: "row" }}
-            align={{ base: "stretch", lg: "end" }}
+            align={{ base: "stretch", lg: "start" }}
           >
             <VStack align="start" gap={1} flexShrink={0} w={{ base: "100%", lg: "15%" }}>
               <Label>Event Format</Label>
               <StyledSelect
                 value={locationType}
-                onChange={(e) => setLocationType(e.target.value)}
+                onChange={(e) => {
+                  setLocationType(e.target.value);
+                  setAddressSubmitted(false);
+                }}
                 options={EVENT_FORMAT_OPTIONS}
                 color="black"
               />
             </VStack>
 
-            <VStack align="start" gap={1} flex={1} w="100%">
-              <Label>Location</Label>
-              <HStack w="100%" gap={2} flexWrap="wrap" align="start">
-                {(locationType === "in-person" || locationType === "hybrid") && (
-                  <>
+            <VStack align="start" gap={4} flex={1} w="100%">
+              {/* In-Person: Location is required */}
+              {locationType === "in-person" && (
+                <VStack align="start" gap={1} w="100%">
+                  <Label required={true}>Location</Label>
+                  <HStack w="100%" gap={2} flexWrap="wrap" align="start">
                     <Input
                       placeholder="Address"
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      onChange={(e) => {
+                        setAddress(e.target.value);
+                        if (addressSubmitted) setAddressSubmitted(false);
+                      }}
                       {...fieldStyle}
+                      borderColor={
+                        addressSubmitted && !address.trim() ? "red.500" : "#CBD5E0"
+                      }
                       flex={{ base: "1 1 100%", lg: 2 }}
                       minW={0}
                     />
@@ -625,19 +704,165 @@ export const CreateEvent = () => {
                       {...fieldStyle}
                       w={{ base: "calc(25% - 6px)", md: "15%" }}
                     />
-                  </>
-                )}
-                {(locationType === "online" || locationType === "hybrid") && (
-                  <Input
-                    placeholder="Zoom Link"
-                    value={zoomLink}
-                    onChange={(e) => setZoomLink(e.target.value)}
-                    {...fieldStyle}
-                    flex="1 1 220px"
-                    minW="120px"
-                  />
-                )}
-              </HStack>
+                  </HStack>
+                  {addressSubmitted && !address.trim() && (
+                    <Text fontSize="xs" color="red.500" mt={1}>
+                      Location address is required for in-person events.
+                    </Text>
+                  )}
+                </VStack>
+              )}
+
+              {/* Online: Meeting links are optional */}
+              {locationType === "online" && (
+                <VStack align="start" gap={2} w="100%">
+                  <Label required={false}>Meeting Links</Label>
+                  {meetingLinks.map((link, idx) => (
+                    <HStack key={idx} w="100%" gap={2} align="center">
+                      <Input
+                        placeholder={
+                          meetingLinks.length > 1
+                            ? `Meeting Link #${idx + 1} (e.g., Zoom, Google Meet)`
+                            : "Meeting Link (e.g., Zoom, Google Meet)"
+                        }
+                        value={link}
+                        onChange={(e) => handleMeetingLinkChange(idx, e.target.value)}
+                        {...fieldStyle}
+                        flex={1}
+                      />
+                      {meetingLinks.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          h="44px"
+                          px={2.5}
+                          color="gray.400"
+                          _hover={{ color: "red.500", bg: "red.50" }}
+                          onClick={() => handleRemoveMeetingLink(idx)}
+                          aria-label={`Remove meeting link ${idx + 1}`}
+                          title="Remove link"
+                        >
+                          <LuTrash2 size={16} />
+                        </Button>
+                      )}
+                    </HStack>
+                  ))}
+                  <HStack justify="flex-start" w="100%" pt={1}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      h="34px"
+                      px={3}
+                      borderColor="#CBD5E0"
+                      color="#2B6CB0"
+                      fontSize="xs"
+                      fontWeight="medium"
+                      borderRadius="4px"
+                      _hover={{ bg: "blue.50", borderColor: "#2B6CB0" }}
+                      onClick={handleAddMeetingLink}
+                    >
+                      <LuPlus size={14} /> Add Meeting Link
+                    </Button>
+                  </HStack>
+                </VStack>
+              )}
+
+              {/* Hybrid: Both Physical Location and Meeting Links are optional */}
+              {locationType === "hybrid" && (
+                <VStack align="start" gap={4} w="100%">
+                  <VStack align="start" gap={1} w="100%">
+                    <Label required={false}>Physical Location</Label>
+                    <HStack w="100%" gap={2} flexWrap="wrap" align="start">
+                      <Input
+                        placeholder="Address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        {...fieldStyle}
+                        flex={{ base: "1 1 100%", lg: 2 }}
+                        minW={0}
+                      />
+                      <Input
+                        placeholder="City"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        {...fieldStyle}
+                        w={{ base: "calc(50% - 4px)", md: "20%" }}
+                      />
+                      <Box w={{ base: "calc(25% - 6px)", md: "95px" }}>
+                        <StyledSelect
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          options={US_STATES}
+                          placeholder="State"
+                          color={state ? "black" : undefined}
+                        />
+                      </Box>
+                      <Input
+                        placeholder="Zip Code"
+                        value={zip}
+                        onChange={(e) => setZip(e.target.value)}
+                        {...fieldStyle}
+                        w={{ base: "calc(25% - 6px)", md: "15%" }}
+                      />
+                    </HStack>
+                  </VStack>
+
+                  <VStack align="start" gap={2} w="100%">
+                    <Label required={false}>Meeting Links</Label>
+                    {meetingLinks.map((link, idx) => (
+                      <HStack key={idx} w="100%" gap={2} align="center">
+                        <Input
+                          placeholder={
+                            meetingLinks.length > 1
+                              ? `Meeting Link #${idx + 1} (e.g., Zoom, Google Meet)`
+                              : "Meeting Link (e.g., Zoom, Google Meet)"
+                          }
+                          value={link}
+                          onChange={(e) => handleMeetingLinkChange(idx, e.target.value)}
+                          {...fieldStyle}
+                          flex={1}
+                        />
+                        {meetingLinks.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            h="44px"
+                            px={2.5}
+                            color="gray.400"
+                            _hover={{ color: "red.500", bg: "red.50" }}
+                            onClick={() => handleRemoveMeetingLink(idx)}
+                            aria-label={`Remove meeting link ${idx + 1}`}
+                            title="Remove link"
+                          >
+                            <LuTrash2 size={16} />
+                          </Button>
+                        )}
+                      </HStack>
+                    ))}
+                    <HStack justify="flex-start" w="100%" pt={1}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        h="34px"
+                        px={3}
+                        borderColor="#CBD5E0"
+                        color="#2B6CB0"
+                        fontSize="xs"
+                        fontWeight="medium"
+                        borderRadius="4px"
+                        _hover={{ bg: "blue.50", borderColor: "#2B6CB0" }}
+                        onClick={handleAddMeetingLink}
+                      >
+                        <LuPlus size={14} /> Add Meeting Link
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </VStack>
+              )}
             </VStack>
           </Flex>
 
