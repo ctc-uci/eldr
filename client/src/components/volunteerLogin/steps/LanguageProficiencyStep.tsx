@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
  
 import {
   Box,
@@ -18,24 +18,47 @@ type Props = {
   onNext: () => void;
 };
  
-type Proficiency = "proficient" | "professional" | "native/fluent";
- 
+type Proficiency =
+  | "Native/Bilingual"
+  | "Professional"
+  | "Limited Working"
+  | "Elementary";
+
 const PROFICIENCY_OPTIONS: Proficiency[] = [
-  "proficient",
-  "professional",
-  "native/fluent",
+  "Native/Bilingual",
+  "Professional",
+  "Limited Working",
+  "Elementary",
 ];
- 
-const proficiencyLabel = (p: Proficiency) => {
-  switch (p) {
-    case "proficient":
-      return "Proficient";
-    case "professional":
-      return "Professional";
-    case "native/fluent":
-      return "Native/Fluent";
+
+const normalizeProficiencyValue = (p: unknown): Proficiency => {
+  if (!p) return "Professional";
+  const str = String(p).trim().toLowerCase();
+  if (
+    str === "native/bilingual" ||
+    str === "native/fluent" ||
+    str === "native" ||
+    str === "fluent" ||
+    str === "bilingual"
+  ) {
+    return "Native/Bilingual";
   }
+  if (str === "professional") return "Professional";
+  if (
+    str === "limited working" ||
+    str === "intermediate" ||
+    str === "advanced"
+  ) {
+    return "Limited Working";
+  }
+  if (str === "elementary" || str === "proficient") {
+    return "Elementary";
+  }
+  const match = PROFICIENCY_OPTIONS.find((opt) => opt.toLowerCase() === str);
+  return match ?? "Professional";
 };
+
+const proficiencyLabel = (p: Proficiency) => p;
 
 const ProficiencyDropdown = ({
   value,
@@ -68,27 +91,28 @@ const ProficiencyDropdown = ({
   }, [open]);
  
   return (
-    <Box position="relative" ref={containerRef}>
+    <Box position="relative" ref={containerRef} w="100%" minW={0}>
       <Flex
         align="center"
         justify="space-between"
         border="1px solid"
         borderColor={open ? "#3182CE" : "#E4E4E7"}
         borderRadius="6px"
-        px="14px"
+        px="12px"
         h="44px"
         cursor="pointer"
         bg="white"
         userSelect="none"
-        gap="10px"
-        minW="180px"
+        gap="8px"
+        w="100%"
+        minW={0}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setOpen(false);
         }}
         tabIndex={0}
       >
-        <Text fontSize="14px" color="black">
+        <Text fontSize="14px" color="black" truncate>
           {proficiencyLabel(value)}
         </Text>
         <LuChevronDown
@@ -119,7 +143,7 @@ const ProficiencyDropdown = ({
           {PROFICIENCY_OPTIONS.map((opt) => (
             <Flex
               key={opt}
-              px="14px"
+              px="12px"
               py="10px"
               cursor="pointer"
               bg={opt === value ? "#D4D4D8" : "white"}
@@ -141,36 +165,51 @@ const ProficiencyDropdown = ({
 };
  
 const LanguageProficiencyStep = ({ onNext }: Props) => {
-  const selectedLanguages = loadDraft()?.selectedLanguageNames ?? [];
-
-  const [proficiencies, setProficiencies] = useState<Record<string, Proficiency>>(
-    () => {
-      const draft = loadDraft();
-      const fromDraft = draft?.languageProficiencies as
-        | Record<string, Proficiency>
-        | undefined;
-      if (fromDraft && Object.keys(fromDraft).length > 0) {
-        const next: Record<string, Proficiency> = {};
-        for (const lang of selectedLanguages) {
-          const p = fromDraft[lang];
-          next[lang] =
-            p && PROFICIENCY_OPTIONS.includes(p as Proficiency)
-              ? (p as Proficiency)
-              : "proficient";
-        }
-        return next;
-      }
-      return Object.fromEntries(
-        selectedLanguages.map((lang) => [lang, "proficient" as Proficiency])
-      );
-    }
+  const selectedLanguages = useMemo(
+    () => loadDraft()?.selectedLanguageNames ?? [],
+    []
   );
+
+  const [verbalProficiencies, setVerbalProficiencies] = useState<
+    Record<string, Proficiency>
+  >(() => {
+    const draft = loadDraft();
+    const map: Record<string, Proficiency> = {};
+    for (const lang of selectedLanguages) {
+      const v =
+        draft?.verbalProficiencies?.[lang] ??
+        draft?.languageProficiencies?.[lang];
+      map[lang] = normalizeProficiencyValue(v);
+    }
+    return map;
+  });
+
+  const [writtenProficiencies, setWrittenProficiencies] = useState<
+    Record<string, Proficiency>
+  >(() => {
+    const draft = loadDraft();
+    const map: Record<string, Proficiency> = {};
+    for (const lang of selectedLanguages) {
+      const w =
+        draft?.writtenProficiencies?.[lang] ??
+        draft?.languageProficiencies?.[lang];
+      map[lang] = normalizeProficiencyValue(w);
+    }
+    return map;
+  });
  
   useEffect(() => {
-    setProficiencies((prev) => {
+    setVerbalProficiencies((prev) => {
       const next: Record<string, Proficiency> = {};
       for (const lang of selectedLanguages) {
-        next[lang] = prev[lang] ?? "proficient";
+        next[lang] = prev[lang] ?? "Professional";
+      }
+      return next;
+    });
+    setWrittenProficiencies((prev) => {
+      const next: Record<string, Proficiency> = {};
+      for (const lang of selectedLanguages) {
+        next[lang] = prev[lang] ?? "Professional";
       }
       return next;
     });
@@ -189,13 +228,10 @@ const LanguageProficiencyStep = ({ onNext }: Props) => {
     const draft = loadDraft();
     const literateNames = draft?.literateLanguageNames ?? [];
 
-    const profMap: Record<string, string> = {};
-    for (const lang of selectedLanguages) {
-      profMap[lang] = proficiencies[lang] ?? "proficient";
-    }
-
     saveDraft({
-      languageProficiencies: profMap,
+      verbalProficiencies,
+      writtenProficiencies,
+      languageProficiencies: verbalProficiencies,
       literateLanguageNames: literateNames,
     });
     onNext();
@@ -240,113 +276,163 @@ const LanguageProficiencyStep = ({ onNext }: Props) => {
                 Volunteer Account Creation
               </Heading>
               <Text fontSize={{ base: "14px", md: "16px", lg: "20px" }} color="black">
-                Indicate your level of proficiency for each language selected.
+                Indicate your verbal and written proficiency levels for each language selected.
               </Text>
             </Box>
           </Flex>
  
           {/* Right */}
-            <Flex
+          <Flex
             direction="column"
             justify="flex-start"
             w={{ base: "100%", md: "50%" }}
             px="5%"
             py="10%"
             gap={{ base: "16px", md: "18px" }}
-            >
+          >
             <Progress.Root value={35} size="xs">
-                <Progress.Track>
+              <Progress.Track>
                 <Progress.Range bg="#0088FF" />
-                </Progress.Track>
+              </Progress.Track>
             </Progress.Root>
 
             {errorMsg && (
-                <Box
+              <Box
                 border="1px solid"
                 borderColor="red.200"
                 bg="red.50"
                 p="10px"
                 borderRadius="8px"
-                >
+              >
                 <Text color="red.700" fontSize="14px">
-                    {errorMsg}
+                  {errorMsg}
                 </Text>
-                </Box>
+              </Box>
             )}
 
-            {/* Language proficiency rows */}
-            <Flex direction="column" gap="8px">
-                {selectedLanguages.length === 0 ? (
-                <Text fontSize="14px" color="gray.400">
-                    No languages selected. Go back to select languages first.
+            {/* Language proficiency grid */}
+            {selectedLanguages.length === 0 ? (
+              <Text fontSize="14px" color="gray.400">
+                No languages selected. Go back to select languages first.
+              </Text>
+            ) : (
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(3, minmax(0, 1fr))"
+                columnGap="10px"
+                rowGap="10px"
+                w="100%"
+                alignItems="center"
+              >
+                {/* Column headers aligned with inputs below */}
+                <Text
+                  fontSize="12px"
+                  fontWeight="semibold"
+                  color="#71717A"
+                  textAlign="left"
+                >
+                  Language
                 </Text>
-                ) : (
-                selectedLanguages.map((lang) => (
-                    <Flex key={lang} align="center" gap="12px" w="100%" h="44px">
-                    {/* Language box (50%) */}
+                <Text
+                  fontSize="12px"
+                  fontWeight="semibold"
+                  color="#71717A"
+                  textAlign="left"
+                >
+                  Verbal Proficiency
+                </Text>
+                <Text
+                  fontSize="12px"
+                  fontWeight="semibold"
+                  color="#71717A"
+                  textAlign="left"
+                >
+                  Written Proficiency
+                </Text>
+
+                {/* Rows sharing the exact same 3 grid tracks */}
+                {selectedLanguages.map((lang) => (
+                  <Fragment key={lang}>
+                    {/* Language box */}
                     <Flex
-                        align="center"
-                        w="50%"
-                        px="14px"
-                        h="100%"
-                        border="1px solid"
-                        borderColor="#E4E4E7"
-                        borderRadius="6px"
-                        overflow="hidden"
+                      align="center"
+                      px="14px"
+                      h="44px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="#FAFAFA"
+                      overflow="hidden"
+                      minW={0}
+                      w="100%"
                     >
-                        <Text
+                      <Text
                         fontSize={{ base: "13px", md: "14px" }}
-                        color="#52525B"
+                        fontWeight="medium"
+                        color="#27272A"
                         truncate
-                        >
+                      >
                         {lang}
-                        </Text>
+                      </Text>
                     </Flex>
 
-                    {/* Proficiency dropdown (50%) */}
-                    <Box w="50%">
-                        <ProficiencyDropdown
-                        value={proficiencies[lang] ?? "proficient"}
+                    {/* Verbal Proficiency dropdown */}
+                    <Box minW={0} w="100%">
+                      <ProficiencyDropdown
+                        value={verbalProficiencies[lang] ?? "Professional"}
                         onChange={(val) =>
-                            setProficiencies((prev) => ({
+                          setVerbalProficiencies((prev) => ({
                             ...prev,
                             [lang]: val,
-                            }))
+                          }))
                         }
-                        />
+                      />
                     </Box>
-                    </Flex>
-                ))
-                )}
-            </Flex>
+
+                    {/* Written Proficiency dropdown */}
+                    <Box minW={0} w="100%">
+                      <ProficiencyDropdown
+                        value={writtenProficiencies[lang] ?? "Professional"}
+                        onChange={(val) =>
+                          setWrittenProficiencies((prev) => ({
+                            ...prev,
+                            [lang]: val,
+                          }))
+                        }
+                      />
+                    </Box>
+                  </Fragment>
+                ))}
+              </Box>
+            )}
 
             <Button
-                bg="white"
-                borderColor="#E4E4E7"
-                color="black"
-                h={{ base: "40px", md: "48px" }}
-                borderRadius="8px"
-                fontSize={{ base: "13px", md: "16px" }}
-                fontWeight={600}
-                _active={{ bg: "black", color: "white" }}
-                _hover={{
+              bg="white"
+              borderColor="#E4E4E7"
+              color="black"
+              h={{ base: "40px", md: "48px" }}
+              borderRadius="8px"
+              fontSize={{ base: "13px", md: "16px" }}
+              fontWeight={600}
+              _active={{ bg: "black", color: "white" }}
+              _hover={{
                 bg: "#F4F4F5",
                 _active: { bg: "black", color: "white" },
-                }}
-                position="relative"
-                w="100%"
-                px="20px"
-                onClick={handleContinue}
+              }}
+              position="relative"
+              w="100%"
+              px="20px"
+              onClick={handleContinue}
             >
-                <Box w="100%" textAlign="center">
+              <Box w="100%" textAlign="center">
                 Continue
-                </Box>
-                <Box position="absolute" right="12px">
+              </Box>
+              <Box position="absolute" right="12px">
                 <LuArrowRight size={16} />
-                </Box>
+              </Box>
             </Button>
 
-            </Flex>
+          </Flex>
         </Flex>
  
         <Box w="100%" h="70px" bg="#F6F6F6" flexShrink={0} />

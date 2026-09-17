@@ -6,7 +6,11 @@ export type VolunteerSignupDraft = {
   email: string;
   selectedLanguageNames: string[];
   literateLanguageNames: string[];
-  /** language name -> proficiency */
+  /** language name -> verbal proficiency */
+  verbalProficiencies: Record<string, string>;
+  /** language name -> written proficiency */
+  writtenProficiencies: Record<string, string>;
+  /** legacy fallback: language name -> proficiency */
   languageProficiencies: Record<string, string>;
   selectedAreaLabels: string[];
   /** null = not answered yet */
@@ -23,6 +27,8 @@ export function defaultDraft(): VolunteerSignupDraft {
     email: "",
     selectedLanguageNames: [],
     literateLanguageNames: [],
+    verbalProficiencies: {},
+    writtenProficiencies: {},
     languageProficiencies: {},
     selectedAreaLabels: [],
     isNotary: null,
@@ -48,6 +54,14 @@ export function saveDraft(partial: Partial<VolunteerSignupDraft>): void {
   const next: VolunteerSignupDraft = {
     ...cur,
     ...partial,
+    verbalProficiencies:
+      partial.verbalProficiencies !== undefined
+        ? { ...cur.verbalProficiencies, ...partial.verbalProficiencies }
+        : cur.verbalProficiencies,
+    writtenProficiencies:
+      partial.writtenProficiencies !== undefined
+        ? { ...cur.writtenProficiencies, ...partial.writtenProficiencies }
+        : cur.writtenProficiencies,
     languageProficiencies:
       partial.languageProficiencies !== undefined
         ? { ...cur.languageProficiencies, ...partial.languageProficiencies }

@@ -29,8 +29,16 @@ interface LanguageOption {
 interface LanguageEntry {
   languageId: number;
   language: string;
-  proficiency: string;
+  verbalProficiency: string;
+  writtenProficiency: string;
 }
+
+const PROFICIENCY_OPTIONS = [
+  "Native/Bilingual",
+  "Professional",
+  "Limited Working",
+  "Elementary",
+];
 
 const TagInput = ({
   tags,
@@ -143,7 +151,7 @@ export const AddProfileView = () => {
   const [stateBarCertState, setStateBarCertState] = useState("");
   const [stateBarNumber, setStateBarNumber] = useState("");
   const [languages, setLanguages] = useState<LanguageEntry[]>([
-    { languageId: 0, language: "", proficiency: "" },
+    { languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" },
   ]);
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
@@ -232,8 +240,8 @@ export const AddProfileView = () => {
             backend.post(`/volunteers/${volunteerId}/languages`, {
               languages: validLanguages.map((l) => ({
                 languageId: l.languageId,
-                proficiency: l.proficiency || "proficient",
-                isLiterate: true,
+                verbalProficiency: l.verbalProficiency || "Professional",
+                writtenProficiency: l.writtenProficiency || "Professional",
               })),
             })
           );
@@ -750,6 +758,20 @@ export const AddProfileView = () => {
                   >
                     Select the languages and your proficiency level
                   </Text>
+                  {languages.length > 0 && (
+                    <Flex gap={2} mb={2} px={1}>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1}>
+                        Language
+                      </Text>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1}>
+                        Verbal Proficiency
+                      </Text>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1}>
+                        Written Proficiency
+                      </Text>
+                      {languages.length > 1 && <Box w="12px" />}
+                    </Flex>
+                  )}
                   {languages.map((entry, i) => (
                     <Flex
                       key={i}
@@ -799,29 +821,50 @@ export const AddProfileView = () => {
                         flex={1}
                       >
                         <NativeSelect.Field
-                          placeholder="Proficiency"
-                          color={!entry.proficiency ? "#A1A1AA" : "inherit"}
-                          value={entry.proficiency}
+                          placeholder="Verbal"
+                          color={!entry.verbalProficiency ? "#A1A1AA" : "inherit"}
+                          value={entry.verbalProficiency}
                           onChange={(e) =>
                             setLanguages((prev) =>
                               prev.map((l, idx) =>
                                 idx === i
-                                  ? { ...l, proficiency: e.target.value }
+                                  ? { ...l, verbalProficiency: e.target.value }
                                   : l
                               )
                             )
                           }
                         >
-                          {["Proficient", "Professional", "Native/Fluent"].map(
-                            (p) => (
-                              <option
-                                key={p}
-                                value={p}
-                              >
-                                {p}
-                              </option>
+                          {PROFICIENCY_OPTIONS.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <NativeSelect.Root
+                        borderColor="#E4E4E7"
+                        flex={1}
+                      >
+                        <NativeSelect.Field
+                          placeholder="Written"
+                          color={!entry.writtenProficiency ? "#A1A1AA" : "inherit"}
+                          value={entry.writtenProficiency}
+                          onChange={(e) =>
+                            setLanguages((prev) =>
+                              prev.map((l, idx) =>
+                                idx === i
+                                  ? { ...l, writtenProficiency: e.target.value }
+                                  : l
+                              )
                             )
-                          )}
+                          }
+                        >
+                          {PROFICIENCY_OPTIONS.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
                         </NativeSelect.Field>
                         <NativeSelect.Indicator />
                       </NativeSelect.Root>
@@ -850,7 +893,12 @@ export const AddProfileView = () => {
                     onClick={() =>
                       setLanguages((prev) => [
                         ...prev,
-                        { languageId: 0, language: "", proficiency: "" },
+                        {
+                          languageId: 0,
+                          language: "",
+                          verbalProficiency: "",
+                          writtenProficiency: "",
+                        },
                       ])
                     }
                   >

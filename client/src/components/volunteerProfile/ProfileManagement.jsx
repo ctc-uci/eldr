@@ -24,29 +24,38 @@ const PROFILE_TABS = [
 ];
 
 const VALID_SECTIONS = new Set(["information", "activity", "preferences"]);
-const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Proficient";
+const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Native/Bilingual";
 const toDisplayProficiency = (value) => {
   const normalized = normalizeText(value);
   if (!normalized) return DEFAULT_PROFICIENCY;
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "Native/Fluent";
+  if (
+    normalized === "native/bilingual" ||
+    normalized === "native/fluent" ||
+    normalized === "native" ||
+    normalized === "bilingual" ||
+    normalized === "fluent"
+  ) {
+    return "Native/Bilingual";
   }
   if (normalized === "professional") return "Professional";
-  if (normalized === "proficient") return "Proficient";
-  return normalized
-    .split("/")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("/");
-};
-const toBackendProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return "proficient";
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "native/fluent";
+  if (
+    normalized === "limited working" ||
+    normalized === "limited" ||
+    normalized === "working" ||
+    normalized === "intermediate" ||
+    normalized === "advanced"
+  ) {
+    return "Limited Working";
   }
-  if (normalized === "professional") return "professional";
-  return "proficient";
+  if (normalized === "elementary" || normalized === "proficient") {
+    return "Elementary";
+  }
+  const match = PROFICIENCY_OPTIONS.find(
+    (o) => o.toLowerCase() === normalized
+  );
+  return match || DEFAULT_PROFICIENCY;
 };
+const toBackendProficiency = (value) => toDisplayProficiency(value);
 const readFirst = (value) => (Array.isArray(value) ? value[0] : value);
 const normalizeText = (value) => value?.trim().toLowerCase();
 
@@ -151,7 +160,12 @@ export const ProfileManagement = () => {
           languages: volunteerLanguages.map((row) => ({
             id: `lang-${row.id}`,
             language: row.language,
-            proficiency: toDisplayProficiency(row.proficiency),
+            verbalProficiency: toDisplayProficiency(
+              row.verbalProficiency ?? row.proficiency
+            ),
+            writtenProficiency: toDisplayProficiency(
+              row.writtenProficiency ?? row.proficiency
+            ),
           })),
           interests: volunteerAreas.map((row) => row.areasOfPractice),
         }));
@@ -271,8 +285,8 @@ export const ProfileManagement = () => {
           nextLanguageIds.push(match.id);
           return {
             languageId: match.id,
-            proficiency: toBackendProficiency(row.proficiency),
-            isLiterate: true,
+            verbalProficiency: toBackendProficiency(row.verbalProficiency),
+            writtenProficiency: toBackendProficiency(row.writtenProficiency),
           };
         })
         .filter(Boolean);

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Avatar,
@@ -17,13 +17,130 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuFileText, LuPencil, LuTriangleAlert, LuX } from "react-icons/lu";
+import {
+  LuChevronDown,
+  LuFileText,
+  LuPencil,
+  LuTriangleAlert,
+  LuX,
+} from "react-icons/lu";
 import InputMask from "react-input-mask";
 
 import {
   NOTARY_OPTIONS,
   PROFICIENCY_OPTIONS,
 } from "./profileState.js";
+
+const ModernDropdown = ({
+  value,
+  options = [],
+  placeholder = "Select...",
+  onChange,
+  flex = 1,
+  minW = 0,
+}) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
+
+  return (
+    <Box position="relative" ref={containerRef} flex={flex} minW={minW} w="100%">
+      <Flex
+        align="center"
+        justify="space-between"
+        border="1px solid"
+        borderColor={open ? "#3182CE" : "#E4E4E7"}
+        borderRadius="6px"
+        px="12px"
+        h="42px"
+        cursor="pointer"
+        bg="white"
+        userSelect="none"
+        gap="8px"
+        w="100%"
+        minW={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
+        tabIndex={0}
+        _hover={{ borderColor: open ? "#3182CE" : "#D4D4D8" }}
+        transition="border-color 0.15s ease"
+      >
+        <Text fontSize="14px" color={value ? "#27272A" : "#A1A1AA"} truncate>
+          {value || placeholder}
+        </Text>
+        <LuChevronDown
+          size={16}
+          color="#9CA3AF"
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            flexShrink: 0,
+          }}
+        />
+      </Flex>
+
+      {open && (
+        <Box
+          position="absolute"
+          top="calc(100% + 4px)"
+          left={0}
+          right={0}
+          bg="white"
+          border="1px solid"
+          borderColor="#E4E4E7"
+          borderRadius="6px"
+          boxShadow="lg"
+          zIndex={9999}
+          maxH="220px"
+          overflowY="auto"
+          py={1}
+        >
+          {options.map((opt) => (
+            <Flex
+              key={opt}
+              px="12px"
+              py="9px"
+              cursor="pointer"
+              align="center"
+              bg={opt === value ? "#F4F4F5" : "white"}
+              fontWeight={opt === value ? "semibold" : "normal"}
+              _hover={{ bg: "#F4F4F5" }}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
+            >
+              <Text fontSize="14px" color="#27272A" truncate>
+                {opt}
+              </Text>
+            </Flex>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 
 const FieldLabel = ({ children }) => (
@@ -90,7 +207,8 @@ export const ProfileInformation = ({
         {
           id: `lang-${Date.now()}`,
           language: defaultLanguage,
-          proficiency: PROFICIENCY_OPTIONS[0],
+          verbalProficiency: PROFICIENCY_OPTIONS[0],
+          writtenProficiency: PROFICIENCY_OPTIONS[0],
         },
       ],
     }));
@@ -409,7 +527,7 @@ export const ProfileInformation = ({
             Experience
           </Text>
           <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start" minW={0}>
-          <Box flex="1" minW={0} w="100%">
+          <Box flex={{ base: "1", md: "1.75" }} minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
@@ -421,7 +539,7 @@ export const ProfileInformation = ({
             >
             {isEditing ? (
               <Text fontSize="sm" color="#A1A1AA" mb={3} fontWeight="normal">
-                Select the languages and your proficiency level.
+                Select the languages and your verbal and written proficiency levels.
               </Text>
             ) : null}
             {!isEditing && data.languages.length === 0 ? (
@@ -430,87 +548,134 @@ export const ProfileInformation = ({
               </Text>
             ) : (
             <VStack gap={2} align="stretch">
+              {isEditing && data.languages.length > 0 ? (
+                <Flex gap={2} mb={1} px={1} align="center">
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1.2}>
+                    Language
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1}>
+                    Verbal
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1}>
+                    Written
+                  </Text>
+                  <Box w="36px" flexShrink={0} />
+                </Flex>
+              ) : null}
+              {!isEditing && data.languages.length > 0 ? (
+                <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2} mb={1} px={1}>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Language
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Verbal
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Written
+                  </Text>
+                </SimpleGrid>
+              ) : null}
               {data.languages.map((row) =>
                 isEditing ? (
                   <Flex key={row.id} gap={2} align="center" minW={0}>
-                    <NativeSelect.Root size="sm" flex={1} minW={0}>
-                      <NativeSelect.Field
-                        value={row.language}
-                        onChange={(e) =>
-                          updateLanguage(row.id, {
-                            language: e.target.value,
-                          })
-                        }
-                      >
-                        {languageOptions.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                    <NativeSelect.Root size="sm" flex={1} minW={0}>
-                      <NativeSelect.Field
-                        value={row.proficiency}
-                        onChange={(e) =>
-                          updateLanguage(row.id, {
-                            proficiency: e.target.value,
-                          })
-                        }
-                      >
-                        {PROFICIENCY_OPTIONS.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
+                    <ModernDropdown
+                      value={row.language}
+                      options={languageOptions}
+                      placeholder="Select language"
+                      flex={1.2}
+                      onChange={(val) =>
+                        updateLanguage(row.id, {
+                          language: val,
+                        })
+                      }
+                    />
+                    <ModernDropdown
+                      value={row.verbalProficiency ?? PROFICIENCY_OPTIONS[0]}
+                      options={PROFICIENCY_OPTIONS}
+                      flex={1}
+                      onChange={(val) =>
+                        updateLanguage(row.id, {
+                          verbalProficiency: val,
+                        })
+                      }
+                    />
+                    <ModernDropdown
+                      value={row.writtenProficiency ?? PROFICIENCY_OPTIONS[0]}
+                      options={PROFICIENCY_OPTIONS}
+                      flex={1}
+                      onChange={(val) =>
+                        updateLanguage(row.id, {
+                          writtenProficiency: val,
+                        })
+                      }
+                    />
                     <IconButton
                       aria-label={`Remove ${row.language}`}
                       variant="ghost"
-                      size="xs"
-                      color="gray.500"
+                      size="sm"
+                      h="42px"
+                      w="36px"
+                      color="gray.400"
+                      _hover={{ bg: "#F4F4F5", color: "red.500" }}
+                      borderRadius="6px"
                       flexShrink={0}
                       onClick={() => removeLanguageRow(row.id)}
                     >
-                      <LuX size={14} />
+                      <LuX size={16} />
                     </IconButton>
                   </Flex>
                 ) : (
                   <SimpleGrid
                     key={row.id}
-                    columns={2}
+                    columns={{ base: 1, sm: 3 }}
                     gap={2}
                     minChildWidth="0"
                   >
-                    <Field.Root>
-                      <Input
-                        size="sm"
-                        readOnly
-                        value={row.language}
-                        bg="white"
-                        borderColor="gray.200"
-                        color="gray.900"
-                        cursor="default"
-                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                        _readOnly={{ opacity: 1, cursor: "default" }}
-                      />
-                    </Field.Root>
-                    <Field.Root>
-                      <Input
-                        size="sm"
-                        readOnly
-                        value={row.proficiency}
-                        bg="white"
-                        borderColor="gray.200"
-                        color="gray.900"
-                        cursor="default"
-                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                        _readOnly={{ opacity: 1, cursor: "default" }}
-                      />
-                    </Field.Root>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="#FAFAFA"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" fontWeight="medium" color="#27272A" truncate>
+                        {row.language}
+                      </Text>
+                    </Flex>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="white"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" color="#27272A" truncate>
+                        {row.verbalProficiency || "—"}
+                      </Text>
+                    </Flex>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="white"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" color="#27272A" truncate>
+                        {row.writtenProficiency || "—"}
+                      </Text>
+                    </Flex>
                   </SimpleGrid>
                 ),
               )}
@@ -518,13 +683,16 @@ export const ProfileInformation = ({
             )}
             {isEditing ? (
               <Button
-                variant="plain"
+                variant="outline"
                 size="sm"
-                colorPalette="blue"
-                fontWeight="semibold"
+                borderColor="#E4E4E7"
+                color="#27272A"
+                bg="white"
+                fontWeight="medium"
+                _hover={{ bg: "#F4F4F5", borderColor: "#D4D4D8" }}
                 mt={3}
-                px={0}
-                h="auto"
+                h="36px"
+                borderRadius="6px"
                 onClick={addLanguageRow}
               >
                 + Add Language
@@ -533,7 +701,7 @@ export const ProfileInformation = ({
             </Box>
           </Box>
 
-          <Box flex="1" minW={0} w="100%">
+          <Box flex={{ base: "1", md: "1" }} minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Listed Experience
             </Text>
@@ -545,7 +713,7 @@ export const ProfileInformation = ({
                 placeholder="Enter listed experience."
                 _placeholder={{ color: "#A1A1AA" }}
                 minH="96px"
-                resize="none"
+                resize="vertical"
                 p={4}
                 bg="white"
                 borderWidth="1px"
@@ -561,11 +729,13 @@ export const ProfileInformation = ({
                 p={4}
                 w="100%"
                 minW={0}
+                minH="96px"
                 bg="white"
                 borderWidth="1px"
                 borderColor="gray.200"
                 borderRadius="md"
-                overflow="hidden"
+                overflow="auto"
+                resize="vertical"
               >
                 <Text
                   fontSize="sm"

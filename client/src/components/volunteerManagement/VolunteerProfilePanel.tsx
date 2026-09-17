@@ -38,7 +38,12 @@ export interface VolunteerProfileFormData {
 }
 
 interface LanguageOption { id: number; language: string; }
-interface LanguageEntry { languageId: number; language: string; proficiency: string; }
+interface LanguageEntry {
+  languageId: number;
+  language: string;
+  verbalProficiency: string;
+  writtenProficiency: string;
+}
 interface AreaOption { id: number; areasOfPractice: string; }
 interface AreaEntry { id: number | null; name: string; }
 interface RoleOption { id: number; roleName: string; }
@@ -69,7 +74,7 @@ interface VolunteerProfilePanelProps {
 // VolunteerProfilePanel
 // ---------------------------------------------------------------------------
 
-const PROFICIENCY_OPTIONS = ["Native", "Fluent", "Advanced", "Intermediate", "Elementary"];
+const PROFICIENCY_OPTIONS = ["Native/Bilingual", "Professional", "Limited Working", "Elementary"];
 const LAW_SCHOOL_YEARS = ["1L", "2L", "3L", "Graduate"];
 
 export const VolunteerProfilePanel = ({
@@ -81,7 +86,9 @@ export const VolunteerProfilePanel = ({
   const { backend } = useBackendContext();
 
   // View mode
-  const [languages, setLanguages] = useState<{ language: string; proficiency: string }[]>([]);
+  const [languages, setLanguages] = useState<
+    { language: string; verbalProficiency: string; writtenProficiency: string }[]
+  >([]);
 
   // Edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -126,8 +133,24 @@ export const VolunteerProfilePanel = ({
     setIsEditing(false);
     setIsSaved(false);
     backend
-      .get<{ id: number; language: string; proficiency: string }[]>(`/volunteers/${volunteerId}/languages`)
-      .then((res) => setLanguages(res.data.map((l) => ({ language: l.language, proficiency: l.proficiency }))))
+      .get<
+        {
+          id: number;
+          language: string;
+          verbalProficiency?: string;
+          writtenProficiency?: string;
+          proficiency?: string;
+        }[]
+      >(`/volunteers/${volunteerId}/languages`)
+      .then((res) =>
+        setLanguages(
+          res.data.map((l) => ({
+            language: l.language,
+            verbalProficiency: l.verbalProficiency ?? l.proficiency ?? "",
+            writtenProficiency: l.writtenProficiency ?? l.proficiency ?? "",
+          }))
+        )
+      )
       .catch(() => setLanguages([]));
   }, [volunteerId, backend]);
 
@@ -171,14 +194,31 @@ export const VolunteerProfilePanel = ({
     setSelectedRoleId("");
 
     try {
-      const res = await backend.get<{ id: number; language: string; proficiency: string }[]>(
-        `/volunteers/${volunteer.id}/languages`
+      const res = await backend.get<
+        {
+          id: number;
+          language: string;
+          verbalProficiency?: string;
+          writtenProficiency?: string;
+          proficiency?: string;
+        }[]
+      >(`/volunteers/${volunteer.id}/languages`);
+      const mapped = res.data.map((l) => ({
+        languageId: l.id,
+        language: l.language,
+        verbalProficiency: l.verbalProficiency ?? l.proficiency ?? "Professional",
+        writtenProficiency: l.writtenProficiency ?? l.proficiency ?? "Professional",
+      }));
+      setEditLanguages(
+        mapped.length > 0
+          ? mapped
+          : [{ languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" }]
       );
-      const mapped = res.data.map((l) => ({ languageId: l.id, language: l.language, proficiency: l.proficiency }));
-      setEditLanguages(mapped.length > 0 ? mapped : [{ languageId: 0, language: "", proficiency: "" }]);
       setOriginalLanguageIds(res.data.map((l) => l.id));
     } catch {
-      setEditLanguages([{ languageId: 0, language: "", proficiency: "" }]);
+      setEditLanguages([
+        { languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" },
+      ]);
     }
     setIsEditing(true);
   };
@@ -214,8 +254,8 @@ export const VolunteerProfilePanel = ({
       await backend.post(`/volunteers/${volunteer.id}/languages`, {
         languages: validLanguages.map((l) => ({
           languageId: l.languageId,
-          proficiency: l.proficiency || "proficient",
-          isLiterate: true,
+          verbalProficiency: l.verbalProficiency || "Professional",
+          writtenProficiency: l.writtenProficiency || "Professional",
         })),
       });
     }
@@ -268,7 +308,8 @@ export const VolunteerProfilePanel = ({
     setLanguages(
       validLanguages.map((l) => ({
         language: l.language,
-        proficiency: l.proficiency,
+        verbalProficiency: l.verbalProficiency,
+        writtenProficiency: l.writtenProficiency,
       }))
     );
 
@@ -512,9 +553,23 @@ export const VolunteerProfilePanel = ({
                   <Text fontSize="sm" color="gray.500" mb={3}>
                     Select the languages and your proficiency level
                   </Text>
+                  {editLanguages.length > 0 && (
+                    <Flex gap={2} mb={2} px={1}>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1.2}>
+                        Language
+                      </Text>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1}>
+                        Verbal Proficiency
+                      </Text>
+                      <Text fontSize="xs" fontWeight="semibold" color="gray.500" flex={1}>
+                        Written Proficiency
+                      </Text>
+                      {editLanguages.length > 1 && <Box w="12px" />}
+                    </Flex>
+                  )}
                   {editLanguages.map((entry, i) => (
                     <Flex key={i} gap={2} mb={2} align="center">
-                      <NativeSelect.Root borderColor="#E4E4E7" flex={1} size="sm">
+                      <NativeSelect.Root borderColor="#E4E4E7" flex={1.2} size="sm">
                         <NativeSelect.Field
                           placeholder="Language"
                           color={!entry.languageId ? "#A1A1AA" : "inherit"}
@@ -537,19 +592,38 @@ export const VolunteerProfilePanel = ({
                       </NativeSelect.Root>
                       <NativeSelect.Root borderColor="#E4E4E7" flex={1} size="sm">
                         <NativeSelect.Field
-                          placeholder="Proficiency"
-                          color={!entry.proficiency ? "#A1A1AA" : "inherit"}
-                          value={entry.proficiency}
+                          placeholder="Verbal"
+                          color={!entry.verbalProficiency ? "#A1A1AA" : "inherit"}
+                          value={entry.verbalProficiency}
                           onChange={(e) =>
                             setEditLanguages((prev) =>
                               prev.map((l, idx) =>
-                                idx === i ? { ...l, proficiency: e.target.value } : l
+                                idx === i ? { ...l, verbalProficiency: e.target.value } : l
                               )
                             )
                           }
                         >
                           {PROFICIENCY_OPTIONS.map((p) => (
-                            <option key={p} value={p.toLowerCase()}>{p}</option>
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <NativeSelect.Root borderColor="#E4E4E7" flex={1} size="sm">
+                        <NativeSelect.Field
+                          placeholder="Written"
+                          color={!entry.writtenProficiency ? "#A1A1AA" : "inherit"}
+                          value={entry.writtenProficiency}
+                          onChange={(e) =>
+                            setEditLanguages((prev) =>
+                              prev.map((l, idx) =>
+                                idx === i ? { ...l, writtenProficiency: e.target.value } : l
+                              )
+                            )
+                          }
+                        >
+                          {PROFICIENCY_OPTIONS.map((p) => (
+                            <option key={p} value={p}>{p}</option>
                           ))}
                         </NativeSelect.Field>
                         <NativeSelect.Indicator />
@@ -569,13 +643,22 @@ export const VolunteerProfilePanel = ({
                     </Flex>
                   ))}
                   <Button
-                    size="xs"
                     variant="ghost"
-                    color="blue.500"
-                    mt={2}
-                    gap={1}
+                    size="sm"
+                    color="#2563EB"
+                    _hover={{ bg: "transparent", textDecoration: "underline" }}
+                    p={0}
+                    h="auto"
                     onClick={() =>
-                      setEditLanguages((prev) => [...prev, { languageId: 0, language: "", proficiency: "" }])
+                      setEditLanguages((prev) => [
+                        ...prev,
+                        {
+                          languageId: 0,
+                          language: "",
+                          verbalProficiency: "",
+                          writtenProficiency: "",
+                        },
+                      ])
                     }
                   >
                     + Add Language
@@ -676,14 +759,22 @@ export const VolunteerProfilePanel = ({
               {/* Languages */}
               <Box mb={6}>
                 <Text fontSize="sm" fontWeight="bold" mb={2}>Languages</Text>
-                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="xl" p={5} justifyContent="center" maxWidth="400px">
+                <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="xl" p={5} justifyContent="center" maxWidth="440px">
                   {languages.length > 0 ? (
-                    languages.map((entry, i) => (
-                      <SimpleGrid key={i} columns={2} px={2} py={1.5}>
-                        <Text fontSize="sm">{entry.language}</Text>
-                        <Text fontSize="sm">{entry.proficiency ? entry.proficiency.charAt(0).toUpperCase() + entry.proficiency.slice(1) : "—"}</Text>
+                    <>
+                      <SimpleGrid columns={{ base: 1, sm: 3 }} px={2} pb={1.5} gap={2}>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500">Language</Text>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500">Verbal Proficiency</Text>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500">Written Proficiency</Text>
                       </SimpleGrid>
-                    ))
+                      {languages.map((entry, i) => (
+                        <SimpleGrid key={i} columns={{ base: 1, sm: 3 }} px={2} py={1.5} gap={2}>
+                          <Text fontSize="sm" fontWeight="medium">{entry.language}</Text>
+                          <Text fontSize="sm" color="gray.700">{entry.verbalProficiency || "—"}</Text>
+                          <Text fontSize="sm" color="gray.700">{entry.writtenProficiency || "—"}</Text>
+                        </SimpleGrid>
+                      ))}
+                    </>
                   ) : (
                     <Text fontSize="sm" color="gray.500" px={2}>—</Text>
                   )}
