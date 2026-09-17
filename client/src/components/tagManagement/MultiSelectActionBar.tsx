@@ -4,6 +4,7 @@ import { Pencil, Trash2, X } from "lucide-react";
 export type TagSelectionRow = {
   sectionTitle: string;
   row: {
+    id: number;
     name: string;
     clinicCount: number;
     volunteerCount: number;

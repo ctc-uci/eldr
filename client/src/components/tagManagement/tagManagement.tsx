@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { TbTag } from "react-icons/tb";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CreateTagPopover } from "./CreateTagPopover";
+import { DeleteTagDialog } from "./DeleteTagDialog";
 import { EditTagDialog } from "./EditTagDialog";
 import { MultiSelectActionBar } from "./MultiSelectActionBar";
 import { TagSectionTable } from "./TagSectionTable";
@@ -49,6 +50,8 @@ export const TagManagement = () => {
   const [volunteerSortDirection, setVolunteerSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<{ sectionTitle: string; row: TagRow } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchTagGroups = async () => {
@@ -172,17 +175,52 @@ export const TagManagement = () => {
   };
 
   const handleDeleteSelected = () => {
-    if (selectedRowKeys.length === 0) return;
+    if (selectedRows.length === 0) return;
+    setIsDeleteDialogOpen(true);
+  };
 
-    setSections((prev) =>
-      prev.map((section) => ({
-        ...section,
-        rows: section.rows.filter(
-          (row) => !selectedRowKeys.includes(getRowKey(section.title, row.name)),
-        ),
-      })),
-    );
-    setSelectedRowKeys([]);
+  const getDeletePath = (sectionTitle: string, id: number) => {
+    const basePaths: Record<string, string> = {
+      "Areas of Practice": "areas-of-practice",
+      Languages: "languages",
+      Roles: "roles",
+      Miscellaneous: "tags",
+    };
+    const basePath = basePaths[sectionTitle];
+    return basePath ? `/${basePath}/${id}` : null;
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedRows.length === 0 || isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      const rowsToDelete = [...selectedRows];
+      const deletePaths = rowsToDelete
+        .map(({ sectionTitle, row }) => getDeletePath(sectionTitle, row.id))
+        .filter((path): path is string => path !== null);
+
+      await Promise.all(deletePaths.map((path) => backend.delete(path)));
+
+      setSections((prev) =>
+        prev.map((section) => ({
+          ...section,
+          rows: section.rows.filter(
+            (row) =>
+              !rowsToDelete.some(
+                (selected) =>
+                  selected.sectionTitle === section.title && selected.row.id === row.id,
+              ),
+          ),
+        })),
+      );
+      setSelectedRowKeys([]);
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to delete selected tags", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const toggleSectionSelection = (sectionTitle: string, rows: Section["rows"]) => {
@@ -239,6 +277,19 @@ export const TagManagement = () => {
     if (!newTag.category || !newTag.name.trim()) return;
 
     const targetSection = sectionAliasMap[newTag.category] ?? "Areas of Practice";
+    const createRequest = {
+      "Areas of Practice": () =>
+        backend.post("/areas-of-practice", { areaOfPractice: newTag.name.trim() }),
+      Languages: () => backend.post("/languages", { language: newTag.name.trim() }),
+      Roles: () => backend.post("/roles", { roleName: newTag.name.trim() }),
+      Miscellaneous: () => backend.post("/tags", { text: newTag.name.trim() }),
+    }[targetSection];
+
+    if (!createRequest) return;
+
+    const response = await createRequest();
+    const createdEntry = Array.isArray(response?.data) ? response.data[0] : response?.data;
+    if (!createdEntry?.id) return;
 
     setSections((prev) =>
       prev.map((section) =>
@@ -247,7 +298,7 @@ export const TagManagement = () => {
               ...section,
               rows: [
                 {
-                  id: -Date.now(),
+                  id: createdEntry.id,
                   name: newTag.name.trim(),
                   clinicCount: 0,
                   volunteerCount: 0,
@@ -343,6 +394,14 @@ export const TagManagement = () => {
             onSave={handleEdit}
           />
         )}
+
+        <DeleteTagDialog
+          open={isDeleteDialogOpen}
+          count={selectedRows.length}
+          isDeleting={isDeleting}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+        />
       </Box>
     </Flex>
   );
