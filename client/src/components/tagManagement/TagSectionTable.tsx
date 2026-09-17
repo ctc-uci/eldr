@@ -3,6 +3,7 @@ import { LuChevronsUpDown } from "react-icons/lu";
 import { TbTag } from "react-icons/tb";
 
 export type TagRow = {
+  id: number;
   name: string;
   clinicCount: number;
   volunteerCount: number;

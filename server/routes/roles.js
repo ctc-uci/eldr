@@ -60,6 +60,35 @@ rolesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
+// Update a role by ID
+rolesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { roleName } = req.body;
+    if (!roleName || !roleName.trim()) {
+      return res.status(400).send("Role name is required");
+    }
+
+    const result = await db.query(
+      `
+        UPDATE roles
+        SET role_name = $1
+        WHERE id = $2
+        RETURNING *;
+      `,
+      [roleName.trim(), id]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Role not found" });
+    }
+
+    res.status(200).json(keysToCamel(result));
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 // Delete a role by ID
 rolesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
   try {

@@ -4,10 +4,12 @@ import { Search } from "lucide-react";
 import { TbTag } from "react-icons/tb";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CreateTagPopover } from "./CreateTagPopover";
+import { EditTagDialog } from "./EditTagDialog";
 import { MultiSelectActionBar } from "./MultiSelectActionBar";
 import { TagSectionTable } from "./TagSectionTable";
 
 type TagRow = {
+  id: number;
   name: string;
   clinicCount: number;
   volunteerCount: number;
@@ -46,6 +48,7 @@ export const TagManagement = () => {
   const [clinicSortDirection, setClinicSortDirection] = useState<"asc" | "desc">("asc");
   const [volunteerSortDirection, setVolunteerSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<{ sectionTitle: string; row: TagRow } | null>(null);
 
   useEffect(() => {
     const fetchTagGroups = async () => {
@@ -65,7 +68,8 @@ export const TagManagement = () => {
         setSections([
           {
             title: "Areas of Practice",
-            rows: safeAreas.map((entry: { areasOfPractice?: string; areaOfPractice?: string; name?: string }) => ({
+            rows: safeAreas.map((entry: { id: number; areasOfPractice?: string; areaOfPractice?: string; name?: string }) => ({
+              id: entry.id,
               name: entry.areasOfPractice ?? entry.areaOfPractice ?? entry.name ?? "",
               clinicCount: 0,
               volunteerCount: 0,
@@ -73,7 +77,8 @@ export const TagManagement = () => {
           },
           {
             title: "Languages",
-            rows: safeLanguages.map((entry: { language?: string; name?: string }) => ({
+            rows: safeLanguages.map((entry: { id: number; language?: string; name?: string }) => ({
+              id: entry.id,
               name: entry.language ?? entry.name ?? "",
               clinicCount: 0,
               volunteerCount: 0,
@@ -81,7 +86,8 @@ export const TagManagement = () => {
           },
           {
             title: "Roles",
-            rows: safeRoles.map((entry: { roleName?: string; name?: string }) => ({
+            rows: safeRoles.map((entry: { id: number; roleName?: string; name?: string }) => ({
+              id: entry.id,
               name: entry.roleName ?? entry.name ?? "",
               clinicCount: 0,
               volunteerCount: 0,
@@ -89,10 +95,11 @@ export const TagManagement = () => {
           },
           {
             title: "Miscellaneous",
-            rows: safeTags.map((entry: { tag?: string; name?: string }) => ({
+            rows: safeTags.map((entry: { id: number; tag?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
+              id: entry.id,
               name: entry.tag ?? entry.name ?? "",
-              clinicCount: 0,
-              volunteerCount: 0,
+              clinicCount: entry.clinicCount ?? 0,
+              volunteerCount: entry.volunteerCount ?? 0,
             })),
           },
         ]);
@@ -197,24 +204,34 @@ export const TagManagement = () => {
     const selected = selectedRows[0];
     if (!selected) return;
 
-    const { sectionTitle, row } = selected;
-    const nextName = window.prompt("Edit tag name", row.name)?.trim();
+    setEditingRow(selected);
+  };
 
-    if (!nextName) return;
+  const handleEdit = async (nextName: string) => {
+    if (!editingRow) return;
+
+    const updateRequest = {
+      "Areas of Practice": () => backend.put(`/areas-of-practice/${editingRow.row.id}`, { areaOfPractice: nextName }),
+      Languages: () => backend.put(`/languages/${editingRow.row.id}`, { language: nextName }),
+      Roles: () => backend.put(`/roles/${editingRow.row.id}`, { roleName: nextName }),
+      Miscellaneous: () => backend.put(`/tags/${editingRow.row.id}`, { text: nextName }),
+    }[editingRow.sectionTitle];
+
+    if (!updateRequest) return;
+    await updateRequest();
 
     setSections((prev) =>
       prev.map((section) =>
-        section.title === sectionTitle
+        section.title === editingRow.sectionTitle
           ? {
               ...section,
               rows: section.rows.map((item) =>
-                item.name === row.name ? { ...item, name: nextName } : item,
+                item.id === editingRow.row.id ? { ...item, name: nextName } : item,
               ),
             }
           : section,
       ),
     );
-
     setSelectedRowKeys([]);
   };
 
@@ -230,6 +247,7 @@ export const TagManagement = () => {
               ...section,
               rows: [
                 {
+                  id: -Date.now(),
                   name: newTag.name.trim(),
                   clinicCount: 0,
                   volunteerCount: 0,
@@ -316,6 +334,15 @@ export const TagManagement = () => {
             />
           ))}
         </Box>
+
+        {editingRow && (
+          <EditTagDialog
+            open
+            currentName={editingRow.row.name}
+            onClose={() => setEditingRow(null)}
+            onSave={handleEdit}
+          />
+        )}
       </Box>
     </Flex>
   );
