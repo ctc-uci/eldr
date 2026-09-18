@@ -28,14 +28,14 @@ export function SearchAutocomplete({
 
   return (
     <Box ref={wrapperRef} position="relative" flex={1}>
-      <InputGroup startElement={<Search size={16} color="#a1a1aa" />}>
+      <InputGroup startElement={<Search size={16} color="gray.400" />}>
         <Input
           placeholder="Search for a tag..."
-          borderColor="#ccccd1"
+          borderColor="gray.300"
           borderRadius="4px"
           h="48px"
           fontSize="16px"
-          _placeholder={{ color: "#a1a1aa" }}
+          _placeholder={{ color: "gray.400" }}
           value={searchQuery}
           onChange={(e) => {
             onSearchChange(e.target.value);
@@ -54,9 +54,10 @@ export function SearchAutocomplete({
           left={0}
           right={0}
           bg="white"
-          border="1px solid #e4e4e7"
+          border="1px solid"
+          borderColor="gray.200"
           borderRadius="4px"
-          boxShadow="0 4px 12px rgba(0,0,0,0.08)"
+          boxShadow="md"
           zIndex={10}
           maxH="240px"
           overflowY="auto"
@@ -68,8 +69,8 @@ export function SearchAutocomplete({
               py="10px"
               cursor="pointer"
               fontSize="14px"
-              color="#27272a"
-              _hover={{ bg: "#f4f4f5" }}
+              color="gray.800"
+              _hover={{ bg: "gray.100" }}
               onClick={() => {
                 onSelectSuggestion(s);
                 setShowSuggestions(false);

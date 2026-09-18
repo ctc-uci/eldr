@@ -855,6 +855,91 @@ volunteersRouter.get(
 );
 
 // -----------------------------
+// Volunteer Workshop Types Routes
+// -----------------------------
+
+volunteersRouter.post(
+  "/:volunteerId/workshop-types",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const { workshopTypeId } = req.body;
+
+      if (!workshopTypeId) {
+        return res.status(400).json({ message: "workshopTypeId is required" });
+      }
+
+      const newRelationship = await db.query(
+        `
+        INSERT INTO volunteer_workshop_types (volunteer_id, workshop_type_id)
+        VALUES ($1, $2)
+        RETURNING *;
+      `,
+        [volunteerId, workshopTypeId]
+      );
+
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
+  }
+);
+
+volunteersRouter.delete(
+  "/:volunteerId/workshop-types/:workshopTypeId",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId, workshopTypeId } = req.params;
+
+      const deletedRelationship = await db.query(
+        `
+        DELETE FROM volunteer_workshop_types
+        WHERE volunteer_id = $1 AND workshop_type_id = $2
+        RETURNING *;
+      `,
+        [volunteerId, workshopTypeId]
+      );
+
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Workshop type not assigned to this volunteer" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
+  }
+);
+
+volunteersRouter.get(
+  "/:volunteerId/workshop-types",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+
+      const listAll = await db.query(
+        `
+        SELECT wt.id, wt.workshop_type
+        FROM volunteer_workshop_types vwt
+        JOIN workshop_types wt ON vwt.workshop_type_id = wt.id
+        WHERE vwt.volunteer_id = $1;
+      `,
+        [volunteerId]
+      );
+
+      res.status(200).json(keysToCamel(listAll));
+    } catch (e) {
+      res.status(500).send(e.message);
+    }
+  }
+);
+
+// -----------------------------
 // Volunteer Locations Routes
 // -----------------------------
 

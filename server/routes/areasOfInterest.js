@@ -9,7 +9,22 @@ export const areasOfPracticeRouter = Router();
 // {port}/areas-of-practice
 areasOfPracticeRouter.get("/", verifyRole("volunteer"), async (req, res) => {
     try {
-        const areasOfPractice = await db.query("SELECT * FROM areas_of_practice");
+        const areasOfPractice = await db.query(`
+            SELECT
+                aop.*,
+                (
+                    SELECT COUNT(DISTINCT caop.clinic_id)::int
+                    FROM clinic_areas_of_practice caop
+                    WHERE caop.area_of_practice_id = aop.id
+                ) AS clinic_count,
+                (
+                    SELECT COUNT(DISTINCT vaop.volunteer_id)::int
+                    FROM volunteer_areas_of_practice vaop
+                    WHERE vaop.area_of_practice_id = aop.id
+                ) AS volunteer_count
+            FROM areas_of_practice aop
+            ORDER BY aop.id ASC
+        `);
         res.status(200).json(keysToCamel(areasOfPractice));
     } catch (err) {
         res.status(500).send(err.message);

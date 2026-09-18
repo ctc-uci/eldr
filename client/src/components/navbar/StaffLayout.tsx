@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
 
@@ -17,18 +18,22 @@ export type StaffLayoutProps = {
  * Usage in routes: `<StaffLayout />`, `<StaffLayout navbar="expanded" />`, or `<StaffLayout navbar="collapsed" />`.
  */
 export const StaffLayout = ({ navbar = "expanded" }: StaffLayoutProps) => {
-  const Sidebar =
-    navbar === "collapsed" ? CollapsedNavbar : AdminNavbar;
+  const [currentNavbar, setCurrentNavbar] = useState(navbar);
 
   return (
     <Flex
-      minH="100vh"
+      h="100vh"
       bg="#FAFBFC"
     >
-      <Sidebar />
+      {currentNavbar === "collapsed" ? (
+        <CollapsedNavbar />
+      ) : (
+        <AdminNavbar onCollapse={() => setCurrentNavbar("collapsed")} />
+      )}
       <Box
         flex="1"
-        overflow="auto"
+        minH={0}
+        overflowY="auto"
       >
         <Outlet />
       </Box>
