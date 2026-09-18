@@ -25,9 +25,22 @@ workshopTypesRouter.post("/", verifyRole("staff"), async (req, res) => {
 
 workshopTypesRouter.get("/", verifyRole("volunteer"), async (_req, res) => {
   try {
-    const workshopTypes = await db.query(
-      "SELECT * FROM workshop_types ORDER BY LOWER(workshop_type) ASC"
-    );
+    const workshopTypes = await db.query(`
+      SELECT
+        wt.*,
+        (
+          SELECT COUNT(DISTINCT cwt.clinic_id)::int
+          FROM clinic_workshop_types cwt
+          WHERE cwt.workshop_type_id = wt.id
+        ) AS clinic_count,
+        (
+          SELECT COUNT(DISTINCT vwt.volunteer_id)::int
+          FROM volunteer_workshop_types vwt
+          WHERE vwt.workshop_type_id = wt.id
+        ) AS volunteer_count
+      FROM workshop_types wt
+      ORDER BY LOWER(wt.workshop_type) ASC
+    `);
     res.status(200).json(keysToCamel(workshopTypes));
   } catch (error) {
     res.status(500).send(error.message);

@@ -935,6 +935,84 @@ clinicsRouter.get(
   }
 );
 
+// Clinic Workshop Types Routes
+// POST: assign a workshop type to a clinic
+// /clinics/{clinicId}/workshop-types
+clinicsRouter.post(
+  "/:clinicId/workshop-types",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { workshopTypeId } = req.body; // get JSON body
+      const { clinicId } = req.params; // get URL parameters
+
+      if (!workshopTypeId) {
+        return res.status(400).json({ message: "Workshop type ID is required" });
+      }
+
+      const newRelationship = await db.query(
+        "INSERT INTO clinic_workshop_types (clinic_id, workshop_type_id) VALUES ($1, $2) RETURNING *",
+        [clinicId, workshopTypeId]
+      );
+
+      res.status(201).json(keysToCamel(newRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
+
+// DELETE: remove a workshop type from a clinic
+// /clinics/{clinicId}/workshop-types/{workshopTypeId}
+clinicsRouter.delete(
+  "/:clinicId/workshop-types/:workshopTypeId",
+  verifyRole("staff"),
+  async (req, res) => {
+    try {
+      const { clinicId, workshopTypeId } = req.params;
+
+      const deletedRelationship = await db.query(
+        "DELETE FROM clinic_workshop_types WHERE clinic_id = $1 AND workshop_type_id = $2 RETURNING *",
+        [clinicId, workshopTypeId]
+      );
+
+      if (deletedRelationship.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Workshop type not assigned to this clinic" });
+      }
+
+      res.status(200).json(keysToCamel(deletedRelationship));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
+
+// GET: list all workshop types for a clinic, including IDs and text
+// /clinics/{clinicId}/workshop-types
+clinicsRouter.get(
+  "/:clinicId/workshop-types",
+  verifyRole("volunteer"),
+  async (req, res) => {
+    try {
+      const { clinicId } = req.params;
+
+      const listAll = await db.query(
+        `SELECT wt.id, wt.workshop_type
+             FROM clinic_workshop_types cwt
+             JOIN workshop_types wt ON cwt.workshop_type_id = wt.id
+             WHERE cwt.clinic_id = $1`,
+        [clinicId]
+      );
+
+      res.status(200).json(keysToCamel(listAll));
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
+
 // Clinic Tags Routes
 // POST: assign a tag to a clinic
 // /clinics/{clinicId}/tags

@@ -114,11 +114,13 @@ export const TagManagement = () => {
                 id: number;
                 workshopType?: string;
                 name?: string;
+                clinicCount?: number;
+                volunteerCount?: number;
               }) => ({
                 id: entry.id,
                 name: entry.workshopType ?? entry.name ?? "",
-                clinicCount: 0,
-                volunteerCount: 0,
+                clinicCount: entry.clinicCount ?? 0,
+                volunteerCount: entry.volunteerCount ?? 0,
               })
             ),
           },
