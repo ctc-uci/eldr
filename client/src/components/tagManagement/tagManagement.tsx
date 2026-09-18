@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Box, Button, Flex, Input, InputGroup } from "@chakra-ui/react";
+
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Search } from "lucide-react";
 import { TbTag } from "react-icons/tb";
-import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
 import { CreateTagPopover } from "./CreateTagPopover";
 import { DeleteTagDialog } from "./DeleteTagDialog";
 import { EditTagDialog } from "./EditTagDialog";
@@ -28,6 +31,7 @@ type TagFormValues = {
 
 const initialSections: Section[] = [
   { title: "Areas of Practice", rows: [] },
+  { title: "Workshop Types", rows: [] },
   { title: "Languages", rows: [] },
   { title: "Roles", rows: [] },
   { title: "Miscellaneous", rows: [] },
@@ -35,6 +39,7 @@ const initialSections: Section[] = [
 
 const sectionAliasMap: Record<string, string> = {
   "Areas of Practice": "Areas of Practice",
+  "Workshop Types": "Workshop Types",
   Languages: "Languages",
   Roles: "Roles",
   Miscellaneous: "Miscellaneous",
@@ -45,64 +50,128 @@ export const TagManagement = () => {
   const [sections, setSections] = useState<Section[]>(initialSections);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<"name" | "clinicCount" | "volunteerCount">("name");
+  const [sortField, setSortField] = useState<
+    "name" | "clinicCount" | "volunteerCount"
+  >("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
-  const [editingRow, setEditingRow] = useState<{ sectionTitle: string; row: TagRow } | null>(null);
+  const [editingRow, setEditingRow] = useState<{
+    sectionTitle: string;
+    row: TagRow;
+  } | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchTagGroups = async () => {
       try {
-        const [areasRes, languagesRes, rolesRes, tagsRes] = await Promise.all([
-          backend.get("/areas-of-practice"),
-          backend.get("/languages"),
-          backend.get("/roles"),
-          backend.get("/tags"),
-        ]);
+        const [areasRes, workshopTypesRes, languagesRes, rolesRes, tagsRes] =
+          await Promise.all([
+            backend.get("/areas-of-practice"),
+            backend.get("/workshop-types"),
+            backend.get("/languages"),
+            backend.get("/roles"),
+            backend.get("/tags"),
+          ]);
 
         const safeAreas = Array.isArray(areasRes?.data) ? areasRes.data : [];
-        const safeLanguages = Array.isArray(languagesRes?.data) ? languagesRes.data : [];
+        const safeWorkshopTypes = Array.isArray(workshopTypesRes?.data)
+          ? workshopTypesRes.data
+          : [];
+        const safeLanguages = Array.isArray(languagesRes?.data)
+          ? languagesRes.data
+          : [];
         const safeRoles = Array.isArray(rolesRes?.data) ? rolesRes.data : [];
         const safeTags = Array.isArray(tagsRes?.data) ? tagsRes.data : [];
 
         setSections([
           {
             title: "Areas of Practice",
-            rows: safeAreas.map((entry: { id: number; areasOfPractice?: string; areaOfPractice?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
-              id: entry.id,
-              name: entry.areasOfPractice ?? entry.areaOfPractice ?? entry.name ?? "",
-              clinicCount: entry.clinicCount ?? 0,
-              volunteerCount: entry.volunteerCount ?? 0,
-            })),
+            rows: safeAreas.map(
+              (entry: {
+                id: number;
+                areasOfPractice?: string;
+                areaOfPractice?: string;
+                name?: string;
+                clinicCount?: number;
+                volunteerCount?: number;
+              }) => ({
+                id: entry.id,
+                name:
+                  entry.areasOfPractice ??
+                  entry.areaOfPractice ??
+                  entry.name ??
+                  "",
+                clinicCount: entry.clinicCount ?? 0,
+                volunteerCount: entry.volunteerCount ?? 0,
+              })
+            ),
+          },
+          {
+            title: "Workshop Types",
+            rows: safeWorkshopTypes.map(
+              (entry: {
+                id: number;
+                workshopType?: string;
+                name?: string;
+              }) => ({
+                id: entry.id,
+                name: entry.workshopType ?? entry.name ?? "",
+                clinicCount: 0,
+                volunteerCount: 0,
+              })
+            ),
           },
           {
             title: "Languages",
-            rows: safeLanguages.map((entry: { id: number; language?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
-              id: entry.id,
-              name: entry.language ?? entry.name ?? "",
-              clinicCount: entry.clinicCount ?? 0,
-              volunteerCount: entry.volunteerCount ?? 0,
-            })),
+            rows: safeLanguages.map(
+              (entry: {
+                id: number;
+                language?: string;
+                name?: string;
+                clinicCount?: number;
+                volunteerCount?: number;
+              }) => ({
+                id: entry.id,
+                name: entry.language ?? entry.name ?? "",
+                clinicCount: entry.clinicCount ?? 0,
+                volunteerCount: entry.volunteerCount ?? 0,
+              })
+            ),
           },
           {
             title: "Roles",
-            rows: safeRoles.map((entry: { id: number; roleName?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
-              id: entry.id,
-              name: entry.roleName ?? entry.name ?? "",
-              clinicCount: entry.clinicCount ?? 0,
-              volunteerCount: entry.volunteerCount ?? 0,
-            })),
+            rows: safeRoles.map(
+              (entry: {
+                id: number;
+                roleName?: string;
+                name?: string;
+                clinicCount?: number;
+                volunteerCount?: number;
+              }) => ({
+                id: entry.id,
+                name: entry.roleName ?? entry.name ?? "",
+                clinicCount: entry.clinicCount ?? 0,
+                volunteerCount: entry.volunteerCount ?? 0,
+              })
+            ),
           },
           {
             title: "Miscellaneous",
-            rows: safeTags.map((entry: { id: number; tag?: string; name?: string; clinicCount?: number; volunteerCount?: number }) => ({
-              id: entry.id,
-              name: entry.tag ?? entry.name ?? "",
-              clinicCount: entry.clinicCount ?? 0,
-              volunteerCount: entry.volunteerCount ?? 0,
-            })),
+            rows: safeTags.map(
+              (entry: {
+                id: number;
+                tag?: string;
+                name?: string;
+                clinicCount?: number;
+                volunteerCount?: number;
+              }) => ({
+                id: entry.id,
+                name: entry.tag ?? entry.name ?? "",
+                clinicCount: entry.clinicCount ?? 0,
+                volunteerCount: entry.volunteerCount ?? 0,
+              })
+            ),
           },
         ]);
       } catch (error) {
@@ -113,16 +182,19 @@ export const TagManagement = () => {
     fetchTagGroups();
   }, [backend]);
 
-  const getRowKey = (sectionTitle: string, rowName: string) => `${sectionTitle}::${rowName}`;
+  const getRowKey = (sectionTitle: string, rowName: string) =>
+    `${sectionTitle}::${rowName}`;
 
   const selectedRows = useMemo(
     () =>
       sections.flatMap((section) =>
         section.rows
-          .filter((row) => selectedRowKeys.includes(getRowKey(section.title, row.name)))
-          .map((row) => ({ sectionTitle: section.title, row })),
+          .filter((row) =>
+            selectedRowKeys.includes(getRowKey(section.title, row.name))
+          )
+          .map((row) => ({ sectionTitle: section.title, row }))
       ),
-    [sections, selectedRowKeys],
+    [sections, selectedRowKeys]
   );
 
   const filteredSections = useMemo(() => {
@@ -132,16 +204,21 @@ export const TagManagement = () => {
       .map((section) => ({
         ...section,
         rows: [...section.rows]
-          .filter((row) => row.name.toLowerCase().includes(query) || query.length === 0)
+          .filter(
+            (row) =>
+              row.name.toLowerCase().includes(query) || query.length === 0
+          )
           .sort((a, b) => {
             const comparison =
               sortField === "name"
-                ? a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+                ? a.name.localeCompare(b.name, undefined, {
+                    sensitivity: "base",
+                  })
                 : a[sortField] - b[sortField];
             return sortDirection === "asc" ? comparison : -comparison;
           }),
       }))
-      .filter((section) => section.rows.length > 0);
+      .filter((section) => query.length === 0 || section.rows.length > 0);
   }, [searchQuery, sections, sortDirection, sortField]);
 
   const handleSort = (field: "name" | "clinicCount" | "volunteerCount") => {
@@ -158,7 +235,9 @@ export const TagManagement = () => {
     const rowKey = getRowKey(sectionTitle, rowName);
 
     setSelectedRowKeys((prev) =>
-      prev.includes(rowKey) ? prev.filter((key) => key !== rowKey) : [...prev, rowKey],
+      prev.includes(rowKey)
+        ? prev.filter((key) => key !== rowKey)
+        : [...prev, rowKey]
     );
   };
 
@@ -170,6 +249,7 @@ export const TagManagement = () => {
   const getDeletePath = (sectionTitle: string, id: number) => {
     const basePaths: Record<string, string> = {
       "Areas of Practice": "areas-of-practice",
+      "Workshop Types": "workshop-types",
       Languages: "languages",
       Roles: "roles",
       Miscellaneous: "tags",
@@ -197,10 +277,11 @@ export const TagManagement = () => {
             (row) =>
               !rowsToDelete.some(
                 (selected) =>
-                  selected.sectionTitle === section.title && selected.row.id === row.id,
-              ),
+                  selected.sectionTitle === section.title &&
+                  selected.row.id === row.id
+              )
           ),
-        })),
+        }))
       );
       setSelectedRowKeys([]);
       setIsDeleteDialogOpen(false);
@@ -211,9 +292,14 @@ export const TagManagement = () => {
     }
   };
 
-  const toggleSectionSelection = (sectionTitle: string, rows: Section["rows"]) => {
+  const toggleSectionSelection = (
+    sectionTitle: string,
+    rows: Section["rows"]
+  ) => {
     const sectionKeys = rows.map((row) => getRowKey(sectionTitle, row.name));
-    const allSelected = sectionKeys.every((key) => selectedRowKeys.includes(key));
+    const allSelected = sectionKeys.every((key) =>
+      selectedRowKeys.includes(key)
+    );
 
     setSelectedRowKeys((prev) => {
       if (allSelected) {
@@ -237,10 +323,20 @@ export const TagManagement = () => {
     if (!editingRow) return;
 
     const updateRequest = {
-      "Areas of Practice": () => backend.put(`/areas-of-practice/${editingRow.row.id}`, { areaOfPractice: nextName }),
-      Languages: () => backend.put(`/languages/${editingRow.row.id}`, { language: nextName }),
-      Roles: () => backend.put(`/roles/${editingRow.row.id}`, { roleName: nextName }),
-      Miscellaneous: () => backend.put(`/tags/${editingRow.row.id}`, { text: nextName }),
+      "Areas of Practice": () =>
+        backend.put(`/areas-of-practice/${editingRow.row.id}`, {
+          areaOfPractice: nextName,
+        }),
+      "Workshop Types": () =>
+        backend.put(`/workshop-types/${editingRow.row.id}`, {
+          workshopType: nextName,
+        }),
+      Languages: () =>
+        backend.put(`/languages/${editingRow.row.id}`, { language: nextName }),
+      Roles: () =>
+        backend.put(`/roles/${editingRow.row.id}`, { roleName: nextName }),
+      Miscellaneous: () =>
+        backend.put(`/tags/${editingRow.row.id}`, { text: nextName }),
     }[editingRow.sectionTitle];
 
     if (!updateRequest) return;
@@ -252,11 +348,13 @@ export const TagManagement = () => {
           ? {
               ...section,
               rows: section.rows.map((item) =>
-                item.id === editingRow.row.id ? { ...item, name: nextName } : item,
+                item.id === editingRow.row.id
+                  ? { ...item, name: nextName }
+                  : item
               ),
             }
-          : section,
-      ),
+          : section
+      )
     );
     setSelectedRowKeys([]);
   };
@@ -264,11 +362,17 @@ export const TagManagement = () => {
   const handleCreateTag = async (newTag: TagFormValues) => {
     if (!newTag.category || !newTag.name.trim()) return;
 
-    const targetSection = sectionAliasMap[newTag.category] ?? "Areas of Practice";
+    const targetSection =
+      sectionAliasMap[newTag.category] ?? "Areas of Practice";
     const createRequest = {
       "Areas of Practice": () =>
-        backend.post("/areas-of-practice", { areaOfPractice: newTag.name.trim() }),
-      Languages: () => backend.post("/languages", { language: newTag.name.trim() }),
+        backend.post("/areas-of-practice", {
+          areaOfPractice: newTag.name.trim(),
+        }),
+      "Workshop Types": () =>
+        backend.post("/workshop-types", { workshopType: newTag.name.trim() }),
+      Languages: () =>
+        backend.post("/languages", { language: newTag.name.trim() }),
       Roles: () => backend.post("/roles", { roleName: newTag.name.trim() }),
       Miscellaneous: () => backend.post("/tags", { text: newTag.name.trim() }),
     }[targetSection];
@@ -276,7 +380,9 @@ export const TagManagement = () => {
     if (!createRequest) return;
 
     const response = await createRequest();
-    const createdEntry = Array.isArray(response?.data) ? response.data[0] : response?.data;
+    const createdEntry = Array.isArray(response?.data)
+      ? response.data[0]
+      : response?.data;
     if (!createdEntry?.id) return;
 
     setSections((prev) =>
@@ -294,22 +400,51 @@ export const TagManagement = () => {
                 ...section.rows,
               ],
             }
-          : section,
-      ),
+          : section
+      )
     );
 
     setIsCreatePopoverOpen(false);
   };
 
   return (
-    <Flex h="100vh" bg="white" justify="center">
-      <Box w="100%" maxW="1280px" px="24px" py="18px">
-        <Flex justify="space-between" align="center" gap="18px" mb="18px">
+    <Flex
+      h="100vh"
+      bg="white"
+      justify="center"
+    >
+      <Box
+        w="100%"
+        maxW="1280px"
+        px="24px"
+        py="18px"
+      >
+        <Flex
+          justify="space-between"
+          align="center"
+          gap="18px"
+          mb="18px"
+        >
           <Box flex={1} />
 
-          <Flex align="center" gap="16px" ml="auto" w="100%">
-            <Box position="relative" flex={1}>
-              <InputGroup endElement={<Search size={16} color="gray.400" />}>
+          <Flex
+            align="center"
+            gap="16px"
+            ml="auto"
+            w="100%"
+          >
+            <Box
+              position="relative"
+              flex={1}
+            >
+              <InputGroup
+                endElement={
+                  <Search
+                    size={16}
+                    color="gray.400"
+                  />
+                }
+              >
                 <Input
                   placeholder="Search for a tag..."
                   h="48px"
@@ -324,7 +459,10 @@ export const TagManagement = () => {
               </InputGroup>
             </Box>
 
-            <Box position="relative" flexShrink={0}>
+            <Box
+              position="relative"
+              flexShrink={0}
+            >
               <Button
                 bg="brand.navy"
                 color="white"
@@ -336,12 +474,20 @@ export const TagManagement = () => {
                 _hover={{ bg: "primary.500" }}
                 onClick={() => setIsCreatePopoverOpen((prev) => !prev)}
               >
-                <TbTag size={18} style={{ marginRight: "8px" }} />
+                <TbTag
+                  size={18}
+                  style={{ marginRight: "8px" }}
+                />
                 Create Tag
               </Button>
 
               {isCreatePopoverOpen && (
-                <Box position="absolute" top="48px" right={0} zIndex={2}>
+                <Box
+                  position="absolute"
+                  top="48px"
+                  right={0}
+                  zIndex={2}
+                >
                   <CreateTagPopover onSave={handleCreateTag} />
                 </Box>
               )}
@@ -356,7 +502,10 @@ export const TagManagement = () => {
           onClear={() => setSelectedRowKeys([])}
         />
 
-        <Box borderTop="1px solid" borderColor="gray.200">
+        <Box
+          borderTop="1px solid"
+          borderColor="gray.200"
+        >
           {filteredSections.map((section) => (
             <TagSectionTable
               key={section.title}
