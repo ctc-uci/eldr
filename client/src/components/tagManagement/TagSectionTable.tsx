@@ -53,7 +53,11 @@ export const TagSectionTable = ({
         {sectionTitle}
       </Text>
 
-      <Box borderTop="1px solid" borderColor="gray.200">
+      <Box
+        border="1px solid"
+        borderColor="gray.200"
+        overflow="hidden"
+      >
         <Flex
           align="center"
           gap="12px"
@@ -150,6 +154,7 @@ export const TagSectionTable = ({
             py="12px"
             borderBottom="1px solid"
             borderColor="gray.100"
+            _last={{ borderBottom: "none" }}
             _hover={{ bg: "gray.50" }}
           >
             <Box w="24px" display="flex" justifyContent="center">

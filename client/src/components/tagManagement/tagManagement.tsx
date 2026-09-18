@@ -409,7 +409,7 @@ export const TagManagement = () => {
 
   return (
     <Flex
-      h="100vh"
+        minH="100%"
       bg="white"
       justify="center"
     >
@@ -502,10 +502,7 @@ export const TagManagement = () => {
           onClear={() => setSelectedRowKeys([])}
         />
 
-        <Box
-          borderTop="1px solid"
-          borderColor="gray.200"
-        >
+        <Box>
           {filteredSections.map((section) => (
             <TagSectionTable
               key={section.title}
