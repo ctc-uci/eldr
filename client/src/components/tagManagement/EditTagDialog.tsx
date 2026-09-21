@@ -25,9 +25,13 @@ export const EditTagDialog = ({
 }: EditTagDialogProps) => {
   const [name, setName] = useState(currentName);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    if (open) setName(currentName);
+    if (open) {
+      setName(currentName);
+      setSaveError("");
+    }
   }, [currentName, open]);
 
   const handleSave = async () => {
@@ -36,8 +40,12 @@ export const EditTagDialog = ({
 
     try {
       setIsSaving(true);
+      setSaveError("");
       await onSave(trimmedName);
       onClose();
+    } catch (error) {
+      console.error("Failed to update tag", error);
+      setSaveError("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -47,7 +55,7 @@ export const EditTagDialog = ({
     <Dialog.Root
       open={open}
       onOpenChange={({ open: nextOpen }) => {
-        if (!nextOpen) onClose();
+        if (!nextOpen && !isSaving) onClose();
       }}
       placement="center"
       lazyMount
@@ -70,6 +78,7 @@ export const EditTagDialog = ({
               <CloseButton
                 size="sm"
                 aria-label="Close edit tag dialog"
+                disabled={isSaving}
               />
             </Dialog.CloseTrigger>
 
@@ -108,10 +117,17 @@ export const EditTagDialog = ({
                   aria-label="Tag Name"
                   placeholder="Type your new tag's name"
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    if (saveError) setSaveError("");
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") void handleSave();
                   }}
+                  aria-invalid={saveError ? true : undefined}
+                  aria-describedby={
+                    saveError ? "edit-tag-save-error" : undefined
+                  }
                   h="34px"
                   px="10px"
                   fontSize="12px"
@@ -119,6 +135,16 @@ export const EditTagDialog = ({
                   borderRadius="4px"
                   _placeholder={{ color: "gray.400" }}
                 />
+                {saveError && (
+                  <Text
+                    id="edit-tag-save-error"
+                    role="alert"
+                    fontSize="12px"
+                    color="red.600"
+                  >
+                    {saveError}
+                  </Text>
+                )}
               </Flex>
             </Dialog.Body>
 
@@ -138,6 +164,7 @@ export const EditTagDialog = ({
                   borderRadius="4px"
                   fontSize="12px"
                   fontWeight="500"
+                  disabled={isSaving}
                   onClick={onClose}
                 >
                   Cancel

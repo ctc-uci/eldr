@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+
 import { Box, Button, Input, Text, VStack } from "@chakra-ui/react";
+
 import { Check, ChevronDown } from "lucide-react";
+
 import { TAG_CATEGORY_OPTIONS } from "./types";
 
 type CreateTagPayload = {
@@ -16,8 +19,10 @@ export function CreateTagPopover({
   const [tagName, setTagName] = useState("");
   const [category, setCategory] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [activeOptionIndex, setActiveOptionIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const categoryTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -29,17 +34,77 @@ export function CreateTagPopover({
       }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsCategoryMenuOpen(false);
-    };
-
     document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isCategoryMenuOpen) return;
+
+    const options =
+      categoryMenuRef.current?.querySelectorAll<HTMLElement>('[role="option"]');
+    options?.[activeOptionIndex]?.focus();
+  }, [activeOptionIndex, isCategoryMenuOpen]);
+
+  const openCategoryMenu = (optionIndex?: number) => {
+    const selectedIndex = TAG_CATEGORY_OPTIONS.findIndex(
+      (option) => option === category
+    );
+    setActiveOptionIndex(
+      optionIndex ?? (selectedIndex >= 0 ? selectedIndex : 0)
+    );
+    setIsCategoryMenuOpen(true);
+  };
+
+  const selectCategory = (option: string) => {
+    setCategory(option);
+    setIsCategoryMenuOpen(false);
+    requestAnimationFrame(() => categoryTriggerRef.current?.focus());
+  };
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent,
+    optionIndex: number
+  ) => {
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setActiveOptionIndex((optionIndex + 1) % TAG_CATEGORY_OPTIONS.length);
+        break;
+      case "ArrowUp":
+        event.preventDefault();
+        setActiveOptionIndex(
+          (optionIndex - 1 + TAG_CATEGORY_OPTIONS.length) %
+            TAG_CATEGORY_OPTIONS.length
+        );
+        break;
+      case "Home":
+        event.preventDefault();
+        setActiveOptionIndex(0);
+        break;
+      case "End":
+        event.preventDefault();
+        setActiveOptionIndex(TAG_CATEGORY_OPTIONS.length - 1);
+        break;
+      case "Enter":
+      case " ":
+        event.preventDefault();
+        if (TAG_CATEGORY_OPTIONS[optionIndex]) {
+          selectCategory(TAG_CATEGORY_OPTIONS[optionIndex]);
+        }
+        break;
+      case "Escape":
+        event.preventDefault();
+        setIsCategoryMenuOpen(false);
+        requestAnimationFrame(() => categoryTriggerRef.current?.focus());
+        break;
+      case "Tab":
+        setIsCategoryMenuOpen(false);
+        break;
+    }
+  };
 
   const handleSubmit = async () => {
     if (!tagName.trim() || !category) return;
@@ -80,16 +145,29 @@ export function CreateTagPopover({
         transform: "rotate(45deg)",
       }}
     >
-      <VStack align="stretch" gap="16px">
+      <VStack
+        align="stretch"
+        gap="16px"
+      >
         <Box>
-          <Text mb="6px" fontSize="14px" fontWeight={500} color="gray.900">
+          <Text
+            mb="6px"
+            fontSize="14px"
+            fontWeight={500}
+            color="gray.900"
+          >
             Tag Category
           </Text>
-          <Box ref={categoryMenuRef} position="relative">
+          <Box
+            ref={categoryMenuRef}
+            position="relative"
+          >
             <Button
+              ref={categoryTriggerRef}
               type="button"
               aria-haspopup="listbox"
               aria-expanded={isCategoryMenuOpen}
+              aria-controls="tag-category-listbox"
               aria-label="Tag Category"
               w="full"
               h="40px"
@@ -103,8 +181,29 @@ export function CreateTagPopover({
               fontSize="14px"
               fontWeight={400}
               _hover={{ bg: "white" }}
-              _focusVisible={{ borderColor: "gray.500", boxShadow: "0 0 0 1px var(--chakra-colors-gray-500)" }}
-              onClick={() => setIsCategoryMenuOpen((isOpen) => !isOpen)}
+              _focusVisible={{
+                borderColor: "gray.500",
+                boxShadow: "0 0 0 1px var(--chakra-colors-gray-500)",
+              }}
+              onClick={() => {
+                if (isCategoryMenuOpen) {
+                  setIsCategoryMenuOpen(false);
+                } else {
+                  openCategoryMenu();
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  openCategoryMenu(
+                    event.key === "ArrowUp"
+                      ? TAG_CATEGORY_OPTIONS.length - 1
+                      : undefined
+                  );
+                } else if (event.key === "Escape") {
+                  setIsCategoryMenuOpen(false);
+                }
+              }}
             >
               {category || "Select a category"}
               <ChevronDown
@@ -119,6 +218,7 @@ export function CreateTagPopover({
 
             {isCategoryMenuOpen && (
               <Box
+                id="tag-category-listbox"
                 as="ul"
                 role="listbox"
                 aria-label="Tag categories"
@@ -135,7 +235,7 @@ export function CreateTagPopover({
                 borderRadius="4px"
                 boxShadow="md"
               >
-                {TAG_CATEGORY_OPTIONS.map((option) => {
+                {TAG_CATEGORY_OPTIONS.map((option, optionIndex) => {
                   const isSelected = category === option;
 
                   return (
@@ -144,6 +244,7 @@ export function CreateTagPopover({
                       key={option}
                       role="option"
                       aria-selected={isSelected}
+                      tabIndex={optionIndex === activeOptionIndex ? 0 : -1}
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
@@ -154,13 +255,23 @@ export function CreateTagPopover({
                       fontSize="14px"
                       bg={isSelected ? "gray.100" : "white"}
                       _hover={{ bg: "gray.100" }}
-                      onClick={() => {
-                        setCategory(option);
-                        setIsCategoryMenuOpen(false);
+                      _focusVisible={{
+                        bg: "gray.100",
+                        outline: "2px solid",
+                        outlineColor: "brand.navy",
                       }}
+                      onClick={() => selectCategory(option)}
+                      onKeyDown={(event) =>
+                        handleOptionKeyDown(event, optionIndex)
+                      }
                     >
                       {option}
-                      {isSelected && <Check size={17} strokeWidth={2} />}
+                      {isSelected && (
+                        <Check
+                          size={17}
+                          strokeWidth={2}
+                        />
+                      )}
                     </Box>
                   );
                 })}
@@ -170,7 +281,12 @@ export function CreateTagPopover({
         </Box>
 
         <Box>
-          <Text mb="6px" fontSize="14px" fontWeight={500} color="gray.900">
+          <Text
+            mb="6px"
+            fontSize="14px"
+            fontWeight={500}
+            color="gray.900"
+          >
             Tag Name
           </Text>
           <Input

@@ -266,18 +266,36 @@ export const TagManagement = () => {
     try {
       setIsDeleting(true);
       const rowsToDelete = [...selectedRows];
-      const deletePaths = rowsToDelete
-        .map(({ sectionTitle, row }) => getDeletePath(sectionTitle, row.id))
-        .filter((path): path is string => path !== null);
+      const deleteResults = await Promise.allSettled(
+        rowsToDelete.map(async (selected) => {
+          const path = getDeletePath(selected.sectionTitle, selected.row.id);
+          if (!path)
+            throw new Error(
+              `Unsupported tag section: ${selected.sectionTitle}`
+            );
 
-      await Promise.all(deletePaths.map((path) => backend.delete(path)));
+          await backend.delete(path);
+          return selected;
+        })
+      );
+      const deletedRows = deleteResults.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : []
+      );
+      const failedRows = rowsToDelete.filter(
+        (selected) =>
+          !deletedRows.some(
+            (deleted) =>
+              deleted.sectionTitle === selected.sectionTitle &&
+              deleted.row.id === selected.row.id
+          )
+      );
 
       setSections((prev) =>
         prev.map((section) => ({
           ...section,
           rows: section.rows.filter(
             (row) =>
-              !rowsToDelete.some(
+              !deletedRows.some(
                 (selected) =>
                   selected.sectionTitle === section.title &&
                   selected.row.id === row.id
@@ -285,8 +303,20 @@ export const TagManagement = () => {
           ),
         }))
       );
-      setSelectedRowKeys([]);
-      setIsDeleteDialogOpen(false);
+      setSelectedRowKeys(
+        failedRows.map(({ sectionTitle, row }) =>
+          getRowKey(sectionTitle, row.name)
+        )
+      );
+
+      if (failedRows.length === 0) {
+        setIsDeleteDialogOpen(false);
+      } else {
+        const failures = deleteResults.flatMap((result) =>
+          result.status === "rejected" ? [result.reason] : []
+        );
+        console.error("Failed to delete some selected tags", failures);
+      }
     } catch (error) {
       console.error("Failed to delete selected tags", error);
     } finally {
@@ -411,7 +441,7 @@ export const TagManagement = () => {
 
   return (
     <Flex
-        minH="100%"
+      minH="100%"
       bg="white"
       justify="center"
     >
@@ -443,7 +473,7 @@ export const TagManagement = () => {
                 endElement={
                   <Search
                     size={16}
-                    color="gray.400"
+                    color="var(--chakra-colors-gray-400)"
                   />
                 }
               >

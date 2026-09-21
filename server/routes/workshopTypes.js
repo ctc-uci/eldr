@@ -7,10 +7,11 @@ export const workshopTypesRouter = Router();
 
 workshopTypesRouter.post("/", verifyRole("staff"), async (req, res) => {
   try {
-    const workshopType = req.body.workshopType?.trim();
-    if (!workshopType) {
+    const workshopTypeInput = req.body?.workshopType;
+    if (typeof workshopTypeInput !== "string" || !workshopTypeInput.trim()) {
       return res.status(400).json({ message: "Workshop type is required" });
     }
+    const workshopType = workshopTypeInput.trim();
 
     const result = await db.query(
       "INSERT INTO workshop_types (workshop_type) VALUES ($1) RETURNING *",
@@ -19,7 +20,12 @@ workshopTypesRouter.post("/", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(result[0]));
   } catch (error) {
-    res.status(500).send(error.message);
+    if (error.code === "23505") {
+      return res.status(409).json({ message: "Workshop type already exists" });
+    }
+
+    console.error("Error creating workshop type:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -43,7 +49,8 @@ workshopTypesRouter.get("/", verifyRole("volunteer"), async (_req, res) => {
     `);
     res.status(200).json(keysToCamel(workshopTypes));
   } catch (error) {
-    res.status(500).send(error.message);
+    console.error("Error fetching workshop types:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -59,16 +66,18 @@ workshopTypesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
 
     res.status(200).json(keysToCamel(workshopTypes[0]));
   } catch (error) {
-    res.status(500).send(error.message);
+    console.error("Error fetching workshop type:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 workshopTypesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
   try {
-    const workshopType = req.body.workshopType?.trim();
-    if (!workshopType) {
+    const workshopTypeInput = req.body?.workshopType;
+    if (typeof workshopTypeInput !== "string" || !workshopTypeInput.trim()) {
       return res.status(400).json({ message: "Workshop type is required" });
     }
+    const workshopType = workshopTypeInput.trim();
 
     const result = await db.query(
       "UPDATE workshop_types SET workshop_type = $1 WHERE id = $2 RETURNING *",
@@ -80,7 +89,12 @@ workshopTypesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(result[0]));
   } catch (error) {
-    res.status(500).send(error.message);
+    if (error.code === "23505") {
+      return res.status(409).json({ message: "Workshop type already exists" });
+    }
+
+    console.error("Error updating workshop type:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -96,6 +110,7 @@ workshopTypesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(result[0]));
   } catch (error) {
-    res.status(500).send(error.message);
+    console.error("Error deleting workshop type:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });

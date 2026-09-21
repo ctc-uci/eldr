@@ -1,4 +1,5 @@
 import { keysToCamel } from "@/common/utils";
+import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
 import { verifyRole, verifyToken } from "@/middleware";
@@ -10,6 +11,18 @@ const normalizeNullableText = (value) => {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
   return normalized === "" ? null : normalized;
+};
+
+const canModifyVolunteer = (res, volunteerId) => {
+  if (process.env.NODE_ENV !== "production") return true;
+
+  const user = res.locals.user;
+  return (
+    user &&
+    (user.role === "staff" ||
+      user.role === "supervisor" ||
+      String(user.id) === volunteerId)
+  );
 };
 
 // Create a new volunteer
@@ -94,7 +107,8 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
         (existingUser.firebase_uid && existingUser.firebase_uid !== firebaseUid)
       ) {
         return res.status(409).json({
-          message: "Conflict: This email is already registered to another account.",
+          message:
+            "Conflict: This email is already registered to another account.",
         });
       }
     }
@@ -132,7 +146,9 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
 
       // Verify that the firebase_uid matches (atomic ownership decision)
       if (firebaseUid && userResult.firebase_uid !== firebaseUid) {
-        throw new Error("Conflict: This email is already linked to another account.");
+        throw new Error(
+          "Conflict: This email is already linked to another account."
+        );
       }
 
       const volunteerResult = await t.one(
@@ -854,89 +870,10 @@ volunteersRouter.get(
   }
 );
 
-// -----------------------------
-// Volunteer Workshop Types Routes
-// -----------------------------
-
-volunteersRouter.post(
-  "/:volunteerId/workshop-types",
-  verifyRole("volunteer"),
-  async (req, res) => {
-    try {
-      const { volunteerId } = req.params;
-      const { workshopTypeId } = req.body;
-
-      if (!workshopTypeId) {
-        return res.status(400).json({ message: "workshopTypeId is required" });
-      }
-
-      const newRelationship = await db.query(
-        `
-        INSERT INTO volunteer_workshop_types (volunteer_id, workshop_type_id)
-        VALUES ($1, $2)
-        RETURNING *;
-      `,
-        [volunteerId, workshopTypeId]
-      );
-
-      res.status(201).json(keysToCamel(newRelationship));
-    } catch (e) {
-      res.status(500).send(e.message);
-    }
-  }
-);
-
-volunteersRouter.delete(
-  "/:volunteerId/workshop-types/:workshopTypeId",
-  verifyRole("volunteer"),
-  async (req, res) => {
-    try {
-      const { volunteerId, workshopTypeId } = req.params;
-
-      const deletedRelationship = await db.query(
-        `
-        DELETE FROM volunteer_workshop_types
-        WHERE volunteer_id = $1 AND workshop_type_id = $2
-        RETURNING *;
-      `,
-        [volunteerId, workshopTypeId]
-      );
-
-      if (deletedRelationship.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Workshop type not assigned to this volunteer" });
-      }
-
-      res.status(200).json(keysToCamel(deletedRelationship));
-    } catch (e) {
-      res.status(500).send(e.message);
-    }
-  }
-);
-
-volunteersRouter.get(
-  "/:volunteerId/workshop-types",
-  verifyRole("volunteer"),
-  async (req, res) => {
-    try {
-      const { volunteerId } = req.params;
-
-      const listAll = await db.query(
-        `
-        SELECT wt.id, wt.workshop_type
-        FROM volunteer_workshop_types vwt
-        JOIN workshop_types wt ON vwt.workshop_type_id = wt.id
-        WHERE vwt.volunteer_id = $1;
-      `,
-        [volunteerId]
-      );
-
-      res.status(200).json(keysToCamel(listAll));
-    } catch (e) {
-      res.status(500).send(e.message);
-    }
-  }
+registerWorkshopTypeAssignmentRoutes(
+  volunteersRouter,
+  "volunteer",
+  (req, res) => canModifyVolunteer(res, req.params.volunteerId)
 );
 
 // -----------------------------

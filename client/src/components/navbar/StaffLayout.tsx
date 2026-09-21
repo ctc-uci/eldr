@@ -1,9 +1,10 @@
 import { useState } from "react";
+
 import { Box, Flex } from "@chakra-ui/react";
-import { Outlet } from "react-router-dom";
 
 import { AdminNavbar } from "@/components/navbar/AdminNavbar.tsx";
 import { CollapsedNavbar } from "@/components/navbar/CollapsedNavbar.tsx";
+import { Outlet } from "react-router-dom";
 
 export type StaffLayoutNavbar = "expanded" | "collapsed";
 
@@ -26,7 +27,7 @@ export const StaffLayout = ({ navbar = "expanded" }: StaffLayoutProps) => {
       bg="#FAFBFC"
     >
       {currentNavbar === "collapsed" ? (
-        <CollapsedNavbar />
+        <CollapsedNavbar onExpand={() => setCurrentNavbar("expanded")} />
       ) : (
         <AdminNavbar onCollapse={() => setCurrentNavbar("collapsed")} />
       )}

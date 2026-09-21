@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import { Box, Input, InputGroup } from "@chakra-ui/react";
+
 import { Search } from "lucide-react";
 
 export function SearchAutocomplete({
@@ -18,7 +20,10 @@ export function SearchAutocomplete({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     }
@@ -27,8 +32,19 @@ export function SearchAutocomplete({
   }, []);
 
   return (
-    <Box ref={wrapperRef} position="relative" flex={1}>
-      <InputGroup startElement={<Search size={16} color="gray.400" />}>
+    <Box
+      ref={wrapperRef}
+      position="relative"
+      flex={1}
+    >
+      <InputGroup
+        startElement={
+          <Search
+            size={16}
+            color="var(--chakra-colors-gray-400)"
+          />
+        }
+      >
         <Input
           placeholder="Search for a tag..."
           borderColor="gray.300"
