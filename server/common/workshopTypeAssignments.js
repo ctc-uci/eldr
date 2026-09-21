@@ -106,6 +106,15 @@ export const registerWorkshopTypeAssignmentRoutes = (
           return res.status(403).json({ message: "Forbidden" });
         }
 
+        if (
+          !isPositiveIntegerId(ownerId) ||
+          !isPositiveIntegerId(workshopTypeId)
+        ) {
+          return res
+            .status(400)
+            .json({ message: "Invalid owner or workshop type ID" });
+        }
+
         const relationship = await db.query(config.deleteQuery, [
           ownerId,
           workshopTypeId,
