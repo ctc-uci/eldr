@@ -514,14 +514,7 @@ export const TagManagement = () => {
               </Button>
 
               {isCreatePopoverOpen && (
-                <Box
-                  position="absolute"
-                  top="48px"
-                  right={0}
-                  zIndex={2}
-                >
-                  <CreateTagPopover onSave={handleCreateTag} />
-                </Box>
+                <CreateTagPopover onSave={handleCreateTag} />
               )}
             </Box>
           </Flex>

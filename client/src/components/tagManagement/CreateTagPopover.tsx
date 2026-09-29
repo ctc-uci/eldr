@@ -120,7 +120,7 @@ export function CreateTagPopover({
   return (
     <Box
       position="absolute"
-      top="52px"
+      top="calc(100% + 10px)"
       right="0"
       zIndex={20}
       w="320px"
@@ -133,8 +133,8 @@ export function CreateTagPopover({
       _before={{
         content: '""',
         position: "absolute",
-        top: "-7px",
-        right: "30px",
+        top: "-6px",
+        right: "61px",
         w: "12px",
         h: "12px",
         bg: "white",
