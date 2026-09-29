@@ -6,6 +6,7 @@ import {
   updateCalendarEvent,
 } from "@/common/calendar";
 import { keysToCamel } from "@/common/utils";
+import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
@@ -562,11 +563,9 @@ clinicsRouter.post(
           caller?.role === "volunteer" &&
           String(caller.id) !== String(volunteerId)
         ) {
-          return res
-            .status(403)
-            .json({
-              message: "Forbidden: cannot register for another volunteer",
-            });
+          return res.status(403).json({
+            message: "Forbidden: cannot register for another volunteer",
+          });
         }
       }
 
@@ -702,12 +701,10 @@ clinicsRouter.delete(
           caller?.role === "volunteer" &&
           String(caller.id) !== String(volunteerId)
         ) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "Forbidden: cannot cancel registration for another volunteer",
-            });
+          return res.status(403).json({
+            message:
+              "Forbidden: cannot cancel registration for another volunteer",
+          });
         }
       }
 
@@ -934,6 +931,8 @@ clinicsRouter.get(
     }
   }
 );
+
+registerWorkshopTypeAssignmentRoutes(clinicsRouter, "clinic");
 
 // Clinic Tags Routes
 // POST: assign a tag to a clinic
