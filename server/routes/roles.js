@@ -30,20 +30,8 @@ rolesRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {
     const roles = await db.query(
       `
-        SELECT
-          r.*,
-          (
-            SELECT COUNT(DISTINCT cr.clinic_id)::int
-            FROM clinic_roles cr
-            WHERE cr.role_id = r.id
-          ) AS clinic_count,
-          (
-            SELECT COUNT(DISTINCT vr.volunteer_id)::int
-            FROM volunteer_roles vr
-            WHERE vr.role_id = r.id
-          ) AS volunteer_count
-        FROM roles r
-        ORDER BY r.id ASC;
+        SELECT *
+        FROM roles;
       `
     );
 
@@ -67,35 +55,6 @@ rolesRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
     );
 
     res.status(200).json(keysToCamel(roles));
-  } catch (e) {
-    res.status(500).send(e.message);
-  }
-});
-
-// Update a role by ID
-rolesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { roleName } = req.body;
-    if (!roleName || !roleName.trim()) {
-      return res.status(400).send("Role name is required");
-    }
-
-    const result = await db.query(
-      `
-        UPDATE roles
-        SET role_name = $1
-        WHERE id = $2
-        RETURNING *;
-      `,
-      [roleName.trim(), id]
-    );
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: "Role not found" });
-    }
-
-    res.status(200).json(keysToCamel(result));
   } catch (e) {
     res.status(500).send(e.message);
   }
