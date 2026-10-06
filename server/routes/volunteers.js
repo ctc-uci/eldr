@@ -1,4 +1,5 @@
 import { keysToCamel } from "@/common/utils";
+import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
 import { verifyRole, verifyToken } from "@/middleware";
@@ -10,6 +11,18 @@ const normalizeNullableText = (value) => {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
   return normalized === "" ? null : normalized;
+};
+
+const canModifyVolunteer = (res, volunteerId) => {
+  if (process.env.NODE_ENV !== "production") return true;
+
+  const user = res.locals.user;
+  return (
+    user &&
+    (user.role === "staff" ||
+      user.role === "supervisor" ||
+      String(user.id) === volunteerId)
+  );
 };
 
 // Create a new volunteer
@@ -94,7 +107,8 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
         (existingUser.firebase_uid && existingUser.firebase_uid !== firebaseUid)
       ) {
         return res.status(409).json({
-          message: "Conflict: This email is already registered to another account.",
+          message:
+            "Conflict: This email is already registered to another account.",
         });
       }
     }
@@ -132,7 +146,9 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
 
       // Verify that the firebase_uid matches (atomic ownership decision)
       if (firebaseUid && userResult.firebase_uid !== firebaseUid) {
-        throw new Error("Conflict: This email is already linked to another account.");
+        throw new Error(
+          "Conflict: This email is already linked to another account."
+        );
       }
 
       const volunteerResult = await t.one(
@@ -852,6 +868,12 @@ volunteersRouter.get(
       res.status(500).send(e.message);
     }
   }
+);
+
+registerWorkshopTypeAssignmentRoutes(
+  volunteersRouter,
+  "volunteer",
+  (req, res) => canModifyVolunteer(res, req.params.volunteerId)
 );
 
 // -----------------------------
