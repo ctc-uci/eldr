@@ -4,17 +4,12 @@ TODO: Implement on all associated admin pages
 */
 
 import { useLocation, Link as RouterLink } from "react-router-dom";
-import { Avatar, Box, Flex, HStack, IconButton, Image, Text, VStack } from "@chakra-ui/react";
+import { Avatar, Box, Flex, HStack, Image, Text, VStack } from "@chakra-ui/react";
 import { ClipboardList, Users } from "lucide-react";
 import { LuTags, LuMails } from "react-icons/lu";
-import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
 import { getLogoRootPath } from "@/utils/navigation";
 
-type AdminNavbarProps = {
-  onCollapse: () => void;
-};
-
-export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
+export const AdminNavbar = () => {
   const location = useLocation();
 
   // Array of mapping icons
@@ -29,8 +24,8 @@ export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
     <Flex
       direction="column"
       w="clamp(180px, 18vw, 250px)"
-      h="100vh"
       flexShrink={0}
+      // h="100vh"
       borderRight="1px solid"
       borderColor="gray.200"
       bg="white"
@@ -101,30 +96,24 @@ export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
         </VStack>
       </VStack>
 
-      <HStack justify="space-between" px="clamp(16px, 2vw, 20px)">
-        <RouterLink
-          to="/admin-profile"
-          style={{ textDecoration: "none", display: "block" }}
+      {/* Profile Picture */}
+      <RouterLink
+        to="/admin-profile"
+        style={{ textDecoration: "none", display: "block" }}
+      >
+        <Box
+          px="clamp(16px, 2vw, 20px)"
+          cursor="pointer"
         >
-          <Box cursor="pointer">
-            <Avatar.Root
-              w="clamp(40px, 4vw, 48px)"
-              h="clamp(40px, 4vw, 48px)"
-            >
-              <Avatar.Fallback name="Admin User" />
-              <Avatar.Image src="" />
-            </Avatar.Root>
-          </Box>
-        </RouterLink>
-        <IconButton
-          aria-label="Collapse navigation button"
-          title="Collapse navigation button"
-          variant="ghost"
-          onClick={onCollapse}
-        >
-          <TbLayoutSidebarLeftCollapse size={22} />
-        </IconButton>
-      </HStack>
+          <Avatar.Root
+            w="clamp(40px, 4vw, 48px)"
+            h="clamp(40px, 4vw, 48px)"
+          >
+            <Avatar.Fallback name="Admin User" />
+            <Avatar.Image src="" />
+          </Avatar.Root>
+        </Box>
+      </RouterLink>
     </Flex>
   );
 };

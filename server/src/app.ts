@@ -1,18 +1,17 @@
 import { verifyToken } from "@/middleware";
-import { adminsRouter } from "@/routes/admins";
+import { languagesRouter } from "@/routes/languages";
 import { areasOfPracticeRouter } from "@/routes/areasOfInterest";
 import { casesRouter } from "@/routes/cases";
-import { clinicsRouter } from "@/routes/clinics";
-import { emailsRouter } from "@/routes/emails";
-import { emailTemplatesRouter } from "@/routes/emailTemplates";
-import { foldersRouter } from "@/routes/folders";
-import { languagesRouter } from "@/routes/languages";
-import { locationsRouter } from "@/routes/locations";
-import { rolesRouter } from "@/routes/roles";
 import { tagsRouter } from "@/routes/tags";
+import { rolesRouter } from "@/routes/roles";
 import { usersRouter } from "@/routes/users";
 import { volunteersRouter } from "@/routes/volunteers";
-import { workshopTypesRouter } from "@/routes/workshopTypes";
+import { adminsRouter } from "@/routes/admins";
+import { clinicsRouter } from "@/routes/clinics";
+import { locationsRouter } from "@/routes/locations";
+import { emailTemplatesRouter } from "@/routes/emailTemplates";
+import { foldersRouter } from "@/routes/folders";
+import { emailsRouter } from "@/routes/emails";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -56,7 +55,6 @@ app.use("/locations", locationsRouter);
 app.use("/email-templates", emailTemplatesRouter);
 app.use("/folders", foldersRouter);
 app.use("/emails", emailsRouter);
-app.use("/workshop-types", workshopTypesRouter);
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;

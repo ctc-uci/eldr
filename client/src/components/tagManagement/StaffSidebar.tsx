@@ -33,7 +33,7 @@ export function StaffSidebar() {
       h="100vh"
       bg="white"
       borderRightWidth="1px"
-      borderColor="gray.200"
+      borderColor="#e0e0e0"
       py="49px"
       px="30px"
       flexShrink={0}
@@ -70,19 +70,16 @@ export function StaffSidebar() {
                   px="23px"
                   py="16px"
                   borderRadius="8px"
-                  bg={isActive ? "skyBlue.100" : "transparent"}
+                  bg={isActive ? "#E8F6FC" : "transparent"}
                   cursor="pointer"
-                  _hover={{ bg: isActive ? "skyBlue.100" : "gray.100" }}
+                  _hover={{ bg: isActive ? "#E8F6FC" : "#f4f4f5" }}
                 >
-                  <Icon
-                    size={23}
-                    color={isActive ? "var(--chakra-colors-brand-navy)" : "var(--chakra-colors-gray-600)"}
-                  />
+                  <Icon size={23} color={isActive ? "#002992" : "#4A5568"} />
                   <Text
                     fontSize="16px"
                     fontWeight={isActive ? "bold" : "600"}
                     fontFamily="heading"
-                    color={isActive ? "brand.navy" : "gray.600"}
+                    color={isActive ? "#002992" : "#4A5568"}
                     lineHeight="24px"
                   >
                     {item.label}
