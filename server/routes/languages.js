@@ -23,7 +23,22 @@ languagesRouter.post("/", verifyRole("staff"), async (req, res) => {
 // Get all langauges
 languagesRouter.get("/", verifyRole("volunteer"), async (_, res) => {
     try {
-        const languages = await db.query(`SELECT * FROM languages ORDER BY id ASC`);
+        const languages = await db.query(`
+            SELECT
+                l.*,
+                (
+                    SELECT COUNT(DISTINCT cl.clinic_id)::int
+                    FROM clinic_languages cl
+                    WHERE cl.language_id = l.id
+                ) AS clinic_count,
+                (
+                    SELECT COUNT(DISTINCT vl.volunteer_id)::int
+                    FROM volunteer_language vl
+                    WHERE vl.language_id = l.id
+                ) AS volunteer_count
+            FROM languages l
+            ORDER BY l.id ASC
+        `);
 
         res.status(200).json(keysToCamel(languages));
     } catch (err) {
