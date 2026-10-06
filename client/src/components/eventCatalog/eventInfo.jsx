@@ -187,6 +187,13 @@ export const EventInfo = ({
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
+  const meetingLinksList = useMemo(() => {
+    if (!meetingLink) return [];
+    return meetingLink
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }, [meetingLink]);
   const locationTypeTag = formatLocationTypeTag(locationType);
 
   const isUpcoming = event.startTime
@@ -323,20 +330,35 @@ export const EventInfo = ({
             </Box>
             <VStack align="flex-start" gap="4px" flex="1" minW={0}>
               <Text lineHeight="1.4" wordBreak="break-word">{localityLine}</Text>
-              {showMeetingLink ? (
-                <Text
-                  as="a"
-                  href={meetingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="#2563EB"
-                  fontSize="13px"
-                  fontWeight={500}
-                  textDecoration="underline"
-                  wordBreak="break-all"
-                >
-                  Meeting link
-                </Text>
+              {showMeetingLink && meetingLinksList.length > 0 ? (
+                <VStack align="flex-start" gap="2px">
+                  {meetingLinksList.map((link, idx) => {
+                    const href =
+                      link.startsWith("http://") || link.startsWith("https://")
+                        ? link
+                        : `https://${link}`;
+                    const label =
+                      meetingLinksList.length === 1
+                        ? "Meeting link"
+                        : `Meeting link ${idx + 1}`;
+                    return (
+                      <Text
+                        key={idx}
+                        as="a"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        color="#2563EB"
+                        fontSize="13px"
+                        fontWeight={500}
+                        textDecoration="underline"
+                        wordBreak="break-all"
+                      >
+                        {label}
+                      </Text>
+                    );
+                  })}
+                </VStack>
               ) : null}
             </VStack>
           </Flex>

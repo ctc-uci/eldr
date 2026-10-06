@@ -136,12 +136,22 @@ export const CreatedEvent = () => {
           .join("-")
       : "";
 
+  const formatMeetingLinks = (raw) => {
+    if (!raw) return "";
+    return raw
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(", ");
+  };
+
   const locationStr = (() => {
     const mode = (locationType || "").toLowerCase();
     const inPerson = [address, city, state, zip].filter(Boolean).join(", ");
-    if (mode === "online") return meetingLink || "";
+    const links = formatMeetingLinks(meetingLink);
+    if (mode === "online") return links || "Online";
     if (mode === "hybrid")
-      return [inPerson, meetingLink].filter(Boolean).join(" | ");
+      return [inPerson, links].filter(Boolean).join(" | ") || "Hybrid";
     return inPerson;
   })();
 
