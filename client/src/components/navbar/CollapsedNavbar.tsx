@@ -3,11 +3,21 @@ Collapsed Navbar
 Implement on event creation ONLY (potentially case creation too??)
 */
 
-import { Link, Flex, VStack, Box, Avatar, Image, IconButton } from "@chakra-ui/react";
-import { LuTags, LuMails } from "react-icons/lu";
-import { ClipboardList, Users } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Avatar,
+  Box,
+  Flex,
+  IconButton,
+  Image,
+  Link,
+  VStack,
+} from "@chakra-ui/react";
+
 import { getLogoRootPath } from "@/utils/navigation";
+import { ClipboardList, Users } from "lucide-react";
+import { LuMails, LuTags } from "react-icons/lu";
+import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const navIconButtonProps = {
   variant: "ghost" as const,
@@ -22,7 +32,11 @@ const navIconButtonProps = {
   },
 };
 
-export const CollapsedNavbar = () => {
+type CollapsedNavbarProps = {
+  onExpand: () => void;
+};
+
+export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,8 +52,15 @@ export const CollapsedNavbar = () => {
       align="center"
       justify="space-between"
     >
-      <VStack gap={10} w="full" justifyContent="left">
-        <Box cursor="pointer" onClick={() => navigate(getLogoRootPath(location.pathname))}>
+      <VStack
+        gap={10}
+        w="full"
+        justifyContent="left"
+      >
+        <Box
+          cursor="pointer"
+          onClick={() => navigate(getLogoRootPath(location.pathname))}
+        >
           <Image
             src="/cc-logo.svg"
             alt="Logo"
@@ -47,10 +68,16 @@ export const CollapsedNavbar = () => {
             maxW="full"
             objectFit="contain"
           />
-          <Box w="32px" h="32px" />
+          <Box
+            w="32px"
+            h="32px"
+          />
         </Box>
 
-        <VStack gap={10} w="full" >
+        <VStack
+          gap={10}
+          w="full"
+        >
           <IconButton
             title="Event Catalog"
             aria-label="Event Catalog"
@@ -82,23 +109,34 @@ export const CollapsedNavbar = () => {
             title="Tags"
             aria-label="Tags"
             {...navIconButtonProps}
-            onClick={() => navigate("/tags")}
+            onClick={() => navigate("/manage-tags")}
           >
             <LuTags size={22} />
           </IconButton>
         </VStack>
       </VStack>
 
-      {/* PLACEHOLDER REPLACE WITH ACTUAL PFP */}
-      <Link
-        href="/admin-profile"
-        title="Profile"
-      >
-        <Avatar.Root size="sm">
-          <Avatar.Fallback name="User" />
-          <Avatar.Image src="" />
-        </Avatar.Root>
-      </Link>
+      <VStack gap={3}>
+        <IconButton
+          aria-label="Expand navigation button"
+          title="Expand navigation button"
+          {...navIconButtonProps}
+          onClick={onExpand}
+        >
+          <TbLayoutSidebarLeftExpand size={22} />
+        </IconButton>
+
+        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP */}
+        <Link
+          href="/admin-profile"
+          title="Profile"
+        >
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name="User" />
+            <Avatar.Image src="" />
+          </Avatar.Root>
+        </Link>
+      </VStack>
     </Flex>
   );
 };
