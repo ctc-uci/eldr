@@ -45,13 +45,15 @@ const BackgroundStep = ({
     }
   }, []);
 
-  const handleBack = () => {
-    saveDraft({
-      lawSchoolYear: gradYear.trim(),
-      affiliatedEmployer: employer.trim(),
-    });
-    onBack?.();
-  };
+  const handleBack = onBack
+    ? () => {
+        saveDraft({
+          lawSchoolYear: gradYear.trim(),
+          affiliatedEmployer: employer.trim(),
+        });
+        onBack();
+      }
+    : undefined;
 
   const handleSubmit = async () => {
     onDismissError();

@@ -15,9 +15,7 @@ export const verifyToken = async (
     const requestPath = (req.originalUrl || req.url || req.path || "").split("?")[0];
     if (
       requestPath === "/users/check-email" ||
-      requestPath === "/users/custom-token" ||
-      req.path === "/check-email" ||
-      req.path === "/custom-token"
+      req.path === "/check-email"
     ) {
       return next();
     }

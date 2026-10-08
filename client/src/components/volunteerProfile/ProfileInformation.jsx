@@ -39,7 +39,10 @@ const ModernDropdown = ({
   onChange,
   flex = 1,
   minW = 0,
+  "aria-label": ariaLabelProp,
+  ariaLabel,
 }) => {
+  const accessibleLabel = ariaLabel || ariaLabelProp;
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
@@ -72,6 +75,7 @@ const ModernDropdown = ({
         role="button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={accessibleLabel}
         tabIndex={0}
         align="center"
         justify="space-between"
@@ -648,6 +652,7 @@ export const ProfileInformation = ({
                         value={row.language}
                         options={languageOptions}
                         placeholder="Select language"
+                        aria-label={`Language${row.language ? `: ${row.language}` : ""}`}
                         onChange={(val) =>
                           updateLanguage(row.id, {
                             language: val,
@@ -662,6 +667,7 @@ export const ProfileInformation = ({
                       <ModernDropdown
                         value={row.verbalProficiency ?? DEFAULT_PROFICIENCY}
                         options={PROFICIENCY_OPTIONS}
+                        aria-label={`Verbal proficiency${row.language ? ` for ${row.language}` : ""}`}
                         onChange={(val) =>
                           updateLanguage(row.id, {
                             verbalProficiency: val,
@@ -676,6 +682,7 @@ export const ProfileInformation = ({
                       <ModernDropdown
                         value={row.writtenProficiency ?? DEFAULT_PROFICIENCY}
                         options={PROFICIENCY_OPTIONS}
+                        aria-label={`Written proficiency${row.language ? ` for ${row.language}` : ""}`}
                         onChange={(val) =>
                           updateLanguage(row.id, {
                             writtenProficiency: val,

@@ -14,7 +14,7 @@ import {
 
 import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
-import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
+import { createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
 import { normalizeProficiency, DEFAULT_PROFICIENCY } from "@eldr/shared";
