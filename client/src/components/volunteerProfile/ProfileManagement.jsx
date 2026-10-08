@@ -14,8 +14,10 @@ import {
 
 import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
-import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
+import { createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
+
+import { normalizeProficiency, DEFAULT_PROFICIENCY } from "@eldr/shared";
 
 const PROFILE_TABS = [
   { value: "information", label: "Profile Information", icon: LuUser },
@@ -24,29 +26,8 @@ const PROFILE_TABS = [
 ];
 
 const VALID_SECTIONS = new Set(["information", "activity", "preferences"]);
-const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Proficient";
-const toDisplayProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return DEFAULT_PROFICIENCY;
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "Native/Fluent";
-  }
-  if (normalized === "professional") return "Professional";
-  if (normalized === "proficient") return "Proficient";
-  return normalized
-    .split("/")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("/");
-};
-const toBackendProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return "proficient";
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "native/fluent";
-  }
-  if (normalized === "professional") return "professional";
-  return "proficient";
-};
+const toDisplayProficiency = (value) => normalizeProficiency(value, DEFAULT_PROFICIENCY);
+const toBackendProficiency = (value) => toDisplayProficiency(value);
 const readFirst = (value) => (Array.isArray(value) ? value[0] : value);
 const normalizeText = (value) => value?.trim().toLowerCase();
 
@@ -151,7 +132,12 @@ export const ProfileManagement = () => {
           languages: volunteerLanguages.map((row) => ({
             id: `lang-${row.id}`,
             language: row.language,
-            proficiency: toDisplayProficiency(row.proficiency),
+            verbalProficiency: toDisplayProficiency(
+              row.verbalProficiency ?? row.proficiency
+            ),
+            writtenProficiency: toDisplayProficiency(
+              row.writtenProficiency ?? row.proficiency
+            ),
           })),
           interests: volunteerAreas.map((row) => row.areasOfPractice),
         }));
@@ -271,8 +257,8 @@ export const ProfileManagement = () => {
           nextLanguageIds.push(match.id);
           return {
             languageId: match.id,
-            proficiency: toBackendProficiency(row.proficiency),
-            isLiterate: true,
+            verbalProficiency: toBackendProficiency(row.verbalProficiency),
+            writtenProficiency: toBackendProficiency(row.writtenProficiency),
           };
         })
         .filter(Boolean);

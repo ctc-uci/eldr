@@ -12,12 +12,14 @@ import {
 } from "@chakra-ui/react";
  
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuArrowRight, LuSearch, LuX } from "react-icons/lu";
+import { LuSearch, LuX } from "react-icons/lu";
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
  
 type LanguageRow = {
@@ -294,15 +296,12 @@ const LanguageMultiSelect = ({
   );
 };
  
-const LanguageStep = ({ onNext }: Props) => {
+const LanguageStep = ({ onNext, onBack }: Props) => {
   const { backend } = useBackendContext();
 
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
   const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
     () => loadDraft()?.selectedLanguageNames ?? []
-  );
-  const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
-    () => loadDraft()?.literateLanguageNames ?? []
   );
 
   const [isLoading, setIsLoading] = useState(false);
@@ -339,33 +338,26 @@ const LanguageStep = ({ onNext }: Props) => {
     for (const row of allLanguages) m.set(row.language, row.id);
     return m;
   }, [allLanguages]);
- 
+
   const allLanguageNames = useMemo(() => {
     return [...new Set(allLanguages.map((l) => l.language))].sort((a, b) =>
       a.localeCompare(b)
     );
   }, [allLanguages]);
 
-  // "Literate in" must be a subset of the selected languages
-  const literateOptions = useMemo(
-    () => selectedLanguageNames,
-    [selectedLanguageNames]
-  );
+  const handleBack = () => {
+    saveDraft({
+      selectedLanguageNames,
+    });
+    onBack?.();
+  };
 
-  // If selected languages change, keep literate selections valid.
-  useEffect(() => {
-    setLiterateLanguageNames((prev) =>
-      prev.filter((n) => selectedLanguageNames.includes(n))
-    );
-  }, [selectedLanguageNames]);
- 
   const handleContinue = () => {
     setErrorMsg(null);
 
     if (selectedLanguageNames.length === 0) {
       saveDraft({
         selectedLanguageNames: [],
-        literateLanguageNames: [],
       });
       onNext();
       return;
@@ -375,14 +367,13 @@ const LanguageStep = ({ onNext }: Props) => {
       .map((name) => {
         const languageId = nameToId.get(name);
         if (!languageId) return null;
-        return { languageId, isLiterate: literateLanguageNames.includes(name) };
+        return { languageId };
       })
       .filter(Boolean);
 
     if (!mapped.length) {
       saveDraft({
         selectedLanguageNames: [],
-        literateLanguageNames: [],
       });
       onNext();
       return;
@@ -390,7 +381,6 @@ const LanguageStep = ({ onNext }: Props) => {
 
     saveDraft({
       selectedLanguageNames,
-      literateLanguageNames,
     });
     onNext();
   };
@@ -408,7 +398,16 @@ const LanguageStep = ({ onNext }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+        <Flex
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+          align="center"
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton onClick={handleBack} />
+        </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
@@ -477,42 +476,7 @@ const LanguageStep = ({ onNext }: Props) => {
               placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
  
-            <LanguageMultiSelect
-              label={
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>Indicate in which you are literate</span>
-                  <span style={{ backgroundColor: "#F4F4F5", color: "black", fontSize: 12, padding: "2px 6px", borderRadius: 4 }}>
-                    optional
-                  </span>
-                </span>
-              }
-              items={literateOptions}
-              selected={literateLanguageNames}
-              onChange={setLiterateLanguageNames}
-              disabled={isLoading}
-              placeholder={isLoading ? "Loading..." : "Search for languages"}
-            />
- 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "16px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{ bg: "#F4F4F5", _active: { bg: "black", color: "white" } }}
-              position="relative"
-              w="100%"
-              px="20px"
-              onClick={handleContinue}
-            >
-              <Box w="100%" textAlign="center">Continue</Box>
-              <Box position="absolute" right="12px">
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            <StepNavButtons onBack={handleBack} onContinue={handleContinue} />
 
           </Flex>
         </Flex>

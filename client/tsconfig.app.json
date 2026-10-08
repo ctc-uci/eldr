@@ -26,8 +26,10 @@
     /* Path Aliasing */
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["*"],
+      "@eldr/shared": ["../../shared/index.ts"],
+      "@eldr/shared/*": ["../../shared/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../shared"]
 }

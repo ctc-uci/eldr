@@ -81,17 +81,22 @@ export async function completeVolunteerSignup(
         if (lid && name) nameToId.set(name, lid);
       }
 
-      const literate = new Set(draft.literateLanguageNames);
       const languages = draft.selectedLanguageNames
         .map((name) => {
           const languageId = nameToId.get(name);
           if (!languageId) return null;
-          const proficiency =
-            draft.languageProficiencies[name] ?? "proficient";
+          const verbalProficiency =
+            draft.verbalProficiencies?.[name] ??
+            draft.languageProficiencies?.[name] ??
+            "Professional";
+          const writtenProficiency =
+            draft.writtenProficiencies?.[name] ??
+            draft.languageProficiencies?.[name] ??
+            "Professional";
           return {
             languageId,
-            proficiency,
-            isLiterate: literate.has(name),
+            verbalProficiency,
+            writtenProficiency,
           };
         })
         .filter(Boolean);

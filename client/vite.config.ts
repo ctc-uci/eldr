@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        '@eldr/shared': path.resolve(__dirname, '../shared/index.ts'),
       },
     },
 

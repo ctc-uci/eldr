@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Box,
@@ -11,25 +11,42 @@ import {
 } from "@chakra-ui/react";
 
 import {
-  LuArrowRight,
   LuExternalLink,
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { TopBackButton, ContinueButton } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
-const CreateAccountStep = ({ onNext }: Props) => {
+const CreateAccountStep = ({ onNext, onBack }: Props) => {
+  const { backend } = useBackendContext();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const isCancelledRef = useRef(false);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+
+  useEffect(() => {
+    isCancelledRef.current = false;
+    return () => {
+      isCancelledRef.current = true;
+    };
+  }, []);
+
+  const handleBack = () => {
+    isCancelledRef.current = true;
+    onBack?.();
+  };
 
   useEffect(() => {
     localStorage.removeItem("volunteerId");
@@ -45,7 +62,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setErrorMsg(null);
 
     if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
@@ -57,6 +74,27 @@ const CreateAccountStep = ({ onNext }: Props) => {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
+
+    setIsCheckingEmail(true);
+    try {
+      const checkResp = await backend.post("/users/check-email", {
+        email: normalizedEmail,
+      });
+      if (isCancelledRef.current) return;
+      if (checkResp.data?.exists) {
+        setErrorMsg(
+          "An account with this email already exists. Please log in instead, or use a different email."
+        );
+        setIsCheckingEmail(false);
+        return;
+      }
+    } catch {
+      // If check endpoint errors, do not block signup
+    } finally {
+      setIsCheckingEmail(false);
+    }
+
+    if (isCancelledRef.current) return;
 
     saveDraft({
       firstName: firstName.trim(),
@@ -85,9 +123,10 @@ const CreateAccountStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
-        />
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton label="Back to Login" onClick={handleBack} disabled={isCheckingEmail} />
+        </Flex>
 
         <Flex
           flex="1"
@@ -242,33 +281,12 @@ const CreateAccountStep = ({ onNext }: Props) => {
               </Field>
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              w="30vw"
-              minW="320px"
-              maxW="460px"
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "14px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5",
-                _active: {
-                  bg: "black",
-                  color: "white",
-                },
-              }}
-              justifyContent="center"
-              px="20px"
-              mt="4px"
+            <ContinueButton
               onClick={handleContinue}
-            >
-              Continue
-              <LuArrowRight size={16} />
-            </Button>
+              loading={isCheckingEmail}
+              disabled={isCheckingEmail}
+              mt="4px"
+            />
 
           </Flex>
         </Flex>

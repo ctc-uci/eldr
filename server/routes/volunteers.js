@@ -1,4 +1,4 @@
-import { keysToCamel } from "@/common/utils";
+import { keysToCamel, normalizeProficiency } from "@/common/utils";
 import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp";
@@ -660,12 +660,12 @@ volunteersRouter.get(
 );
 
 // -----------------------------
-// Volunteer Languages Routes (join table + is_literate)
+// Volunteer Languages Routes (verbal & written proficiency)
 // -----------------------------
 
 // Batch upsert languages for a volunteer
 // POST /volunteers/:volunteerId/languages
-// body: { languages: [{ languageId, proficiency?, isLiterate? }] }
+// body: { languages: [{ languageId, verbalProficiency?, writtenProficiency? }] }
 volunteersRouter.post(
   "/:volunteerId/languages",
   verifyRole("volunteer"),
@@ -694,29 +694,27 @@ volunteersRouter.post(
 
       const params = [volunteerId];
       for (const entry of languages) {
-        const normalizedProficiency = String(entry?.proficiency ?? "")
-          .trim()
-          .toLowerCase();
-        const proficiency = [
-          "proficient",
-          "professional",
-          "native/fluent",
-        ].includes(normalizedProficiency)
-          ? normalizedProficiency
-          : "proficient";
-        const isLiterate =
-          typeof entry?.isLiterate === "boolean" ? entry.isLiterate : true;
-        params.push(entry.languageId, isLiterate, proficiency);
+        const verbal = normalizeProficiency(
+          entry?.verbalProficiency ??
+            entry?.verbal_proficiency ??
+            entry?.proficiency
+        );
+        const written = normalizeProficiency(
+          entry?.writtenProficiency ??
+            entry?.written_proficiency ??
+            entry?.proficiency
+        );
+        params.push(entry.languageId, verbal, written);
       }
 
       const result = await db.query(
         `
-        INSERT INTO volunteer_language (volunteer_id, language_id, is_literate, proficiency)
+        INSERT INTO volunteer_language (volunteer_id, language_id, verbal_proficiency, written_proficiency)
         VALUES ${valuesSql}
         ON CONFLICT (volunteer_id, language_id)
         DO UPDATE SET
-          is_literate = EXCLUDED.is_literate,
-          proficiency = EXCLUDED.proficiency
+          verbal_proficiency = EXCLUDED.verbal_proficiency,
+          written_proficiency = EXCLUDED.written_proficiency
         RETURNING *;
       `,
         params
@@ -739,7 +737,7 @@ volunteersRouter.get(
 
       const languages = await db.query(
         `
-        SELECT l.id, l.language, vl.proficiency
+        SELECT l.id, l.language, vl.verbal_proficiency, vl.written_proficiency
         FROM volunteer_language vl
         JOIN languages l ON l.id = vl.language_id
         WHERE vl.volunteer_id = $1
