@@ -41,13 +41,17 @@ ALTER TABLE public.volunteer_language
 DO $$ BEGIN
     UPDATE public.case_languages
     SET verbal_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::verbal_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::verbal_proficiency
             ELSE 'Professional'::verbal_proficiency
         END,
         written_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::written_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::written_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::written_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::written_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::written_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::written_proficiency
             ELSE 'Professional'::written_proficiency
         END
     WHERE proficiency IS NOT NULL AND (verbal_proficiency IS NULL OR written_proficiency IS NULL);
@@ -58,13 +62,17 @@ END $$;
 DO $$ BEGIN
     UPDATE public.clinic_languages
     SET verbal_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::verbal_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::verbal_proficiency
             ELSE 'Professional'::verbal_proficiency
         END,
         written_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::written_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::written_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::written_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::written_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::written_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::written_proficiency
             ELSE 'Professional'::written_proficiency
         END
     WHERE proficiency IS NOT NULL AND (verbal_proficiency IS NULL OR written_proficiency IS NULL);
@@ -75,13 +83,17 @@ END $$;
 DO $$ BEGIN
     UPDATE public.volunteer_language
     SET verbal_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::verbal_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::verbal_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::verbal_proficiency
             ELSE 'Professional'::verbal_proficiency
         END,
         written_proficiency = CASE
-            WHEN proficiency::text ILIKE '%native%' THEN 'Native/Bilingual'::written_proficiency
-            WHEN proficiency::text ILIKE '%professional%' THEN 'Professional'::written_proficiency
+            WHEN proficiency::text ILIKE '%native%' OR proficiency::text ILIKE '%fluent%' OR proficiency::text ILIKE '%bilingual%' THEN 'Native/Bilingual'::written_proficiency
+            WHEN proficiency::text ILIKE '%limited%' OR proficiency::text ILIKE '%intermediate%' OR proficiency::text ILIKE '%advanced%' OR proficiency::text ILIKE '%working%' OR proficiency::text ILIKE '%conversational%' THEN 'Limited Working'::written_proficiency
+            WHEN proficiency::text ILIKE '%elementary%' OR proficiency::text ILIKE '%basic%' THEN 'Elementary'::written_proficiency
+            WHEN proficiency::text ILIKE '%professional%' OR proficiency::text ILIKE '%proficient%' THEN 'Professional'::written_proficiency
             ELSE 'Professional'::written_proficiency
         END
     WHERE proficiency IS NOT NULL AND (verbal_proficiency IS NULL OR written_proficiency IS NULL);

@@ -45,6 +45,14 @@ const BackgroundStep = ({
     }
   }, []);
 
+  const handleBack = () => {
+    saveDraft({
+      lawSchoolYear: gradYear.trim(),
+      affiliatedEmployer: employer.trim(),
+    });
+    onBack?.();
+  };
+
   const handleSubmit = async () => {
     onDismissError();
 
@@ -93,7 +101,7 @@ const BackgroundStep = ({
           align="center"
           px={{ base: "16px", md: "24px" }}
         >
-          <TopBackButton onClick={onBack} disabled={isSubmitting} />
+          <TopBackButton onClick={handleBack} disabled={isSubmitting} />
         </Flex>
 
         <Flex
@@ -255,7 +263,7 @@ const BackgroundStep = ({
             </Box>
 
             <StepNavButtons
-              onBack={onBack}
+              onBack={handleBack}
               onContinue={handleSubmit}
               continueLabel="Create Account"
               isLoading={isSubmitting}

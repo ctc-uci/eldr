@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Box,
@@ -32,8 +32,21 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const isCancelledRef = useRef(false);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+
+  useEffect(() => {
+    isCancelledRef.current = false;
+    return () => {
+      isCancelledRef.current = true;
+    };
+  }, []);
+
+  const handleBack = () => {
+    isCancelledRef.current = true;
+    onBack?.();
+  };
 
   useEffect(() => {
     localStorage.removeItem("volunteerId");
@@ -64,9 +77,10 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
     setIsCheckingEmail(true);
     try {
-      const checkResp = await backend.get("/users/check-email", {
-        params: { email: normalizedEmail },
+      const checkResp = await backend.post("/users/check-email", {
+        email: normalizedEmail,
       });
+      if (isCancelledRef.current) return;
       if (checkResp.data?.exists) {
         setErrorMsg(
           "An account with this email already exists. Please log in instead, or use a different email."
@@ -79,6 +93,8 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
     } finally {
       setIsCheckingEmail(false);
     }
+
+    if (isCancelledRef.current) return;
 
     saveDraft({
       firstName: firstName.trim(),
@@ -109,7 +125,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
           align="center"
           px={{ base: "16px", md: "24px" }}
         >
-          <TopBackButton label="Back to Login" onClick={onBack} />
+          <TopBackButton label="Back to Login" onClick={handleBack} disabled={isCheckingEmail} />
         </Flex>
 
         <Flex

@@ -17,6 +17,8 @@ import { ProfileInformation } from "./ProfileInformation";
 import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
+import { normalizeProficiency, DEFAULT_PROFICIENCY } from "@eldr/shared";
+
 const PROFILE_TABS = [
   { value: "information", label: "Profile Information", icon: LuUser },
   { value: "activity", label: "Activity", icon: LuActivity },
@@ -24,37 +26,7 @@ const PROFILE_TABS = [
 ];
 
 const VALID_SECTIONS = new Set(["information", "activity", "preferences"]);
-const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Native/Bilingual";
-const toDisplayProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return DEFAULT_PROFICIENCY;
-  if (
-    normalized === "native/bilingual" ||
-    normalized === "native/fluent" ||
-    normalized === "native" ||
-    normalized === "bilingual" ||
-    normalized === "fluent"
-  ) {
-    return "Native/Bilingual";
-  }
-  if (normalized === "professional") return "Professional";
-  if (
-    normalized === "limited working" ||
-    normalized === "limited" ||
-    normalized === "working" ||
-    normalized === "intermediate" ||
-    normalized === "advanced"
-  ) {
-    return "Limited Working";
-  }
-  if (normalized === "elementary" || normalized === "proficient") {
-    return "Elementary";
-  }
-  const match = PROFICIENCY_OPTIONS.find(
-    (o) => o.toLowerCase() === normalized
-  );
-  return match || DEFAULT_PROFICIENCY;
-};
+const toDisplayProficiency = (value) => normalizeProficiency(value, DEFAULT_PROFICIENCY);
 const toBackendProficiency = (value) => toDisplayProficiency(value);
 const readFirst = (value) => (Array.isArray(value) ? value[0] : value);
 const normalizeText = (value) => value?.trim().toLowerCase();

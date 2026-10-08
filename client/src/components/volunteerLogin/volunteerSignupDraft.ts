@@ -5,7 +5,6 @@ export type VolunteerSignupDraft = {
   lastName: string;
   email: string;
   selectedLanguageNames: string[];
-  literateLanguageNames: string[];
   /** language name -> verbal proficiency */
   verbalProficiencies: Record<string, string>;
   /** language name -> written proficiency */
@@ -26,7 +25,6 @@ export function defaultDraft(): VolunteerSignupDraft {
     lastName: "",
     email: "",
     selectedLanguageNames: [],
-    literateLanguageNames: [],
     verbalProficiencies: {},
     writtenProficiencies: {},
     languageProficiencies: {},

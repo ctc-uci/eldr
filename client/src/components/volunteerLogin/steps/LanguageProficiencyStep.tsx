@@ -19,45 +19,11 @@ type Props = {
   onBack?: () => void;
 };
  
-type Proficiency =
-  | "Native/Bilingual"
-  | "Professional"
-  | "Limited Working"
-  | "Elementary";
-
-const PROFICIENCY_OPTIONS: Proficiency[] = [
-  "Native/Bilingual",
-  "Professional",
-  "Limited Working",
-  "Elementary",
-];
-
-const normalizeProficiencyValue = (p: unknown): Proficiency => {
-  if (!p) return "Professional";
-  const str = String(p).trim().toLowerCase();
-  if (
-    str === "native/bilingual" ||
-    str === "native/fluent" ||
-    str === "native" ||
-    str === "fluent" ||
-    str === "bilingual"
-  ) {
-    return "Native/Bilingual";
-  }
-  if (str === "professional") return "Professional";
-  if (
-    str === "limited working" ||
-    str === "intermediate" ||
-    str === "advanced"
-  ) {
-    return "Limited Working";
-  }
-  if (str === "elementary" || str === "proficient") {
-    return "Elementary";
-  }
-  const match = PROFICIENCY_OPTIONS.find((opt) => opt.toLowerCase() === str);
-  return match ?? "Professional";
-};
+import {
+  PROFICIENCY_OPTIONS,
+  normalizeProficiency as normalizeProficiencyValue,
+  type ProficiencyLevel as Proficiency,
+} from "@eldr/shared";
 
 const proficiencyLabel = (p: Proficiency) => p;
 
@@ -226,14 +192,10 @@ const LanguageProficiencyStep = ({ onNext, onBack }: Props) => {
       return;
     }
 
-    const draft = loadDraft();
-    const literateNames = draft?.literateLanguageNames ?? [];
-
     saveDraft({
       verbalProficiencies,
       writtenProficiencies,
       languageProficiencies: verbalProficiencies,
-      literateLanguageNames: literateNames,
     });
     onNext();
   };

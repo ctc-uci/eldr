@@ -12,6 +12,16 @@ export const verifyToken = async (
   next: NextFunction
 ) => {
   try {
+    const requestPath = (req.originalUrl || req.url || req.path || "").split("?")[0];
+    if (
+      requestPath === "/users/check-email" ||
+      requestPath === "/users/custom-token" ||
+      req.path === "/check-email" ||
+      req.path === "/custom-token"
+    ) {
+      return next();
+    }
+
     const { cookies } = req;
 
     if (!cookies.accessToken) {

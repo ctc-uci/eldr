@@ -22,10 +22,7 @@ export const LANGUAGE_OPTIONS = [
   "Mandarin",
   "Korean",
 ];
-export const PROFICIENCY_OPTIONS = [
-  "Native/Bilingual",
-  "Professional",
-  "Limited Working",
-  "Elementary",
-];
+import { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY } from "@eldr/shared";
+
+export { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY };
 

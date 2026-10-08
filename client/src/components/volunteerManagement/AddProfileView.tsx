@@ -33,12 +33,7 @@ interface LanguageEntry {
   writtenProficiency: string;
 }
 
-const PROFICIENCY_OPTIONS = [
-  "Native/Bilingual",
-  "Professional",
-  "Limited Working",
-  "Elementary",
-];
+import { PROFICIENCY_OPTIONS } from "@eldr/shared";
 
 const TagInput = ({
   tags,

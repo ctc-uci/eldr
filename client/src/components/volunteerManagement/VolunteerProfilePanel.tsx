@@ -74,7 +74,7 @@ interface VolunteerProfilePanelProps {
 // VolunteerProfilePanel
 // ---------------------------------------------------------------------------
 
-const PROFICIENCY_OPTIONS = ["Native/Bilingual", "Professional", "Limited Working", "Elementary"];
+import { PROFICIENCY_OPTIONS } from "@eldr/shared";
 const LAW_SCHOOL_YEARS = ["1L", "2L", "3L", "Graduate"];
 
 export const VolunteerProfilePanel = ({

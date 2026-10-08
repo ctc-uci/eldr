@@ -89,46 +89,12 @@ const keysToCamel = (data: object | string[] | string) => {
   return data;
 };
 
-const PROFICIENCY_OPTIONS = [
-  "Native/Bilingual",
-  "Professional",
-  "Limited Working",
-  "Elementary",
-] as const;
-
-type ProficiencyLevel = (typeof PROFICIENCY_OPTIONS)[number];
-
-const normalizeProficiency = (
-  value: unknown,
-  defaultVal: ProficiencyLevel = "Professional"
-): ProficiencyLevel => {
-  if (!value) return defaultVal;
-  const str = String(value).trim().toLowerCase();
-  if (
-    str === "native/bilingual" ||
-    str === "native/fluent" ||
-    str === "native" ||
-    str === "bilingual" ||
-    str === "fluent"
-  ) {
-    return "Native/Bilingual";
-  }
-  if (str === "professional") return "Professional";
-  if (
-    str === "limited working" ||
-    str === "limited" ||
-    str === "working" ||
-    str === "intermediate" ||
-    str === "advanced"
-  ) {
-    return "Limited Working";
-  }
-  if (str === "elementary" || str === "proficient") {
-    return "Elementary";
-  }
-  const match = PROFICIENCY_OPTIONS.find((o) => o.toLowerCase() === str);
-  return match || defaultVal;
-};
+import {
+  PROFICIENCY_OPTIONS,
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  type ProficiencyLevel,
+} from "@eldr/shared";
 
 export {
   isNumeric,
@@ -139,5 +105,7 @@ export {
   keysToCamel,
   PROFICIENCY_OPTIONS,
   normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  type ProficiencyLevel,
 };
 

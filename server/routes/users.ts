@@ -130,13 +130,13 @@ usersRouter.post("/custom-token", async (req, res) => {
 });
 
 // Check whether an email is already in use by a user in DB or Firebase Auth
-usersRouter.all("/check-email", async (req, res) => {
+usersRouter.post("/check-email", async (req, res) => {
   try {
     const rawEmail =
-      typeof req.query.email === "string"
-        ? req.query.email
-        : typeof req.body?.email === "string"
+      typeof req.body?.email === "string"
         ? req.body.email
+        : typeof req.query?.email === "string"
+        ? req.query.email
         : "";
     const email = rawEmail.trim().toLowerCase();
 
@@ -162,8 +162,10 @@ usersRouter.all("/check-email", async (req, res) => {
       }
     } catch (e: unknown) {
       const fbErr = e as { code?: string };
-      if (fbErr.code !== "auth/user-not-found") {
-        // Not a user-not-found error, ignore and continue
+      if (fbErr.code === "auth/user-not-found") {
+        // User not found in Firebase Auth; email is free to use
+      } else {
+        throw e;
       }
     }
 

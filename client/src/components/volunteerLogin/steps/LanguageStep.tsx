@@ -303,9 +303,6 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
   const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
     () => loadDraft()?.selectedLanguageNames ?? []
   );
-  const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
-    () => loadDraft()?.literateLanguageNames ?? []
-  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -341,33 +338,26 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
     for (const row of allLanguages) m.set(row.language, row.id);
     return m;
   }, [allLanguages]);
- 
+
   const allLanguageNames = useMemo(() => {
     return [...new Set(allLanguages.map((l) => l.language))].sort((a, b) =>
       a.localeCompare(b)
     );
   }, [allLanguages]);
 
-  // "Literate in" must be a subset of the selected languages
-  const literateOptions = useMemo(
-    () => selectedLanguageNames,
-    [selectedLanguageNames]
-  );
+  const handleBack = () => {
+    saveDraft({
+      selectedLanguageNames,
+    });
+    onBack?.();
+  };
 
-  // If selected languages change, keep literate selections valid.
-  useEffect(() => {
-    setLiterateLanguageNames((prev) =>
-      prev.filter((n) => selectedLanguageNames.includes(n))
-    );
-  }, [selectedLanguageNames]);
- 
   const handleContinue = () => {
     setErrorMsg(null);
 
     if (selectedLanguageNames.length === 0) {
       saveDraft({
         selectedLanguageNames: [],
-        literateLanguageNames: [],
       });
       onNext();
       return;
@@ -377,14 +367,13 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
       .map((name) => {
         const languageId = nameToId.get(name);
         if (!languageId) return null;
-        return { languageId, isLiterate: literateLanguageNames.includes(name) };
+        return { languageId };
       })
       .filter(Boolean);
 
     if (!mapped.length) {
       saveDraft({
         selectedLanguageNames: [],
-        literateLanguageNames: [],
       });
       onNext();
       return;
@@ -392,7 +381,6 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
 
     saveDraft({
       selectedLanguageNames,
-      literateLanguageNames,
     });
     onNext();
   };
@@ -418,7 +406,7 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
           align="center"
           px={{ base: "16px", md: "24px" }}
         >
-          <TopBackButton onClick={onBack} />
+          <TopBackButton onClick={handleBack} />
         </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
@@ -488,23 +476,7 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
               placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
  
-            <LanguageMultiSelect
-              label={
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>Indicate in which you are literate</span>
-                  <span style={{ backgroundColor: "#F4F4F5", color: "black", fontSize: 12, padding: "2px 6px", borderRadius: 4 }}>
-                    optional
-                  </span>
-                </span>
-              }
-              items={literateOptions}
-              selected={literateLanguageNames}
-              onChange={setLiterateLanguageNames}
-              disabled={isLoading}
-              placeholder={isLoading ? "Loading..." : "Search for languages"}
-            />
- 
-            <StepNavButtons onBack={onBack} onContinue={handleContinue} />
+            <StepNavButtons onBack={handleBack} onContinue={handleContinue} />
 
           </Flex>
         </Flex>

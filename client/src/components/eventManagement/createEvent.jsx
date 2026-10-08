@@ -392,7 +392,8 @@ export const CreateEvent = () => {
           if (!lang) return;
           await backend.post(`/clinics/${clinicId}/languages`, {
             languageId: lang.id,
-            proficiency: "proficient",
+            verbalProficiency: "Professional",
+            writtenProficiency: "Professional",
           });
         })
       );

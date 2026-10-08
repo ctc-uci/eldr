@@ -29,6 +29,7 @@ import InputMask from "react-input-mask";
 import {
   NOTARY_OPTIONS,
   PROFICIENCY_OPTIONS,
+  DEFAULT_PROFICIENCY,
 } from "./profileState.js";
 
 const ModernDropdown = ({
@@ -41,6 +42,8 @@ const ModernDropdown = ({
 }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const listRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
@@ -65,6 +68,11 @@ const ModernDropdown = ({
   return (
     <Box position="relative" ref={containerRef} flex={flex} minW={minW} w="100%">
       <Flex
+        ref={triggerRef}
+        role="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        tabIndex={0}
         align="center"
         justify="space-between"
         border="1px solid"
@@ -80,9 +88,22 @@ const ModernDropdown = ({
         minW={0}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") setOpen(false);
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            setOpen(false);
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!open) {
+              setOpen(true);
+            } else {
+              const firstOption = listRef.current?.querySelector('[role="option"]');
+              firstOption?.focus();
+            }
+          }
         }}
-        tabIndex={0}
         _hover={{ borderColor: open ? "#3182CE" : "#D4D4D8" }}
         transition="border-color 0.15s ease"
       >
@@ -102,6 +123,8 @@ const ModernDropdown = ({
 
       {open && (
         <Box
+          ref={listRef}
+          role="listbox"
           position="absolute"
           top="calc(100% + 4px)"
           left={0}
@@ -119,6 +142,9 @@ const ModernDropdown = ({
           {options.map((opt) => (
             <Flex
               key={opt}
+              role="option"
+              aria-selected={opt === value}
+              tabIndex={0}
               px="12px"
               py="9px"
               cursor="pointer"
@@ -126,9 +152,35 @@ const ModernDropdown = ({
               bg={opt === value ? "#F4F4F5" : "white"}
               fontWeight={opt === value ? "semibold" : "normal"}
               _hover={{ bg: "#F4F4F5" }}
+              _focus={{ bg: "#F4F4F5", outline: "none" }}
               onClick={() => {
                 onChange(opt);
                 setOpen(false);
+                triggerRef.current?.focus();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onChange(opt);
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  const next = e.currentTarget.nextElementSibling;
+                  if (next && next.focus) next.focus();
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const prev = e.currentTarget.previousElementSibling;
+                  if (prev && prev.focus) {
+                    prev.focus();
+                  } else {
+                    triggerRef.current?.focus();
+                  }
+                }
               }}
             >
               <Text fontSize="14px" color="#27272A" truncate>
@@ -207,8 +259,8 @@ export const ProfileInformation = ({
         {
           id: `lang-${Date.now()}`,
           language: defaultLanguage,
-          verbalProficiency: PROFICIENCY_OPTIONS[0],
-          writtenProficiency: PROFICIENCY_OPTIONS[0],
+          verbalProficiency: DEFAULT_PROFICIENCY,
+          writtenProficiency: DEFAULT_PROFICIENCY,
         },
       ],
     }));
@@ -549,7 +601,7 @@ export const ProfileInformation = ({
             ) : (
             <VStack gap={2} align="stretch">
               {isEditing && data.languages.length > 0 ? (
-                <Flex gap={2} mb={1} px={1} align="center">
+                <Flex gap={2} mb={1} px={1} align="center" display={{ base: "none", md: "flex" }}>
                   <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1.2}>
                     Language
                   </Text>
@@ -577,52 +629,76 @@ export const ProfileInformation = ({
               ) : null}
               {data.languages.map((row) =>
                 isEditing ? (
-                  <Flex key={row.id} gap={2} align="center" minW={0}>
-                    <ModernDropdown
-                      value={row.language}
-                      options={languageOptions}
-                      placeholder="Select language"
-                      flex={1.2}
-                      onChange={(val) =>
-                        updateLanguage(row.id, {
-                          language: val,
-                        })
-                      }
-                    />
-                    <ModernDropdown
-                      value={row.verbalProficiency ?? PROFICIENCY_OPTIONS[0]}
-                      options={PROFICIENCY_OPTIONS}
-                      flex={1}
-                      onChange={(val) =>
-                        updateLanguage(row.id, {
-                          verbalProficiency: val,
-                        })
-                      }
-                    />
-                    <ModernDropdown
-                      value={row.writtenProficiency ?? PROFICIENCY_OPTIONS[0]}
-                      options={PROFICIENCY_OPTIONS}
-                      flex={1}
-                      onChange={(val) =>
-                        updateLanguage(row.id, {
-                          writtenProficiency: val,
-                        })
-                      }
-                    />
-                    <IconButton
-                      aria-label={`Remove ${row.language}`}
-                      variant="ghost"
-                      size="sm"
-                      h="42px"
-                      w="36px"
-                      color="gray.400"
-                      _hover={{ bg: "#F4F4F5", color: "red.500" }}
-                      borderRadius="6px"
-                      flexShrink={0}
-                      onClick={() => removeLanguageRow(row.id)}
-                    >
-                      <LuX size={16} />
-                    </IconButton>
+                  <Flex
+                    key={row.id}
+                    direction={{ base: "column", md: "row" }}
+                    gap={2}
+                    align={{ base: "stretch", md: "center" }}
+                    minW={0}
+                    p={{ base: 3, md: 0 }}
+                    bg={{ base: "#F9FAFB", md: "transparent" }}
+                    border={{ base: "1px solid #E4E4E7", md: "none" }}
+                    borderRadius={{ base: "8px", md: "0" }}
+                  >
+                    <Box flex={{ base: "none", md: 1.2 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Language
+                      </Text>
+                      <ModernDropdown
+                        value={row.language}
+                        options={languageOptions}
+                        placeholder="Select language"
+                        onChange={(val) =>
+                          updateLanguage(row.id, {
+                            language: val,
+                          })
+                        }
+                      />
+                    </Box>
+                    <Box flex={{ base: "none", md: 1 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Verbal
+                      </Text>
+                      <ModernDropdown
+                        value={row.verbalProficiency ?? DEFAULT_PROFICIENCY}
+                        options={PROFICIENCY_OPTIONS}
+                        onChange={(val) =>
+                          updateLanguage(row.id, {
+                            verbalProficiency: val,
+                          })
+                        }
+                      />
+                    </Box>
+                    <Box flex={{ base: "none", md: 1 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Written
+                      </Text>
+                      <ModernDropdown
+                        value={row.writtenProficiency ?? DEFAULT_PROFICIENCY}
+                        options={PROFICIENCY_OPTIONS}
+                        onChange={(val) =>
+                          updateLanguage(row.id, {
+                            writtenProficiency: val,
+                          })
+                        }
+                      />
+                    </Box>
+                    <Flex justify={{ base: "flex-end", md: "center" }} align="center">
+                      <IconButton
+                        aria-label={`Remove ${row.language}`}
+                        variant="ghost"
+                        size="sm"
+                        h="42px"
+                        w="36px"
+                        color="gray.400"
+                        _hover={{ bg: "#F4F4F5", color: "red.500" }}
+                        borderRadius="6px"
+                        flexShrink={0}
+                        onClick={() => removeLanguageRow(row.id)}
+                      >
+                        <LuX size={16} />
+                      </IconButton>
+                    </Flex>
                   </Flex>
                 ) : (
                   <SimpleGrid
