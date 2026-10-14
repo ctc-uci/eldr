@@ -35,3 +35,47 @@ export const db = pgp({
     rejectUnauthorized: false,
   },
 });
+
+// Auto-run migration 002 if needed so verbal_proficiency and written_proficiency exist
+(async () => {
+  try {
+    await db.none(`
+      DO $$ BEGIN
+          CREATE TYPE verbal_proficiency AS ENUM (
+              'Native/Bilingual',
+              'Professional',
+              'Limited Working',
+              'Elementary'
+          );
+      EXCEPTION
+          WHEN duplicate_object THEN null;
+      END $$;
+
+      DO $$ BEGIN
+          CREATE TYPE written_proficiency AS ENUM (
+              'Native/Bilingual',
+              'Professional',
+              'Limited Working',
+              'Elementary'
+          );
+      EXCEPTION
+          WHEN duplicate_object THEN null;
+      END $$;
+
+      ALTER TABLE public.case_languages 
+          ADD COLUMN IF NOT EXISTS verbal_proficiency verbal_proficiency,
+          ADD COLUMN IF NOT EXISTS written_proficiency written_proficiency;
+
+      ALTER TABLE public.clinic_languages 
+          ADD COLUMN IF NOT EXISTS verbal_proficiency verbal_proficiency,
+          ADD COLUMN IF NOT EXISTS written_proficiency written_proficiency;
+
+      ALTER TABLE public.volunteer_language 
+          ADD COLUMN IF NOT EXISTS verbal_proficiency verbal_proficiency,
+          ADD COLUMN IF NOT EXISTS written_proficiency written_proficiency;
+    `);
+  } catch (err) {
+    console.error("Auto-migration check error:", err?.message);
+  }
+})();
+

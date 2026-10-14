@@ -17,7 +17,11 @@ import { ProfileInformation } from "./ProfileInformation";
 import { createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
-import { normalizeProficiency, DEFAULT_PROFICIENCY } from "@eldr/shared";
+import {
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  DEFAULT_TOP_LANGUAGES,
+} from "@eldr/shared";
 
 const PROFILE_TABS = [
   { value: "information", label: "Profile Information", icon: LuUser },
@@ -247,6 +251,27 @@ export const ProfileManagement = () => {
         uniqueLanguageRows.push(row);
       }
 
+      // Auto-create any custom language that does not exist yet in DB
+      for (const row of uniqueLanguageRows) {
+        const trimmed = row.language?.trim();
+        if (!trimmed) continue;
+        const exists = allLanguages.some(
+          (l) => normalizeText(l.language) === normalizeText(trimmed)
+        );
+        if (!exists) {
+          try {
+            const createResp = await backend.post("/languages", { language: trimmed });
+            const created = createResp?.data;
+            const newRecord = Array.isArray(created) ? created[0] : created;
+            if (newRecord?.id) {
+              allLanguages.push(newRecord);
+            }
+          } catch (err) {
+            console.error("Failed to create language on save:", trimmed, err);
+          }
+        }
+      }
+
       const nextLanguageIds = [];
       const languagePayload = uniqueLanguageRows
         .map((row) => {
@@ -468,12 +493,25 @@ export const ProfileManagement = () => {
                 isSaving={isSavingProfile}
                 photoError={photoError}
                 errorMessage={loadError}
-                languageOptions={Array.from(
-                  new Set([
-                    ...languageCatalog.map((row) => row.language),
-                    ...display.languages.map((row) => row.language),
-                  ]),
-                )}
+                languageOptions={(() => {
+                  const combined = Array.from(
+                    new Set([
+                      ...DEFAULT_TOP_LANGUAGES,
+                      ...languageCatalog.map((row) => row.language),
+                      ...display.languages.map((row) => row.language),
+                    ])
+                  );
+                  const topSet = new Set(
+                    DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase())
+                  );
+                  const topList = DEFAULT_TOP_LANGUAGES.filter((t) =>
+                    combined.some((c) => c.toLowerCase() === t.toLowerCase())
+                  );
+                  const remaining = combined
+                    .filter((c) => !topSet.has(c.toLowerCase()))
+                    .sort((a, b) => a.localeCompare(b));
+                  return [...topList, ...remaining];
+                })()}
                 areaOptions={Array.from(
                   new Set([
                     ...areaCatalog.map((row) => row.areasOfPractice),

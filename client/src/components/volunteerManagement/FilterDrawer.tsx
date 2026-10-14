@@ -5,10 +5,12 @@ import { MdFilterList } from "react-icons/md";
 
 import { Volunteer } from "@/types/volunteer";
 
+import { DEFAULT_TOP_LANGUAGES } from "@eldr/shared";
+
 // TODO Need to change data to more applicable to app
 const ROLES = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
 const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discrimination", "Labor", "Criminal Justice"];
-const LANGUAGES = ["Arabic", "English", "French", "Japanese", "Korean", "Mandarin", "Portuguese", "Spanish"];
+const LANGUAGES = [...DEFAULT_TOP_LANGUAGES];
 
 
 export interface FilterState {
@@ -182,10 +184,10 @@ export const FilterDrawer = ({ open, onClose, volunteers, onApply }: FilterDrawe
                 Clear
               </Button>
               <Button
-                bg={allSelected.length > 0 ? "#002992" : "#A1A1AA"}
+                bg={allSelected.length > 0 ? "brand.navy" : "#A1A1AA"}
                 color="white"
                 fontFamily="heading"
-                _hover={{ bg: allSelected.length > 0 ? "#001E6C" : "#71717A" }}
+                _hover={{ bg: allSelected.length > 0 ? "brand.navyHover" : "#71717A" }}
                 gap={2}
                 onClick={() => {
                   onApply?.({ roles: checkedRoles, interests: checkedInterests, languages: checkedLanguages });

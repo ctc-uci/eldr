@@ -21,6 +21,7 @@ import {
   LuChevronDown,
   LuFileText,
   LuPencil,
+  LuPlus,
   LuTriangleAlert,
   LuX,
 } from "react-icons/lu";
@@ -37,6 +38,8 @@ const ModernDropdown = ({
   options = [],
   placeholder = "Select...",
   onChange,
+  onAddCustom,
+  allowCustom = false,
   flex = 1,
   minW = 0,
   "aria-label": ariaLabelProp,
@@ -44,12 +47,19 @@ const ModernDropdown = ({
 }) => {
   const accessibleLabel = ariaLabel || ariaLabelProp;
   const [open, setOpen] = useState(false);
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [customInput, setCustomInput] = useState("");
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const listRef = useRef(null);
+  const customInputRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setIsAddingCustom(false);
+      setCustomInput("");
+      return;
+    }
 
     const onPointerDown = (e) => {
       if (
@@ -57,6 +67,8 @@ const ModernDropdown = ({
         !containerRef.current.contains(e.target)
       ) {
         setOpen(false);
+        setIsAddingCustom(false);
+        setCustomInput("");
       }
     };
 
@@ -67,6 +79,23 @@ const ModernDropdown = ({
       document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (isAddingCustom) {
+      setTimeout(() => customInputRef.current?.focus(), 50);
+    }
+  }, [isAddingCustom]);
+
+  const handleAddCustom = () => {
+    const trimmed = customInput.trim();
+    if (!trimmed) return;
+    onAddCustom?.(trimmed);
+    onChange(trimmed);
+    setCustomInput("");
+    setIsAddingCustom(false);
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
 
   return (
     <Box position="relative" ref={containerRef} flex={flex} minW={minW} w="100%">
@@ -139,7 +168,7 @@ const ModernDropdown = ({
           borderRadius="6px"
           boxShadow="lg"
           zIndex={9999}
-          maxH="220px"
+          maxH="260px"
           overflowY="auto"
           py={1}
         >
@@ -192,6 +221,82 @@ const ModernDropdown = ({
               </Text>
             </Flex>
           ))}
+
+          {allowCustom && (
+            <Box borderTop="1px solid #E4E4E7" bg="#FAFAFA" mt={1}>
+              {!isAddingCustom ? (
+                <Flex
+                  align="center"
+                  gap="8px"
+                  px="12px"
+                  py="8px"
+                  cursor="pointer"
+                  color="brand.navy"
+                  _hover={{ bg: "#EDF2F7" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAddingCustom(true);
+                  }}
+                >
+                  <LuPlus size={15} />
+                  <Text fontSize="13px" fontWeight="semibold">
+                    Add other language...
+                  </Text>
+                </Flex>
+              ) : (
+                <Flex
+                  p="8px 12px"
+                  gap="6px"
+                  align="center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Input
+                    ref={customInputRef}
+                    size="sm"
+                    h="30px"
+                    bg="white"
+                    borderColor="#CBD5E0"
+                    fontSize="13px"
+                    placeholder="Type language..."
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustom();
+                      } else if (e.key === "Escape") {
+                        setIsAddingCustom(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    size="xs"
+                    h="30px"
+                    px="10px"
+                    bg="brand.navy"
+                    color="white"
+                    fontWeight="semibold"
+                    _hover={{ bg: "brand.navyHover" }}
+                    onClick={handleAddCustom}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    size="xs"
+                    h="30px"
+                    variant="ghost"
+                    color="gray.600"
+                    onClick={() => {
+                      setIsAddingCustom(false);
+                      setCustomInput("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Flex>
+              )}
+            </Box>
+          )}
         </Box>
       )}
     </Box>
@@ -229,7 +334,11 @@ export const ProfileInformation = ({
   areaOptions = [],
 }) => {
   const photoInputRef = useRef(null);
-  const defaultLanguage = languageOptions[0] ?? "";
+  const [localLanguageOptions, setLocalLanguageOptions] = useState(languageOptions);
+  useEffect(() => {
+    setLocalLanguageOptions(languageOptions);
+  }, [languageOptions]);
+  const defaultLanguage = localLanguageOptions[0] ?? "";
 
   const handlePhotoInputChange = (event) => {
     const file = event.target.files?.[0];
@@ -650,8 +759,14 @@ export const ProfileInformation = ({
                       </Text>
                       <ModernDropdown
                         value={row.language}
-                        options={languageOptions}
+                        options={localLanguageOptions}
                         placeholder="Select language"
+                        allowCustom={true}
+                        onAddCustom={(newLang) => {
+                          if (!localLanguageOptions.includes(newLang)) {
+                            setLocalLanguageOptions((prev) => [...prev, newLang]);
+                          }
+                        }}
                         aria-label={`Language${row.language ? `: ${row.language}` : ""}`}
                         onChange={(val) =>
                           updateLanguage(row.id, {

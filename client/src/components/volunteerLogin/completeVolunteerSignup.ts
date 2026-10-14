@@ -78,12 +78,31 @@ export async function completeVolunteerSignup(
         const row = r as { id?: unknown; language?: unknown };
         const lid = Number(row.id);
         const name = String(row.language ?? "").trim();
-        if (lid && name) nameToId.set(name, lid);
+        if (lid && name) nameToId.set(name.toLowerCase(), lid);
+      }
+
+      // Create any newly added custom languages that do not exist yet in DB
+      for (const name of draft.selectedLanguageNames) {
+        const trimmed = name.trim();
+        if (trimmed && !nameToId.has(trimmed.toLowerCase())) {
+          try {
+            const createResp = await backend.post("/languages", { language: trimmed });
+            const created = createResp?.data;
+            const newId = Number(
+              created?.id ?? (Array.isArray(created) ? created[0]?.id : undefined)
+            );
+            if (newId) {
+              nameToId.set(trimmed.toLowerCase(), newId);
+            }
+          } catch (err) {
+            console.error("Failed to create language during signup:", trimmed, err);
+          }
+        }
       }
 
       const languages = draft.selectedLanguageNames
         .map((name) => {
-          const languageId = nameToId.get(name);
+          const languageId = nameToId.get(name.trim().toLowerCase());
           if (!languageId) return null;
           const verbalProficiency =
             draft.verbalProficiencies?.[name] ??

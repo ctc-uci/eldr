@@ -14,15 +14,13 @@ export const createInitialProfile = () => ({
   interests: [],
 });
 
-export const NOTARY_OPTIONS = ["Active", "Inactive"];
-export const LANGUAGE_OPTIONS = [
-  "English",
-  "Spanish",
-  "Japanese",
-  "Mandarin",
-  "Korean",
-];
-import { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY } from "@eldr/shared";
+import {
+  PROFICIENCY_OPTIONS,
+  DEFAULT_PROFICIENCY,
+  DEFAULT_TOP_LANGUAGES,
+} from "@eldr/shared";
 
-export { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY };
+export const NOTARY_OPTIONS = ["Active", "Inactive"];
+
+export { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY, DEFAULT_TOP_LANGUAGES };
 
