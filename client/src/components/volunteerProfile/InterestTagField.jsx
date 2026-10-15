@@ -120,17 +120,22 @@ export const InterestTagField = ({
                 h="32px"
                 minH="32px"
                 px={1}
+                display="flex"
+                alignItems="center"
               >
                 <Combobox.Input
                   placeholder={addPlaceholder}
                   fontSize="sm"
                   border="none"
                   outline="none"
+                  h="100%"
+                  p="0"
                   _placeholder={{ color: addPlaceholderColor }}
+                  focusRingColor="transparent"
                 />
-                <Combobox.IndicatorGroup>
+                <Combobox.IndicatorGroup display="flex" alignItems="center">
                   <Combobox.ClearTrigger />
-                  <Combobox.Trigger />
+                  <Combobox.Trigger cursor="pointer" p={1} color="gray.400" _hover={{ color: "gray.600" }} />
                 </Combobox.IndicatorGroup>
               </Combobox.Control>
               <Portal>

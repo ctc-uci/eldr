@@ -47,21 +47,29 @@ export async function completeVolunteerSignup(
     });
     firebaseUid = userCredential.user.uid;
 
+    const isAttorney = draft.roleLabel?.toLowerCase() === "attorney";
+
     const resp = await backend.post("/volunteers", {
       firebaseUid,
       first_name: draft.firstName.trim(),
       last_name: draft.lastName.trim(),
       email: normalizedEmail,
-      phone_number: null,
+      phone_number: draft.phoneNumber ? draft.phoneNumber.trim() : null,
+      secondary_phone_number: draft.secondaryPhoneNumber ? draft.secondaryPhoneNumber.trim() : null,
+      is_primary_mobile: draft.isPrimaryMobile ?? false,
+      is_secondary_mobile: draft.isSecondaryMobile ?? false,
+      can_text: draft.canText ?? false,
       form_completed: true,
       form_link: null,
       is_signed_confidentiality: new Date().toISOString(),
-      is_attorney: false,
+      is_attorney: isAttorney,
       is_notary: draft.isNotary === true,
+      notary_status: draft.notaryStatus ?? (draft.isNotary ? "active" : "no"),
       affiliated_employer: draft.affiliatedEmployer.trim(),
-      law_school_year: draft.lawSchoolYear.trim(),
-      state_bar_certificate: null,
-      state_bar_number: null,
+      law_school_year: draft.lawSchoolYear ? draft.lawSchoolYear.trim() : null,
+      is_california_licensed: isAttorney ? (draft.isCaliforniaLicensed ?? false) : false,
+      state_bar_certificate: isAttorney && draft.isCaliforniaLicensed ? "California" : null,
+      state_bar_number: isAttorney && draft.isCaliforniaLicensed && draft.stateBarNumber ? draft.stateBarNumber.trim() : null,
     });
 
     const id = resp?.data?.id as number | undefined;

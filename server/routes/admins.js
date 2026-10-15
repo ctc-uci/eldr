@@ -10,7 +10,17 @@ export const adminsRouter = Router();
 adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
   let firebaseUid = null;
   try {
-    const { firstName, lastName, email, phoneNumber, isSupervisor } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      secondaryPhoneNumber,
+      isPrimaryMobile,
+      isSecondaryMobile,
+      canText,
+      isSupervisor,
+    } = req.body;
 
     if (!email) return res.status(400).send("email is required");
 
@@ -51,9 +61,31 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
     }
 
     const result = await db.query(
-      `INSERT INTO admins (id, first_name, last_name, email, phone_number, is_supervisor)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [userId, firstName, lastName, email, phoneNumber ?? null, isSupervisor ?? false]
+      `INSERT INTO admins (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        secondary_phone_number,
+        is_primary_mobile,
+        is_secondary_mobile,
+        can_text,
+        is_supervisor
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [
+        userId,
+        firstName,
+        lastName,
+        email,
+        phoneNumber ?? null,
+        secondaryPhoneNumber ?? null,
+        Boolean(isPrimaryMobile),
+        Boolean(isSecondaryMobile),
+        Boolean(canText),
+        isSupervisor ?? false,
+      ]
     );
 
     res.status(201).json(keysToCamel(result[0]));
@@ -87,6 +119,10 @@ adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res)
           a.last_name,
           a.email,
           a.phone_number,
+          a.secondary_phone_number,
+          a.is_primary_mobile,
+          a.is_secondary_mobile,
+          a.can_text,
           a.start_date,
           CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role
         FROM admins a
@@ -253,8 +289,19 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       return res.status(400).send("Invalid staff profile id");
     }
 
-    const { firstName, lastName, email, calendarEmail, isSupervisor, startDate, phoneNumber } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      calendarEmail,
+      isSupervisor,
+      startDate,
+      phoneNumber,
+      secondaryPhoneNumber,
+      isPrimaryMobile,
+      isSecondaryMobile,
+      canText,
+    } = req.body;
 
     const result = await db.query(
       `UPDATE admins
@@ -264,7 +311,11 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
             calendar_email = $4,
             is_supervisor = COALESCE($5, is_supervisor),
             start_date = COALESCE($7, start_date),
-            phone_number = COALESCE($8, phone_number)
+            phone_number = COALESCE($8, phone_number),
+            secondary_phone_number = COALESCE($9, secondary_phone_number),
+            is_primary_mobile = COALESCE($10, is_primary_mobile),
+            is_secondary_mobile = COALESCE($11, is_secondary_mobile),
+            can_text = COALESCE($12, can_text)
         WHERE id = $6
        RETURNING *`,
       [
@@ -276,6 +327,10 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
         adminId,
         startDate || null,
         phoneNumber?.trim() ? phoneNumber.trim() : null,
+        secondaryPhoneNumber !== undefined ? (secondaryPhoneNumber?.trim() ? secondaryPhoneNumber.trim() : null) : null,
+        isPrimaryMobile !== undefined ? Boolean(isPrimaryMobile) : null,
+        isSecondaryMobile !== undefined ? Boolean(isSecondaryMobile) : null,
+        canText !== undefined ? Boolean(canText) : null,
       ]
     );
 

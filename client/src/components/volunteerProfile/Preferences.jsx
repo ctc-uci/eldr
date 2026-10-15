@@ -286,7 +286,7 @@ export const Preferences = ({
         p={{ base: 5, md: 8 }}
       >
         <VStack py={16} gap={3}>
-          <Spinner color="blue.500" />
+          <Spinner color="brand.navy" />
           <Text color="gray.600" fontSize="sm">
             Loading preferences...
           </Text>
@@ -305,20 +305,21 @@ export const Preferences = ({
     >
       <VStack gap={8} align="stretch">
         <Box>
-          <Heading size="2xl" lineHeight="snug" fontWeight="semibold" color="gray.900">
+          <Heading size="2xl" lineHeight="snug" fontWeight="semibold" color="gray.900" fontFamily="heading">
             Preferences
           </Heading>
           <Box mt={4}>
             <Section
-              title="Event Topic Interest"
-              description="Manage focus subjects for volunteer events below"
+              title="Practice Areas & Interests"
+              description="Manage the legal practice areas and topics you're interested in assisting with"
             >
-              <FieldLabel>Subjects of Interest</FieldLabel>
+              <FieldLabel>Practice Areas & Interests</FieldLabel>
               <InterestTagField
                 tags={localInterests}
                 options={areaOptions}
                 editable
-                emptyMessage="No subjects of interest added yet."
+                emptyMessage="No practice areas or interests added yet."
+                addPlaceholder="Add interest..."
                 addPlaceholderColor="#A1A1AA"
                 onAdd={handleAddInterest}
                 onRemove={handleRemoveInterest}
@@ -328,15 +329,16 @@ export const Preferences = ({
         </Box>
 
         <Section
-          title="Location Event Interest"
-          description="Manage location preferences for volunteer events below"
+          title="Preferred Event Locations"
+          description="Manage location preferences for attending and supporting volunteer events"
         >
+          <FieldLabel>Locations</FieldLabel>
           <InterestTagField
             tags={locations.map((row) => row.label)}
             options={locationOptions}
             editable
             emptyMessage="No location preferences added yet."
-            addPlaceholder="Add tag..."
+            addPlaceholder="Add location..."
             addPlaceholderColor="#A1A1AA"
             onAdd={handleAddLocation}
             onRemove={handleRemoveLocation}

@@ -111,7 +111,7 @@ const LoginStep: React.FC<Props> = ({ onNavigateToCreateAccount }) => {
 
   return (
     <LoginLayout>
-      <LoginCardLayout>
+      <LoginCardLayout onBack={() => navigate("/login")}>
         <LoginFormField
           label="First Name"
           required

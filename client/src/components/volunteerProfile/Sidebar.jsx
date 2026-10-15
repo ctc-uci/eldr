@@ -30,15 +30,15 @@ export const Sidebar = ({ activeId, onSelect }) => {
             borderRadius="4px"
             px={3}
             py={2}
-            bg={active ? "gray.100" : "transparent"}
+            bg={active ? "skyBlue.100" : "transparent"}
             cursor="pointer"
             transition="background 0.15s ease"
-            _hover={{ bg: active ? "gray.100" : "gray.50" }}
+            _hover={{ bg: active ? "skyBlue.100" : "gray.50" }}
             onClick={() => onSelect(id)}
           >
             <Flex align="center" gap={2.5}>
-              <Icon size={15} color="var(--chakra-colors-gray-700)" />
-              <Text fontSize="14px" fontWeight={active ? "500" : "400"} color="gray.800">
+              <Icon size={15} color={active ? "var(--chakra-colors-brand-navy)" : "var(--chakra-colors-gray-700)"} />
+              <Text fontSize="14px" fontWeight={active ? "600" : "400"} color={active ? "brand.navy" : "gray.800"}>
                 {label}
               </Text>
             </Flex>

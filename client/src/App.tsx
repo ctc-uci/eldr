@@ -177,7 +177,14 @@ const App = () => {
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}
-                <Route element={<VolunteerLayout />}>
+                <Route
+                  element={
+                    <ProtectedRoute
+                      element={<VolunteerLayout />}
+                      allowedRoles={["volunteer"]}
+                    />
+                  }
+                >
                   <Route
                     path="/event-catalog/*"
                     element={<EventCatalog />}
@@ -193,12 +200,7 @@ const App = () => {
                   />
                   <Route
                     path="/volunteer-profile/:tab"
-                    element={
-                      <ProtectedRoute
-                        element={<VolunteerProfile />}
-                        allowedRoles={["volunteer"]}
-                      />
-                    }
+                    element={<VolunteerProfile />}
                   />
                 </Route>
 

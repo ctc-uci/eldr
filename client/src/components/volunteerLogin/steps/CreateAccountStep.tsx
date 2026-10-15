@@ -3,8 +3,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
+  Checkbox,
   Flex,
   Heading,
+  HStack,
   Input,
   Link,
   Text,
@@ -18,6 +20,7 @@ import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { TopBackButton, ContinueButton } from "../NavigationButtons";
+import { formatPhoneNumber, isCompletePhoneNumber } from "@/utils/phoneNumber";
 
 type Props = {
   onNext: () => void;
@@ -29,6 +32,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPrimaryMobile, setIsPrimaryMobile] = useState(true);
+  const [canText, setCanText] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -55,6 +61,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       setFirstName(d.firstName);
       setLastName(d.lastName);
       setEmail(d.email);
+      setPhoneNumber(d.phoneNumber ?? "");
+      setIsPrimaryMobile(d.isPrimaryMobile ?? true);
+      setCanText(d.canText ?? false);
     }
   }, []);
 
@@ -65,13 +74,18 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const handleContinue = async () => {
     setErrorMsg(null);
 
-    if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
-      setErrorMsg("Please fill out first name, last name, and email.");
+    if (!firstName.trim() || !lastName.trim() || !normalizedEmail || !phoneNumber.trim()) {
+      setErrorMsg("Please fill out first name, last name, email, and phone number.");
       return;
     }
 
     if (!isValidEmail(normalizedEmail)) {
       setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    if (!isCompletePhoneNumber(phoneNumber)) {
+      setErrorMsg("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -100,6 +114,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
+      phoneNumber: phoneNumber.trim(),
+      secondaryPhoneNumber: null,
+      isPrimaryMobile,
+      isSecondaryMobile: false,
+      canText,
     });
     onNext();
   };
@@ -279,6 +298,80 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   focusRingColor="transparent"
                 />
               </Field>
+            </Box>
+
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
+              <Field
+                label={
+                  <>
+                    Phone Number <Box as="span" color="#991919"> *</Box>
+                  </>
+                }
+              >
+                <Input
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                  placeholder="(XXX) XXX-XXXX"
+                  type="tel"
+                  maxLength={14}
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                />
+              </Field>
+              <HStack mt="6px" gap="6px">
+                <Checkbox.Root
+                  checked={isPrimaryMobile}
+                  onCheckedChange={(e) => setIsPrimaryMobile(!!e.checked)}
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control
+                    borderColor={isPrimaryMobile ? "brand.navy" : "#D1D5DB"}
+                    bg={isPrimaryMobile ? "brand.navy" : "white"}
+                  >
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                </Checkbox.Root>
+                <Text fontSize="12px" color="gray.600">
+                  This is a mobile number
+                </Text>
+              </HStack>
+            </Box>
+
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              pt="2px"
+            >
+              <HStack align="flex-start" gap="8px">
+                <Checkbox.Root
+                  checked={canText}
+                  onCheckedChange={(e) => setCanText(!!e.checked)}
+                  size="sm"
+                  mt="2px"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control
+                    borderColor={canText ? "brand.navy" : "#D1D5DB"}
+                    bg={canText ? "brand.navy" : "white"}
+                  >
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                </Checkbox.Root>
+                <Text fontSize="12px" color="gray.600" lineHeight="1.4">
+                  I give permission to receive SMS text messages at this number for clinic and volunteering communications.
+                </Text>
+              </HStack>
             </Box>
 
             <ContinueButton

@@ -5,6 +5,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Field,
   Flex,
   Heading,
@@ -440,16 +441,16 @@ export const ProfileInformation = ({
 
           <HStack
             gap={2}
-            px={2}
+            px={2.5}
             py={1}
-            borderRadius="2px"
+            borderRadius="4px"
             borderWidth="1px"
-            borderColor="gray.300"
+            borderColor="skyBlue.200"
             w="fit-content"
-            bg="white"
+            bg="skyBlue.100"
           >
-            <LuFileText size={14} color="var(--chakra-colors-gray-600)" />
-            <Text fontSize="xs" color="gray.700">
+            <LuFileText size={14} color="var(--chakra-colors-brand-navy)" />
+            <Text fontSize="xs" fontWeight="semibold" color="brand.navy">
               Confidential Form Verified
             </Text>
           </HStack>
@@ -459,12 +460,14 @@ export const ProfileInformation = ({
           {isEditing ? (
             <>
               <Button
-                bg={editBlue}
+                bg="brand.navy"
                 color="white"
                 size="sm"
                 minW="120px"
                 borderRadius="md"
-                _hover={{ bg: "#2B6CB0" }}
+                fontFamily="heading"
+                fontWeight="600"
+                _hover={{ bg: "brand.navyHover" }}
                 onClick={onSave}
                 loading={isSaving}
                 disabled={isSaving}
@@ -475,10 +478,12 @@ export const ProfileInformation = ({
                 variant="outline"
                 size="sm"
                 borderRadius="md"
-                bg="gray.100"
-                borderColor="gray.200"
+                bg="white"
+                borderColor="#E4E4E7"
                 color="gray.800"
-                _hover={{ bg: "gray.200" }}
+                fontFamily="heading"
+                fontWeight="500"
+                _hover={{ bg: "#F4F4F5" }}
                 onClick={onCancel}
                 disabled={isSaving}
               >
@@ -487,11 +492,13 @@ export const ProfileInformation = ({
             </>
           ) : (
             <Button
-              bg={editBlue}
+              bg="brand.navy"
               color="white"
               size="sm"
               borderRadius="md"
-              _hover={{ bg: "#2B6CB0" }}
+              fontFamily="heading"
+              fontWeight="600"
+              _hover={{ bg: "brand.navyHover" }}
               onClick={onEdit}
             >
               <HStack gap={2}>
@@ -549,8 +556,10 @@ export const ProfileInformation = ({
                     <Button
                       size="xs"
                       variant="solid"
-                      bg={editBlue}
+                      bg="brand.navy"
                       color="white"
+                      fontWeight="semibold"
+                      _hover={{ bg: "brand.navyHover" }}
                       onClick={() => photoInputRef.current?.click()}
                       disabled={isSaving}
                     >
@@ -566,7 +575,7 @@ export const ProfileInformation = ({
               </VStack>
             </Box>
 
-            <VStack gap={8} align="stretch">
+            <VStack gap={6} align="stretch">
               <Box>
                 <FieldLabel>First Name</FieldLabel>
                 {isEditing ? (
@@ -581,12 +590,13 @@ export const ProfileInformation = ({
                   <ReadValue>{data.firstName}</ReadValue>
                 )}
               </Box>
+
               <Box>
-                <FieldLabel>Phone Number</FieldLabel>
+                <FieldLabel>Primary Phone</FieldLabel>
                 {isEditing ? (
                   <Field.Root>
                     <InputMask
-                      mask="(999) 999-9999" // can change mask if designer's input mask changes
+                      mask="(999) 999-9999"
                       value={data.phone ?? ""}
                       onChange={(e) => update({ phone: e.target.value })}
                     >
@@ -598,14 +608,51 @@ export const ProfileInformation = ({
                         />
                       )}
                     </InputMask>
+                    <Checkbox.Root
+                      checked={data.isPrimaryMobile}
+                      onCheckedChange={(e) => update({ isPrimaryMobile: !!e.checked })}
+                      colorPalette="blue"
+                      size="sm"
+                      mt={1.5}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                    </Checkbox.Root>
                   </Field.Root>
                 ) : (
-                  <ReadValue>{data.phone}</ReadValue>
+                  <HStack gap={2}>
+                    <ReadValue>{data.phone || "—"}</ReadValue>
+                    {data.isPrimaryMobile && (
+                      <Badge size="xs" bg="skyBlue.100" color="brand.navy" fontWeight="semibold">Mobile</Badge>
+                    )}
+                  </HStack>
+                )}
+              </Box>
+
+              <Box>
+                <FieldLabel>Permission to Text</FieldLabel>
+                {isEditing ? (
+                  <Checkbox.Root
+                    checked={data.canText}
+                    onCheckedChange={(e) => update({ canText: !!e.checked })}
+                    colorPalette="blue"
+                    size="sm"
+                    mt={1}
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label fontSize="xs" color="gray.700">
+                      Permission to text (applies to callable/textable numbers)
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                ) : (
+                  <ReadValue>{data.canText ? "Yes" : "No"}</ReadValue>
                 )}
               </Box>
             </VStack>
 
-            <VStack gap={8} align="stretch">
+            <VStack gap={6} align="stretch">
               <Box>
                 <FieldLabel>Last Name</FieldLabel>
                 {isEditing ? (
@@ -620,6 +667,46 @@ export const ProfileInformation = ({
                   <ReadValue>{data.lastName}</ReadValue>
                 )}
               </Box>
+
+              <Box>
+                <FieldLabel>Secondary Phone (Optional)</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <InputMask
+                      mask="(999) 999-9999"
+                      value={data.secondaryPhone ?? ""}
+                      onChange={(e) => update({ secondaryPhone: e.target.value })}
+                    >
+                      {(inputProps) => (
+                        <Input
+                          {...inputProps}
+                          size="sm"
+                          placeholder="(___) ___-____"
+                        />
+                      )}
+                    </InputMask>
+                    <Checkbox.Root
+                      checked={data.isSecondaryMobile}
+                      onCheckedChange={(e) => update({ isSecondaryMobile: !!e.checked })}
+                      colorPalette="blue"
+                      size="sm"
+                      mt={1.5}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                    </Checkbox.Root>
+                  </Field.Root>
+                ) : (
+                  <HStack gap={2}>
+                    <ReadValue>{data.secondaryPhone || "—"}</ReadValue>
+                    {data.isSecondaryMobile && (
+                      <Badge size="xs" bg="skyBlue.100" color="brand.navy" fontWeight="semibold">Mobile</Badge>
+                    )}
+                  </HStack>
+                )}
+              </Box>
+
               <Box>
                 <FieldLabel>Email</FieldLabel>
                 {isEditing ? (
@@ -644,9 +731,26 @@ export const ProfileInformation = ({
           <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Occupation & Credentials
           </Text>
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={12}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={8}>
             <Box>
-              <FieldLabel>Notary Status</FieldLabel>
+              <FieldLabel>Employer or School</FieldLabel>
+              <Text fontSize="xs" color="gray.500" mb={1}>Current workplace or school</Text>
+              {isEditing ? (
+                <Field.Root>
+                  <Input
+                    size="sm"
+                    placeholder="e.g. UC Irvine, Legal Aid"
+                    value={data.affiliatedEmployer ?? ""}
+                    onChange={(e) => update({ affiliatedEmployer: e.target.value })}
+                  />
+                </Field.Root>
+              ) : (
+                <ReadValue>{data.affiliatedEmployer || "—"}</ReadValue>
+              )}
+            </Box>
+
+            <Box>
+              <FieldLabel>Are you a notary?</FieldLabel>
               {isEditing ? (
                 <NativeSelect.Root size="sm">
                   <NativeSelect.Field
@@ -662,28 +766,88 @@ export const ProfileInformation = ({
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
               ) : (
-                <ReadValue>{data.notary}</ReadValue>
+                <ReadValue>{data.notary || "—"}</ReadValue>
               )}
             </Box>
+
             <Box>
               <FieldLabel>Occupation</FieldLabel>
               <ReadValue>{data.occupation}</ReadValue>
             </Box>
-            <Box>
-              <FieldLabel>Law School Year</FieldLabel>
-              <ReadValue muted>{data.lawSchoolYear}</ReadValue>
-            </Box>
+
+            {/* Show Law School Year only if role is Law Student */}
+            {(data.occupation || "").toLowerCase().includes("law student") && (
+              <Box>
+                <FieldLabel>Law School Year</FieldLabel>
+                {isEditing ? (
+                  <NativeSelect.Root size="sm">
+                    <NativeSelect.Field
+                      value={data.lawSchoolYear || ""}
+                      onChange={(e) => update({ lawSchoolYear: e.target.value })}
+                    >
+                      <option value="">Select Year</option>
+                      {["1L", "2L", "3L", "Graduate"].map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                ) : (
+                  <ReadValue>{data.lawSchoolYear || "—"}</ReadValue>
+                )}
+              </Box>
+            )}
           </SimpleGrid>
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
-            <Box>
-              <FieldLabel>State Bar Certificate State</FieldLabel>
-              <ReadValue muted>{data.stateBarState}</ReadValue>
+
+          {/* California Bar Admission for Attorneys */}
+          {((data.occupation || "").toLowerCase().includes("attorney") || Boolean(data.isCaliforniaLicensed)) && (
+            <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md" bg="gray.50" maxW="560px">
+              {isEditing ? (
+                <>
+                  <Checkbox.Root
+                    checked={data.isCaliforniaLicensed}
+                    onCheckedChange={(e) => update({ isCaliforniaLicensed: !!e.checked })}
+                    colorPalette="blue"
+                    size="sm"
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                      Licensed to practice law in California?
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                  {data.isCaliforniaLicensed && (
+                    <Box mt={3} maxW="280px">
+                      <FieldLabel>California State Bar Number</FieldLabel>
+                      <Input
+                        size="sm"
+                        bg="white"
+                        borderColor="gray.300"
+                        placeholder="Enter bar number"
+                        value={data.stateBarNumber || ""}
+                        onChange={(e) => update({ stateBarNumber: e.target.value })}
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <SimpleGrid columns={2} gap={4}>
+                  <Box>
+                    <FieldLabel>Licensed in California?</FieldLabel>
+                    <ReadValue>{data.isCaliforniaLicensed ? "Yes" : "No"}</ReadValue>
+                  </Box>
+                  {data.isCaliforniaLicensed && (
+                    <Box>
+                      <FieldLabel>State Bar Number</FieldLabel>
+                      <ReadValue>{data.stateBarNumber || "—"}</ReadValue>
+                    </Box>
+                  )}
+                </SimpleGrid>
+              )}
             </Box>
-            <Box>
-              <FieldLabel>State Bar Number</FieldLabel>
-              <ReadValue muted>{data.stateBarNumber}</ReadValue>
-            </Box>
-          </SimpleGrid>
+          )}
         </Box>
 
         {/* Experience: Languages + Listed Experience */}
@@ -883,11 +1047,12 @@ export const ProfileInformation = ({
               <Button
                 variant="outline"
                 size="sm"
-                borderColor="#E4E4E7"
-                color="#27272A"
+                borderColor="brand.navy"
+                color="brand.navy"
                 bg="white"
-                fontWeight="medium"
-                _hover={{ bg: "#F4F4F5", borderColor: "#D4D4D8" }}
+                fontWeight="semibold"
+                fontFamily="heading"
+                _hover={{ bg: "#F0F7FF", borderColor: "brand.navyHover" }}
                 mt={3}
                 h="36px"
                 borderRadius="6px"

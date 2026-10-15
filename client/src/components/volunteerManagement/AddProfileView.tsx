@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
   Breadcrumb,
   Button,
+  Checkbox,
   Flex,
   Heading,
+  HStack,
   Icon,
   Input,
   NativeSelect,
@@ -41,82 +43,156 @@ const TagInput = ({
   onTagInputChange,
   onAddTag,
   onRemoveTag,
+  options = [],
 }: {
   tags: string[];
   tagInput: string;
   onTagInputChange: (v: string) => void;
   onAddTag: (v: string) => void;
   onRemoveTag: (v: string) => void;
-}) => (
-  <Box
-    borderWidth="1px"
-    borderColor="#E4E4E7"
-    borderRadius="md"
-    p={3}
-    minH="80px"
-  >
-    <Flex
-      gap={2}
-      wrap="wrap"
-      align="center"
-    >
-      {tags.map((t) => (
-        <Flex
-          key={t}
-          align="center"
-          gap={1}
-          px={2}
-          py={0.5}
-          bg="gray.100"
-          borderRadius="sm"
-          fontSize="sm"
-        >
-          {t}
-          <Icon
-            as={FiX}
-            boxSize={3}
-            cursor="pointer"
-            color="gray.400"
-            _hover={{ color: "gray.700" }}
-            onClick={() => onRemoveTag(t)}
-          />
-        </Flex>
-      ))}
-      <Flex
-        align="center"
-        gap={1}
+  options?: string[];
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const filteredOptions = useMemo(() => {
+    const q = tagInput.trim().toLowerCase();
+    if (!q) return [];
+    return options.filter(
+      (opt) => opt.toLowerCase().includes(q) && !tags.some((t) => t.toLowerCase() === opt.toLowerCase())
+    ).slice(0, 8);
+  }, [options, tagInput, tags]);
+
+  const handleSelect = (val: string) => {
+    onAddTag(val);
+    onTagInputChange("");
+    setIsOpen(false);
+  };
+
+  return (
+    <Box position="relative">
+      <Box
+        borderWidth="1px"
+        borderColor="#E4E4E7"
+        borderRadius="md"
+        p={3}
+        minH="80px"
+        bg="white"
       >
-        <Input
-          size="xs"
-          variant="unstyled"
-          placeholder="Add tag here..."
-          bg="transparent"
-          value={tagInput}
-          onChange={(e) => onTagInputChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && tagInput.trim()) {
-              e.preventDefault();
-              onAddTag(tagInput.trim());
-              onTagInputChange("");
-            }
-          }}
-          w="120px"
-          color="black"
-          _placeholder={{ color: "#A1A1AA" }}
-        />
-        {tagInput && (
-          <Icon
-            as={FiX}
-            boxSize={3}
-            cursor="pointer"
-            color="gray.400"
-            onClick={() => onTagInputChange("")}
-          />
-        )}
-      </Flex>
-    </Flex>
-  </Box>
-);
+        <Flex
+          gap={2}
+          wrap="wrap"
+          align="center"
+        >
+          {tags.map((t) => (
+            <Flex
+              key={t}
+              align="center"
+              gap={1}
+              px={2}
+              py={0.5}
+              bg="gray.100"
+              borderRadius="sm"
+              fontSize="sm"
+            >
+              {t}
+              <Icon
+                as={FiX}
+                boxSize={3}
+                cursor="pointer"
+                color="gray.400"
+                _hover={{ color: "gray.700" }}
+                onClick={() => onRemoveTag(t)}
+              />
+            </Flex>
+          ))}
+          <Flex
+            align="center"
+            gap={1}
+            flex={1}
+            minW="160px"
+          >
+            <Input
+              size="xs"
+              variant="unstyled"
+              placeholder="Add tag (type to search existing)..."
+              bg="transparent"
+              value={tagInput}
+              onFocus={() => setIsOpen(true)}
+              onChange={(e) => {
+                onTagInputChange(e.target.value);
+                setIsOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && tagInput.trim()) {
+                  e.preventDefault();
+                  if (filteredOptions.length > 0 && filteredOptions[0].toLowerCase() === tagInput.trim().toLowerCase()) {
+                    handleSelect(filteredOptions[0]);
+                  } else {
+                    onAddTag(tagInput.trim());
+                    onTagInputChange("");
+                    setIsOpen(false);
+                  }
+                } else if (e.key === "Escape") {
+                  setIsOpen(false);
+                }
+              }}
+              w="100%"
+              color="black"
+              _placeholder={{ color: "#A1A1AA" }}
+            />
+            {tagInput && (
+              <Icon
+                as={FiX}
+                boxSize={3}
+                cursor="pointer"
+                color="gray.400"
+                onClick={() => {
+                  onTagInputChange("");
+                  setIsOpen(false);
+                }}
+              />
+            )}
+          </Flex>
+        </Flex>
+      </Box>
+
+      {isOpen && filteredOptions.length > 0 && (
+        <Box
+          position="absolute"
+          top="calc(100% + 4px)"
+          left={0}
+          right={0}
+          bg="white"
+          borderWidth="1px"
+          borderColor="#E4E4E7"
+          borderRadius="md"
+          boxShadow="md"
+          zIndex={50}
+          maxH="180px"
+          overflowY="auto"
+          py={1}
+        >
+          {filteredOptions.map((opt) => (
+            <Box
+              key={opt}
+              px={3}
+              py={2}
+              fontSize="sm"
+              cursor="pointer"
+              _hover={{ bg: "skyBlue.100", color: "brand.navy" }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(opt);
+              }}
+            >
+              {opt}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 export const AddProfileView = () => {
   const { backend } = useBackendContext();
@@ -140,16 +216,28 @@ export const AddProfileView = () => {
   //   - stateBarNumber: no column in volunteers table
   //   - interests: free text, not mapped to areas_of_practice IDs
   //   - experience: no backend endpoint
+  // Contact state
+  const [secondaryPhoneNumber, setSecondaryPhoneNumber] = useState("");
+  const [isPrimaryMobile, setIsPrimaryMobile] = useState(false);
+  const [isSecondaryMobile, setIsSecondaryMobile] = useState(false);
+  const [canText, setCanText] = useState(false);
+
+  // Volunteer Roles catalog
+  const [rolesList, setRolesList] = useState<{ id: number; roleName: string }[]>([]);
+  const [selectedVolunteerRoleId, setSelectedVolunteerRoleId] = useState<string>("");
+
+  // Occupation state
   const [affiliated, setAffiliated] = useState("");
   const [notaryStatus, setNotaryStatus] = useState("");
   const [lawSchoolYear, setLawSchoolYear] = useState("");
-  const [stateBarCertState, setStateBarCertState] = useState("");
+  const [isCaliforniaLicensed, setIsCaliforniaLicensed] = useState(false);
   const [stateBarNumber, setStateBarNumber] = useState("");
   const [languages, setLanguages] = useState<LanguageEntry[]>([
     { languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" },
   ]);
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
+  const [areaCatalog, setAreaCatalog] = useState<string[]>([]);
   const [experience, setExperience] = useState<string[]>([]);
   const [experienceInput, setExperienceInput] = useState("");
 
@@ -158,7 +246,30 @@ export const AddProfileView = () => {
       .get<LanguageOption[]>("/languages")
       .then((res) => setLanguageOptions(res.data))
       .catch((error) => console.error("Error fetching languages:", error));
+
+    backend
+      .get<Array<{ id: number; roleName?: string; role_name?: string }>>("/roles")
+      .then((res) => {
+        const rows = (res.data || []).map((r) => ({
+          id: r.id,
+          roleName: r.roleName || r.role_name || "",
+        }));
+        setRolesList(rows);
+      })
+      .catch((error) => console.error("Error fetching roles:", error));
+
+    backend
+      .get<{ id: number; areasOfPractice: string }[]>("/areas-of-practice")
+      .then((res) => {
+        setAreaCatalog((res.data || []).map((a) => a.areasOfPractice));
+      })
+      .catch((err) => console.error("Error fetching areas of practice:", err));
   }, [backend]);
+
+  const selectedRoleObj = rolesList.find((r) => String(r.id) === selectedVolunteerRoleId);
+  const selectedRoleName = (selectedRoleObj?.roleName || "").toLowerCase();
+  const isLawStudent = selectedRoleName.includes("law student");
+  const isAttorney = selectedRoleName.includes("attorney");
 
   const handleContinue = async () => {
     const valid = await trigger([
@@ -188,6 +299,10 @@ export const AddProfileView = () => {
           lastName: data.lastName,
           email: data.email,
           phoneNumber: data.phoneNumber,
+          secondaryPhoneNumber: secondaryPhoneNumber || null,
+          isPrimaryMobile,
+          isSecondaryMobile,
+          canText,
           isSupervisor: data.role === "supervisor",
         });
       } else {
@@ -197,37 +312,31 @@ export const AddProfileView = () => {
           last_name: data.lastName,
           email: data.email,
           phone_number: data.phoneNumber,
-          is_notary:
-            notaryStatus === "active"
-              ? true
-              : notaryStatus === "inactive"
-                ? false
-                : null,
+          secondary_phone_number: secondaryPhoneNumber || null,
+          is_primary_mobile: isPrimaryMobile,
+          is_secondary_mobile: isSecondaryMobile,
+          can_text: canText,
+          is_notary: notaryStatus === "active",
+          notary_status: notaryStatus || null,
+          affiliated_employer: affiliated || null,
+          law_school_year: isLawStudent ? (lawSchoolYear || null) : null,
+          is_california_licensed: isCaliforniaLicensed,
+          state_bar_certificate: isCaliforniaLicensed ? "California" : null,
+          state_bar_number: isCaliforniaLicensed ? (stateBarNumber || null) : null,
         });
 
         const volunteerId = volunteerRes.data.id;
 
         const tasks: Promise<unknown>[] = [];
 
-        // Save extra credential fields
-        tasks.push(
-          backend.put(`/volunteers/${volunteerId}`, {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            email: data.email,
-            phone_number: data.phoneNumber,
-            is_notary:
-              notaryStatus === "active"
-                ? true
-                : notaryStatus === "inactive"
-                  ? false
-                  : null,
-            affiliated_employer: affiliated || null,
-            law_school_year: lawSchoolYear || null,
-            state_bar_certificate: stateBarCertState || null,
-            state_bar_number: stateBarNumber || null,
-          })
-        );
+        // Assign chosen volunteer role
+        if (selectedVolunteerRoleId) {
+          tasks.push(
+            backend.post(`/volunteers/${volunteerId}/roles`, {
+              roleId: Number(selectedVolunteerRoleId),
+            })
+          );
+        }
 
         const validLanguages = languages.filter((l) => l.languageId !== 0);
         if (validLanguages.length > 0) {
@@ -358,8 +467,9 @@ export const AddProfileView = () => {
               Profile Information
             </Text>
 
+            {/* Row 1: Name & Primary Phone */}
             <Flex
-              mb={8}
+              mb={6}
               gap={8}
               mr="24rem"
             >
@@ -409,7 +519,7 @@ export const AddProfileView = () => {
                   fontWeight="semibold"
                   mb={1}
                 >
-                  Phone Number{" "}
+                  Primary Phone{" "}
                   <Box
                     as="span"
                     color="red.500"
@@ -422,9 +532,74 @@ export const AddProfileView = () => {
                   borderColor="#E4E4E7"
                   {...register("phoneNumber", { required: true })}
                 />
+                <Checkbox.Root
+                  checked={isPrimaryMobile}
+                  onCheckedChange={(e) => setIsPrimaryMobile(!!e.checked)}
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
               </Box>
             </Flex>
 
+            {/* Row 2: Secondary Phone & Consent */}
+            <Flex
+              mb={6}
+              gap={8}
+              mr="24rem"
+            >
+              <Box flex={1}>
+                <Text
+                  fontSize="sm"
+                  fontWeight="semibold"
+                  mb={1}
+                >
+                  Secondary Phone (Optional)
+                </Text>
+                <Input
+                  placeholder="Optional secondary phone"
+                  borderColor="#E4E4E7"
+                  value={secondaryPhoneNumber}
+                  onChange={(e) => setSecondaryPhoneNumber(e.target.value)}
+                />
+                <Checkbox.Root
+                  checked={isSecondaryMobile}
+                  onCheckedChange={(e) => setIsSecondaryMobile(!!e.checked)}
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              <Box flex={2} p={3} bg="gray.50" borderRadius="md" border="1px solid" borderColor="#E4E4E7" alignSelf="flex-start">
+                <Checkbox.Root
+                  checked={canText}
+                  onCheckedChange={(e) => setCanText(!!e.checked)}
+                  colorPalette="blue"
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.700">
+                    Permission to text (applies to callable/textable numbers for California compliance)
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+            </Flex>
+
+            {/* Row 3: Email & User Type */}
             <Flex
               mb={8}
               gap={8}
@@ -456,7 +631,7 @@ export const AddProfileView = () => {
                   fontWeight="semibold"
                   mb={1}
                 >
-                  Role{" "}
+                  User Type{" "}
                   <Box
                     as="span"
                     color="red.500"
@@ -466,7 +641,7 @@ export const AddProfileView = () => {
                 </Text>
                 <NativeSelect.Root borderColor="#E4E4E7">
                   <NativeSelect.Field
-                    placeholder="Type here to search"
+                    placeholder="Select User Type"
                     color={!roleValue ? "#A1A1AA" : "inherit"}
                     {...register("role", { required: true })}
                   >
@@ -549,7 +724,33 @@ export const AddProfileView = () => {
               </Flex>
             </Flex>
 
-            {/* Row 1 */}
+            {/* Volunteer Role Selection (if Volunteer User Type) */}
+            {(roleValue === "volunteer" || !roleValue) && (
+              <Flex mb={6} gap={8} mr="24rem">
+                <Box flex={1}>
+                  <Text fontSize="sm" fontWeight="semibold" mb={1}>
+                    Volunteer Role
+                  </Text>
+                  <NativeSelect.Root borderColor="#E4E4E7">
+                    <NativeSelect.Field
+                      placeholder="Select Volunteer Role"
+                      value={selectedVolunteerRoleId}
+                      onChange={(e) => setSelectedVolunteerRoleId(e.target.value)}
+                    >
+                      {rolesList.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.roleName}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Box>
+                <Box flex={2} />
+              </Flex>
+            )}
+
+            {/* Row 1: Employer or School, Notary, Law School Year */}
             <Flex
               mb={8}
               gap={8}
@@ -559,15 +760,18 @@ export const AddProfileView = () => {
                 <Text
                   fontSize="sm"
                   fontWeight="semibold"
-                  mb={1}
+                  mb={0.5}
                 >
-                  Affiliated Employer/Education{" "}
+                  Employer or School{" "}
                   <Box
                     as="span"
                     color="red.500"
                   >
                     *
                   </Box>
+                </Text>
+                <Text fontSize="xs" color="gray.500" mb={1.5}>
+                  Current workplace or school, not educational history
                 </Text>
                 <Flex
                   align="center"
@@ -589,13 +793,14 @@ export const AddProfileView = () => {
                   />
                 </Flex>
               </Box>
+
               <Box flex={1}>
                 <Text
                   fontSize="sm"
                   fontWeight="semibold"
                   mb={1}
                 >
-                  Notary Status{" "}
+                  Are you a notary?{" "}
                   <Box
                     as="span"
                     color="red.500"
@@ -610,43 +815,47 @@ export const AddProfileView = () => {
                     value={notaryStatus}
                     onChange={(e) => setNotaryStatus(e.target.value)}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="none">None</option>
+                    <option value="active">Yes (active)</option>
+                    <option value="inactive">Yes (inactive)</option>
+                    <option value="no">No</option>
                   </NativeSelect.Field>
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
               </Box>
-              <Box flex={1}>
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  Law School Year
-                </Text>
-                <NativeSelect.Root borderColor="#E4E4E7">
-                  <NativeSelect.Field
-                    placeholder="Select here"
-                    color={!lawSchoolYear ? "#A1A1AA" : "inherit"}
-                    value={lawSchoolYear}
-                    onChange={(e) => setLawSchoolYear(e.target.value)}
+
+              {/* Show Law School Year only if role is Law Student */}
+              {isLawStudent && (
+                <Box flex={1}>
+                  <Text
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    mb={1}
                   >
-                    {["1L", "2L", "3L", "Graduate"].map((y) => (
-                      <option
-                        key={y}
-                        value={y}
-                      >
-                        {y}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Box>
+                    Law School Year
+                  </Text>
+                  <NativeSelect.Root borderColor="#E4E4E7">
+                    <NativeSelect.Field
+                      placeholder="Select here"
+                      color={!lawSchoolYear ? "#A1A1AA" : "inherit"}
+                      value={lawSchoolYear}
+                      onChange={(e) => setLawSchoolYear(e.target.value)}
+                    >
+                      {["1L", "2L", "3L", "Graduate"].map((y) => (
+                        <option
+                          key={y}
+                          value={y}
+                        >
+                          {y}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Box>
+              )}
             </Flex>
 
-            {/* Row 2 */}
+            {/* Row 2: California Bar Admission & Interests */}
             <Flex
               mb={8}
               align="flex-start"
@@ -654,65 +863,63 @@ export const AddProfileView = () => {
               mr="16rem"
             >
               <Box
-                w="180px"
+                w="380px"
                 flexShrink={0}
+                p={3.5}
+                borderWidth="1px"
+                borderColor="#E4E4E7"
+                borderRadius="md"
+                bg="#FAFAFA"
               >
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  mb={1}
+                <Checkbox.Root
+                  checked={isCaliforniaLicensed}
+                  onCheckedChange={(e) => setIsCaliforniaLicensed(!!e.checked)}
+                  colorPalette="blue"
+                  size="sm"
                 >
-                  State Bar Certificate State
-                </Text>
-                <NativeSelect.Root borderColor="#E4E4E7">
-                  <NativeSelect.Field
-                    placeholder="Select here"
-                    color={!stateBarCertState ? "#A1A1AA" : "inherit"}
-                    value={stateBarCertState}
-                    onChange={(e) => setStateBarCertState(e.target.value)}
-                  >
-                    {["CA", "NY", "TX", "FL", "WA"].map((s) => (
-                      <option
-                        key={s}
-                        value={s}
-                      >
-                        {s}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                    Licensed to practice law in California?
+                  </Checkbox.Label>
+                </Checkbox.Root>
+
+                {isCaliforniaLicensed && (
+                  <Box mt={3}>
+                    <Text
+                      fontSize="xs"
+                      fontWeight="bold"
+                      mb={1}
+                      color="gray.700"
+                    >
+                      California State Bar Number
+                    </Text>
+                    <Input
+                      size="sm"
+                      bg="white"
+                      borderColor="#E4E4E7"
+                      placeholder="Enter number"
+                      _placeholder={{ color: "#A1A1AA" }}
+                      value={stateBarNumber}
+                      onChange={(e) => setStateBarNumber(e.target.value)}
+                    />
+                  </Box>
+                )}
               </Box>
-              <Box
-                w="200px"
-                flexShrink={0}
-              >
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  State Bar Number
-                </Text>
-                <Input
-                  borderColor="#E4E4E7"
-                  placeholder="Enter number"
-                  _placeholder={{ color: "#A1A1AA" }}
-                  value={stateBarNumber}
-                  onChange={(e) => setStateBarNumber(e.target.value)}
-                />
-              </Box>
+
               <Box flex={1}>
                 <Text
                   fontSize="sm"
                   fontWeight="semibold"
                   mb={1}
                 >
-                  Interest(s)
+                  Practice Areas & Interests
                 </Text>
+                <Text fontSize="xs" color="gray.400" mb={2}>Select or type areas of law, subjects, and interests</Text>
                 <TagInput
                   tags={interests}
                   tagInput={interestInput}
+                  options={areaCatalog}
                   onTagInputChange={setInterestInput}
                   onAddTag={(v) =>
                     setInterests((prev) =>

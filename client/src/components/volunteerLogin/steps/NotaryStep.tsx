@@ -22,13 +22,16 @@ type Props = {
   onBack?: () => void;
 };
 
-const NOTARY_STATUSES = ["Active Notary", "Non-Active (Not a Notary)"];
+const NOTARY_STATUSES = ["Yes (active)", "Yes (inactive)", "No"];
 
 const NotaryStep = ({ onNext, onBack }: Props) => {
   const [selected, setSelected] = useState<string>(() => {
-    const n = loadDraft()?.isNotary;
-    if (n === true) return "Active Notary";
-    if (n === false) return "Non-Active (Not a Notary)";
+    const draft = loadDraft();
+    if (draft?.notaryStatus === "active") return "Yes (active)";
+    if (draft?.notaryStatus === "inactive") return "Yes (inactive)";
+    if (draft?.notaryStatus === "no") return "No";
+    if (draft?.isNotary === true) return "Yes (active)";
+    if (draft?.isNotary === false) return "No";
     return "";
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -39,18 +42,30 @@ const NotaryStep = ({ onNext, onBack }: Props) => {
       item.toLowerCase().includes(inputValue.toLowerCase()),
   });
 
-  const isNotary = useMemo(() => selected === "Active Notary", [selected]);
-
   const handleContinue = () => {
     setErrorMsg(null);
 
     if (!selected) {
-      saveDraft({ isNotary: null });
+      saveDraft({ isNotary: null, notaryStatus: null });
       onNext();
       return;
     }
 
-    saveDraft({ isNotary: isNotary });
+    let status: "active" | "inactive" | "no" | null = null;
+    let isNotary: boolean | null = null;
+
+    if (selected === "Yes (active)") {
+      status = "active";
+      isNotary = true;
+    } else if (selected === "Yes (inactive)") {
+      status = "inactive";
+      isNotary = false;
+    } else if (selected === "No") {
+      status = "no";
+      isNotary = false;
+    }
+
+    saveDraft({ isNotary, notaryStatus: status });
     onNext();
   };
 
@@ -108,7 +123,7 @@ const NotaryStep = ({ onNext, onBack }: Props) => {
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Please indicate whether or not you are an active notary.
+                Please indicate whether or not you are a notary.
               </Text>
             </Box>
           </Flex>
@@ -163,7 +178,7 @@ const NotaryStep = ({ onNext, onBack }: Props) => {
                 color="black"
                 mb="6px"
               >
-                Notary Status
+                Are you a notary?
               </Text>
 
               <Box position="relative">
@@ -210,7 +225,7 @@ const NotaryStep = ({ onNext, onBack }: Props) => {
                       fontSize="14px"
                       _hover={{ bg: "gray.50" }}
                     >
-                      {item === "Active Notary" ? "Active" : "Inactive"}
+                      <Select.ItemText>{item}</Select.ItemText>
                     </Select.Item>
                   ))}
                 </Select.Content>
