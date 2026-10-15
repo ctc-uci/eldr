@@ -34,11 +34,17 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       last_name,
       email: reqEmail,
       phone_number,
+      secondary_phone_number,
+      is_primary_mobile,
+      is_secondary_mobile,
+      can_text,
       form_completed,
       form_link,
       is_signed_confidentiality: reqIsSignedConfidentiality,
       is_attorney: reqIsAttorney,
       is_notary: reqIsNotary,
+      notary_status: reqNotaryStatus,
+      is_california_licensed: reqIsCaliforniaLicensed,
       affiliated_employer,
       law_school_year: reqLawSchoolYear,
       state_bar_certificate: reqStateBarCertificate,
@@ -50,10 +56,28 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     let email = reqEmail;
     let is_attorney = reqIsAttorney;
     let is_notary = reqIsNotary;
+    let notary_status = reqNotaryStatus;
+    let is_california_licensed = reqIsCaliforniaLicensed;
     let state_bar_certificate = reqStateBarCertificate;
     let state_bar_number = reqStateBarNumber;
     let law_school_year = reqLawSchoolYear;
     let is_signed_confidentiality = reqIsSignedConfidentiality;
+
+    const rawNotaryStatus =
+      reqNotaryStatus ??
+      (reqIsNotary === true ? "active" : reqIsNotary === false ? "inactive" : "no");
+    notary_status = ["active", "inactive", "no"].includes(rawNotaryStatus)
+      ? rawNotaryStatus
+      : reqIsNotary
+        ? "active"
+        : "no";
+    is_notary = notary_status === "active";
+
+    const normalizedSecondaryPhone = normalizeNullableText(secondary_phone_number);
+    const isPrimaryMobile = Boolean(is_primary_mobile);
+    const isSecondaryMobile = Boolean(is_secondary_mobile);
+    const canText = Boolean(can_text);
+    is_california_licensed = Boolean(is_california_licensed);
 
     const callerUid = res.locals.decodedToken?.uid;
     const callerEmail = res.locals.decodedToken?.email;
@@ -159,28 +183,40 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
             last_name,
             email,
             phone_number,
+            secondary_phone_number,
+            is_primary_mobile,
+            is_secondary_mobile,
+            can_text,
             form_completed,
             form_link,
             is_signed_confidentiality,
             is_attorney,
             is_notary,
+            notary_status,
+            is_california_licensed,
             affiliated_employer,
             law_school_year,
             state_bar_certificate,
             state_bar_number,
             listed_experience
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
           ON CONFLICT (id) DO UPDATE
             SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
                 last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
                 email = COALESCE(EXCLUDED.email, volunteers.email),
                 phone_number = COALESCE(EXCLUDED.phone_number, volunteers.phone_number),
+                secondary_phone_number = COALESCE(EXCLUDED.secondary_phone_number, volunteers.secondary_phone_number),
+                is_primary_mobile = COALESCE(EXCLUDED.is_primary_mobile, volunteers.is_primary_mobile),
+                is_secondary_mobile = COALESCE(EXCLUDED.is_secondary_mobile, volunteers.is_secondary_mobile),
+                can_text = COALESCE(EXCLUDED.can_text, volunteers.can_text),
                 form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
                 form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
                 is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
                 is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
                 is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
+                notary_status = COALESCE(EXCLUDED.notary_status, volunteers.notary_status),
+                is_california_licensed = COALESCE(EXCLUDED.is_california_licensed, volunteers.is_california_licensed),
                 affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
                 law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
                 state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
@@ -194,11 +230,17 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           normalizedLastName,
           emailToUse,
           normalizedPhoneNumber,
+          normalizedSecondaryPhone,
+          isPrimaryMobile,
+          isSecondaryMobile,
+          canText,
           form_completed ?? null,
           normalizeNullableText(form_link),
           is_signed_confidentiality ?? null,
           is_attorney ?? null,
           is_notary ?? null,
+          notary_status ?? "no",
+          isCaliforniaLicensed,
           normalizedAffiliatedEmployer,
           normalizedLawSchoolYear,
           normalizedStateBarCertificate,
@@ -410,11 +452,17 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       last_name,
       email,
       phone_number,
+      secondary_phone_number,
+      is_primary_mobile,
+      is_secondary_mobile,
+      can_text,
       form_completed,
       form_link,
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      notary_status,
+      is_california_licensed,
       affiliated_employer,
       law_school_year,
       state_bar_certificate,
@@ -427,8 +475,18 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       "listed_experience"
     );
     const listedExperienceClause = hasListedExperience
-      ? "listed_experience = $15"
+      ? "listed_experience = $21"
       : "listed_experience = listed_experience";
+
+    const resolvedNotaryStatus =
+      notary_status ??
+      (is_notary === true ? "active" : is_notary === false ? "inactive" : null);
+    const resolvedIsNotary =
+      resolvedNotaryStatus === "active"
+        ? true
+        : resolvedNotaryStatus === "inactive" || resolvedNotaryStatus === "no"
+          ? false
+          : is_notary;
 
     await db.query(
       `
@@ -437,15 +495,21 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             last_name = COALESCE($3, last_name),
             email = COALESCE($4, email),
             phone_number = COALESCE($5, phone_number),
-            form_completed = COALESCE($6, form_completed),
-            form_link = COALESCE($7, form_link),
-            is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
-            is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary),
-            affiliated_employer = COALESCE($11, affiliated_employer),
-            law_school_year = COALESCE($12, law_school_year),
-            state_bar_certificate = COALESCE($13, state_bar_certificate),
-            state_bar_number = COALESCE($14, state_bar_number),
+            secondary_phone_number = COALESCE($6, secondary_phone_number),
+            is_primary_mobile = COALESCE($7, is_primary_mobile),
+            is_secondary_mobile = COALESCE($8, is_secondary_mobile),
+            can_text = COALESCE($9, can_text),
+            form_completed = COALESCE($10, form_completed),
+            form_link = COALESCE($11, form_link),
+            is_signed_confidentiality = COALESCE($12, is_signed_confidentiality),
+            is_attorney = COALESCE($13, is_attorney),
+            is_notary = COALESCE($14, is_notary),
+            notary_status = COALESCE($15, notary_status),
+            is_california_licensed = COALESCE($16, is_california_licensed),
+            affiliated_employer = COALESCE($17, affiliated_employer),
+            law_school_year = COALESCE($18, law_school_year),
+            state_bar_certificate = COALESCE($19, state_bar_certificate),
+            state_bar_number = COALESCE($20, state_bar_number),
             ${listedExperienceClause}
         WHERE id = $1;
       `,
@@ -455,11 +519,17 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         last_name,
         email,
         phone_number,
+        secondary_phone_number !== undefined ? (secondary_phone_number ? String(secondary_phone_number).trim() : null) : null,
+        is_primary_mobile !== undefined ? Boolean(is_primary_mobile) : null,
+        is_secondary_mobile !== undefined ? Boolean(is_secondary_mobile) : null,
+        can_text !== undefined ? Boolean(can_text) : null,
         form_completed,
         form_link,
         is_signed_confidentiality,
         is_attorney,
-        is_notary,
+        resolvedIsNotary,
+        resolvedNotaryStatus,
+        is_california_licensed !== undefined ? Boolean(is_california_licensed) : null,
         affiliated_employer ?? null,
         law_school_year ?? null,
         state_bar_certificate ?? null,

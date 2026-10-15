@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Field,
   Flex,
   Heading,
@@ -29,6 +30,10 @@ type AdminProfileData = {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   email: string;
   roleLabel: string;
 };
@@ -37,6 +42,10 @@ const initialProfile: AdminProfileData = {
   firstName: "",
   lastName: "",
   phoneNumber: "",
+  secondaryPhoneNumber: "",
+  isPrimaryMobile: false,
+  isSecondaryMobile: false,
+  canText: false,
   email: "",
   roleLabel: "",
 };
@@ -106,12 +115,17 @@ export const AdminProfile = () => {
       }
 
       const savedPhone = phoneNumberForSave(draft.phoneNumber);
+      const savedSecondary = draft.secondaryPhoneNumber ? phoneNumberForSave(draft.secondaryPhoneNumber) : null;
 
       try {
         await backend.put(`/admins/${adminId}`, {
           firstName: draft.firstName,
           lastName: draft.lastName,
           phoneNumber: savedPhone,
+          secondaryPhoneNumber: savedSecondary,
+          isPrimaryMobile: draft.isPrimaryMobile,
+          isSecondaryMobile: draft.isSecondaryMobile,
+          canText: draft.canText,
           email: draft.email,
           calendarEmail: draft.email,
         });
@@ -121,7 +135,11 @@ export const AdminProfile = () => {
           firebaseUid: currentUser.uid,
         });
 
-        setProfile({ ...draft, phoneNumber: savedPhone ?? "" });
+        setProfile({
+          ...draft,
+          phoneNumber: savedPhone ?? "",
+          secondaryPhoneNumber: savedSecondary ?? "",
+        });
         setDraft(null);
         setIsEditing(false);
         setShowUpdated(true);
@@ -192,6 +210,10 @@ export const AdminProfile = () => {
           firstName,
           lastName,
           phoneNumber: formatPhoneNumber(String(adminRow.phoneNumber ?? "")),
+          secondaryPhoneNumber: formatPhoneNumber(String(adminRow.secondaryPhoneNumber ?? "")),
+          isPrimaryMobile: Boolean(adminRow.isPrimaryMobile),
+          isSecondaryMobile: Boolean(adminRow.isSecondaryMobile),
+          canText: Boolean(adminRow.canText),
           email: adminRow.email ?? userRow.email ?? "",
           roleLabel: staffRoleLabel(rawRole, isSupervisor),
         });
@@ -450,31 +472,129 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Phone Number</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Primary Phone</Field.Label>
+                  {readOnly ? (
+                    <HStack gap={2}>
+                      <Text fontSize="14px" color="gray.900">
+                        {display.phoneNumber || "—"}
+                      </Text>
+                      {display.isPrimaryMobile && (
+                        <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                      )}
+                    </HStack>
+                  ) : (
+                    <Box>
+                      <Input
+                        size="sm"
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="000-000-0000"
+                        maxLength={12}
+                        value={display.phoneNumber}
+                        onChange={(e) => {
+                          if (!draft) return;
+                          setDraft({
+                            ...draft,
+                            phoneNumber: formatPhoneNumber(e.target.value),
+                          });
+                        }}
+                        bg="white"
+                        borderColor="gray.200"
+                        borderRadius="4px"
+                        _focus={{ boxShadow: "none", borderColor: "gray.300" }}
+                      />
+                      <Checkbox.Root
+                        checked={display.isPrimaryMobile}
+                        onCheckedChange={(e) => {
+                          if (!draft) return;
+                          setDraft({ ...draft, isPrimaryMobile: !!e.checked });
+                        }}
+                        colorPalette="blue"
+                        size="sm"
+                        mt={1.5}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                      </Checkbox.Root>
+                    </Box>
+                  )}
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Secondary Phone (Optional)</Field.Label>
+                  {readOnly ? (
+                    <HStack gap={2}>
+                      <Text fontSize="14px" color="gray.900">
+                        {display.secondaryPhoneNumber || "—"}
+                      </Text>
+                      {display.isSecondaryMobile && (
+                        <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                      )}
+                    </HStack>
+                  ) : (
+                    <Box>
+                      <Input
+                        size="sm"
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="000-000-0000"
+                        maxLength={12}
+                        value={display.secondaryPhoneNumber}
+                        onChange={(e) => {
+                          if (!draft) return;
+                          setDraft({
+                            ...draft,
+                            secondaryPhoneNumber: formatPhoneNumber(e.target.value),
+                          });
+                        }}
+                        bg="white"
+                        borderColor="gray.200"
+                        borderRadius="4px"
+                        _focus={{ boxShadow: "none", borderColor: "gray.300" }}
+                      />
+                      <Checkbox.Root
+                        checked={display.isSecondaryMobile}
+                        onCheckedChange={(e) => {
+                          if (!draft) return;
+                          setDraft({ ...draft, isSecondaryMobile: !!e.checked });
+                        }}
+                        colorPalette="blue"
+                        size="sm"
+                        mt={1.5}
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                      </Checkbox.Root>
+                    </Box>
+                  )}
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Permission to Text</Field.Label>
                   {readOnly ? (
                     <Text fontSize="14px" color="gray.900">
-                      {display.phoneNumber || "—"}
+                      {display.canText ? "Yes" : "No"}
                     </Text>
                   ) : (
-                    <Input
-                      size="sm"
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="000-000-0000"
-                      maxLength={12}
-                      value={display.phoneNumber}
-                      onChange={(e) => {
-                        if (!draft) return;
-                        setDraft({
-                          ...draft,
-                          phoneNumber: formatPhoneNumber(e.target.value),
-                        });
-                      }}
-                      bg="white"
-                      borderColor="gray.200"
-                      borderRadius="4px"
-                      _focus={{ boxShadow: "none", borderColor: "gray.300" }}
-                    />
+                    <Box pt={2}>
+                      <Checkbox.Root
+                        checked={display.canText}
+                        onCheckedChange={(e) => {
+                          if (!draft) return;
+                          setDraft({ ...draft, canText: !!e.checked });
+                        }}
+                        colorPalette="blue"
+                        size="sm"
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label fontSize="xs" color="gray.700">
+                          Permission to text (applies to callable/textable numbers)
+                        </Checkbox.Label>
+                      </Checkbox.Root>
+                    </Box>
                   )}
                 </Field.Root>
               </SimpleGrid>
@@ -506,7 +626,7 @@ export const AdminProfile = () => {
                   )}
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">Role</Field.Label>
+                  <Field.Label fontSize="14px" color="gray.600" fontWeight="bold">User Type</Field.Label>
                   <Text fontSize="14px" color="gray.900">{profile.roleLabel}</Text>
                 </Field.Root>
               </SimpleGrid>

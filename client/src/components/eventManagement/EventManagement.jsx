@@ -169,8 +169,13 @@ export const EventManagement = () => {
     const q = search.trim().toLowerCase();
     const { clinicTypes, eventFormats, languages } = activeFilters;
     const filtered = clinics.filter((c) => {
-      if (q && !(c.name || "").toLowerCase().includes(q)) return false;
-      if (clinicTypes.size > 0 && !clinicTypes.has(c.type)) return false;
+      if (clinicTypes.size > 0) {
+        const matchesType = Array.from(clinicTypes).some((type) => {
+          if (type === "One-off") return !c.type || c.type === "One-off";
+          return c.type === type || c.name === type;
+        });
+        if (!matchesType) return false;
+      }
       if (eventFormats.size > 0 && !eventFormats.has(c.locationType)) return false;
       if (languages.size > 0 && !(c.languages ?? []).some((l) => languages.has(l.language))) return false;
       return true;
@@ -308,24 +313,22 @@ export const EventManagement = () => {
               mt={1}
             >
               <HStack gap={2}>
-                {clinic.type && (
-                  <Tag.Root
-                    size="md"
-                    borderRadius="4px"
-                    border="0.5px solid"
-                    borderColor="gray.200"
-                    bg="gray.100"
-                    px={2}
-                    py={1}
+                <Tag.Root
+                  size="md"
+                  borderRadius="4px"
+                  border="0.5px solid"
+                  borderColor="gray.200"
+                  bg="gray.100"
+                  px={2}
+                  py={1}
+                >
+                  <Tag.Label
+                    fontSize="xs"
+                    fontWeight="medium"
                   >
-                    <Tag.Label
-                      fontSize="xs"
-                      fontWeight="medium"
-                    >
-                      {clinic.type}
-                    </Tag.Label>
-                  </Tag.Root>
-                )}
+                    {clinic.type || "One-off"}
+                  </Tag.Label>
+                </Tag.Root>
 
                 {clinic.locationType && (
                   <Tag.Root
@@ -498,7 +501,7 @@ export const EventManagement = () => {
                       fontSize="lg"
                       fontFamily="heading"
                       fontWeight="600"
-                      color="#002992"
+                      color="brand.navy"
                     >
                       Upcoming Events
                     </Text>
@@ -521,7 +524,7 @@ export const EventManagement = () => {
                       fontSize="lg"
                       fontFamily="heading"
                       fontWeight="600"
-                      color="#002992"
+                      color="brand.navy"
                     >
                       Past Events
                     </Text>

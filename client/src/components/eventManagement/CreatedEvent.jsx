@@ -223,7 +223,7 @@ export const CreatedEvent = () => {
                 bottom="calc(100% + 6px)"
                 left="50%"
                 transform="translateX(-50%)"
-                bg="#002992"
+                bg="brand.navy"
                 color="white"
                 fontSize="xs"
                 fontWeight="medium"
@@ -255,14 +255,14 @@ export const CreatedEvent = () => {
           </Button>
 
           <Button
-            bg="#002992"
+            bg="brand.navy"
             color="white"
             fontFamily="heading"
             fontWeight={600}
             borderRadius="4px"
             gap={2}
             px={4}
-            _hover={{ bg: "#001E6C" }}
+            _hover={{ bg: "brand.navyHover" }}
             onClick={() => navigate(`/events/${eventId}/edit/header`)}
           >
             <LuPencil />
@@ -276,7 +276,7 @@ export const CreatedEvent = () => {
         const inRange = attendees >= minAttendees && attendees <= capacity;
         const dotColor = inRange ? "green.400" : "red.400";
         const tags = [
-          type,
+          type || "One-off",
           capitalizeLocationType(locationType),
           ...languages.map((l) => (typeof l === "string" ? l : l.language)),
         ].filter(Boolean);

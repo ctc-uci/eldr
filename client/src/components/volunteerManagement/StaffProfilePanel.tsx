@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 
 import {
+  Badge,
   Box,
+  Checkbox,
+  HStack,
   Input,
   NativeSelect,
   SimpleGrid,
@@ -25,7 +28,10 @@ interface FormState {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  email: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   role: string;
   startDate: string;
 }
@@ -43,7 +49,10 @@ export const StaffProfilePanel = ({
     firstName: "",
     lastName: "",
     phoneNumber: "",
-    email: "",
+    secondaryPhoneNumber: "",
+    isPrimaryMobile: false,
+    isSecondaryMobile: false,
+    canText: false,
     role: "",
     startDate: "",
   });
@@ -62,7 +71,10 @@ export const StaffProfilePanel = ({
       firstName: staff.firstName,
       lastName: staff.lastName,
       phoneNumber: staff.phoneNumber ?? "",
-      email: staff.email,
+      secondaryPhoneNumber: staff.secondaryPhoneNumber ?? "",
+      isPrimaryMobile: Boolean(staff.isPrimaryMobile),
+      isSecondaryMobile: Boolean(staff.isSecondaryMobile),
+      canText: Boolean(staff.canText),
       role: staff.role,
       startDate: staff.startDate ? staff.startDate.split("T")[0] : "",
     });
@@ -77,8 +89,12 @@ export const StaffProfilePanel = ({
     await backend.put(`/admins/${staff.id}`, {
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email,
-      phoneNumber: form.phoneNumber,
+      email: staff.email,
+      phoneNumber: form.phoneNumber || null,
+      secondaryPhoneNumber: form.secondaryPhoneNumber || null,
+      isPrimaryMobile: form.isPrimaryMobile,
+      isSecondaryMobile: form.isSecondaryMobile,
+      canText: form.canText,
       isSupervisor: editRole === "supervisor",
       startDate: form.startDate || null,
     });
@@ -88,8 +104,12 @@ export const StaffProfilePanel = ({
     onSaved?.({
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email,
+      email: staff.email,
       phoneNumber: form.phoneNumber || undefined,
+      secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
+      isPrimaryMobile: form.isPrimaryMobile,
+      isSecondaryMobile: form.isSecondaryMobile,
+      canText: form.canText,
       role: resolvedRole,
       startDate: form.startDate || undefined,
     });
@@ -156,39 +176,125 @@ export const StaffProfilePanel = ({
               gap={4}
               maxW="560px"
             >
-              {(["firstName", "lastName", "phoneNumber", "email"] as const).map(
-                (key) => (
-                  <Box key={key}>
-                    <Text
-                      fontSize="sm"
-                      fontWeight="bold"
-                      mb={1}
-                    >
-                      {key === "firstName"
-                        ? "First Name"
-                        : key === "lastName"
-                          ? "Last Name"
-                          : key === "phoneNumber"
-                            ? "Phone Number"
-                            : "Email"}
-                    </Text>
-                    <Input
-                      size="sm"
-                      borderColor="#E4E4E7"
-                      value={form[key]}
-                      onChange={setField(key)}
-                      _placeholder={{ color: "#A1A1AA" }}
-                    />
-                  </Box>
-                )
-              )}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  First Name
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.firstName}
+                  onChange={setField("firstName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Last Name
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.lastName}
+                  onChange={setField("lastName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+
+              {/* Primary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Primary Phone
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.phoneNumber}
+                  onChange={setField("phoneNumber")}
+                  placeholder="Primary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isPrimaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isPrimaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Secondary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Secondary Phone (Optional)
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.secondaryPhoneNumber}
+                  onChange={setField("secondaryPhoneNumber")}
+                  placeholder="Secondary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isSecondaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isSecondaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Permission to text */}
+              <Box gridColumn="span 2" p={2.5} bg="gray.50" borderRadius="md" border="1px solid" borderColor="#E4E4E7">
+                <Checkbox.Root
+                  checked={form.canText}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, canText: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.700">
+                    Permission to text (applies to callable/textable numbers for California compliance)
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Email
+                </Text>
+                <Text fontSize="sm" color="gray.600" py={1.5}>
+                  {staff.email}
+                </Text>
+              </Box>
+
               <Box>
                 <Text
                   fontSize="sm"
                   fontWeight="bold"
                   mb={1}
                 >
-                  Role
+                  User Type
                 </Text>
                 <NativeSelect.Root
                   borderColor="#E4E4E7"
@@ -219,16 +325,34 @@ export const StaffProfilePanel = ({
                 label="Last Name"
                 value={staff.lastName}
               />
-              <ProfileField
-                label="Phone Number"
-                value={staff.phoneNumber}
-              />
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Primary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{staff.phoneNumber || "—"}</Text>
+                  {staff.isPrimaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Secondary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{staff.secondaryPhoneNumber || "—"}</Text>
+                  {staff.isSecondaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Permission to Text</Text>
+                <Text fontSize="sm" color="gray.500">{staff.canText ? "Yes" : "No"}</Text>
+              </Box>
               <ProfileField
                 label="Email"
                 value={staff.email}
               />
               <ProfileField
-                label="Role"
+                label="User Type"
                 value={staff.role}
               />
             </SimpleGrid>

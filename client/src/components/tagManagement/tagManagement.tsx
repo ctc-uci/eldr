@@ -324,6 +324,74 @@ export const TagManagement = () => {
     }
   };
 
+  const handleDetachAndDelete = async () => {
+    if (selectedRows.length === 0 || isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      const rowsToDelete = [...selectedRows];
+      const deleteResults = await Promise.allSettled(
+        rowsToDelete.map(async (selected) => {
+          if (selected.sectionTitle === "Languages") {
+            await backend.post(`/languages/${selected.row.id}/detach-and-delete`);
+            return selected;
+          }
+          const path = getDeletePath(selected.sectionTitle, selected.row.id);
+          if (!path)
+            throw new Error(
+              `Unsupported tag section: ${selected.sectionTitle}`
+            );
+
+          await backend.delete(path);
+          return selected;
+        })
+      );
+      const deletedRows = deleteResults.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : []
+      );
+      const failedRows = rowsToDelete.filter(
+        (selected) =>
+          !deletedRows.some(
+            (deleted) =>
+              deleted.sectionTitle === selected.sectionTitle &&
+              deleted.row.id === selected.row.id
+          )
+      );
+
+      setSections((prev) =>
+        prev.map((section) => ({
+          ...section,
+          rows: section.rows.filter(
+            (row) =>
+              !deletedRows.some(
+                (selected) =>
+                  selected.sectionTitle === section.title &&
+                  selected.row.id === row.id
+              )
+          ),
+        }))
+      );
+      setSelectedRowKeys(
+        failedRows.map(({ sectionTitle, row }) =>
+          getRowKey(sectionTitle, row.name)
+        )
+      );
+
+      if (failedRows.length === 0) {
+        setIsDeleteDialogOpen(false);
+      } else {
+        const failures = deleteResults.flatMap((result) =>
+          result.status === "rejected" ? [result.reason] : []
+        );
+        console.error("Failed to detach and delete some selected tags", failures);
+      }
+    } catch (error) {
+      console.error("Failed to detach and delete selected tags", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const toggleSectionSelection = (
     sectionTitle: string,
     rows: Section["rows"]
@@ -559,8 +627,10 @@ export const TagManagement = () => {
           open={isDeleteDialogOpen}
           count={selectedRows.length}
           isDeleting={isDeleting}
+          selectedRows={selectedRows}
           onClose={() => setIsDeleteDialogOpen(false)}
           onConfirm={handleConfirmDelete}
+          onDetachAndDelete={handleDetachAndDelete}
         />
       </Box>
     </Flex>

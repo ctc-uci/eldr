@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Badge,
@@ -94,6 +94,16 @@ export const EventInfo = ({
     setShowCopyMessage(true);
   };
 
+  const meetingLinksList = useMemo(() => {
+    if (!event) return [];
+    const { meetingLink } = getClinicLocationDisplay(event);
+    if (!meetingLink) return [];
+    return meetingLink
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }, [event]);
+
   if (!event) {
     return (
       <Flex
@@ -187,13 +197,6 @@ export const EventInfo = ({
   const locationType = event.locationType ?? event.location_type;
   const showMeetingLink =
     meetingLink && (locationType === "online" || locationType === "hybrid");
-  const meetingLinksList = useMemo(() => {
-    if (!meetingLink) return [];
-    return meetingLink
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-  }, [meetingLink]);
   const locationTypeTag = formatLocationTypeTag(locationType);
 
   const isUpcoming = event.startTime
@@ -492,7 +495,10 @@ export const EventInfo = ({
             <Button
               variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
-              bg={!event.isRegistered && "#002992"}
+              bg={!event.isRegistered ? "brand.navy" : undefined}
+              _hover={!event.isRegistered ? { bg: "brand.navyHover" } : undefined}
+              fontFamily="heading"
+              fontWeight="600"
               px="18px"
               py="6px"
               onClick={handleRegistration}

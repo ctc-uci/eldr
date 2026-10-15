@@ -2,27 +2,29 @@ export const createInitialProfile = () => ({
   firstName: "",
   lastName: "",
   phone: "",
+  secondaryPhone: "",
+  isPrimaryMobile: false,
+  isSecondaryMobile: false,
+  canText: false,
   email: "",
   photoUrl: "",
   listedExperience: "",
-  notary: "Inactive",
+  notary: "No",
   occupation: "Volunteer",
-  lawSchoolYear: "N/A",
-  stateBarState: "N/A",
-  stateBarNumber: "N/A",
+  lawSchoolYear: "",
+  isCaliforniaLicensed: false,
+  stateBarNumber: "",
+  affiliatedEmployer: "",
   languages: [],
   interests: [],
 });
 
-export const NOTARY_OPTIONS = ["Active", "Inactive"];
-export const LANGUAGE_OPTIONS = [
-  "English",
-  "Spanish",
-  "Japanese",
-  "Mandarin",
-  "Korean",
-];
-import { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY } from "@eldr/shared";
+import {
+  PROFICIENCY_OPTIONS,
+  DEFAULT_PROFICIENCY,
+  DEFAULT_TOP_LANGUAGES,
+} from "@eldr/shared";
 
-export { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY };
+export const NOTARY_OPTIONS = ["Yes (active)", "Yes (inactive)", "No"];
 
+export { PROFICIENCY_OPTIONS, DEFAULT_PROFICIENCY, DEFAULT_TOP_LANGUAGES };

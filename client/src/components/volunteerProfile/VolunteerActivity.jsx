@@ -219,7 +219,7 @@ export const VolunteerActivity = ({ volunteerId }) => {
             borderWidth="1px"
             borderColor="gray.200"
           >
-            <Text fontSize="3xl" fontWeight="bold" color="gray.900">
+            <Text fontSize="3xl" fontWeight="bold" color="brand.navy" fontFamily="heading">
               {loading ? "-" : renderHours(totalHours)}
             </Text>
             <Text fontSize="sm" color="gray.600" mt={1}>
@@ -235,7 +235,7 @@ export const VolunteerActivity = ({ volunteerId }) => {
             borderWidth="1px"
             borderColor="gray.200"
           >
-            <Text fontSize="3xl" fontWeight="bold" color="gray.900">
+            <Text fontSize="3xl" fontWeight="bold" color="brand.navy" fontFamily="heading">
               {loading ? "-" : pastRegisteredEvents.length}
             </Text>
             <Text fontSize="sm" color="gray.600" mt={1}>
@@ -319,8 +319,10 @@ export const VolunteerActivity = ({ volunteerId }) => {
               size="xs"
               minW="32px"
               variant={page === n ? "solid" : "ghost"}
-              bg={page === n ? "gray.900" : undefined}
-              color={page === n ? "white" : undefined}
+              bg={page === n ? "brand.navy" : undefined}
+              color={page === n ? "white" : "gray.700"}
+              fontWeight={page === n ? "600" : "normal"}
+              _hover={{ bg: page === n ? "brand.navyHover" : "skyBlue.100" }}
               onClick={() => setPage(n)}
             >
               {n}

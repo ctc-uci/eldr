@@ -17,7 +17,11 @@ import { ProfileInformation } from "./ProfileInformation";
 import { createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
 
-import { normalizeProficiency, DEFAULT_PROFICIENCY } from "@eldr/shared";
+import {
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  DEFAULT_TOP_LANGUAGES,
+} from "@eldr/shared";
 
 const PROFILE_TABS = [
   { value: "information", label: "Profile Information", icon: LuUser },
@@ -93,13 +97,19 @@ export const ProfileManagement = () => {
 
         const volunteerResp = await backend.get(`/volunteers/${id}`);
         const volunteer = volunteerResp?.data?.[0];
-        const [languageCatalogResp, areaCatalogResp, volunteerLanguagesResp, volunteerAreasResp] =
-          await Promise.all([
-            backend.get("/languages"),
-            backend.get("/areas-of-practice"),
-            backend.get(`/volunteers/${id}/languages`),
-            backend.get(`/volunteers/${id}/areas-of-practice`),
-          ]);
+        const [
+          languageCatalogResp,
+          areaCatalogResp,
+          volunteerLanguagesResp,
+          volunteerAreasResp,
+          volunteerRolesResp,
+        ] = await Promise.all([
+          backend.get("/languages"),
+          backend.get("/areas-of-practice"),
+          backend.get(`/volunteers/${id}/languages`),
+          backend.get(`/volunteers/${id}/areas-of-practice`),
+          backend.get(`/volunteers/${id}/roles`).catch(() => ({ data: [] })),
+        ]);
 
         if (!volunteer) {
           setLoadError("Unable to find volunteer information.");
@@ -110,6 +120,21 @@ export const ProfileManagement = () => {
         const allAreas = areaCatalogResp?.data ?? [];
         const volunteerLanguages = volunteerLanguagesResp?.data ?? [];
         const volunteerAreas = volunteerAreasResp?.data ?? [];
+        const userRoles = volunteerRolesResp?.data ?? [];
+        const primaryRole = userRoles[0]?.roleName ?? userRoles[0]?.role_name ?? "Volunteer";
+
+        const notaryDisplay =
+          volunteer.notaryStatus === "active" || (volunteer.notaryStatus === undefined && volunteer.isNotary === true)
+            ? "Yes (active)"
+            : volunteer.notaryStatus === "inactive"
+              ? "Yes (inactive)"
+              : "No";
+
+        const isCalLicensed = Boolean(
+          volunteer.isCaliforniaLicensed ??
+            (volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+              volunteer.stateBarCertificate?.toLowerCase() === "ca")
+        );
 
         setLanguageCatalog(allLanguages);
         setAreaCatalog(allAreas);
@@ -121,14 +146,19 @@ export const ProfileManagement = () => {
           firstName: volunteer.firstName ?? "",
           lastName: volunteer.lastName ?? "",
           phone: volunteer.phoneNumber ?? "",
+          secondaryPhone: volunteer.secondaryPhoneNumber ?? "",
+          isPrimaryMobile: Boolean(volunteer.isPrimaryMobile),
+          isSecondaryMobile: Boolean(volunteer.isSecondaryMobile),
+          canText: Boolean(volunteer.canText),
           email: volunteer.email ?? userRow.email ?? "",
           photoUrl: userRow.profilePictureUrl ?? "",
           listedExperience: volunteer.listedExperience ?? "",
-          notary: volunteer.isNotary ? "Active" : "Inactive",
-          occupation: "Volunteer",
-          lawSchoolYear: "N/A",
-          stateBarState: "N/A",
-          stateBarNumber: "N/A",
+          notary: notaryDisplay,
+          occupation: primaryRole,
+          lawSchoolYear: volunteer.lawSchoolYear ?? "",
+          isCaliforniaLicensed: isCalLicensed,
+          stateBarNumber: volunteer.stateBarNumber ?? "",
+          affiliatedEmployer: volunteer.affiliatedEmployer ?? "",
           languages: volunteerLanguages.map((row) => ({
             id: `lang-${row.id}`,
             language: row.language,
@@ -206,12 +236,30 @@ export const ProfileManagement = () => {
           ? areaCatalog
           : (await backend.get("/areas-of-practice")).data ?? [];
 
+      const isNotaryActive = draft.notary === "Yes (active)";
+      const notaryStatusVal =
+        draft.notary === "Yes (active)"
+          ? "active"
+          : draft.notary === "Yes (inactive)"
+            ? "inactive"
+            : "no";
+
       await backend.put(`/volunteers/${volunteerId}`, {
         first_name: draft.firstName,
         last_name: draft.lastName,
         email: draft.email,
         phone_number: draft.phone,
-        is_notary: draft.notary === "Active",
+        secondary_phone_number: draft.secondaryPhone || null,
+        is_primary_mobile: Boolean(draft.isPrimaryMobile),
+        is_secondary_mobile: Boolean(draft.isSecondaryMobile),
+        can_text: Boolean(draft.canText),
+        is_notary: isNotaryActive,
+        notary_status: notaryStatusVal,
+        affiliated_employer: draft.affiliatedEmployer || null,
+        law_school_year: draft.occupation?.toLowerCase().includes("law student") ? (draft.lawSchoolYear || null) : null,
+        is_california_licensed: Boolean(draft.isCaliforniaLicensed),
+        state_bar_certificate: draft.isCaliforniaLicensed ? "California" : null,
+        state_bar_number: draft.isCaliforniaLicensed ? (draft.stateBarNumber || null) : null,
         listed_experience: draft.listedExperience?.trim() ? draft.listedExperience.trim() : null,
       });
 
@@ -245,6 +293,27 @@ export const ProfileManagement = () => {
         if (!normalizedName || seenLanguageNames.has(normalizedName)) continue;
         seenLanguageNames.add(normalizedName);
         uniqueLanguageRows.push(row);
+      }
+
+      // Auto-create any custom language that does not exist yet in DB
+      for (const row of uniqueLanguageRows) {
+        const trimmed = row.language?.trim();
+        if (!trimmed) continue;
+        const exists = allLanguages.some(
+          (l) => normalizeText(l.language) === normalizeText(trimmed)
+        );
+        if (!exists) {
+          try {
+            const createResp = await backend.post("/languages", { language: trimmed });
+            const created = createResp?.data;
+            const newRecord = Array.isArray(created) ? created[0] : created;
+            if (newRecord?.id) {
+              allLanguages.push(newRecord);
+            }
+          } catch (err) {
+            console.error("Failed to create language on save:", trimmed, err);
+          }
+        }
       }
 
       const nextLanguageIds = [];
@@ -411,10 +480,12 @@ export const ProfileManagement = () => {
                   px={4}
                   py={2}
                   fontSize="13px"
-                  fontWeight={400}
-                  color="gray.600"
+                  fontFamily="heading"
+                  fontWeight={isActive ? "600" : "500"}
+                  color={isActive ? "brand.navy" : "gray.600"}
                   bg={isActive ? "white" : "transparent"}
-                  borderTop={isActive ? "1px solid" : "none"}
+                  borderTop={isActive ? "2px solid" : "none"}
+                  borderTopColor={isActive ? "brand.navy" : "transparent"}
                   borderLeft={isActive ? "1px solid" : "none"}
                   borderRight={isActive ? "1px solid" : "none"}
                   borderBottom={isActive ? "1px solid white" : "none"}
@@ -424,12 +495,13 @@ export const ProfileManagement = () => {
                   mb="-1px"
                   position="relative"
                   zIndex={isActive ? 1 : 0}
-                  _hover={{ bg: isActive ? "white" : "gray.50" }}
+                  _hover={{ bg: isActive ? "white" : "gray.50", color: "brand.navy" }}
                   _selected={{
                     bg: "white",
-                    color: "gray.600",
-                    fontWeight: 400,
-                    borderTop: "1px solid",
+                    color: "brand.navy",
+                    fontWeight: "600",
+                    borderTop: "2px solid",
+                    borderTopColor: "brand.navy",
                     borderLeft: "1px solid",
                     borderRight: "1px solid",
                     borderBottom: "1px solid white",
@@ -438,8 +510,8 @@ export const ProfileManagement = () => {
                     boxShadow: "none",
                   }}
                 >
-                  <Icon size={16} />
-                  <Text as="span" fontSize="13px" fontWeight={400}>
+                  <Icon size={16} color={isActive ? "var(--chakra-colors-brand-navy)" : undefined} />
+                  <Text as="span" fontSize="13px" fontWeight={isActive ? "600" : "500"}>
                     {label}
                   </Text>
                 </Tabs.Trigger>
@@ -450,7 +522,7 @@ export const ProfileManagement = () => {
           <Tabs.Content value="information" p={0}>
             {isLoadingProfile ? (
               <VStack py={16} gap={3}>
-                <Spinner color="blue.500" />
+                <Spinner color="brand.navy" />
                 <Text color="gray.600" fontSize="sm">
                   Loading profile...
                 </Text>
@@ -468,12 +540,25 @@ export const ProfileManagement = () => {
                 isSaving={isSavingProfile}
                 photoError={photoError}
                 errorMessage={loadError}
-                languageOptions={Array.from(
-                  new Set([
-                    ...languageCatalog.map((row) => row.language),
-                    ...display.languages.map((row) => row.language),
-                  ]),
-                )}
+                languageOptions={(() => {
+                  const combined = Array.from(
+                    new Set([
+                      ...DEFAULT_TOP_LANGUAGES,
+                      ...languageCatalog.map((row) => row.language),
+                      ...display.languages.map((row) => row.language),
+                    ])
+                  );
+                  const topSet = new Set(
+                    DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase())
+                  );
+                  const topList = DEFAULT_TOP_LANGUAGES.filter((t) =>
+                    combined.some((c) => c.toLowerCase() === t.toLowerCase())
+                  );
+                  const remaining = combined
+                    .filter((c) => !topSet.has(c.toLowerCase()))
+                    .sort((a, b) => a.localeCompare(b));
+                  return [...topList, ...remaining];
+                })()}
                 areaOptions={Array.from(
                   new Set([
                     ...areaCatalog.map((row) => row.areasOfPractice),
