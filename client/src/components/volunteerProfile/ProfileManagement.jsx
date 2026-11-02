@@ -244,6 +244,10 @@ export const ProfileManagement = () => {
             ? "inactive"
             : "no";
 
+      const roleLabel = (draft.occupation || draft.role || "").toLowerCase();
+      const isLawStudent = roleLabel.includes("law student");
+      const isAttorney = roleLabel.includes("attorney");
+
       await backend.put(`/volunteers/${volunteerId}`, {
         first_name: draft.firstName,
         last_name: draft.lastName,
@@ -256,10 +260,10 @@ export const ProfileManagement = () => {
         is_notary: isNotaryActive,
         notary_status: notaryStatusVal,
         affiliated_employer: draft.affiliatedEmployer || null,
-        law_school_year: draft.occupation?.toLowerCase().includes("law student") ? (draft.lawSchoolYear || null) : null,
-        is_california_licensed: Boolean(draft.isCaliforniaLicensed),
-        state_bar_certificate: draft.isCaliforniaLicensed ? "California" : null,
-        state_bar_number: draft.isCaliforniaLicensed ? (draft.stateBarNumber || null) : null,
+        law_school_year: isLawStudent ? (draft.lawSchoolYear || null) : null,
+        is_california_licensed: isAttorney ? Boolean(draft.isCaliforniaLicensed) : false,
+        state_bar_certificate: isAttorney && draft.isCaliforniaLicensed ? "California" : null,
+        state_bar_number: isAttorney && draft.isCaliforniaLicensed ? (draft.stateBarNumber || null) : null,
         listed_experience: draft.listedExperience?.trim() ? draft.listedExperience.trim() : null,
       });
 
@@ -399,10 +403,10 @@ export const ProfileManagement = () => {
       setProfile({
         ...draft,
         photoUrl: savedPhotoUrl,
-        occupation: "Volunteer",
-        lawSchoolYear: "N/A",
-        stateBarState: "N/A",
-        stateBarNumber: "N/A",
+        occupation: draft.occupation || "Volunteer",
+        lawSchoolYear: isLawStudent ? (draft.lawSchoolYear ?? "") : "",
+        stateBarNumber: isAttorney && draft.isCaliforniaLicensed ? (draft.stateBarNumber ?? "") : "",
+        isCaliforniaLicensed: isAttorney ? Boolean(draft.isCaliforniaLicensed) : false,
         languages: normalizedLanguages,
         interests: resolvedAreas,
       });

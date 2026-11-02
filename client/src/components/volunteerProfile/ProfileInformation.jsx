@@ -334,6 +334,10 @@ export const ProfileInformation = ({
   languageOptions = [],
   areaOptions = [],
 }) => {
+  const roleLabel = (data.occupation || data.role || "").toLowerCase();
+  const isLawStudent = roleLabel.includes("law student");
+  const isAttorney = roleLabel.includes("attorney");
+
   const photoInputRef = useRef(null);
   const [localLanguageOptions, setLocalLanguageOptions] = useState(languageOptions);
   useEffect(() => {
@@ -776,7 +780,7 @@ export const ProfileInformation = ({
             </Box>
 
             {/* Show Law School Year only if role is Law Student */}
-            {(data.occupation || "").toLowerCase().includes("law student") && (
+            {isLawStudent && (
               <Box>
                 <FieldLabel>Law School Year</FieldLabel>
                 {isEditing ? (
@@ -802,7 +806,7 @@ export const ProfileInformation = ({
           </SimpleGrid>
 
           {/* California Bar Admission for Attorneys */}
-          {((data.occupation || "").toLowerCase().includes("attorney") || Boolean(data.isCaliforniaLicensed)) && (
+          {isAttorney && (
             <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md" bg="gray.50" maxW="560px">
               {isEditing ? (
                 <>

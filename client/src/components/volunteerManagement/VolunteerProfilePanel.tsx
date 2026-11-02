@@ -194,6 +194,14 @@ export const VolunteerProfilePanel = ({
   const setField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
+  const currentRoles = isEditing
+    ? editRoles.map((r) => r.roleName)
+    : (volunteer?.roles && volunteer.roles.length > 0 ? volunteer.roles : [volunteer?.role || ""]);
+  const roleLabel = currentRoles.filter(Boolean).join(" ").toLowerCase();
+
+  const isLawStudent = roleLabel.includes("law student");
+  const isAttorney = roleLabel.includes("attorney");
+
   const enterEditMode = async () => {
     if (!volunteer) return;
     const currentNotary =
@@ -293,10 +301,10 @@ export const VolunteerProfilePanel = ({
       is_notary: form.notaryStatus === "active",
       notary_status: form.notaryStatus || null,
       affiliated_employer: form.affiliated || null,
-      law_school_year: form.lawSchoolYear || null,
-      is_california_licensed: form.isCaliforniaLicensed,
-      state_bar_certificate: form.isCaliforniaLicensed ? "California" : null,
-      state_bar_number: form.isCaliforniaLicensed ? (form.stateBarNumber || null) : null,
+      law_school_year: isLawStudent ? (form.lawSchoolYear || null) : null,
+      is_california_licensed: isAttorney ? form.isCaliforniaLicensed : false,
+      state_bar_certificate: isAttorney && form.isCaliforniaLicensed ? "California" : null,
+      state_bar_number: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || null) : null,
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
@@ -388,10 +396,10 @@ export const VolunteerProfilePanel = ({
       experienceLevel: volunteer.experienceLevel ?? "",
       areasOfPractice: resolvedInterests.map((a) => a.name),
       affiliatedEmployer: form.affiliated || undefined,
-      lawSchoolYear: form.lawSchoolYear || undefined,
-      isCaliforniaLicensed: form.isCaliforniaLicensed,
-      stateBarCertificate: form.isCaliforniaLicensed ? "California" : undefined,
-      stateBarNumber: form.isCaliforniaLicensed ? (form.stateBarNumber || undefined) : undefined,
+      lawSchoolYear: isLawStudent ? (form.lawSchoolYear || undefined) : undefined,
+      isCaliforniaLicensed: isAttorney ? form.isCaliforniaLicensed : false,
+      stateBarCertificate: isAttorney && form.isCaliforniaLicensed ? "California" : undefined,
+      stateBarNumber: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || undefined) : undefined,
       isNotary: form.notaryStatus === "active",
       notaryStatus: form.notaryStatus || undefined,
     });
@@ -685,7 +693,7 @@ export const VolunteerProfilePanel = ({
                 </Box>
 
                 {/* Show Law School Year only if role is Law Student */}
-                {editRoles.some((r) => r.roleName.toLowerCase().includes("law student")) && (
+                {isLawStudent && (
                   <Box>
                     <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
                     <NativeSelect.Root borderColor="#E4E4E7" size="sm">
@@ -705,36 +713,38 @@ export const VolunteerProfilePanel = ({
                 )}
 
                 {/* California Bar Admission (toggle + number if active) */}
-                <Box gridColumn="span 2" p={3} borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" bg="#FAFAFA">
-                  <Checkbox.Root
-                    checked={form.isCaliforniaLicensed}
-                    onCheckedChange={(e) =>
-                      setForm((prev) => ({ ...prev, isCaliforniaLicensed: !!e.checked }))
-                    }
-                    colorPalette="blue"
-                    size="sm"
-                  >
-                    <Checkbox.HiddenInput />
-                    <Checkbox.Control />
-                    <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
-                      Licensed to practice law in California?
-                    </Checkbox.Label>
-                  </Checkbox.Root>
-                  {form.isCaliforniaLicensed && (
-                    <Box mt={3} maxW="280px">
-                      <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.700">State Bar Number</Text>
-                      <Input
-                        size="sm"
-                        borderColor="#E4E4E7"
-                        bg="white"
-                        placeholder="Enter bar number"
-                        _placeholder={{ color: "#A1A1AA" }}
-                        value={form.stateBarNumber}
-                        onChange={setField("stateBarNumber")}
-                      />
-                    </Box>
-                  )}
-                </Box>
+                {isAttorney && (
+                  <Box gridColumn="span 2" p={3} borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" bg="#FAFAFA">
+                    <Checkbox.Root
+                      checked={form.isCaliforniaLicensed}
+                      onCheckedChange={(e) =>
+                        setForm((prev) => ({ ...prev, isCaliforniaLicensed: !!e.checked }))
+                      }
+                      colorPalette="blue"
+                      size="sm"
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                        Licensed to practice law in California?
+                      </Checkbox.Label>
+                    </Checkbox.Root>
+                    {form.isCaliforniaLicensed && (
+                      <Box mt={3} maxW="280px">
+                        <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.700">State Bar Number</Text>
+                        <Input
+                          size="sm"
+                          borderColor="#E4E4E7"
+                          bg="white"
+                          placeholder="Enter bar number"
+                          _placeholder={{ color: "#A1A1AA" }}
+                          value={form.stateBarNumber}
+                          onChange={setField("stateBarNumber")}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </SimpleGrid>
 
               {/* Languages */}
@@ -1000,16 +1010,13 @@ export const VolunteerProfilePanel = ({
                           : "—"}
                   </Text>
                 </Box>
-                {((volunteer.roles || []).some((r) => r.toLowerCase().includes("law student")) || (volunteer.role || "").toLowerCase().includes("law student")) && (
+                {isLawStudent && (
                   <Box>
                     <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
                     <Text fontSize="sm" color="gray.500">{volunteer.lawSchoolYear || "—"}</Text>
                   </Box>
                 )}
-                {((volunteer.roles || []).some((r) => r.toLowerCase().includes("attorney")) ||
-                  (volunteer.role || "").toLowerCase().includes("attorney") ||
-                  volunteer.isCaliforniaLicensed ||
-                  volunteer.stateBarCertificate) && (
+                {isAttorney && (
                   <>
                     <Box>
                       <Text fontSize="sm" fontWeight="bold" mb={1}>Licensed in California?</Text>

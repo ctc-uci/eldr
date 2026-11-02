@@ -267,9 +267,9 @@ export const AddProfileView = () => {
   }, [backend]);
 
   const selectedRoleObj = rolesList.find((r) => String(r.id) === selectedVolunteerRoleId);
-  const selectedRoleName = (selectedRoleObj?.roleName || "").toLowerCase();
-  const isLawStudent = selectedRoleName.includes("law student");
-  const isAttorney = selectedRoleName.includes("attorney");
+  const roleLabel = (selectedRoleObj?.roleName || "").toLowerCase();
+  const isLawStudent = roleLabel.includes("law student");
+  const isAttorney = roleLabel.includes("attorney");
 
   const handleContinue = async () => {
     const valid = await trigger([
@@ -320,9 +320,9 @@ export const AddProfileView = () => {
           notary_status: notaryStatus || null,
           affiliated_employer: affiliated || null,
           law_school_year: isLawStudent ? (lawSchoolYear || null) : null,
-          is_california_licensed: isCaliforniaLicensed,
-          state_bar_certificate: isCaliforniaLicensed ? "California" : null,
-          state_bar_number: isCaliforniaLicensed ? (stateBarNumber || null) : null,
+          is_california_licensed: isAttorney ? isCaliforniaLicensed : false,
+          state_bar_certificate: isAttorney && isCaliforniaLicensed ? "California" : null,
+          state_bar_number: isAttorney && isCaliforniaLicensed ? (stateBarNumber || null) : null,
         });
 
         const volunteerId = volunteerRes.data.id;
@@ -862,50 +862,52 @@ export const AddProfileView = () => {
               gap={16}
               mr="16rem"
             >
-              <Box
-                w="380px"
-                flexShrink={0}
-                p={3.5}
-                borderWidth="1px"
-                borderColor="#E4E4E7"
-                borderRadius="md"
-                bg="#FAFAFA"
-              >
-                <Checkbox.Root
-                  checked={isCaliforniaLicensed}
-                  onCheckedChange={(e) => setIsCaliforniaLicensed(!!e.checked)}
-                  colorPalette="blue"
-                  size="sm"
+              {isAttorney && (
+                <Box
+                  w="380px"
+                  flexShrink={0}
+                  p={3.5}
+                  borderWidth="1px"
+                  borderColor="#E4E4E7"
+                  borderRadius="md"
+                  bg="#FAFAFA"
                 >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control />
-                  <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
-                    Licensed to practice law in California?
-                  </Checkbox.Label>
-                </Checkbox.Root>
+                  <Checkbox.Root
+                    checked={isCaliforniaLicensed}
+                    onCheckedChange={(e) => setIsCaliforniaLicensed(!!e.checked)}
+                    colorPalette="blue"
+                    size="sm"
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                      Licensed to practice law in California?
+                    </Checkbox.Label>
+                  </Checkbox.Root>
 
-                {isCaliforniaLicensed && (
-                  <Box mt={3}>
-                    <Text
-                      fontSize="xs"
-                      fontWeight="bold"
-                      mb={1}
-                      color="gray.700"
-                    >
-                      California State Bar Number
-                    </Text>
-                    <Input
-                      size="sm"
-                      bg="white"
-                      borderColor="#E4E4E7"
-                      placeholder="Enter number"
-                      _placeholder={{ color: "#A1A1AA" }}
-                      value={stateBarNumber}
-                      onChange={(e) => setStateBarNumber(e.target.value)}
-                    />
-                  </Box>
-                )}
-              </Box>
+                  {isCaliforniaLicensed && (
+                    <Box mt={3}>
+                      <Text
+                        fontSize="xs"
+                        fontWeight="bold"
+                        mb={1}
+                        color="gray.700"
+                      >
+                        California State Bar Number
+                      </Text>
+                      <Input
+                        size="sm"
+                        bg="white"
+                        borderColor="#E4E4E7"
+                        placeholder="Enter number"
+                        _placeholder={{ color: "#A1A1AA" }}
+                        value={stateBarNumber}
+                        onChange={(e) => setStateBarNumber(e.target.value)}
+                      />
+                    </Box>
+                  )}
+                </Box>
+              )}
 
               <Box flex={1}>
                 <Text
