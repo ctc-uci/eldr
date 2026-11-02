@@ -61,6 +61,7 @@ interface RoleEntry { id: number; roleName: string; }
 interface FormState {
   firstName: string;
   lastName: string;
+  email: string;
   phoneNumber: string;
   secondaryPhoneNumber: string;
   isPrimaryMobile: boolean;
@@ -109,6 +110,7 @@ export const VolunteerProfilePanel = ({
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
+    email: "",
     phoneNumber: "",
     secondaryPhoneNumber: "",
     isPrimaryMobile: false,
@@ -220,6 +222,7 @@ export const VolunteerProfilePanel = ({
     setForm({
       firstName: volunteer.firstName,
       lastName: volunteer.lastName,
+      email: volunteer.email ?? "",
       phoneNumber: volunteer.phoneNumber ?? "",
       secondaryPhoneNumber: volunteer.secondaryPhoneNumber ?? "",
       isPrimaryMobile: Boolean(volunteer.isPrimaryMobile),
@@ -292,7 +295,7 @@ export const VolunteerProfilePanel = ({
     await backend.put(`/volunteers/${volunteer.id}`, {
       first_name: form.firstName,
       last_name: form.lastName,
-      email: volunteer.email,
+      email: form.email || volunteer.email,
       phone_number: form.phoneNumber || null,
       secondary_phone_number: form.secondaryPhoneNumber || null,
       is_primary_mobile: form.isPrimaryMobile,
@@ -313,7 +316,9 @@ export const VolunteerProfilePanel = ({
 
     await Promise.all(
       removedLanguageIds.map((id) =>
-        backend.delete(`/volunteers/${volunteer.id}/languages/${id}`)
+        backend.delete(`/volunteers/${volunteer.id}/languages/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
       )
     );
 
@@ -332,7 +337,11 @@ export const VolunteerProfilePanel = ({
     const rolesToRemove = originalRoleIds.filter((id) => !currentRoleIds.includes(id));
     await Promise.all([
       ...rolesToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/roles`, { roleId: id })),
-      ...rolesToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/roles/${id}`)),
+      ...rolesToRemove.map((id) =>
+        backend.delete(`/volunteers/${volunteer.id}/roles/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
+      ),
     ]);
 
     // Resolve null-id interests: match by name or create new area
@@ -368,7 +377,11 @@ export const VolunteerProfilePanel = ({
 
     await Promise.all([
       ...interestsToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/areas-of-practice`, { areaOfPracticeId: id })),
-      ...interestsToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${id}`)),
+      ...interestsToRemove.map((id) =>
+        backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
+      ),
     ]);
 
     // Optimistically update view mode state
@@ -385,7 +398,7 @@ export const VolunteerProfilePanel = ({
     await onConfirm?.({
       firstName: form.firstName,
       lastName: form.lastName,
-      email: volunteer.email,
+      email: form.email || volunteer.email,
       phoneNumber: form.phoneNumber,
       secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
       isPrimaryMobile: form.isPrimaryMobile,
