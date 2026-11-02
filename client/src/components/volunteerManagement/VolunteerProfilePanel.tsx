@@ -206,6 +206,7 @@ export const VolunteerProfilePanel = ({
 
   const enterEditMode = async () => {
     if (!volunteer) return;
+    setSaveError(null);
     const currentNotary =
       volunteer.notaryStatus ??
       (volunteer.isNotary === true
@@ -235,39 +236,33 @@ export const VolunteerProfilePanel = ({
       stateBarNumber: volunteer.stateBarNumber ?? "",
       affiliated: volunteer.affiliatedEmployer ?? "",
     });
-    try {
-      const res = await backend.get<{ areaOfPracticeId: number; areasOfPractice: string }[]>(
-        `/volunteers/${volunteer.id}/areas-of-practice`
-      );
-      setEditInterests(res.data.map((a) => ({ id: a.areaOfPracticeId, name: a.areasOfPractice })));
-      setOriginalInterestIds(res.data.map((a) => a.areaOfPracticeId));
-    } catch {
-      setEditInterests([]);
-      setOriginalInterestIds([]);
-    }
-    setInterestInput("");
 
     try {
-      const res = await backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`);
-      setEditRoles(res.data);
-      setOriginalRoleIds(res.data.map((r) => r.id));
-    } catch {
-      setEditRoles([]);
-      setOriginalRoleIds([]);
-    }
-    setSelectedRoleId("");
+      const [areasRes, rolesRes, langsRes] = await Promise.all([
+        backend.get<{ areaOfPracticeId: number; areasOfPractice: string }[]>(
+          `/volunteers/${volunteer.id}/areas-of-practice`
+        ),
+        backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`),
+        backend.get<
+          {
+            id: number;
+            language: string;
+            verbalProficiency?: string;
+            writtenProficiency?: string;
+            proficiency?: string;
+          }[]
+        >(`/volunteers/${volunteer.id}/languages`),
+      ]);
 
-    try {
-      const res = await backend.get<
-        {
-          id: number;
-          language: string;
-          verbalProficiency?: string;
-          writtenProficiency?: string;
-          proficiency?: string;
-        }[]
-      >(`/volunteers/${volunteer.id}/languages`);
-      const mapped = res.data.map((l) => ({
+      setEditInterests(areasRes.data.map((a) => ({ id: a.areaOfPracticeId, name: a.areasOfPractice })));
+      setOriginalInterestIds(areasRes.data.map((a) => a.areaOfPracticeId));
+      setInterestInput("");
+
+      setEditRoles(rolesRes.data);
+      setOriginalRoleIds(rolesRes.data.map((r) => r.id));
+      setSelectedRoleId("");
+
+      const mapped = langsRes.data.map((l) => ({
         languageId: l.id,
         language: l.language,
         verbalProficiency: l.verbalProficiency ?? l.proficiency ?? "Professional",
@@ -278,13 +273,13 @@ export const VolunteerProfilePanel = ({
           ? mapped
           : [{ languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" }]
       );
-      setOriginalLanguageIds(res.data.map((l) => l.id));
-    } catch {
-      setEditLanguages([
-        { languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" },
-      ]);
+      setOriginalLanguageIds(langsRes.data.map((l) => l.id));
+
+      setIsEditing(true);
+    } catch (err) {
+      console.error("Failed to load volunteer details for editing:", err);
+      setSaveError("Failed to load volunteer roles and details. Please try again.");
     }
-    setIsEditing(true);
   };
 
   const handleSave = async () => {
