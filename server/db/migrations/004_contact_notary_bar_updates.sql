@@ -10,8 +10,10 @@ ALTER TABLE public.volunteers
     ADD COLUMN IF NOT EXISTS is_california_licensed BOOLEAN DEFAULT FALSE;
 
 -- Migrate existing is_notary boolean data to notary_status if not already set.
--- Legacy is_notary = FALSE meant "No" (there was no inactive state), so only
--- TRUE maps to 'active'; everything else stays 'no'.
+-- Note: Pre-PR admin panel had an explicit "Inactive" option that saved
+-- is_notary = FALSE, but legacy FALSE also covered "Not a notary" at signup.
+-- Because the legacy schema cannot distinguish between them, only TRUE maps to
+-- 'active'; FALSE maps to 'no' (admin-set inactive notaries are not preserved).
 UPDATE public.volunteers
 SET notary_status = CASE
     WHEN is_notary = TRUE THEN 'active'

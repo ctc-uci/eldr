@@ -135,10 +135,17 @@ languagesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 languagesRouter.post("/:id/detach-and-delete", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
-        await db.tx(async (t) => {
+        const exists = await db.tx(async (t) => {
+            const lang = await t.oneOrNone("SELECT id FROM languages WHERE id = $1 FOR UPDATE", [id]);
+            if (!lang) return false;
             await t.query(`DELETE FROM clinic_languages WHERE language_id = $1`, [id]);
             await t.query(`DELETE FROM languages WHERE id = $1`, [id]);
+            return true;
         });
+
+        if (!exists) {
+            return res.status(404).send(`Language ${id} not found`);
+        }
 
         res.status(200).send(`Language ${id} detached and deleted successfully`);
     } catch (err) {
@@ -153,6 +160,10 @@ languagesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
         const { detachFromEvents } = req.query;
 
         const blockedCount = await db.tx(async (t) => {
+            // Lock the language row first with FOR UPDATE so concurrent FK inserts wait
+            const lang = await t.oneOrNone("SELECT id FROM languages WHERE id = $1 FOR UPDATE", [id]);
+            if (!lang) return -1;
+
             const tiedClinics = await t.query(
                 `SELECT clinic_id FROM clinic_languages WHERE language_id = $1`,
                 [id]
@@ -166,6 +177,10 @@ languagesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
             await t.query(`DELETE FROM languages WHERE id = $1`, [id]);
             return 0;
         });
+
+        if (blockedCount === -1) {
+            return res.status(404).send(`Language ${id} not found`);
+        }
 
         if (blockedCount > 0) {
             return res.status(400).json({

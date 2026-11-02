@@ -557,6 +557,7 @@ export const EventManagement = () => {
         onClose={() => setFilterOpen(false)}
         onApply={setActiveFilters}
         clinics={clinics}
+        search={search}
       />
     </Flex>
   );

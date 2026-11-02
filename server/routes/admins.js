@@ -36,6 +36,17 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
 
     if (!email) return res.status(400).send("email is required");
 
+    if (phoneNumber !== undefined && phoneNumber !== null && typeof phoneNumber !== "string") {
+      return res.status(400).send("phoneNumber must be a string");
+    }
+    if (
+      secondaryPhoneNumber !== undefined &&
+      secondaryPhoneNumber !== null &&
+      typeof secondaryPhoneNumber !== "string"
+    ) {
+      return res.status(400).send("secondaryPhoneNumber must be a string");
+    }
+
     let parsedIsPrimaryMobile;
     let parsedIsSecondaryMobile;
     let parsedCanText;
@@ -337,6 +348,57 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       "secondaryPhoneNumber"
     );
 
+    if (phoneNumber !== undefined && phoneNumber !== null && typeof phoneNumber !== "string") {
+      return res.status(400).send("phoneNumber must be a string");
+    }
+    if (
+      secondaryPhoneNumber !== undefined &&
+      secondaryPhoneNumber !== null &&
+      typeof secondaryPhoneNumber !== "string"
+    ) {
+      return res.status(400).send("secondaryPhoneNumber must be a string");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let nextEmail = undefined;
+    if (email !== undefined) {
+      if (typeof email !== "string" || !email.trim() || !emailRegex.test(email.trim())) {
+        return res.status(400).send("A valid email address is required");
+      }
+      nextEmail = email.trim();
+    }
+
+    const existingRows = await db.query(
+      `SELECT a.email as admin_email, u.email as user_email, u.firebase_uid
+       FROM admins a
+       LEFT JOIN users u ON a.id = u.id
+       WHERE a.id = $1`,
+      [adminId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).send("Staff profile not found");
+    }
+
+    const currentRecord = existingRows[0];
+    const currentEmail = (currentRecord.admin_email || currentRecord.user_email || "").toLowerCase();
+
+    if (nextEmail && nextEmail.toLowerCase() !== currentEmail) {
+      const duplicateUser = await db.query(
+        `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id <> $2 LIMIT 1`,
+        [nextEmail, adminId]
+      );
+      if (duplicateUser.length > 0) {
+        return res.status(409).send("Email is already in use by another account");
+      }
+
+      if (currentRecord.firebase_uid) {
+        await admin.auth().updateUser(currentRecord.firebase_uid, { email: nextEmail });
+      }
+
+      await db.query(`UPDATE users SET email = $1 WHERE id = $2`, [nextEmail, adminId]);
+    }
+
     let parsedIsPrimaryMobile;
     let parsedIsSecondaryMobile;
     let parsedCanText;
@@ -355,7 +417,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       `UPDATE admins
         SET first_name = $1,
             last_name = $2,
-            email = $3,
+            email = COALESCE($3, email),
             calendar_email = $4,
             is_supervisor = COALESCE($5, is_supervisor),
             start_date = COALESCE($7, start_date),
@@ -369,7 +431,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       [
         firstName,
         lastName,
-        email,
+        nextEmail ?? null,
         calendarEmail,
         isSupervisor,
         adminId,

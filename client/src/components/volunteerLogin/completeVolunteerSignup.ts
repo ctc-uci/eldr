@@ -22,6 +22,7 @@ export async function completeVolunteerSignup(
   const normalizedEmail = draft.email.trim().toLowerCase();
   let firebaseUid: string | null = null;
   let volunteerId: number | null = null;
+  let authUser: UserCredential["user"] | null = null;
 
   const rollback = async () => {
     if (volunteerId !== null) {
@@ -38,6 +39,13 @@ export async function completeVolunteerSignup(
         /* ignore */
       }
     }
+    if (authUser) {
+      try {
+        await authUser.delete();
+      } catch {
+        /* ignore */
+      }
+    }
   };
 
   try {
@@ -45,6 +53,7 @@ export async function completeVolunteerSignup(
       email: normalizedEmail,
       password: "placeholder",
     });
+    authUser = userCredential.user;
     firebaseUid = userCredential.user.uid;
 
     const isAttorney = (draft.roleLabel ?? "").toLowerCase().includes("attorney");

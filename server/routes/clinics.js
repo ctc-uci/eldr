@@ -143,7 +143,9 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(created));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -153,7 +155,9 @@ clinicsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
     const clinics = await db.query("SELECT * FROM clinics");
     res.status(200).json(keysToCamel(clinics));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -214,7 +218,9 @@ clinicsRouter.get("/search", verifyRole("volunteer"), async (req, res) => {
     );
     res.status(200).json(keysToCamel(clinics));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -274,7 +280,9 @@ clinicsRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
     }
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -389,7 +397,9 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -411,7 +421,9 @@ clinicsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -460,7 +472,9 @@ clinicsRouter.post(
 
       res.status(201).json(keysToCamel(result[0]));
     } catch (e) {
-      res.status(500).send(e.message);
+      console.error(e);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -487,7 +501,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(result[0]));
     } catch (e) {
-      res.status(500).send(e.message);
+      console.error(e);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -564,7 +580,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -703,7 +721,9 @@ clinicsRouter.post(
         );
       }
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -767,7 +787,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -796,7 +818,9 @@ clinicsRouter.patch(
 
       res.status(200).json(keysToCamel(data[0]));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -825,7 +849,9 @@ clinicsRouter.post(
 
       res.status(200).json(keysToCamel(newRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -850,7 +876,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -874,7 +902,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -901,7 +931,9 @@ clinicsRouter.post(
 
       res.status(201).json(keysToCamel(newRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -928,7 +960,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -952,7 +986,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -978,7 +1014,9 @@ clinicsRouter.post("/:clinicId/tags", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(newRelationship));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -1004,7 +1042,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -1027,7 +1067,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );

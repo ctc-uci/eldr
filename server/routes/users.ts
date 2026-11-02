@@ -249,12 +249,24 @@ usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-// Delete a user by ID, both in Firebase and NPO DB
-usersRouter.delete("/:firebaseUid", verifyRole("supervisor"), async (req, res) => {
+// Delete a user by ID, both in Firebase and NPO DB (supervisors can delete any user; users can delete self during signup rollback)
+usersRouter.delete("/:firebaseUid", verifyToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+    const callerUid = res.locals.decodedToken?.uid;
 
-    await admin.auth().deleteUser(firebaseUid);
+    if (process.env.NODE_ENV === "production") {
+      const userResult = await db.query("SELECT role FROM users WHERE firebase_uid = $1", [callerUid]);
+      const callerRole = userResult.at(0)?.role;
+      const isSupervisor = callerRole === "supervisor";
+      const isSelf = callerUid && callerUid === firebaseUid;
+
+      if (!isSupervisor && !isSelf) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+    }
+
+    await admin.auth().deleteUser(firebaseUid).catch(() => {});
     const user = await db.query("DELETE FROM users WHERE firebase_uid = $1", [
       firebaseUid,
     ]);

@@ -46,6 +46,7 @@ export const StaffProfilePanel = ({
   const { role } = useRoleContext();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -69,6 +70,7 @@ export const StaffProfilePanel = ({
 
   const enterEditMode = () => {
     if (!staff) return;
+    setEmailError(null);
     setForm({
       firstName: staff.firstName,
       lastName: staff.lastName,
@@ -90,6 +92,17 @@ export const StaffProfilePanel = ({
   const handleSave = async () => {
     if (!staff) return;
     const nextEmail = form.email.trim();
+    if (!nextEmail) {
+      setEmailError("Email is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(nextEmail)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+    setEmailError(null);
+
     await backend.put(`/admins/${staff.id}`, {
       firstName: form.firstName,
       lastName: form.lastName,
@@ -279,11 +292,19 @@ export const StaffProfilePanel = ({
                 <Input
                   size="sm"
                   type="email"
-                  borderColor="#E4E4E7"
+                  borderColor={emailError ? "red.500" : "#E4E4E7"}
                   value={form.email}
-                  onChange={setField("email")}
+                  onChange={(e) => {
+                    setEmailError(null);
+                    setField("email")(e);
+                  }}
                   _placeholder={{ color: "#A1A1AA" }}
                 />
+                {emailError && (
+                  <Text fontSize="xs" color="red.500" mt={1}>
+                    {emailError}
+                  </Text>
+                )}
               </Box>
 
               <Box>

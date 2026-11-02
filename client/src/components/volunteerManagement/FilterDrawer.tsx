@@ -31,13 +31,19 @@ const computeCount = (
   roles: Set<string>,
   interests: Set<string>,
   languages: Set<string>
-) =>
-  volunteers.filter((v) => {
+) => {
+  const lowerLanguages = new Set(Array.from(languages).map((l) => l.toLowerCase()));
+  return volunteers.filter((v) => {
     if (roles.size > 0 && !v.roles?.some((r) => roles.has(r))) return false;
     if (interests.size > 0 && !v.areasOfPractice?.some((a) => interests.has(a))) return false;
-    if (languages.size > 0 && !v.languages?.some((l) => languages.has(l))) return false;
+    if (
+      lowerLanguages.size > 0 &&
+      !v.languages?.some((l) => lowerLanguages.has(l.toLowerCase()))
+    )
+      return false;
     return true;
   }).length;
+};
 
 interface FilterSectionProps {
   label: string;

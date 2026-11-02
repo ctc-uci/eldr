@@ -54,8 +54,10 @@ const FilterSection = ({ label, items, checked, onToggle }) => {
   );
 };
 
-const computeCount = (clinics, clinicTypes, eventFormats, languages) =>
-  clinics.filter((c) => {
+const computeCount = (clinics, clinicTypes, eventFormats, languages, search = "") => {
+  const q = search.trim().toLowerCase();
+  return clinics.filter((c) => {
+    if (q && !(c.name || "").toLowerCase().includes(q)) return false;
     if (clinicTypes.size > 0) {
       const match = Array.from(clinicTypes).some((type) => {
         if (type === ONE_OFF_FILTER_VALUE) return isOneOffClinic(c);
@@ -67,8 +69,9 @@ const computeCount = (clinics, clinicTypes, eventFormats, languages) =>
     if (languages.size > 0 && !(c.languages ?? []).some((l) => languages.has(l.language))) return false;
     return true;
   }).length;
+};
 
-export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
+export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [], search = "" }) => {
   const { backend } = useBackendContext();
   const [languages, setLanguages] = useState([]);
   const [workshopTypes, setWorkshopTypes] = useState(DEFAULT_WORKSHOP_TYPES);
@@ -134,7 +137,7 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
     onClose();
   };
 
-  const resultCount = computeCount(clinics, checkedTypes, checkedFormats, checkedLangs);
+  const resultCount = computeCount(clinics, checkedTypes, checkedFormats, checkedLangs, search);
 
   const workshopTypeItems = [
     ...workshopTypes.map((t) => ({ value: t, label: t })),
