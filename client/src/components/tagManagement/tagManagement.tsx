@@ -260,7 +260,23 @@ export const TagManagement = () => {
     return basePath ? `/${basePath}/${id}` : null;
   };
 
-  const handleConfirmDelete = async () => {
+  type SelectedRow = (typeof selectedRows)[number];
+
+  const deleteViaPath = async (selected: SelectedRow) => {
+    const path = getDeletePath(selected.sectionTitle, selected.row.id);
+    if (!path)
+      throw new Error(`Unsupported tag section: ${selected.sectionTitle}`);
+
+    await backend.delete(path);
+  };
+
+  // Shared bookkeeping for every bulk-delete path: runs `deleteOne` for each
+  // selected row, removes the rows that succeeded, keeps failed rows selected,
+  // and only closes the dialog when everything was deleted.
+  const runBulkDelete = async (
+    deleteOne: (selected: SelectedRow) => Promise<void>,
+    failureLabel: string
+  ) => {
     if (selectedRows.length === 0 || isDeleting) return;
 
     try {
@@ -268,39 +284,26 @@ export const TagManagement = () => {
       const rowsToDelete = [...selectedRows];
       const deleteResults = await Promise.allSettled(
         rowsToDelete.map(async (selected) => {
-          const path = getDeletePath(selected.sectionTitle, selected.row.id);
-          if (!path)
-            throw new Error(
-              `Unsupported tag section: ${selected.sectionTitle}`
-            );
-
-          await backend.delete(path);
+          await deleteOne(selected);
           return selected;
         })
       );
       const deletedRows = deleteResults.flatMap((result) =>
         result.status === "fulfilled" ? [result.value] : []
       );
+      const isDeleted = (sectionTitle: string, rowId: number) =>
+        deletedRows.some(
+          (deleted) =>
+            deleted.sectionTitle === sectionTitle && deleted.row.id === rowId
+        );
       const failedRows = rowsToDelete.filter(
-        (selected) =>
-          !deletedRows.some(
-            (deleted) =>
-              deleted.sectionTitle === selected.sectionTitle &&
-              deleted.row.id === selected.row.id
-          )
+        (selected) => !isDeleted(selected.sectionTitle, selected.row.id)
       );
 
       setSections((prev) =>
         prev.map((section) => ({
           ...section,
-          rows: section.rows.filter(
-            (row) =>
-              !deletedRows.some(
-                (selected) =>
-                  selected.sectionTitle === section.title &&
-                  selected.row.id === row.id
-              )
-          ),
+          rows: section.rows.filter((row) => !isDeleted(section.title, row.id)),
         }))
       );
       setSelectedRowKeys(
@@ -315,82 +318,25 @@ export const TagManagement = () => {
         const failures = deleteResults.flatMap((result) =>
           result.status === "rejected" ? [result.reason] : []
         );
-        console.error("Failed to delete some selected tags", failures);
+        console.error(`Failed to ${failureLabel} some selected tags`, failures);
       }
     } catch (error) {
-      console.error("Failed to delete selected tags", error);
+      console.error(`Failed to ${failureLabel} selected tags`, error);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleDetachAndDelete = async () => {
-    if (selectedRows.length === 0 || isDeleting) return;
+  const handleConfirmDelete = () => runBulkDelete(deleteViaPath, "delete");
 
-    try {
-      setIsDeleting(true);
-      const rowsToDelete = [...selectedRows];
-      const deleteResults = await Promise.allSettled(
-        rowsToDelete.map(async (selected) => {
-          if (selected.sectionTitle === "Languages") {
-            await backend.post(`/languages/${selected.row.id}/detach-and-delete`);
-            return selected;
-          }
-          const path = getDeletePath(selected.sectionTitle, selected.row.id);
-          if (!path)
-            throw new Error(
-              `Unsupported tag section: ${selected.sectionTitle}`
-            );
-
-          await backend.delete(path);
-          return selected;
-        })
-      );
-      const deletedRows = deleteResults.flatMap((result) =>
-        result.status === "fulfilled" ? [result.value] : []
-      );
-      const failedRows = rowsToDelete.filter(
-        (selected) =>
-          !deletedRows.some(
-            (deleted) =>
-              deleted.sectionTitle === selected.sectionTitle &&
-              deleted.row.id === selected.row.id
-          )
-      );
-
-      setSections((prev) =>
-        prev.map((section) => ({
-          ...section,
-          rows: section.rows.filter(
-            (row) =>
-              !deletedRows.some(
-                (selected) =>
-                  selected.sectionTitle === section.title &&
-                  selected.row.id === row.id
-              )
-          ),
-        }))
-      );
-      setSelectedRowKeys(
-        failedRows.map(({ sectionTitle, row }) =>
-          getRowKey(sectionTitle, row.name)
-        )
-      );
-
-      if (failedRows.length === 0) {
-        setIsDeleteDialogOpen(false);
-      } else {
-        const failures = deleteResults.flatMap((result) =>
-          result.status === "rejected" ? [result.reason] : []
-        );
-        console.error("Failed to detach and delete some selected tags", failures);
+  const handleDetachAndDelete = () =>
+    runBulkDelete(async (selected) => {
+      if (selected.sectionTitle === "Languages") {
+        await backend.post(`/languages/${selected.row.id}/detach-and-delete`);
+        return;
       }
-    } catch (error) {
-      console.error("Failed to detach and delete selected tags", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+      await deleteViaPath(selected);
+    }, "detach and delete");
 
   const toggleSectionSelection = (
     sectionTitle: string,
@@ -487,7 +433,10 @@ export const TagManagement = () => {
 
     setSections((prev) =>
       prev.map((section) =>
-        section.title === targetSection
+        section.title === targetSection &&
+        // Create endpoints like POST /languages are idempotent and return the
+        // existing row (200) on a case-insensitive match; don't duplicate it.
+        !section.rows.some((row) => row.id === createdEntry.id)
           ? {
               ...section,
               rows: [

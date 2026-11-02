@@ -64,8 +64,7 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     let is_signed_confidentiality = reqIsSignedConfidentiality;
 
     const rawNotaryStatus =
-      reqNotaryStatus ??
-      (reqIsNotary === true ? "active" : reqIsNotary === false ? "inactive" : "no");
+      reqNotaryStatus ?? (reqIsNotary === true ? "active" : "no");
     notary_status = ["active", "inactive", "no"].includes(rawNotaryStatus)
       ? rawNotaryStatus
       : reqIsNotary
@@ -106,6 +105,8 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       // Prevent self-asserting credentials/confidentiality fields during self-registration
       is_attorney = false;
       is_notary = false;
+      notary_status = "no";
+      is_california_licensed = false;
       state_bar_certificate = null;
       state_bar_number = null;
       law_school_year = null;
@@ -240,7 +241,7 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           is_attorney ?? null,
           is_notary ?? null,
           notary_status ?? "no",
-          isCaliforniaLicensed,
+          is_california_licensed,
           normalizedAffiliatedEmployer,
           normalizedLawSchoolYear,
           normalizedStateBarCertificate,
@@ -477,10 +478,14 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
     const listedExperienceClause = hasListedExperience
       ? "listed_experience = $21"
       : "listed_experience = listed_experience";
+    const hasSecondaryPhone = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "secondary_phone_number"
+    );
 
     const resolvedNotaryStatus =
       notary_status ??
-      (is_notary === true ? "active" : is_notary === false ? "inactive" : null);
+      (is_notary === true ? "active" : is_notary === false ? "no" : null);
     const resolvedIsNotary =
       resolvedNotaryStatus === "active"
         ? true
@@ -495,7 +500,7 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             last_name = COALESCE($3, last_name),
             email = COALESCE($4, email),
             phone_number = COALESCE($5, phone_number),
-            secondary_phone_number = COALESCE($6, secondary_phone_number),
+            secondary_phone_number = CASE WHEN $22 THEN $6 ELSE secondary_phone_number END,
             is_primary_mobile = COALESCE($7, is_primary_mobile),
             is_secondary_mobile = COALESCE($8, is_secondary_mobile),
             can_text = COALESCE($9, can_text),
@@ -508,8 +513,8 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             is_california_licensed = COALESCE($16, is_california_licensed),
             affiliated_employer = COALESCE($17, affiliated_employer),
             law_school_year = COALESCE($18, law_school_year),
-            state_bar_certificate = COALESCE($19, state_bar_certificate),
-            state_bar_number = COALESCE($20, state_bar_number),
+            state_bar_certificate = CASE WHEN $16 IS FALSE THEN NULL ELSE COALESCE($19, state_bar_certificate) END,
+            state_bar_number = CASE WHEN $16 IS FALSE THEN NULL ELSE COALESCE($20, state_bar_number) END,
             ${listedExperienceClause}
         WHERE id = $1;
       `,
@@ -519,7 +524,7 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         last_name,
         email,
         phone_number,
-        secondary_phone_number !== undefined ? (secondary_phone_number ? String(secondary_phone_number).trim() : null) : null,
+        hasSecondaryPhone ? normalizeNullableText(secondary_phone_number) : null,
         is_primary_mobile !== undefined ? Boolean(is_primary_mobile) : null,
         is_secondary_mobile !== undefined ? Boolean(is_secondary_mobile) : null,
         can_text !== undefined ? Boolean(can_text) : null,
@@ -535,6 +540,7 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         state_bar_certificate ?? null,
         state_bar_number ?? null,
         hasListedExperience ? normalizeNullableText(listed_experience) : null,
+        hasSecondaryPhone,
       ]
     );
 
@@ -926,7 +932,8 @@ volunteersRouter.get(
         SELECT r.id, r.role_name
         FROM volunteer_roles vr
         JOIN roles r ON vr.role_id = r.id
-        WHERE vr.volunteer_id = $1;
+        WHERE vr.volunteer_id = $1
+        ORDER BY r.id ASC;
       `,
         [volunteerId]
       );

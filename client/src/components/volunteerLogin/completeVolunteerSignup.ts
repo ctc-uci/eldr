@@ -47,7 +47,7 @@ export async function completeVolunteerSignup(
     });
     firebaseUid = userCredential.user.uid;
 
-    const isAttorney = draft.roleLabel?.toLowerCase() === "attorney";
+    const isAttorney = (draft.roleLabel ?? "").toLowerCase().includes("attorney");
 
     const resp = await backend.post("/volunteers", {
       firebaseUid,
@@ -89,29 +89,32 @@ export async function completeVolunteerSignup(
         if (lid && name) nameToId.set(name.toLowerCase(), lid);
       }
 
-      // Create any newly added custom languages that do not exist yet in DB
+      // Create any newly added custom languages that do not exist yet in DB.
+      // A failure here aborts signup (outer catch rolls back) rather than
+      // silently dropping a language the user selected.
       for (const name of draft.selectedLanguageNames) {
         const trimmed = name.trim();
         if (trimmed && !nameToId.has(trimmed.toLowerCase())) {
-          try {
-            const createResp = await backend.post("/languages", { language: trimmed });
-            const created = createResp?.data;
-            const newId = Number(
-              created?.id ?? (Array.isArray(created) ? created[0]?.id : undefined)
-            );
-            if (newId) {
-              nameToId.set(trimmed.toLowerCase(), newId);
-            }
-          } catch (err) {
-            console.error("Failed to create language during signup:", trimmed, err);
+          const createResp = await backend.post("/languages", { language: trimmed });
+          const created = createResp?.data;
+          const newId = Number(
+            created?.id ?? (Array.isArray(created) ? created[0]?.id : undefined)
+          );
+          if (!newId) {
+            throw new Error(`Failed to create language "${trimmed}".`);
           }
+          nameToId.set(trimmed.toLowerCase(), newId);
         }
       }
 
+      // Case-variant selections (e.g. "Spanish" and "spanish") resolve to the
+      // same id; keep only the first so the batch insert has unique keys.
+      const seenLanguageIds = new Set<number>();
       const languages = draft.selectedLanguageNames
         .map((name) => {
           const languageId = nameToId.get(name.trim().toLowerCase());
-          if (!languageId) return null;
+          if (!languageId || seenLanguageIds.has(languageId)) return null;
+          seenLanguageIds.add(languageId);
           const verbalProficiency =
             draft.verbalProficiencies?.[name] ??
             draft.languageProficiencies?.[name] ??

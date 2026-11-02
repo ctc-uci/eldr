@@ -14,20 +14,32 @@ languagesRouter.post("/", verifyRole(["staff", "volunteer"]), async (req, res) =
             return res.status(400).json({ message: "Language is required" });
         }
 
-        const existing = await db.query(
-            "SELECT * FROM languages WHERE LOWER(language) = LOWER($1)",
-            [trimmed]
-        );
-        if (existing.length > 0) {
-            return res.status(200).json(keysToCamel(existing[0]));
-        }
+        const { row, created } = await db.tx(async (t) => {
+            // Serialize concurrent creates of the same (case-insensitive) name so
+            // two requests can't both miss the lookup and insert case variants.
+            await t.query("SELECT pg_advisory_xact_lock(hashtext(LOWER($1)))", [trimmed]);
 
-        const languageResult = await db.query(
-            "INSERT INTO languages (language) VALUES ($1) RETURNING *",
-            [trimmed]
-        );
+            const existing = await t.oneOrNone(
+                "SELECT * FROM languages WHERE LOWER(language) = LOWER($1) ORDER BY id ASC LIMIT 1",
+                [trimmed]
+            );
+            if (existing) return { row: existing, created: false };
 
-        res.status(201).json(keysToCamel(languageResult[0] ?? languageResult));
+            const inserted = await t.oneOrNone(
+                "INSERT INTO languages (language) VALUES ($1) ON CONFLICT (language) DO NOTHING RETURNING *",
+                [trimmed]
+            );
+            if (inserted) return { row: inserted, created: true };
+
+            // Exact-match row was committed by a writer outside this lock path.
+            const conflicted = await t.one(
+                "SELECT * FROM languages WHERE language = $1",
+                [trimmed]
+            );
+            return { row: conflicted, created: false };
+        });
+
+        res.status(created ? 201 : 200).json(keysToCamel(row));
     } catch (err) {
         res.status(400).send(err.message);
     }
@@ -123,8 +135,10 @@ languagesRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 languagesRouter.post("/:id/detach-and-delete", verifyRole("staff"), async (req, res) => {
     try {
         const { id } = req.params;
-        await db.query(`DELETE FROM clinic_languages WHERE language_id = $1`, [id]);
-        await db.query(`DELETE FROM languages WHERE id = $1`, [id]);
+        await db.tx(async (t) => {
+            await t.query(`DELETE FROM clinic_languages WHERE language_id = $1`, [id]);
+            await t.query(`DELETE FROM languages WHERE id = $1`, [id]);
+        });
 
         res.status(200).send(`Language ${id} detached and deleted successfully`);
     } catch (err) {
@@ -138,23 +152,27 @@ languagesRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
         const { id } = req.params;
         const { detachFromEvents } = req.query;
 
-        const tiedClinics = await db.query(
-            `SELECT clinic_id FROM clinic_languages WHERE language_id = $1`,
-            [id]
-        );
+        const blockedCount = await db.tx(async (t) => {
+            const tiedClinics = await t.query(
+                `SELECT clinic_id FROM clinic_languages WHERE language_id = $1`,
+                [id]
+            );
 
-        if (tiedClinics.length > 0) {
-            if (detachFromEvents === "true") {
-                await db.query(`DELETE FROM clinic_languages WHERE language_id = $1`, [id]);
-            } else {
-                return res.status(400).json({
-                    message: `Cannot delete language: it is currently tied to ${tiedClinics.length} event(s). Detach it from past events first.`,
-                    clinicCount: tiedClinics.length,
-                });
+            if (tiedClinics.length > 0) {
+                if (detachFromEvents !== "true") return tiedClinics.length;
+                await t.query(`DELETE FROM clinic_languages WHERE language_id = $1`, [id]);
             }
-        }
 
-        await db.query(`DELETE FROM languages WHERE id = $1`, [id]);
+            await t.query(`DELETE FROM languages WHERE id = $1`, [id]);
+            return 0;
+        });
+
+        if (blockedCount > 0) {
+            return res.status(400).json({
+                message: `Cannot delete language: it is currently tied to ${blockedCount} event(s). Detach it from past events first.`,
+                clinicCount: blockedCount,
+            });
+        }
 
         res.status(200).send(`Language ${id} deleted successfully`);
     } catch (err) {

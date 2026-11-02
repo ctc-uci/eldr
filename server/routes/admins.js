@@ -6,6 +6,18 @@ import { Router } from "express";
 
 export const adminsRouter = Router();
 
+class InvalidBooleanError extends Error {}
+
+// Returns true/false for boolean-ish input, null when omitted/null, and throws
+// InvalidBooleanError for anything else (e.g. "yes", 1, {}), so that string
+// values such as "false" are never coerced to true by Boolean().
+const parseOptionalBoolean = (value, field) => {
+  if (value === undefined || value === null) return null;
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  throw new InvalidBooleanError(`${field} must be a boolean`);
+};
+
 // POST /admins - create a new staff/supervisor
 adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
   let firebaseUid = null;
@@ -23,6 +35,21 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
     } = req.body;
 
     if (!email) return res.status(400).send("email is required");
+
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsPrimaryMobile = parseOptionalBoolean(isPrimaryMobile, "isPrimaryMobile") ?? false;
+      parsedIsSecondaryMobile =
+        parseOptionalBoolean(isSecondaryMobile, "isSecondaryMobile") ?? false;
+      parsedCanText = parseOptionalBoolean(canText, "canText") ?? false;
+    } catch (validationErr) {
+      if (validationErr instanceof InvalidBooleanError) {
+        return res.status(400).send(validationErr.message);
+      }
+      throw validationErr;
+    }
 
     // Create Firebase Auth account with a temporary password
     const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
@@ -80,10 +107,12 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
         lastName,
         email,
         phoneNumber ?? null,
-        secondaryPhoneNumber ?? null,
-        Boolean(isPrimaryMobile),
-        Boolean(isSecondaryMobile),
-        Boolean(canText),
+        typeof secondaryPhoneNumber === "string" && secondaryPhoneNumber.trim()
+          ? secondaryPhoneNumber.trim()
+          : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
         isSupervisor ?? false,
       ]
     );
@@ -303,6 +332,25 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       canText,
     } = req.body;
 
+    const hasSecondaryPhone = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "secondaryPhoneNumber"
+    );
+
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsPrimaryMobile = parseOptionalBoolean(isPrimaryMobile, "isPrimaryMobile");
+      parsedIsSecondaryMobile = parseOptionalBoolean(isSecondaryMobile, "isSecondaryMobile");
+      parsedCanText = parseOptionalBoolean(canText, "canText");
+    } catch (validationErr) {
+      if (validationErr instanceof InvalidBooleanError) {
+        return res.status(400).send(validationErr.message);
+      }
+      throw validationErr;
+    }
+
     const result = await db.query(
       `UPDATE admins
         SET first_name = $1,
@@ -312,7 +360,7 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
             is_supervisor = COALESCE($5, is_supervisor),
             start_date = COALESCE($7, start_date),
             phone_number = COALESCE($8, phone_number),
-            secondary_phone_number = COALESCE($9, secondary_phone_number),
+            secondary_phone_number = CASE WHEN $13 THEN $9 ELSE secondary_phone_number END,
             is_primary_mobile = COALESCE($10, is_primary_mobile),
             is_secondary_mobile = COALESCE($11, is_secondary_mobile),
             can_text = COALESCE($12, can_text)
@@ -327,10 +375,13 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
         adminId,
         startDate || null,
         phoneNumber?.trim() ? phoneNumber.trim() : null,
-        secondaryPhoneNumber !== undefined ? (secondaryPhoneNumber?.trim() ? secondaryPhoneNumber.trim() : null) : null,
-        isPrimaryMobile !== undefined ? Boolean(isPrimaryMobile) : null,
-        isSecondaryMobile !== undefined ? Boolean(isSecondaryMobile) : null,
-        canText !== undefined ? Boolean(canText) : null,
+        typeof secondaryPhoneNumber === "string" && secondaryPhoneNumber.trim()
+          ? secondaryPhoneNumber.trim()
+          : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
+        hasSecondaryPhone,
       ]
     );
 

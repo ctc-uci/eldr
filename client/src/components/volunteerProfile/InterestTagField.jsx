@@ -61,6 +61,7 @@ export const InterestTagField = ({
       borderWidth="1px"
       borderColor="gray.200"
       borderRadius="md"
+      _focusWithin={{ borderColor: "brand.navy" }}
     >
       {!editable && tags.length === 0 ? (
         <Text fontSize="sm" color="gray.600" px={1}>
@@ -127,15 +128,14 @@ export const InterestTagField = ({
                   placeholder={addPlaceholder}
                   fontSize="sm"
                   border="none"
-                  outline="none"
                   h="100%"
                   p="0"
                   _placeholder={{ color: addPlaceholderColor }}
-                  focusRingColor="transparent"
+                  focusRingColor="brand.navy"
                 />
                 <Combobox.IndicatorGroup display="flex" alignItems="center">
                   <Combobox.ClearTrigger />
-                  <Combobox.Trigger cursor="pointer" p={1} color="gray.400" _hover={{ color: "gray.600" }} />
+                  <Combobox.Trigger cursor="pointer" p={1} color="gray.600" _hover={{ color: "gray.800" }} />
                 </Combobox.IndicatorGroup>
               </Combobox.Control>
               <Portal>

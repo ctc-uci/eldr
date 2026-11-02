@@ -15,6 +15,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { EventFilterDrawer } from "./FilterDrawer";
+import { isOneOffClinic, ONE_OFF_FILTER_VALUE } from "./oneOffWorkshop";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { CiSearch } from "react-icons/ci";
@@ -169,9 +170,10 @@ export const EventManagement = () => {
     const q = search.trim().toLowerCase();
     const { clinicTypes, eventFormats, languages } = activeFilters;
     const filtered = clinics.filter((c) => {
+      if (q && !(c.name || "").toLowerCase().includes(q)) return false;
       if (clinicTypes.size > 0) {
         const matchesType = Array.from(clinicTypes).some((type) => {
-          if (type === "One-off") return !c.type || c.type === "One-off";
+          if (type === ONE_OFF_FILTER_VALUE) return isOneOffClinic(c);
           return c.type === type || c.name === type;
         });
         if (!matchesType) return false;

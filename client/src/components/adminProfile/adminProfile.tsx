@@ -114,8 +114,19 @@ export const AdminProfile = () => {
         return;
       }
 
+      const secondaryDigits = draft.secondaryPhoneNumber.replace(/\D/g, "");
+      if (
+        secondaryDigits.length > 0 &&
+        !isCompletePhoneNumber(draft.secondaryPhoneNumber)
+      ) {
+        setErrorMessage(
+          "Enter a valid 10-digit secondary phone number (e.g. 621-438-2991)."
+        );
+        return;
+      }
+
       const savedPhone = phoneNumberForSave(draft.phoneNumber);
-      const savedSecondary = draft.secondaryPhoneNumber ? phoneNumberForSave(draft.secondaryPhoneNumber) : null;
+      const savedSecondary = phoneNumberForSave(draft.secondaryPhoneNumber);
 
       try {
         await backend.put(`/admins/${adminId}`, {

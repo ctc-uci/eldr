@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Box,
-  Button,
   Checkbox,
   Flex,
   Heading,
-  HStack,
   Input,
   Link,
   Text,
@@ -115,7 +113,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       lastName: lastName.trim(),
       email: normalizedEmail,
       phoneNumber: phoneNumber.trim(),
-      secondaryPhoneNumber: null,
+      secondaryPhoneNumber: "",
       isPrimaryMobile,
       isSecondaryMobile: false,
       canText,
@@ -224,6 +222,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-first-name"
                 label={
                   <>
                     First Name <Box as="span" color="#991919"> *</Box>
@@ -231,6 +230,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Enter your first name"
@@ -251,6 +251,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-last-name"
                 label={
                   <>
                     Last Name <Box as="span" color="#991919"> *</Box>
@@ -258,6 +259,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter your last name"
@@ -278,6 +280,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-email"
                 label={
                   <>
                     Email <Box as="span" color="#991919"> *</Box>
@@ -285,6 +288,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter an email"
@@ -306,6 +310,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-phone"
                 label={
                   <>
                     Phone Number <Box as="span" color="#991919"> *</Box>
@@ -313,9 +318,10 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-phone"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                  placeholder="(XXX) XXX-XXXX"
+                  placeholder="XXX-XXX-XXXX"
                   type="tel"
                   maxLength={14}
                   border="none"
@@ -327,11 +333,12 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   focusRingColor="transparent"
                 />
               </Field>
-              <HStack mt="6px" gap="6px">
+              <Box mt="6px">
                 <Checkbox.Root
                   checked={isPrimaryMobile}
                   onCheckedChange={(e) => setIsPrimaryMobile(!!e.checked)}
                   size="sm"
+                  gap="6px"
                 >
                   <Checkbox.HiddenInput />
                   <Checkbox.Control
@@ -340,11 +347,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   >
                     <Checkbox.Indicator />
                   </Checkbox.Control>
+                  <Checkbox.Label fontSize="12px" color="gray.600" fontWeight="normal">
+                    This is a mobile number
+                  </Checkbox.Label>
                 </Checkbox.Root>
-                <Text fontSize="12px" color="gray.600">
-                  This is a mobile number
-                </Text>
-              </HStack>
+              </Box>
             </Box>
 
             <Box
@@ -353,25 +360,26 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
               pt="2px"
             >
-              <HStack align="flex-start" gap="8px">
-                <Checkbox.Root
-                  checked={canText}
-                  onCheckedChange={(e) => setCanText(!!e.checked)}
-                  size="sm"
+              <Checkbox.Root
+                checked={canText}
+                onCheckedChange={(e) => setCanText(!!e.checked)}
+                size="sm"
+                alignItems="flex-start"
+                gap="8px"
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control
                   mt="2px"
+                  flexShrink={0}
+                  borderColor={canText ? "brand.navy" : "#D1D5DB"}
+                  bg={canText ? "brand.navy" : "white"}
                 >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control
-                    borderColor={canText ? "brand.navy" : "#D1D5DB"}
-                    bg={canText ? "brand.navy" : "white"}
-                  >
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                </Checkbox.Root>
-                <Text fontSize="12px" color="gray.600" lineHeight="1.4">
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Label fontSize="12px" color="gray.600" lineHeight="1.4" fontWeight="normal">
                   I give permission to receive SMS text messages at this number for clinic and volunteering communications.
-                </Text>
-              </HStack>
+                </Checkbox.Label>
+              </Checkbox.Root>
             </Box>
 
             <ContinueButton
@@ -397,21 +405,25 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
 const Field = ({
   label,
+  htmlFor,
   icon,
   children,
 }: {
   label: React.ReactNode;
+  htmlFor?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <Box>
     <Text
+      asChild
+      display="block"
       fontSize="14px"
       fontWeight={600}
       color="black"
       mb="6px"
     >
-      {label}
+      <label htmlFor={htmlFor}>{label}</label>
     </Text>
     <Flex
       align="center"

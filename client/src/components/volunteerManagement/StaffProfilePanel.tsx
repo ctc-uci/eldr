@@ -27,6 +27,7 @@ interface StaffProfilePanelProps {
 interface FormState {
   firstName: string;
   lastName: string;
+  email: string;
   phoneNumber: string;
   secondaryPhoneNumber: string;
   isPrimaryMobile: boolean;
@@ -48,6 +49,7 @@ export const StaffProfilePanel = ({
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
+    email: "",
     phoneNumber: "",
     secondaryPhoneNumber: "",
     isPrimaryMobile: false,
@@ -70,13 +72,14 @@ export const StaffProfilePanel = ({
     setForm({
       firstName: staff.firstName,
       lastName: staff.lastName,
+      email: staff.email ?? "",
       phoneNumber: staff.phoneNumber ?? "",
       secondaryPhoneNumber: staff.secondaryPhoneNumber ?? "",
       isPrimaryMobile: Boolean(staff.isPrimaryMobile),
       isSecondaryMobile: Boolean(staff.isSecondaryMobile),
       canText: Boolean(staff.canText),
       role: staff.role,
-      startDate: staff.startDate ? staff.startDate.split("T")[0] : "",
+      startDate: staff.startDate ? (staff.startDate.split("T")[0] ?? "") : "",
     });
     setEditRole(
       staff.role?.toLowerCase() === "supervisor" ? "supervisor" : "staff"
@@ -86,10 +89,11 @@ export const StaffProfilePanel = ({
 
   const handleSave = async () => {
     if (!staff) return;
+    const nextEmail = form.email.trim();
     await backend.put(`/admins/${staff.id}`, {
       firstName: form.firstName,
       lastName: form.lastName,
-      email: staff.email,
+      email: nextEmail,
       phoneNumber: form.phoneNumber || null,
       secondaryPhoneNumber: form.secondaryPhoneNumber || null,
       isPrimaryMobile: form.isPrimaryMobile,
@@ -104,7 +108,7 @@ export const StaffProfilePanel = ({
     onSaved?.({
       firstName: form.firstName,
       lastName: form.lastName,
-      email: staff.email,
+      email: nextEmail,
       phoneNumber: form.phoneNumber || undefined,
       secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
       isPrimaryMobile: form.isPrimaryMobile,
@@ -120,17 +124,6 @@ export const StaffProfilePanel = ({
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   if (!staff) return null;
-
-  const formattedStartDate = staff.startDate
-    ? new Date(staff.startDate.split("T")[0] + "T00:00:00").toLocaleDateString(
-        "en-US",
-        {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }
-      )
-    : undefined;
 
   return (
     <ProfilePanelShell
@@ -283,9 +276,14 @@ export const StaffProfilePanel = ({
                 <Text fontSize="sm" fontWeight="bold" mb={1}>
                   Email
                 </Text>
-                <Text fontSize="sm" color="gray.600" py={1.5}>
-                  {staff.email}
-                </Text>
+                <Input
+                  size="sm"
+                  type="email"
+                  borderColor="#E4E4E7"
+                  value={form.email}
+                  onChange={setField("email")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
               </Box>
 
               <Box>

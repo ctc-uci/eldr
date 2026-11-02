@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Checkbox, Drawer, Flex, Icon, Text } from "@chakra-ui/react";
 import { FiX, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
 
 import { DEFAULT_TOP_LANGUAGES } from "@eldr/shared";
@@ -10,7 +11,6 @@ import { DEFAULT_TOP_LANGUAGES } from "@eldr/shared";
 // TODO Need to change data to more applicable to app
 const ROLES = ["Attorney", "General Volunteer", "Law Student", "Notary", "Paralegal/Legal Worker", "Paralegal Student", "Undergraduate Student"];
 const INTERESTS = ["Immigration Law", "Housing", "Family", "Civil Rights & Discrimination", "Labor", "Criminal Justice"];
-const LANGUAGES = [...DEFAULT_TOP_LANGUAGES];
 
 
 export interface FilterState {
@@ -93,14 +93,70 @@ const FilterSection = ({ label, items, checked, onToggle }: FilterSectionProps) 
 };
 
 export const FilterDrawer = ({ open, onClose, volunteers, onApply }: FilterDrawerProps) => {
+  const { backend } = useBackendContext();
+  const [catalogLanguages, setCatalogLanguages] = useState<string[]>([]);
   const [checkedRoles, setCheckedRoles] = useState<Set<string>>(new Set());
   const [checkedInterests, setCheckedInterests] = useState<Set<string>>(new Set());
   const [checkedLanguages, setCheckedLanguages] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadLanguages = async () => {
+      try {
+        const res = await backend.get("/languages");
+        if (cancelled) return;
+        const rows: unknown[] = Array.isArray(res?.data) ? res.data : [];
+        const names = rows
+          .map((r) => String((r as { language?: unknown })?.language ?? "").trim())
+          .filter(Boolean);
+        setCatalogLanguages(names);
+      } catch (err) {
+        console.error("Failed to load languages for filter drawer:", err);
+      }
+    };
+    void loadLanguages();
+    return () => {
+      cancelled = true;
+    };
+  }, [backend]);
+
+  const languageItems = useMemo(() => {
+    const volunteerLanguages = volunteers
+      .flatMap((v) => v.languages ?? [])
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const seen = new Map<string, string>();
+    for (const lang of [
+      ...DEFAULT_TOP_LANGUAGES,
+      ...catalogLanguages,
+      ...volunteerLanguages,
+    ]) {
+      const key = lang.toLowerCase();
+      if (!seen.has(key)) {
+        seen.set(key, lang);
+      }
+    }
+
+    const topSet = new Set(DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase()));
+    const topList = DEFAULT_TOP_LANGUAGES.map(
+      (t) => seen.get(t.toLowerCase()) ?? t
+    );
+    const remaining = Array.from(seen.values())
+      .filter((lang) => !topSet.has(lang.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
+
+    return [...topList, ...remaining];
+  }, [catalogLanguages, volunteers]);
+
   const toggle = (setter: React.Dispatch<React.SetStateAction<Set<string>>>) => (item: string) => {
     setter((prev) => {
       const next = new Set(prev);
-      next.has(item) ? next.delete(item) : next.add(item);
+      if (next.has(item)) {
+        next.delete(item);
+      } else {
+        next.add(item);
+      }
       return next;
     });
   };
@@ -167,7 +223,7 @@ export const FilterDrawer = ({ open, onClose, volunteers, onApply }: FilterDrawe
             <Text fontWeight="bold" fontSize="md" mb={2}>Filter Categories</Text>
             <FilterSection label="Role" items={ROLES} checked={checkedRoles} onToggle={toggle(setCheckedRoles)} />
             <FilterSection label="Interest" items={INTERESTS} checked={checkedInterests} onToggle={toggle(setCheckedInterests)} />
-            <FilterSection label="Language" items={LANGUAGES} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
+            <FilterSection label="Language" items={languageItems} checked={checkedLanguages} onToggle={toggle(setCheckedLanguages)} />
           </Drawer.Body>
 
           {/* Footer */}

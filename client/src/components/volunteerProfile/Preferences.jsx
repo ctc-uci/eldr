@@ -313,7 +313,7 @@ export const Preferences = ({
               title="Practice Areas & Interests"
               description="Manage the legal practice areas and topics you're interested in assisting with"
             >
-              <FieldLabel>Practice Areas & Interests</FieldLabel>
+              <FieldLabel>Areas of Practice</FieldLabel>
               <InterestTagField
                 tags={localInterests}
                 options={areaOptions}

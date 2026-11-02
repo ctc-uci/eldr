@@ -260,7 +260,7 @@ clinicsRouter.get("/with-languages", async (req, res) => {
     res.status(200).json(payload);
   } catch (e) {
     console.error("[ERROR in /with-languages]:", e);
-    res.status(500).json({ error: e.message, stack: e.stack });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -511,7 +511,7 @@ clinicsRouter.get(
       res.status(200).json(keysToCamel(languages));
     } catch (e) {
       console.error("[ERROR in /:clinicId/languages]:", e);
-      res.status(500).json({ error: e.message, stack: e.stack });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );

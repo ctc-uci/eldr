@@ -29,6 +29,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
+import { isOneOffType } from "./oneOffWorkshop";
 
 const parseTimeField = (ts) => {
   if (!ts) return { time: "", period: "AM" };
@@ -61,7 +62,7 @@ const buildEditBaseline = (c, langNames) => {
   const start = parseTimeField(c.startTime);
   const end = parseTimeField(c.endTime);
   const dateStr = c.date ? c.date.split("T")[0].split(" ")[0] : "";
-  const isOneOff = !c.type || (c.type && c.name && c.type !== c.name);
+  const isOneOff = isOneOffType(c.type);
   return {
     isCustomWorkshop: isOneOff,
     selectedWorkshopType: isOneOff ? "" : (c.type || c.name || ""),
@@ -242,7 +243,7 @@ export const CreateEvent = () => {
         ]);
         const c = clinicRes.data;
         const langNames = langRes.data.map((l) => l.language);
-        const isOneOff = !c.type || c.type === "One-off" || (c.type && c.name && c.type !== c.name);
+        const isOneOff = isOneOffType(c.type);
         setIsCustomWorkshop(isOneOff);
         if (isOneOff) {
           setCustomWorkshopName(c.name ?? "");
@@ -288,7 +289,7 @@ export const CreateEvent = () => {
         ]);
         const c = clinicRes.data;
         const langNames = langRes.data.map((l) => l.language);
-        const isOneOff = !c.type || c.type === "One-off" || (c.type && c.name && c.type !== c.name);
+        const isOneOff = isOneOffType(c.type);
         setIsCustomWorkshop(isOneOff);
         if (isOneOff) {
           setCustomWorkshopName(c.name ?? "");

@@ -7,7 +7,6 @@ import {
   Checkbox,
   Flex,
   Heading,
-  HStack,
   Icon,
   Input,
   NativeSelect,
@@ -316,7 +315,10 @@ export const AddProfileView = () => {
           is_primary_mobile: isPrimaryMobile,
           is_secondary_mobile: isSecondaryMobile,
           can_text: canText,
-          is_notary: notaryStatus === "active",
+          is_attorney: isAttorney,
+          // Unanswered selector stays null so the server defaults to "no"
+          // rather than inferring "inactive" from is_notary=false.
+          is_notary: notaryStatus ? notaryStatus === "active" : null,
           notary_status: notaryStatus || null,
           affiliated_employer: affiliated || null,
           law_school_year: isLawStudent ? (lawSchoolYear || null) : null,

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
-  Button,
   Select,
   Flex,
   Heading,
@@ -37,10 +36,13 @@ const RoleStep = ({ onNext, onBack }: Props) => {
     let active = true;
     const fetchRoles = async () => {
       try {
-        const res = await backend.get<Array<{ id: number; name?: string; role_name?: string }>>("/roles");
+        // Applicants are not signed in yet, so use the public catalog endpoint.
+        const res = await backend.get<
+          Array<{ id: number; roleName?: string; name?: string; role_name?: string }>
+        >("/roles/public");
         if (!active) return;
         const fetchedNames = (res.data || [])
-          .map((r) => r.name || r.role_name || "")
+          .map((r) => r.roleName || r.name || r.role_name || "")
           .filter(Boolean);
         if (fetchedNames.length > 0) {
           setRoles(fetchedNames);

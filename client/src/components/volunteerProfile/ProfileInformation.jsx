@@ -53,6 +53,7 @@ const ModernDropdown = ({
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const listRef = useRef(null);
+  const customButtonRef = useRef(null);
   const customInputRef = useRef(null);
 
   useEffect(() => {
@@ -157,8 +158,6 @@ const ModernDropdown = ({
 
       {open && (
         <Box
-          ref={listRef}
-          role="listbox"
           position="absolute"
           top="calc(100% + 4px)"
           left={0}
@@ -169,81 +168,115 @@ const ModernDropdown = ({
           borderRadius="6px"
           boxShadow="lg"
           zIndex={9999}
-          maxH="260px"
-          overflowY="auto"
-          py={1}
+          overflow="hidden"
         >
-          {options.map((opt) => (
-            <Flex
-              key={opt}
-              role="option"
-              aria-selected={opt === value}
-              tabIndex={0}
-              px="12px"
-              py="9px"
-              cursor="pointer"
-              align="center"
-              bg={opt === value ? "#F4F4F5" : "white"}
-              fontWeight={opt === value ? "semibold" : "normal"}
-              _hover={{ bg: "#F4F4F5" }}
-              _focus={{ bg: "#F4F4F5", outline: "none" }}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-                triggerRef.current?.focus();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
+          <Box
+            ref={listRef}
+            role="listbox"
+            aria-label={accessibleLabel}
+            maxH="220px"
+            overflowY="auto"
+            py={1}
+          >
+            {options.map((opt) => (
+              <Flex
+                key={opt}
+                role="option"
+                aria-selected={opt === value}
+                tabIndex={0}
+                px="12px"
+                py="9px"
+                cursor="pointer"
+                align="center"
+                bg={opt === value ? "#F4F4F5" : "white"}
+                fontWeight={opt === value ? "semibold" : "normal"}
+                _hover={{ bg: "#F4F4F5" }}
+                _focus={{ bg: "#F4F4F5", outline: "none" }}
+                onClick={() => {
                   onChange(opt);
                   setOpen(false);
                   triggerRef.current?.focus();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  setOpen(false);
-                  triggerRef.current?.focus();
-                } else if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  const next = e.currentTarget.nextElementSibling;
-                  if (next && next.focus) next.focus();
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  const prev = e.currentTarget.previousElementSibling;
-                  if (prev && prev.focus) {
-                    prev.focus();
-                  } else {
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onChange(opt);
+                    setOpen(false);
                     triggerRef.current?.focus();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    setOpen(false);
+                    triggerRef.current?.focus();
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const next = e.currentTarget.nextElementSibling;
+                    if (next && next.focus) {
+                      next.focus();
+                    } else {
+                      customButtonRef.current?.focus();
+                    }
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const prev = e.currentTarget.previousElementSibling;
+                    if (prev && prev.focus) {
+                      prev.focus();
+                    } else {
+                      triggerRef.current?.focus();
+                    }
                   }
-                }
-              }}
-            >
-              <Text fontSize="14px" color="#27272A" truncate>
-                {opt}
-              </Text>
-            </Flex>
-          ))}
+                }}
+              >
+                <Text fontSize="14px" color="#27272A" truncate>
+                  {opt}
+                </Text>
+              </Flex>
+            ))}
+          </Box>
 
           {allowCustom && (
-            <Box borderTop="1px solid #E4E4E7" bg="#FAFAFA" mt={1}>
+            <Box borderTop="1px solid #E4E4E7" bg="#FAFAFA">
               {!isAddingCustom ? (
-                <Flex
-                  align="center"
+                <Button
+                  ref={customButtonRef}
+                  type="button"
+                  variant="ghost"
+                  w="100%"
+                  justifyContent="flex-start"
                   gap="8px"
                   px="12px"
                   py="8px"
-                  cursor="pointer"
+                  h="auto"
+                  borderRadius="0"
                   color="brand.navy"
+                  fontWeight="semibold"
+                  fontSize="13px"
                   _hover={{ bg: "#EDF2F7" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsAddingCustom(true);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setOpen(false);
+                      triggerRef.current?.focus();
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      const opts = listRef.current?.querySelectorAll('[role="option"]');
+                      const lastOption = opts?.[opts.length - 1];
+                      if (lastOption?.focus) {
+                        lastOption.focus();
+                      } else {
+                        triggerRef.current?.focus();
+                      }
+                    }
+                  }}
                 >
                   <LuPlus size={15} />
-                  <Text fontSize="13px" fontWeight="semibold">
+                  <Text as="span" fontSize="13px" fontWeight="semibold">
                     Add other language...
                   </Text>
-                </Flex>
+                </Button>
               ) : (
                 <Flex
                   p="8px 12px"
@@ -271,6 +304,7 @@ const ModernDropdown = ({
                     }}
                   />
                   <Button
+                    type="button"
                     size="xs"
                     h="30px"
                     px="10px"
@@ -283,6 +317,7 @@ const ModernDropdown = ({
                     Add
                   </Button>
                   <Button
+                    type="button"
                     size="xs"
                     h="30px"
                     variant="ghost"
@@ -316,8 +351,6 @@ const ReadValue = ({ children, muted }) => (
     {children}
   </Text>
 );
-
-const editBlue = "#3B6F8F";
 
 export const ProfileInformation = ({
   data,

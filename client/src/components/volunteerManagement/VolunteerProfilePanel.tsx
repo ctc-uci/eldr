@@ -208,17 +208,11 @@ export const VolunteerProfilePanel = ({
     if (!volunteer) return;
     setSaveError(null);
     const currentNotary =
-      volunteer.notaryStatus ??
-      (volunteer.isNotary === true
-        ? "active"
-        : volunteer.isNotary === false
-          ? "inactive"
-          : "no");
-    const isCalLicensed = Boolean(
-      volunteer.isCaliforniaLicensed ??
-        (volunteer.stateBarCertificate?.toLowerCase() === "california" ||
-          volunteer.stateBarCertificate?.toLowerCase() === "ca")
-    );
+      volunteer.notaryStatus ?? (volunteer.isNotary === true ? "active" : "no");
+    const isCalLicensed =
+      volunteer.isCaliforniaLicensed === true ||
+      volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+      volunteer.stateBarCertificate?.toLowerCase() === "ca";
 
     setForm({
       firstName: volunteer.firstName,

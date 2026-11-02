@@ -121,7 +121,21 @@ export const ProfileManagement = () => {
         const volunteerLanguages = volunteerLanguagesResp?.data ?? [];
         const volunteerAreas = volunteerAreasResp?.data ?? [];
         const userRoles = volunteerRolesResp?.data ?? [];
-        const primaryRole = userRoles[0]?.roleName ?? userRoles[0]?.role_name ?? "Volunteer";
+        const rolePriority = (name) => {
+          const lower = name.toLowerCase();
+          if (lower.includes("attorney")) return 0;
+          if (lower.includes("law student")) return 1;
+          return 2;
+        };
+        const sortedRoleNames = userRoles
+          .map((r) => String(r?.roleName ?? r?.role_name ?? "").trim())
+          .filter(Boolean)
+          .sort((a, b) => {
+            const priorityDiff = rolePriority(a) - rolePriority(b);
+            return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
+          });
+        const primaryRole =
+          sortedRoleNames[0] ?? (volunteer.isAttorney ? "Attorney" : "Volunteer");
 
         const notaryDisplay =
           volunteer.notaryStatus === "active" || (volunteer.notaryStatus === undefined && volunteer.isNotary === true)
@@ -130,11 +144,10 @@ export const ProfileManagement = () => {
               ? "Yes (inactive)"
               : "No";
 
-        const isCalLicensed = Boolean(
-          volunteer.isCaliforniaLicensed ??
-            (volunteer.stateBarCertificate?.toLowerCase() === "california" ||
-              volunteer.stateBarCertificate?.toLowerCase() === "ca")
-        );
+        const isCalLicensed =
+          volunteer.isCaliforniaLicensed === true ||
+          volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+          volunteer.stateBarCertificate?.toLowerCase() === "ca";
 
         setLanguageCatalog(allLanguages);
         setAreaCatalog(allAreas);
@@ -311,11 +324,13 @@ export const ProfileManagement = () => {
             const createResp = await backend.post("/languages", { language: trimmed });
             const created = createResp?.data;
             const newRecord = Array.isArray(created) ? created[0] : created;
-            if (newRecord?.id) {
-              allLanguages.push(newRecord);
+            if (!newRecord?.id) {
+              throw new Error(`Failed to create language "${trimmed}".`);
             }
+            allLanguages.push(newRecord);
           } catch (err) {
             console.error("Failed to create language on save:", trimmed, err);
+            throw err;
           }
         }
       }

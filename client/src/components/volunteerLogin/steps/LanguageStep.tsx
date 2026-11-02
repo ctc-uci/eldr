@@ -147,10 +147,17 @@ const LanguageMultiSelect = ({
     const trimmed = customLanguageInput.trim();
     if (!trimmed) return;
 
-    if (!selected.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
-      onChange([...selected, trimmed]);
+    const canonical =
+      items.find((item) => item.toLowerCase() === trimmed.toLowerCase()) ??
+      DEFAULT_TOP_LANGUAGES.find(
+        (lang) => lang.toLowerCase() === trimmed.toLowerCase()
+      ) ??
+      trimmed;
+
+    if (!selected.some((s) => s.toLowerCase() === canonical.toLowerCase())) {
+      onChange([...selected, canonical]);
     }
-    onAddCustomLanguage?.(trimmed);
+    onAddCustomLanguage?.(canonical);
     setCustomLanguageInput("");
     setIsAddingCustom(false);
     setSearch("");
@@ -439,8 +446,24 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
   const allLanguageNames = useMemo(() => {
     const topSet = new Set(DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase()));
     const fetched = allLanguages.map((l) => l.language);
-    const combined = [...new Set([...fetched, ...customAddedLanguages, ...selectedLanguageNames])];
-    
+
+    const seen = new Map<string, string>();
+    for (const lang of [
+      ...fetched,
+      ...customAddedLanguages,
+      ...selectedLanguageNames,
+    ]) {
+      const key = lang.toLowerCase();
+      if (!seen.has(key)) {
+        const topMatch = DEFAULT_TOP_LANGUAGES.find(
+          (t) => t.toLowerCase() === key
+        );
+        seen.set(key, topMatch ?? lang);
+      }
+    }
+
+    const combined = Array.from(seen.values());
+
     // Sort so top 10 appear first in their defined order, others alphabetically
     const topList = DEFAULT_TOP_LANGUAGES.filter((t) =>
       combined.some((c) => c.toLowerCase() === t.toLowerCase())
@@ -452,9 +475,43 @@ const LanguageStep = ({ onNext, onBack }: Props) => {
     return [...topList, ...remaining];
   }, [allLanguages, customAddedLanguages, selectedLanguageNames]);
 
+  useEffect(() => {
+    if (allLanguages.length === 0) return;
+    setSelectedLanguageNames((prev) => {
+      let changed = false;
+      const seen = new Set<string>();
+      const next: string[] = [];
+      for (const name of prev) {
+        const lower = name.toLowerCase();
+        if (seen.has(lower)) {
+          changed = true;
+          continue;
+        }
+        seen.add(lower);
+        const canonical =
+          DEFAULT_TOP_LANGUAGES.find((t) => t.toLowerCase() === lower) ??
+          allLanguages.find((l) => l.language.toLowerCase() === lower)
+            ?.language ??
+          name;
+        if (canonical !== name) changed = true;
+        next.push(canonical);
+      }
+      return changed ? next : prev;
+    });
+  }, [allLanguages]);
+
   const handleAddCustomLanguage = (name: string) => {
+    const canonical =
+      DEFAULT_TOP_LANGUAGES.find(
+        (l) => l.toLowerCase() === name.toLowerCase()
+      ) ??
+      allLanguages.find((l) => l.language.toLowerCase() === name.toLowerCase())
+        ?.language ??
+      name;
     setCustomAddedLanguages((prev) =>
-      prev.includes(name) ? prev : [...prev, name]
+      prev.some((l) => l.toLowerCase() === canonical.toLowerCase())
+        ? prev
+        : [...prev, canonical]
     );
   };
 

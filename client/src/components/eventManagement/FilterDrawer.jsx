@@ -3,6 +3,7 @@ import { Box, Button, Checkbox, Drawer, Flex, Icon, Spinner, Text } from "@chakr
 import { FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { isOneOffClinic, ONE_OFF_FILTER_VALUE } from "./oneOffWorkshop";
 
 const DEFAULT_WORKSHOP_TYPES = ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"];
 const EVENT_FORMATS = [
@@ -57,7 +58,7 @@ const computeCount = (clinics, clinicTypes, eventFormats, languages) =>
   clinics.filter((c) => {
     if (clinicTypes.size > 0) {
       const match = Array.from(clinicTypes).some((type) => {
-        if (type === "One-off") return !c.type || c.type === "One-off";
+        if (type === ONE_OFF_FILTER_VALUE) return isOneOffClinic(c);
         return c.type === type || c.name === type;
       });
       if (!match) return false;
@@ -111,7 +112,7 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
   const allSelected = [
     ...[...checkedTypes].map((v) => ({
       key: v,
-      label: v === "One-off" ? "One-off Workshop" : v,
+      label: v === ONE_OFF_FILTER_VALUE ? "One-off Workshop" : v,
       remove: () => toggle(setCheckedTypes)(v),
     })),
     ...[...checkedFormats].map((v) => {
@@ -137,7 +138,7 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
 
   const workshopTypeItems = [
     ...workshopTypes.map((t) => ({ value: t, label: t })),
-    { value: "One-off", label: "One-off Workshop" },
+    { value: ONE_OFF_FILTER_VALUE, label: "One-off Workshop" },
   ];
   const languageItems   = languages.map((l) => ({ value: l.language, label: l.language }));
 
