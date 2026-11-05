@@ -3,8 +3,9 @@ import { Box, Button, Checkbox, Drawer, Flex, Icon, Spinner, Text } from "@chakr
 import { FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { isOneOffClinic, ONE_OFF_FILTER_VALUE } from "./oneOffWorkshop";
 
-const CLINIC_TYPES = ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"];
+const DEFAULT_WORKSHOP_TYPES = ["Estate Planning", "Limited Conservatorship", "Probate Note Clearing"];
 const EVENT_FORMATS = [
   { value: "in-person", label: "In-Person" },
   { value: "hybrid",    label: "Hybrid" },
@@ -53,17 +54,27 @@ const FilterSection = ({ label, items, checked, onToggle }) => {
   );
 };
 
-const computeCount = (clinics, clinicTypes, eventFormats, languages) =>
-  clinics.filter((c) => {
-    if (clinicTypes.size > 0 && !clinicTypes.has(c.type)) return false;
+const computeCount = (clinics, clinicTypes, eventFormats, languages, search = "") => {
+  const q = search.trim().toLowerCase();
+  return clinics.filter((c) => {
+    if (q && !(c.name || "").toLowerCase().includes(q)) return false;
+    if (clinicTypes.size > 0) {
+      const match = Array.from(clinicTypes).some((type) => {
+        if (type === ONE_OFF_FILTER_VALUE) return isOneOffClinic(c);
+        return c.type === type || c.name === type;
+      });
+      if (!match) return false;
+    }
     if (eventFormats.size > 0 && !eventFormats.has(c.locationType)) return false;
     if (languages.size > 0 && !(c.languages ?? []).some((l) => languages.has(l.language))) return false;
     return true;
   }).length;
+};
 
-export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
+export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [], search = "" }) => {
   const { backend } = useBackendContext();
   const [languages, setLanguages] = useState([]);
+  const [workshopTypes, setWorkshopTypes] = useState(DEFAULT_WORKSHOP_TYPES);
   const [loadingLanguages, setLoadingLanguages] = useState(false);
 
   const [checkedTypes, setCheckedTypes]     = useState(new Set());
@@ -74,12 +85,22 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
     if (!open) return;
     let cancelled = false;
     setLoadingLanguages(true);
-    backend.get("/languages")
-      .then((res) => {
-        if (!cancelled) setLanguages(Array.isArray(res.data) ? res.data : []);
+    
+    Promise.all([
+      backend.get("/languages").catch(() => ({ data: [] })),
+      backend.get("/workshop-types").catch(() => ({ data: [] })),
+    ])
+      .then(([langRes, wtRes]) => {
+        if (cancelled) return;
+        setLanguages(Array.isArray(langRes.data) ? langRes.data : []);
+        if (Array.isArray(wtRes.data) && wtRes.data.length > 0) {
+          const names = wtRes.data.map((w) => w.workshopType || w.name).filter(Boolean);
+          const combined = Array.from(new Set([...DEFAULT_WORKSHOP_TYPES, ...names]));
+          setWorkshopTypes(combined);
+        }
       })
-      .catch(() => {})
       .finally(() => { if (!cancelled) setLoadingLanguages(false); });
+
     return () => { cancelled = true; };
   }, [open, backend]);
 
@@ -92,7 +113,11 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
   };
 
   const allSelected = [
-    ...[...checkedTypes].map((v) => ({ key: v, label: v, remove: () => toggle(setCheckedTypes)(v) })),
+    ...[...checkedTypes].map((v) => ({
+      key: v,
+      label: v === ONE_OFF_FILTER_VALUE ? "One-off Workshop" : v,
+      remove: () => toggle(setCheckedTypes)(v),
+    })),
     ...[...checkedFormats].map((v) => {
       const fmt = EVENT_FORMATS.find((f) => f.value === v);
       return { key: v, label: fmt?.label ?? v, remove: () => toggle(setCheckedFormats)(v) };
@@ -112,9 +137,12 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
     onClose();
   };
 
-  const resultCount = computeCount(clinics, checkedTypes, checkedFormats, checkedLangs);
+  const resultCount = computeCount(clinics, checkedTypes, checkedFormats, checkedLangs, search);
 
-  const clinicTypeItems = CLINIC_TYPES.map((t) => ({ value: t, label: t }));
+  const workshopTypeItems = [
+    ...workshopTypes.map((t) => ({ value: t, label: t })),
+    { value: ONE_OFF_FILTER_VALUE, label: "One-off Workshop" },
+  ];
   const languageItems   = languages.map((l) => ({ value: l.language, label: l.language }));
 
   return (
@@ -147,8 +175,8 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
             <Text fontWeight="bold" fontSize="md" mb={2}>Filter Categories</Text>
 
             <FilterSection
-              label="Clinic Type"
-              items={clinicTypeItems}
+              label="Workshop Type"
+              items={workshopTypeItems}
               checked={checkedTypes}
               onToggle={toggle(setCheckedTypes)}
             />
@@ -183,10 +211,10 @@ export const EventFilterDrawer = ({ open, onClose, onApply, clinics = [] }) => {
                 Clear
               </Button>
               <Button
-                bg={allSelected.length > 0 ? "#002992" : "#A1A1AA"}
+                bg={allSelected.length > 0 ? "brand.navy" : "#A1A1AA"}
                 color="white"
                 fontFamily="heading"
-                _hover={{ bg: allSelected.length > 0 ? "#001E6C" : "#71717A" }}
+                _hover={{ bg: allSelected.length > 0 ? "brand.navyHover" : "#71717A" }}
                 gap={2}
                 onClick={handleApply}
               >

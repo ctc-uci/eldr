@@ -4,6 +4,10 @@ export interface Volunteer {
   lastName: string;
   email: string;
   phoneNumber?: string;
+  secondaryPhoneNumber?: string;
+  isPrimaryMobile?: boolean;
+  isSecondaryMobile?: boolean;
+  canText?: boolean;
   role?: string;
   roles?: string[];
   areasOfPractice?: string[];
@@ -11,7 +15,9 @@ export interface Volunteer {
   experienceLevel?: string;
   mostRecentEvent?: string;
   isSignedConfidentiality?: boolean;
-  isNotary?: boolean;
+  isNotary?: boolean | null;
+  notaryStatus?: string | null;
+  isCaliforniaLicensed?: boolean;
   affiliatedEmployer?: string;
   lawSchoolYear?: string;
   stateBarCertificate?: string;
@@ -25,6 +31,10 @@ export interface StaffMember {
   email: string;
   role: string;
   phoneNumber?: string;
+  secondaryPhoneNumber?: string;
+  isPrimaryMobile?: boolean;
+  isSecondaryMobile?: boolean;
+  canText?: boolean;
   startDate?: string;
 }
 

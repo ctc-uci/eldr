@@ -4,6 +4,11 @@ export type VolunteerSignupDraft = {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   selectedLanguageNames: string[];
   /** language name -> verbal proficiency */
   verbalProficiencies: Record<string, string>;
@@ -14,6 +19,9 @@ export type VolunteerSignupDraft = {
   selectedAreaLabels: string[];
   /** null = not answered yet */
   isNotary: boolean | null;
+  notaryStatus: "active" | "inactive" | "no" | null;
+  isCaliforniaLicensed: boolean;
+  stateBarNumber: string;
   roleLabel: string;
   lawSchoolYear: string;
   affiliatedEmployer: string;
@@ -24,12 +32,20 @@ export function defaultDraft(): VolunteerSignupDraft {
     firstName: "",
     lastName: "",
     email: "",
+    phoneNumber: "",
+    secondaryPhoneNumber: "",
+    isPrimaryMobile: true,
+    isSecondaryMobile: false,
+    canText: false,
     selectedLanguageNames: [],
     verbalProficiencies: {},
     writtenProficiencies: {},
     languageProficiencies: {},
     selectedAreaLabels: [],
     isNotary: null,
+    notaryStatus: null,
+    isCaliforniaLicensed: false,
+    stateBarNumber: "",
     roleLabel: "",
     lawSchoolYear: "",
     affiliatedEmployer: "",

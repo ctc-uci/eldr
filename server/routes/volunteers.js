@@ -7,6 +7,13 @@ import { Router } from "express";
 
 export const volunteersRouter = Router();
 
+const parseOptionalBoolean = (value, field) => {
+  if (value === undefined || value === null) return null;
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  throw new Error(`${field} must be a boolean`);
+};
+
 const normalizeNullableText = (value) => {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
@@ -34,11 +41,17 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       last_name,
       email: reqEmail,
       phone_number,
+      secondary_phone_number,
+      is_primary_mobile,
+      is_secondary_mobile,
+      can_text,
       form_completed,
       form_link,
       is_signed_confidentiality: reqIsSignedConfidentiality,
       is_attorney: reqIsAttorney,
       is_notary: reqIsNotary,
+      notary_status: reqNotaryStatus,
+      is_california_licensed: reqIsCaliforniaLicensed,
       affiliated_employer,
       law_school_year: reqLawSchoolYear,
       state_bar_certificate: reqStateBarCertificate,
@@ -50,10 +63,36 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     let email = reqEmail;
     let is_attorney = reqIsAttorney;
     let is_notary = reqIsNotary;
+    let notary_status = reqNotaryStatus;
     let state_bar_certificate = reqStateBarCertificate;
     let state_bar_number = reqStateBarNumber;
     let law_school_year = reqLawSchoolYear;
     let is_signed_confidentiality = reqIsSignedConfidentiality;
+
+    const rawNotaryStatus =
+      reqNotaryStatus ?? (reqIsNotary === true ? "active" : "no");
+    notary_status = ["active", "inactive", "no"].includes(rawNotaryStatus)
+      ? rawNotaryStatus
+      : reqIsNotary
+        ? "active"
+        : "no";
+    is_notary = notary_status === "active";
+
+    const normalizedSecondaryPhone = normalizeNullableText(secondary_phone_number);
+    let parsedIsCaliforniaLicensed;
+    let parsedIsAttorney;
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsCaliforniaLicensed = parseOptionalBoolean(reqIsCaliforniaLicensed, "is_california_licensed");
+      parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
+      parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile") ?? false;
+      parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile") ?? false;
+      parsedCanText = parseOptionalBoolean(can_text, "can_text") ?? false;
+    } catch (valErr) {
+      return res.status(400).send(valErr.message);
+    }
 
     const callerUid = res.locals.decodedToken?.uid;
     const callerEmail = res.locals.decodedToken?.email;
@@ -81,7 +120,10 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
 
       // Prevent self-asserting credentials/confidentiality fields during self-registration
       is_attorney = false;
+      parsedIsAttorney = false;
       is_notary = false;
+      notary_status = "no";
+      parsedIsCaliforniaLicensed = false;
       state_bar_certificate = null;
       state_bar_number = null;
       law_school_year = null;
@@ -128,6 +170,22 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
     const normalizedListedExperience = normalizeNullableText(listed_experience);
 
+    const effectiveIsAttorney = parsedIsAttorney;
+    let effectiveIsCalLicensed = parsedIsCaliforniaLicensed;
+    if (effectiveIsAttorney === false) {
+      effectiveIsCalLicensed = false;
+    }
+
+    const resolvedStateBarCertificate =
+      effectiveIsAttorney === false || effectiveIsCalLicensed === false
+        ? null
+        : (normalizedStateBarCertificate || (effectiveIsCalLicensed === true ? "California" : null));
+
+    const resolvedStateBarNumber =
+      effectiveIsAttorney === false || effectiveIsCalLicensed === false
+        ? null
+        : normalizedStateBarNumber;
+
     const result = await db.tx(async (t) => {
       const userResult = await t.one(
         `
@@ -159,32 +217,53 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
             last_name,
             email,
             phone_number,
+            secondary_phone_number,
+            is_primary_mobile,
+            is_secondary_mobile,
+            can_text,
             form_completed,
             form_link,
             is_signed_confidentiality,
             is_attorney,
             is_notary,
+            notary_status,
+            is_california_licensed,
             affiliated_employer,
             law_school_year,
             state_bar_certificate,
             state_bar_number,
             listed_experience
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
           ON CONFLICT (id) DO UPDATE
             SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
                 last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
                 email = COALESCE(EXCLUDED.email, volunteers.email),
                 phone_number = COALESCE(EXCLUDED.phone_number, volunteers.phone_number),
+                secondary_phone_number = COALESCE(EXCLUDED.secondary_phone_number, volunteers.secondary_phone_number),
+                is_primary_mobile = COALESCE(EXCLUDED.is_primary_mobile, volunteers.is_primary_mobile),
+                is_secondary_mobile = COALESCE(EXCLUDED.is_secondary_mobile, volunteers.is_secondary_mobile),
+                can_text = COALESCE(EXCLUDED.can_text, volunteers.can_text),
                 form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
                 form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
                 is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
                 is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
                 is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
+                notary_status = COALESCE(EXCLUDED.notary_status, volunteers.notary_status),
+                is_california_licensed = CASE
+                  WHEN EXCLUDED.is_attorney IS FALSE THEN FALSE
+                  ELSE COALESCE(EXCLUDED.is_california_licensed, volunteers.is_california_licensed)
+                END,
                 affiliated_employer = COALESCE(EXCLUDED.affiliated_employer, volunteers.affiliated_employer),
                 law_school_year = COALESCE(EXCLUDED.law_school_year, volunteers.law_school_year),
-                state_bar_certificate = COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate),
-                state_bar_number = COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number),
+                state_bar_certificate = CASE
+                  WHEN EXCLUDED.is_attorney IS FALSE OR EXCLUDED.is_california_licensed IS FALSE THEN NULL
+                  ELSE COALESCE(EXCLUDED.state_bar_certificate, volunteers.state_bar_certificate)
+                END,
+                state_bar_number = CASE
+                  WHEN EXCLUDED.is_attorney IS FALSE OR EXCLUDED.is_california_licensed IS FALSE THEN NULL
+                  ELSE COALESCE(EXCLUDED.state_bar_number, volunteers.state_bar_number)
+                END,
                 listed_experience = COALESCE(EXCLUDED.listed_experience, volunteers.listed_experience)
           RETURNING *;
         `,
@@ -194,15 +273,21 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           normalizedLastName,
           emailToUse,
           normalizedPhoneNumber,
+          normalizedSecondaryPhone,
+          parsedIsPrimaryMobile,
+          parsedIsSecondaryMobile,
+          parsedCanText,
           form_completed ?? null,
           normalizeNullableText(form_link),
           is_signed_confidentiality ?? null,
           is_attorney ?? null,
           is_notary ?? null,
+          notary_status ?? "no",
+          effectiveIsCalLicensed,
           normalizedAffiliatedEmployer,
           normalizedLawSchoolYear,
-          normalizedStateBarCertificate,
-          normalizedStateBarNumber,
+          resolvedStateBarCertificate,
+          resolvedStateBarNumber,
           normalizedListedExperience,
         ]
       );
@@ -365,36 +450,59 @@ volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-// Delete a volunteer via ID
-volunteersRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
+// Delete a volunteer via ID (staff/supervisors can delete any volunteer; uncompleted volunteers can delete self during signup rollback)
+volunteersRouter.delete("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const volunteerId = Number(id);
+    if (!Number.isInteger(volunteerId)) {
+      return res.status(400).send("Invalid volunteer id");
+    }
+
+    const callerUid = res.locals.decodedToken?.uid;
+    const callerUsers = await db.query(
+      `SELECT u.id, u.role, v.form_completed
+       FROM users u
+       LEFT JOIN volunteers v ON u.id = v.id
+       WHERE u.firebase_uid = $1`,
+      [callerUid]
+    );
+    const caller = callerUsers.at(0);
+    const isStaffOrSupervisor = caller?.role === "staff" || caller?.role === "supervisor";
+    const isSelfRollback = Boolean(caller && caller.id === volunteerId && caller.form_completed !== true);
+
+    if (!isStaffOrSupervisor && !isSelfRollback) {
+      return res.status(403).send("Forbidden");
+    }
 
     const userRow = await db.query(
       `SELECT firebase_uid FROM users WHERE id = $1`,
-      [id]
+      [volunteerId]
     );
 
     if (!userRow.length) {
-      return res.status(404).send(`Volunteer ${id} not found`);
+      return res.status(404).send(`Volunteer ${volunteerId} not found`);
+    }
+
+    if (userRow.length && userRow[0].firebase_uid) {
+      try {
+        await admin.auth().deleteUser(userRow[0].firebase_uid);
+      } catch (fbErr) {
+        if (fbErr?.code !== "auth/user-not-found") {
+          throw fbErr;
+        }
+      }
     }
 
     await db.tx(async (t) => {
       await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
-        id,
+        volunteerId,
       ]);
-      await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
-      await t.query(`DELETE FROM users WHERE id = $1`, [id]);
+      await t.query(`DELETE FROM volunteers WHERE id = $1`, [volunteerId]);
+      await t.query(`DELETE FROM users WHERE id = $1`, [volunteerId]);
     });
 
-    if (userRow.length && userRow[0].firebase_uid) {
-      await admin
-        .auth()
-        .deleteUser(userRow[0].firebase_uid)
-        .catch((err) => console.error("Failed to delete Firebase user:", err));
-    }
-
-    res.status(200).send(`Volunteer ${id} deleted successfully`);
+    res.status(200).send(`Volunteer ${volunteerId} deleted successfully`);
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -410,11 +518,17 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       last_name,
       email,
       phone_number,
+      secondary_phone_number,
+      is_primary_mobile,
+      is_secondary_mobile,
+      can_text,
       form_completed,
       form_link,
       is_signed_confidentiality,
       is_attorney,
       is_notary,
+      notary_status,
+      is_california_licensed,
       affiliated_employer,
       law_school_year,
       state_bar_certificate,
@@ -427,8 +541,37 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       "listed_experience"
     );
     const listedExperienceClause = hasListedExperience
-      ? "listed_experience = $15"
+      ? "listed_experience = $21"
       : "listed_experience = listed_experience";
+    const hasSecondaryPhone = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "secondary_phone_number"
+    );
+
+    let parsedIsCaliforniaLicensed;
+    let parsedIsAttorney;
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsCaliforniaLicensed = parseOptionalBoolean(is_california_licensed, "is_california_licensed");
+      parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
+      parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile");
+      parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile");
+      parsedCanText = parseOptionalBoolean(can_text, "can_text");
+    } catch (valErr) {
+      return res.status(400).send(valErr.message);
+    }
+
+    const resolvedNotaryStatus =
+      notary_status ??
+      (is_notary === true ? "active" : is_notary === false ? "no" : null);
+    const resolvedIsNotary =
+      resolvedNotaryStatus === "active"
+        ? true
+        : resolvedNotaryStatus === "inactive" || resolvedNotaryStatus === "no"
+          ? false
+          : is_notary;
 
     await db.query(
       `
@@ -437,15 +580,30 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             last_name = COALESCE($3, last_name),
             email = COALESCE($4, email),
             phone_number = COALESCE($5, phone_number),
-            form_completed = COALESCE($6, form_completed),
-            form_link = COALESCE($7, form_link),
-            is_signed_confidentiality = COALESCE($8, is_signed_confidentiality),
-            is_attorney = COALESCE($9, is_attorney),
-            is_notary = COALESCE($10, is_notary),
-            affiliated_employer = COALESCE($11, affiliated_employer),
-            law_school_year = COALESCE($12, law_school_year),
-            state_bar_certificate = COALESCE($13, state_bar_certificate),
-            state_bar_number = COALESCE($14, state_bar_number),
+            secondary_phone_number = CASE WHEN $22 THEN $6 ELSE secondary_phone_number END,
+            is_primary_mobile = COALESCE($7, is_primary_mobile),
+            is_secondary_mobile = COALESCE($8, is_secondary_mobile),
+            can_text = COALESCE($9, can_text),
+            form_completed = COALESCE($10, form_completed),
+            form_link = COALESCE($11, form_link),
+            is_signed_confidentiality = COALESCE($12, is_signed_confidentiality),
+            is_attorney = COALESCE($13, is_attorney),
+            is_notary = COALESCE($14, is_notary),
+            notary_status = COALESCE($15, notary_status),
+            is_california_licensed = CASE
+              WHEN $13 IS FALSE THEN FALSE
+              ELSE COALESCE($16, is_california_licensed)
+            END,
+            affiliated_employer = COALESCE($17, affiliated_employer),
+            law_school_year = COALESCE($18, law_school_year),
+            state_bar_certificate = CASE
+              WHEN $13 IS FALSE OR $16 IS FALSE THEN NULL
+              ELSE COALESCE($19, state_bar_certificate)
+            END,
+            state_bar_number = CASE
+              WHEN $13 IS FALSE OR $16 IS FALSE THEN NULL
+              ELSE COALESCE($20, state_bar_number)
+            END,
             ${listedExperienceClause}
         WHERE id = $1;
       `,
@@ -455,16 +613,23 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         last_name,
         email,
         phone_number,
+        hasSecondaryPhone ? normalizeNullableText(secondary_phone_number) : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
         form_completed,
         form_link,
         is_signed_confidentiality,
-        is_attorney,
-        is_notary,
+        parsedIsAttorney,
+        resolvedIsNotary,
+        resolvedNotaryStatus,
+        parsedIsCaliforniaLicensed,
         affiliated_employer ?? null,
         law_school_year ?? null,
         state_bar_certificate ?? null,
         state_bar_number ?? null,
         hasListedExperience ? normalizeNullableText(listed_experience) : null,
+        hasSecondaryPhone,
       ]
     );
 
@@ -856,7 +1021,8 @@ volunteersRouter.get(
         SELECT r.id, r.role_name
         FROM volunteer_roles vr
         JOIN roles r ON vr.role_id = r.id
-        WHERE vr.volunteer_id = $1;
+        WHERE vr.volunteer_id = $1
+        ORDER BY r.id ASC;
       `,
         [volunteerId]
       );

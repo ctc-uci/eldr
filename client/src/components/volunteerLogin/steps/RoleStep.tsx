@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
-  Button,
   Select,
   Flex,
   Heading,
@@ -15,6 +14,7 @@ import { LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
@@ -22,20 +22,48 @@ type Props = {
   onBack?: () => void;
 };
 
+const DEFAULT_ROLES = ["Volunteer", "Law Student", "Paralegal", "Attorney"];
+
 const RoleStep = ({ onNext, onBack }: Props) => {
+  const { backend } = useBackendContext();
+  const [roles, setRoles] = useState<string[]>(DEFAULT_ROLES);
   const [selected, setSelected] = useState<string>(
     () => loadDraft()?.roleLabel ?? ""
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const collection = createListCollection({
-      items: [
-        "Volunteer",
-        "Law Student",
-        "Paralegal",
-        "Attorney",
-      ],
-    })
+  useEffect(() => {
+    let active = true;
+    const fetchRoles = async () => {
+      try {
+        // Applicants are not signed in yet, so use the public catalog endpoint.
+        const res = await backend.get<
+          Array<{ id: number; roleName?: string; name?: string; role_name?: string }>
+        >("/roles/public");
+        if (!active) return;
+        const fetchedNames = (res.data || [])
+          .map((r) => r.roleName || r.name || r.role_name || "")
+          .filter(Boolean);
+        if (fetchedNames.length > 0) {
+          setRoles(fetchedNames);
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles:", err);
+      }
+    };
+    fetchRoles();
+    return () => {
+      active = false;
+    };
+  }, [backend]);
+
+  const collection = useMemo(
+    () =>
+      createListCollection({
+        items: roles,
+      }),
+    [roles]
+  );
 
   const handleContinue = () => {
     setErrorMsg(null);

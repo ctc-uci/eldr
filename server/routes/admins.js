@@ -6,13 +6,61 @@ import { Router } from "express";
 
 export const adminsRouter = Router();
 
+class InvalidBooleanError extends Error {}
+
+// Returns true/false for boolean-ish input, null when omitted/null, and throws
+// InvalidBooleanError for anything else (e.g. "yes", 1, {}), so that string
+// values such as "false" are never coerced to true by Boolean().
+const parseOptionalBoolean = (value, field) => {
+  if (value === undefined || value === null) return null;
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  throw new InvalidBooleanError(`${field} must be a boolean`);
+};
+
 // POST /admins - create a new staff/supervisor
 adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
   let firebaseUid = null;
   try {
-    const { firstName, lastName, email, phoneNumber, isSupervisor } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      secondaryPhoneNumber,
+      isPrimaryMobile,
+      isSecondaryMobile,
+      canText,
+      isSupervisor,
+    } = req.body;
 
     if (!email) return res.status(400).send("email is required");
+
+    if (phoneNumber !== undefined && phoneNumber !== null && typeof phoneNumber !== "string") {
+      return res.status(400).send("phoneNumber must be a string");
+    }
+    if (
+      secondaryPhoneNumber !== undefined &&
+      secondaryPhoneNumber !== null &&
+      typeof secondaryPhoneNumber !== "string"
+    ) {
+      return res.status(400).send("secondaryPhoneNumber must be a string");
+    }
+
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsPrimaryMobile = parseOptionalBoolean(isPrimaryMobile, "isPrimaryMobile") ?? false;
+      parsedIsSecondaryMobile =
+        parseOptionalBoolean(isSecondaryMobile, "isSecondaryMobile") ?? false;
+      parsedCanText = parseOptionalBoolean(canText, "canText") ?? false;
+    } catch (validationErr) {
+      if (validationErr instanceof InvalidBooleanError) {
+        return res.status(400).send(validationErr.message);
+      }
+      throw validationErr;
+    }
 
     // Create Firebase Auth account with a temporary password
     const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
@@ -51,9 +99,33 @@ adminsRouter.post("/", verifyRole("supervisor"), async (req, res) => {
     }
 
     const result = await db.query(
-      `INSERT INTO admins (id, first_name, last_name, email, phone_number, is_supervisor)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [userId, firstName, lastName, email, phoneNumber ?? null, isSupervisor ?? false]
+      `INSERT INTO admins (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        secondary_phone_number,
+        is_primary_mobile,
+        is_secondary_mobile,
+        can_text,
+        is_supervisor
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [
+        userId,
+        firstName,
+        lastName,
+        email,
+        phoneNumber ?? null,
+        typeof secondaryPhoneNumber === "string" && secondaryPhoneNumber.trim()
+          ? secondaryPhoneNumber.trim()
+          : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
+        isSupervisor ?? false,
+      ]
     );
 
     res.status(201).json(keysToCamel(result[0]));
@@ -87,6 +159,10 @@ adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res)
           a.last_name,
           a.email,
           a.phone_number,
+          a.secondary_phone_number,
+          a.is_primary_mobile,
+          a.is_secondary_mobile,
+          a.can_text,
           a.start_date,
           CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role
         FROM admins a
@@ -253,29 +329,121 @@ adminsRouter.put("/:id", verifyRole("supervisor"), async (req, res) => {
       return res.status(400).send("Invalid staff profile id");
     }
 
-    const { firstName, lastName, email, calendarEmail, isSupervisor, startDate, phoneNumber } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      calendarEmail,
+      isSupervisor,
+      startDate,
+      phoneNumber,
+      secondaryPhoneNumber,
+      isPrimaryMobile,
+      isSecondaryMobile,
+      canText,
+    } = req.body;
+
+    const hasSecondaryPhone = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "secondaryPhoneNumber"
+    );
+
+    if (phoneNumber !== undefined && phoneNumber !== null && typeof phoneNumber !== "string") {
+      return res.status(400).send("phoneNumber must be a string");
+    }
+    if (
+      secondaryPhoneNumber !== undefined &&
+      secondaryPhoneNumber !== null &&
+      typeof secondaryPhoneNumber !== "string"
+    ) {
+      return res.status(400).send("secondaryPhoneNumber must be a string");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let nextEmail = undefined;
+    if (email !== undefined) {
+      if (typeof email !== "string" || !email.trim() || !emailRegex.test(email.trim())) {
+        return res.status(400).send("A valid email address is required");
+      }
+      nextEmail = email.trim();
+    }
+
+    const existingRows = await db.query(
+      `SELECT a.email as admin_email, u.email as user_email, u.firebase_uid
+       FROM admins a
+       LEFT JOIN users u ON a.id = u.id
+       WHERE a.id = $1`,
+      [adminId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).send("Staff profile not found");
+    }
+
+    const currentRecord = existingRows[0];
+    const currentEmail = (currentRecord.admin_email || currentRecord.user_email || "").toLowerCase();
+
+    if (nextEmail && nextEmail.toLowerCase() !== currentEmail) {
+      const duplicateUser = await db.query(
+        `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id <> $2 LIMIT 1`,
+        [nextEmail, adminId]
+      );
+      if (duplicateUser.length > 0) {
+        return res.status(409).send("Email is already in use by another account");
+      }
+
+      if (currentRecord.firebase_uid) {
+        await admin.auth().updateUser(currentRecord.firebase_uid, { email: nextEmail });
+      }
+
+      await db.query(`UPDATE users SET email = $1 WHERE id = $2`, [nextEmail, adminId]);
+    }
+
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsPrimaryMobile = parseOptionalBoolean(isPrimaryMobile, "isPrimaryMobile");
+      parsedIsSecondaryMobile = parseOptionalBoolean(isSecondaryMobile, "isSecondaryMobile");
+      parsedCanText = parseOptionalBoolean(canText, "canText");
+    } catch (validationErr) {
+      if (validationErr instanceof InvalidBooleanError) {
+        return res.status(400).send(validationErr.message);
+      }
+      throw validationErr;
+    }
 
     const result = await db.query(
       `UPDATE admins
         SET first_name = $1,
             last_name = $2,
-            email = $3,
+            email = COALESCE($3, email),
             calendar_email = $4,
             is_supervisor = COALESCE($5, is_supervisor),
             start_date = COALESCE($7, start_date),
-            phone_number = COALESCE($8, phone_number)
+            phone_number = COALESCE($8, phone_number),
+            secondary_phone_number = CASE WHEN $13 THEN $9 ELSE secondary_phone_number END,
+            is_primary_mobile = COALESCE($10, is_primary_mobile),
+            is_secondary_mobile = COALESCE($11, is_secondary_mobile),
+            can_text = COALESCE($12, can_text)
         WHERE id = $6
        RETURNING *`,
       [
         firstName,
         lastName,
-        email,
+        nextEmail ?? null,
         calendarEmail,
         isSupervisor,
         adminId,
         startDate || null,
         phoneNumber?.trim() ? phoneNumber.trim() : null,
+        typeof secondaryPhoneNumber === "string" && secondaryPhoneNumber.trim()
+          ? secondaryPhoneNumber.trim()
+          : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
+        hasSecondaryPhone,
       ]
     );
 

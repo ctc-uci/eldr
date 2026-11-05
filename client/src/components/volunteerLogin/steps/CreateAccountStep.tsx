@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Box,
-  Button,
+  Checkbox,
   Flex,
   Heading,
   Input,
@@ -18,6 +18,7 @@ import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { TopBackButton, ContinueButton } from "../NavigationButtons";
+import { formatPhoneNumber, isCompletePhoneNumber } from "@/utils/phoneNumber";
 
 type Props = {
   onNext: () => void;
@@ -29,6 +30,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPrimaryMobile, setIsPrimaryMobile] = useState(true);
+  const [canText, setCanText] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -55,6 +59,9 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       setFirstName(d.firstName);
       setLastName(d.lastName);
       setEmail(d.email);
+      setPhoneNumber(d.phoneNumber ?? "");
+      setIsPrimaryMobile(d.isPrimaryMobile ?? true);
+      setCanText(d.canText ?? false);
     }
   }, []);
 
@@ -65,13 +72,18 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
   const handleContinue = async () => {
     setErrorMsg(null);
 
-    if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
-      setErrorMsg("Please fill out first name, last name, and email.");
+    if (!firstName.trim() || !lastName.trim() || !normalizedEmail || !phoneNumber.trim()) {
+      setErrorMsg("Please fill out first name, last name, email, and phone number.");
       return;
     }
 
     if (!isValidEmail(normalizedEmail)) {
       setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    if (!isCompletePhoneNumber(phoneNumber)) {
+      setErrorMsg("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -100,6 +112,11 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
+      phoneNumber: phoneNumber.trim(),
+      secondaryPhoneNumber: "",
+      isPrimaryMobile,
+      isSecondaryMobile: false,
+      canText,
     });
     onNext();
   };
@@ -205,6 +222,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-first-name"
                 label={
                   <>
                     First Name <Box as="span" color="#991919"> *</Box>
@@ -212,6 +230,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Enter your first name"
@@ -232,6 +251,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-last-name"
                 label={
                   <>
                     Last Name <Box as="span" color="#991919"> *</Box>
@@ -239,6 +259,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter your last name"
@@ -259,6 +280,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-email"
                 label={
                   <>
                     Email <Box as="span" color="#991919"> *</Box>
@@ -266,6 +288,7 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter an email"
@@ -279,6 +302,84 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
                   focusRingColor="transparent"
                 />
               </Field>
+            </Box>
+
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+            >
+              <Field
+                htmlFor="create-account-phone"
+                label={
+                  <>
+                    Phone Number <Box as="span" color="#991919"> *</Box>
+                  </>
+                }
+              >
+                <Input
+                  id="create-account-phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                  placeholder="XXX-XXX-XXXX"
+                  type="tel"
+                  maxLength={14}
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                />
+              </Field>
+              <Box mt="6px">
+                <Checkbox.Root
+                  checked={isPrimaryMobile}
+                  onCheckedChange={(e) => setIsPrimaryMobile(!!e.checked)}
+                  size="sm"
+                  gap="6px"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control
+                    borderColor={isPrimaryMobile ? "brand.navy" : "#D1D5DB"}
+                    bg={isPrimaryMobile ? "brand.navy" : "white"}
+                  >
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label fontSize="12px" color="gray.600" fontWeight="normal">
+                    This is a mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+            </Box>
+
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              pt="2px"
+            >
+              <Checkbox.Root
+                checked={canText}
+                onCheckedChange={(e) => setCanText(!!e.checked)}
+                size="sm"
+                alignItems="flex-start"
+                gap="8px"
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control
+                  mt="2px"
+                  flexShrink={0}
+                  borderColor={canText ? "brand.navy" : "#D1D5DB"}
+                  bg={canText ? "brand.navy" : "white"}
+                >
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Label fontSize="12px" color="gray.600" lineHeight="1.4" fontWeight="normal">
+                  I give permission to receive SMS text messages at this number for clinic and volunteering communications.
+                </Checkbox.Label>
+              </Checkbox.Root>
             </Box>
 
             <ContinueButton
@@ -304,21 +405,25 @@ const CreateAccountStep = ({ onNext, onBack }: Props) => {
 
 const Field = ({
   label,
+  htmlFor,
   icon,
   children,
 }: {
   label: React.ReactNode;
+  htmlFor?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <Box>
     <Text
+      asChild
+      display="block"
       fontSize="14px"
       fontWeight={600}
       color="black"
       mb="6px"
     >
-      {label}
+      <label htmlFor={htmlFor}>{label}</label>
     </Text>
     <Flex
       align="center"

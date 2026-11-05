@@ -249,12 +249,38 @@ usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-// Delete a user by ID, both in Firebase and NPO DB
-usersRouter.delete("/:firebaseUid", verifyRole("supervisor"), async (req, res) => {
+// Delete a user by ID, both in Firebase and NPO DB (supervisors can delete any user; uncompleted volunteers can delete self during signup rollback)
+usersRouter.delete("/:firebaseUid", verifyToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+    const callerUid = res.locals.decodedToken?.uid;
 
-    await admin.auth().deleteUser(firebaseUid);
+    const userResult = await db.query(
+      `SELECT u.role, v.form_completed
+       FROM users u
+       LEFT JOIN volunteers v ON u.id = v.id
+       WHERE u.firebase_uid = $1`,
+      [callerUid]
+    );
+    const callerRecord = userResult.at(0) as { role?: string; form_completed?: boolean } | undefined;
+    const isSupervisor = callerRecord?.role === "supervisor";
+    const isSelf = Boolean(callerUid && callerUid === firebaseUid);
+    const isRollbackSelfDelete = isSelf && callerRecord?.form_completed !== true;
+
+    if (!isSupervisor && !isRollbackSelfDelete) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // Ignore only the expected auth/user-not-found case, propagate other Firebase errors
+    try {
+      await admin.auth().deleteUser(firebaseUid);
+    } catch (fbErr: unknown) {
+      const errWithCode = fbErr as { code?: string };
+      if (errWithCode?.code !== "auth/user-not-found") {
+        throw fbErr;
+      }
+    }
+
     const user = await db.query("DELETE FROM users WHERE firebase_uid = $1", [
       firebaseUid,
     ]);

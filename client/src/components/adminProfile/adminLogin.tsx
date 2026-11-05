@@ -153,7 +153,7 @@ export const AdminLogin: React.FC = () => {
 
   return (
     <LoginLayout>
-      <LoginCardLayout>
+      <LoginCardLayout onBack={() => navigate("/login")}>
         <LoginFormField
           label="Email"
           required

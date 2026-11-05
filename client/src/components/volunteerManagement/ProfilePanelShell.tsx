@@ -114,10 +114,10 @@ export const ProfilePanelShell = ({
       {isEditing ? (
         <Button
           size="sm"
-          bg="#002992"
+          bg="brand.navy"
           color="white"
           fontFamily="heading"
-          _hover={{ bg: "#001E6C" }}
+          _hover={{ bg: "brand.navyHover" }}
           gap={2}
           onClick={onSave}
         >
@@ -128,10 +128,10 @@ export const ProfilePanelShell = ({
         <Button
           type="button"
           size="sm"
-          bg="#002992"
+          bg="brand.navy"
           color="white"
           fontFamily="heading"
-          _hover={{ bg: "#001E6C" }}
+          _hover={{ bg: "brand.navyHover" }}
           gap={2}
           onClick={onEditToggle}
         >

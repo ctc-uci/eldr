@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 
 import {
+  Badge,
   Box,
+  Checkbox,
+  HStack,
   Input,
   NativeSelect,
   SimpleGrid,
@@ -24,8 +27,12 @@ interface StaffProfilePanelProps {
 interface FormState {
   firstName: string;
   lastName: string;
-  phoneNumber: string;
   email: string;
+  phoneNumber: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   role: string;
   startDate: string;
 }
@@ -39,11 +46,17 @@ export const StaffProfilePanel = ({
   const { role } = useRoleContext();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
-    phoneNumber: "",
     email: "",
+    phoneNumber: "",
+    secondaryPhoneNumber: "",
+    isPrimaryMobile: false,
+    isSecondaryMobile: false,
+    canText: false,
     role: "",
     startDate: "",
   });
@@ -54,17 +67,25 @@ export const StaffProfilePanel = ({
   useEffect(() => {
     setIsEditing(false);
     setIsSaved(false);
+    setSaveError(null);
+    setEmailError(null);
   }, [staffId]);
 
   const enterEditMode = () => {
     if (!staff) return;
+    setEmailError(null);
+    setSaveError(null);
     setForm({
       firstName: staff.firstName,
       lastName: staff.lastName,
+      email: staff.email ?? "",
       phoneNumber: staff.phoneNumber ?? "",
-      email: staff.email,
+      secondaryPhoneNumber: staff.secondaryPhoneNumber ?? "",
+      isPrimaryMobile: Boolean(staff.isPrimaryMobile),
+      isSecondaryMobile: Boolean(staff.isSecondaryMobile),
+      canText: Boolean(staff.canText),
       role: staff.role,
-      startDate: staff.startDate ? staff.startDate.split("T")[0] : "",
+      startDate: staff.startDate ? (staff.startDate.split("T")[0] ?? "") : "",
     });
     setEditRole(
       staff.role?.toLowerCase() === "supervisor" ? "supervisor" : "staff"
@@ -74,25 +95,70 @@ export const StaffProfilePanel = ({
 
   const handleSave = async () => {
     if (!staff) return;
-    await backend.put(`/admins/${staff.id}`, {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phoneNumber: form.phoneNumber,
-      isSupervisor: editRole === "supervisor",
-      startDate: form.startDate || null,
-    });
-    const resolvedRole = editRole === "supervisor" ? "Supervisor" : "Staff";
-    setIsEditing(false);
-    setIsSaved(true);
-    onSaved?.({
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phoneNumber: form.phoneNumber || undefined,
-      role: resolvedRole,
-      startDate: form.startDate || undefined,
-    });
+    const nextEmail = form.email.trim();
+    if (!nextEmail) {
+      setEmailError("Email is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(nextEmail)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+    setEmailError(null);
+    setSaveError(null);
+
+    try {
+      await backend.put(`/admins/${staff.id}`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: nextEmail,
+        phoneNumber: form.phoneNumber || null,
+        secondaryPhoneNumber: form.secondaryPhoneNumber || null,
+        isPrimaryMobile: form.isPrimaryMobile,
+        isSecondaryMobile: form.isSecondaryMobile,
+        canText: form.canText,
+        isSupervisor: editRole === "supervisor",
+        startDate: form.startDate || null,
+      });
+      const resolvedRole = editRole === "supervisor" ? "Supervisor" : "Staff";
+      setIsEditing(false);
+      setIsSaved(true);
+      onSaved?.({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: nextEmail,
+        phoneNumber: form.phoneNumber || undefined,
+        secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
+        isPrimaryMobile: form.isPrimaryMobile,
+        isSecondaryMobile: form.isSecondaryMobile,
+        canText: form.canText,
+        role: resolvedRole,
+        startDate: form.startDate || undefined,
+      });
+    } catch (err: unknown) {
+      console.error("Failed to save staff profile:", err);
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string } | string;
+        };
+      };
+      const status = axiosErr?.response?.status;
+      const data = axiosErr?.response?.data;
+      const backendMessage =
+        data && typeof data === "object"
+          ? data.message
+          : typeof data === "string"
+            ? data
+            : null;
+
+      if (status && status >= 400 && status < 500 && backendMessage) {
+        setSaveError(backendMessage);
+      } else {
+        setSaveError("Failed to save staff profile. Please try again.");
+      }
+    }
   };
 
   const setField =
@@ -100,17 +166,6 @@ export const StaffProfilePanel = ({
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   if (!staff) return null;
-
-  const formattedStartDate = staff.startDate
-    ? new Date(staff.startDate.split("T")[0] + "T00:00:00").toLocaleDateString(
-        "en-US",
-        {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }
-      )
-    : undefined;
 
   return (
     <ProfilePanelShell
@@ -124,6 +179,11 @@ export const StaffProfilePanel = ({
       onEditToggle={enterEditMode}
       onSave={handleSave}
     >
+      {saveError && (
+        <Text fontSize="sm" color="red.500" mb={3}>
+          {saveError}
+        </Text>
+      )}
       <Tabs.Root
         defaultValue="profile"
         variant="enclosed"
@@ -156,39 +216,138 @@ export const StaffProfilePanel = ({
               gap={4}
               maxW="560px"
             >
-              {(["firstName", "lastName", "phoneNumber", "email"] as const).map(
-                (key) => (
-                  <Box key={key}>
-                    <Text
-                      fontSize="sm"
-                      fontWeight="bold"
-                      mb={1}
-                    >
-                      {key === "firstName"
-                        ? "First Name"
-                        : key === "lastName"
-                          ? "Last Name"
-                          : key === "phoneNumber"
-                            ? "Phone Number"
-                            : "Email"}
-                    </Text>
-                    <Input
-                      size="sm"
-                      borderColor="#E4E4E7"
-                      value={form[key]}
-                      onChange={setField(key)}
-                      _placeholder={{ color: "#A1A1AA" }}
-                    />
-                  </Box>
-                )
-              )}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  First Name
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.firstName}
+                  onChange={setField("firstName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Last Name
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.lastName}
+                  onChange={setField("lastName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+
+              {/* Primary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Primary Phone
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.phoneNumber}
+                  onChange={setField("phoneNumber")}
+                  placeholder="Primary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isPrimaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isPrimaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Secondary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Secondary Phone (Optional)
+                </Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.secondaryPhoneNumber}
+                  onChange={setField("secondaryPhoneNumber")}
+                  placeholder="Secondary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isSecondaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isSecondaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Permission to text */}
+              <Box gridColumn="span 2" p={2.5} bg="gray.50" borderRadius="md" border="1px solid" borderColor="#E4E4E7">
+                <Checkbox.Root
+                  checked={form.canText}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, canText: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.700">
+                    Permission to text (applies to callable/textable numbers for California compliance)
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>
+                  Email
+                </Text>
+                <Input
+                  size="sm"
+                  type="email"
+                  borderColor={emailError ? "red.500" : "#E4E4E7"}
+                  value={form.email}
+                  onChange={(e) => {
+                    setEmailError(null);
+                    setField("email")(e);
+                  }}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                {emailError && (
+                  <Text fontSize="xs" color="red.500" mt={1}>
+                    {emailError}
+                  </Text>
+                )}
+              </Box>
+
               <Box>
                 <Text
                   fontSize="sm"
                   fontWeight="bold"
                   mb={1}
                 >
-                  Role
+                  User Type
                 </Text>
                 <NativeSelect.Root
                   borderColor="#E4E4E7"
@@ -219,16 +378,34 @@ export const StaffProfilePanel = ({
                 label="Last Name"
                 value={staff.lastName}
               />
-              <ProfileField
-                label="Phone Number"
-                value={staff.phoneNumber}
-              />
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Primary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{staff.phoneNumber || "—"}</Text>
+                  {staff.isPrimaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Secondary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{staff.secondaryPhoneNumber || "—"}</Text>
+                  {staff.isSecondaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Permission to Text</Text>
+                <Text fontSize="sm" color="gray.500">{staff.canText ? "Yes" : "No"}</Text>
+              </Box>
               <ProfileField
                 label="Email"
                 value={staff.email}
               />
               <ProfileField
-                label="Role"
+                label="User Type"
                 value={staff.role}
               />
             </SimpleGrid>

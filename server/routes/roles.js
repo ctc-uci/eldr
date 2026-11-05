@@ -25,6 +25,22 @@ rolesRouter.post("/", verifyRole("staff"), async (req, res) => {
   }
 });
 
+// Public role catalog (id + name only) for the pre-signup volunteer flow, where
+// the applicant has no Firebase account/token yet. Whitelisted in verifyToken.
+// Must be registered before "/:id".
+rolesRouter.get("/public", async (req, res) => {
+  try {
+    const roles = await db.query(
+      `SELECT id, role_name FROM roles ORDER BY id ASC;`
+    );
+
+    res.status(200).json(keysToCamel(roles));
+  } catch (e) {
+    console.error("[ERROR in GET /roles/public]:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get all roles
 rolesRouter.get("/", verifyRole("volunteer"), async (req, res) => {
   try {

@@ -22,6 +22,7 @@ export async function completeVolunteerSignup(
   const normalizedEmail = draft.email.trim().toLowerCase();
   let firebaseUid: string | null = null;
   let volunteerId: number | null = null;
+  let authUser: UserCredential["user"] | null = null;
 
   const rollback = async () => {
     if (volunteerId !== null) {
@@ -38,6 +39,13 @@ export async function completeVolunteerSignup(
         /* ignore */
       }
     }
+    if (authUser) {
+      try {
+        await authUser.delete();
+      } catch {
+        /* ignore */
+      }
+    }
   };
 
   try {
@@ -45,23 +53,32 @@ export async function completeVolunteerSignup(
       email: normalizedEmail,
       password: "placeholder",
     });
+    authUser = userCredential.user;
     firebaseUid = userCredential.user.uid;
+
+    const isAttorney = (draft.roleLabel ?? "").toLowerCase().includes("attorney");
 
     const resp = await backend.post("/volunteers", {
       firebaseUid,
       first_name: draft.firstName.trim(),
       last_name: draft.lastName.trim(),
       email: normalizedEmail,
-      phone_number: null,
+      phone_number: draft.phoneNumber ? draft.phoneNumber.trim() : null,
+      secondary_phone_number: draft.secondaryPhoneNumber ? draft.secondaryPhoneNumber.trim() : null,
+      is_primary_mobile: draft.isPrimaryMobile ?? false,
+      is_secondary_mobile: draft.isSecondaryMobile ?? false,
+      can_text: draft.canText ?? false,
       form_completed: true,
       form_link: null,
       is_signed_confidentiality: new Date().toISOString(),
-      is_attorney: false,
+      is_attorney: isAttorney,
       is_notary: draft.isNotary === true,
+      notary_status: draft.notaryStatus ?? (draft.isNotary ? "active" : "no"),
       affiliated_employer: draft.affiliatedEmployer.trim(),
-      law_school_year: draft.lawSchoolYear.trim(),
-      state_bar_certificate: null,
-      state_bar_number: null,
+      law_school_year: draft.lawSchoolYear ? draft.lawSchoolYear.trim() : null,
+      is_california_licensed: isAttorney ? (draft.isCaliforniaLicensed ?? false) : false,
+      state_bar_certificate: isAttorney && draft.isCaliforniaLicensed ? "California" : null,
+      state_bar_number: isAttorney && draft.isCaliforniaLicensed && draft.stateBarNumber ? draft.stateBarNumber.trim() : null,
     });
 
     const id = resp?.data?.id as number | undefined;
@@ -78,13 +95,35 @@ export async function completeVolunteerSignup(
         const row = r as { id?: unknown; language?: unknown };
         const lid = Number(row.id);
         const name = String(row.language ?? "").trim();
-        if (lid && name) nameToId.set(name, lid);
+        if (lid && name) nameToId.set(name.toLowerCase(), lid);
       }
 
+      // Create any newly added custom languages that do not exist yet in DB.
+      // A failure here aborts signup (outer catch rolls back) rather than
+      // silently dropping a language the user selected.
+      for (const name of draft.selectedLanguageNames) {
+        const trimmed = name.trim();
+        if (trimmed && !nameToId.has(trimmed.toLowerCase())) {
+          const createResp = await backend.post("/languages", { language: trimmed });
+          const created = createResp?.data;
+          const newId = Number(
+            created?.id ?? (Array.isArray(created) ? created[0]?.id : undefined)
+          );
+          if (!newId) {
+            throw new Error(`Failed to create language "${trimmed}".`);
+          }
+          nameToId.set(trimmed.toLowerCase(), newId);
+        }
+      }
+
+      // Case-variant selections (e.g. "Spanish" and "spanish") resolve to the
+      // same id; keep only the first so the batch insert has unique keys.
+      const seenLanguageIds = new Set<number>();
       const languages = draft.selectedLanguageNames
         .map((name) => {
-          const languageId = nameToId.get(name);
-          if (!languageId) return null;
+          const languageId = nameToId.get(name.trim().toLowerCase());
+          if (!languageId || seenLanguageIds.has(languageId)) return null;
+          seenLanguageIds.add(languageId);
           const verbalProficiency =
             draft.verbalProficiencies?.[name] ??
             draft.languageProficiencies?.[name] ??

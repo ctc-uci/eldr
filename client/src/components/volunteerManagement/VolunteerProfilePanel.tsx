@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
+  Badge,
   Box,
   Button,
+  Checkbox,
   Flex,
+  HStack,
   Icon,
   Input,
   NativeSelect,
@@ -27,14 +30,20 @@ export interface VolunteerProfileFormData {
   role: string;
   email: string;
   phoneNumber: string;
+  secondaryPhoneNumber?: string;
+  isPrimaryMobile?: boolean;
+  isSecondaryMobile?: boolean;
+  canText?: boolean;
   experienceLevel: string;
   areasOfPractice?: string[];
   roles?: string[];
   affiliatedEmployer?: string;
   lawSchoolYear?: string;
+  isCaliforniaLicensed?: boolean;
   stateBarCertificate?: string;
   stateBarNumber?: string;
   isNotary?: boolean | null;
+  notaryStatus?: string | null;
 }
 
 interface LanguageOption { id: number; language: string; }
@@ -52,12 +61,16 @@ interface RoleEntry { id: number; roleName: string; }
 interface FormState {
   firstName: string;
   lastName: string;
-  phoneNumber: string;
   email: string;
+  phoneNumber: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   role: string;
   notaryStatus: string;
   lawSchoolYear: string;
-  stateBarCertState: string;
+  isCaliforniaLicensed: boolean;
   stateBarNumber: string;
   affiliated: string;
 }
@@ -95,14 +108,27 @@ export const VolunteerProfilePanel = ({
   const [isSaved, setIsSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
-    firstName: "", lastName: "", phoneNumber: "", email: "", role: "",
-    notaryStatus: "", lawSchoolYear: "", stateBarCertState: "", stateBarNumber: "", affiliated: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    secondaryPhoneNumber: "",
+    isPrimaryMobile: false,
+    isSecondaryMobile: false,
+    canText: false,
+    role: "",
+    notaryStatus: "",
+    lawSchoolYear: "",
+    isCaliforniaLicensed: false,
+    stateBarNumber: "",
+    affiliated: "",
   });
   const [editLanguages, setEditLanguages] = useState<LanguageEntry[]>([]);
   const [originalLanguageIds, setOriginalLanguageIds] = useState<number[]>([]);
   const [editInterests, setEditInterests] = useState<AreaEntry[]>([]);
   const [originalInterestIds, setOriginalInterestIds] = useState<number[]>([]);
   const [interestInput, setInterestInput] = useState("");
+  const [showInterestSuggestions, setShowInterestSuggestions] = useState(false);
 
   // Role edit state
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
@@ -125,6 +151,19 @@ export const VolunteerProfilePanel = ({
       .then((res) => setRoleOptions(res.data))
       .catch(() => {});
   }, [backend]);
+
+  const interestSuggestions = useMemo(() => {
+    const q = interestInput.trim().toLowerCase();
+    if (!q) return [];
+    return areaOptions
+      .map((a) => a.areasOfPractice)
+      .filter(
+        (name) =>
+          name.toLowerCase().includes(q) &&
+          !editInterests.some((e) => e.name.toLowerCase() === name.toLowerCase())
+      )
+      .slice(0, 8);
+  }, [areaOptions, interestInput, editInterests]);
 
   const volunteerId = volunteer?.id;
 
@@ -157,53 +196,67 @@ export const VolunteerProfilePanel = ({
   const setField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
+  const currentRoles = isEditing
+    ? editRoles.map((r) => r.roleName)
+    : (volunteer?.roles && volunteer.roles.length > 0 ? volunteer.roles : [volunteer?.role || ""]);
+  const roleLabel = currentRoles.filter(Boolean).join(" ").toLowerCase();
+
+  const isLawStudent = roleLabel.includes("law student");
+  const isAttorney = roleLabel.includes("attorney");
+
   const enterEditMode = async () => {
     if (!volunteer) return;
+    setSaveError(null);
+    const currentNotary =
+      volunteer.notaryStatus ?? (volunteer.isNotary === true ? "active" : "no");
+    const isCalLicensed =
+      volunteer.isCaliforniaLicensed === true ||
+      volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+      volunteer.stateBarCertificate?.toLowerCase() === "ca";
+
     setForm({
       firstName: volunteer.firstName,
       lastName: volunteer.lastName,
+      email: volunteer.email ?? "",
       phoneNumber: volunteer.phoneNumber ?? "",
-      email: volunteer.email,
+      secondaryPhoneNumber: volunteer.secondaryPhoneNumber ?? "",
+      isPrimaryMobile: Boolean(volunteer.isPrimaryMobile),
+      isSecondaryMobile: Boolean(volunteer.isSecondaryMobile),
+      canText: Boolean(volunteer.canText),
       role: volunteer.roles?.[0] ?? volunteer.role ?? "",
-      notaryStatus: volunteer.isNotary === true ? "active" : volunteer.isNotary === false ? "inactive" : "",
+      notaryStatus: currentNotary,
       lawSchoolYear: volunteer.lawSchoolYear ?? "",
-      stateBarCertState: volunteer.stateBarCertificate ?? "",
+      isCaliforniaLicensed: isCalLicensed,
       stateBarNumber: volunteer.stateBarNumber ?? "",
       affiliated: volunteer.affiliatedEmployer ?? "",
     });
-    try {
-      const res = await backend.get<{ areaOfPracticeId: number; areasOfPractice: string }[]>(
-        `/volunteers/${volunteer.id}/areas-of-practice`
-      );
-      setEditInterests(res.data.map((a) => ({ id: a.areaOfPracticeId, name: a.areasOfPractice })));
-      setOriginalInterestIds(res.data.map((a) => a.areaOfPracticeId));
-    } catch {
-      setEditInterests([]);
-      setOriginalInterestIds([]);
-    }
-    setInterestInput("");
 
     try {
-      const res = await backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`);
-      setEditRoles(res.data);
-      setOriginalRoleIds(res.data.map((r) => r.id));
-    } catch {
-      setEditRoles([]);
-      setOriginalRoleIds([]);
-    }
-    setSelectedRoleId("");
+      const [areasRes, rolesRes, langsRes] = await Promise.all([
+        backend.get<{ areaOfPracticeId: number; areasOfPractice: string }[]>(
+          `/volunteers/${volunteer.id}/areas-of-practice`
+        ),
+        backend.get<RoleEntry[]>(`/volunteers/${volunteer.id}/roles`),
+        backend.get<
+          {
+            id: number;
+            language: string;
+            verbalProficiency?: string;
+            writtenProficiency?: string;
+            proficiency?: string;
+          }[]
+        >(`/volunteers/${volunteer.id}/languages`),
+      ]);
 
-    try {
-      const res = await backend.get<
-        {
-          id: number;
-          language: string;
-          verbalProficiency?: string;
-          writtenProficiency?: string;
-          proficiency?: string;
-        }[]
-      >(`/volunteers/${volunteer.id}/languages`);
-      const mapped = res.data.map((l) => ({
+      setEditInterests(areasRes.data.map((a) => ({ id: a.areaOfPracticeId, name: a.areasOfPractice })));
+      setOriginalInterestIds(areasRes.data.map((a) => a.areaOfPracticeId));
+      setInterestInput("");
+
+      setEditRoles(rolesRes.data);
+      setOriginalRoleIds(rolesRes.data.map((r) => r.id));
+      setSelectedRoleId("");
+
+      const mapped = langsRes.data.map((l) => ({
         languageId: l.id,
         language: l.language,
         verbalProficiency: l.verbalProficiency ?? l.proficiency ?? "Professional",
@@ -214,13 +267,13 @@ export const VolunteerProfilePanel = ({
           ? mapped
           : [{ languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" }]
       );
-      setOriginalLanguageIds(res.data.map((l) => l.id));
-    } catch {
-      setEditLanguages([
-        { languageId: 0, language: "", verbalProficiency: "", writtenProficiency: "" },
-      ]);
+      setOriginalLanguageIds(langsRes.data.map((l) => l.id));
+
+      setIsEditing(true);
+    } catch (err) {
+      console.error("Failed to load volunteer details for editing:", err);
+      setSaveError("Failed to load volunteer roles and details. Please try again.");
     }
-    setIsEditing(true);
   };
 
   const handleSave = async () => {
@@ -231,13 +284,19 @@ export const VolunteerProfilePanel = ({
     await backend.put(`/volunteers/${volunteer.id}`, {
       first_name: form.firstName,
       last_name: form.lastName,
-      email: form.email,
-      phone_number: form.phoneNumber,
-      is_notary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
+      email: form.email || volunteer.email,
+      phone_number: form.phoneNumber || null,
+      secondary_phone_number: form.secondaryPhoneNumber || null,
+      is_primary_mobile: form.isPrimaryMobile,
+      is_secondary_mobile: form.isSecondaryMobile,
+      can_text: form.canText,
+      is_notary: form.notaryStatus === "active",
+      notary_status: form.notaryStatus || null,
       affiliated_employer: form.affiliated || null,
-      law_school_year: form.lawSchoolYear || null,
-      state_bar_certificate: form.stateBarCertState || null,
-      state_bar_number: form.stateBarNumber || null,
+      law_school_year: isLawStudent ? (form.lawSchoolYear || null) : null,
+      is_california_licensed: isAttorney ? form.isCaliforniaLicensed : false,
+      state_bar_certificate: isAttorney && form.isCaliforniaLicensed ? "California" : null,
+      state_bar_number: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || null) : null,
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
@@ -246,7 +305,9 @@ export const VolunteerProfilePanel = ({
 
     await Promise.all(
       removedLanguageIds.map((id) =>
-        backend.delete(`/volunteers/${volunteer.id}/languages/${id}`)
+        backend.delete(`/volunteers/${volunteer.id}/languages/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
       )
     );
 
@@ -265,7 +326,11 @@ export const VolunteerProfilePanel = ({
     const rolesToRemove = originalRoleIds.filter((id) => !currentRoleIds.includes(id));
     await Promise.all([
       ...rolesToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/roles`, { roleId: id })),
-      ...rolesToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/roles/${id}`)),
+      ...rolesToRemove.map((id) =>
+        backend.delete(`/volunteers/${volunteer.id}/roles/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
+      ),
     ]);
 
     // Resolve null-id interests: match by name or create new area
@@ -301,7 +366,11 @@ export const VolunteerProfilePanel = ({
 
     await Promise.all([
       ...interestsToAdd.map((id) => backend.post(`/volunteers/${volunteer.id}/areas-of-practice`, { areaOfPracticeId: id })),
-      ...interestsToRemove.map((id) => backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${id}`)),
+      ...interestsToRemove.map((id) =>
+        backend.delete(`/volunteers/${volunteer.id}/areas-of-practice/${id}`).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+        })
+      ),
     ]);
 
     // Optimistically update view mode state
@@ -318,17 +387,23 @@ export const VolunteerProfilePanel = ({
     await onConfirm?.({
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email,
+      email: form.email || volunteer.email,
       phoneNumber: form.phoneNumber,
+      secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
+      isPrimaryMobile: form.isPrimaryMobile,
+      isSecondaryMobile: form.isSecondaryMobile,
+      canText: form.canText,
       role: editRoles[0]?.roleName ?? form.role,
       roles: editRoles.map((r) => r.roleName),
       experienceLevel: volunteer.experienceLevel ?? "",
       areasOfPractice: resolvedInterests.map((a) => a.name),
       affiliatedEmployer: form.affiliated || undefined,
-      lawSchoolYear: form.lawSchoolYear || undefined,
-      stateBarCertificate: form.stateBarCertState || undefined,
-      stateBarNumber: form.stateBarNumber || undefined,
-      isNotary: form.notaryStatus === "active" ? true : form.notaryStatus === "inactive" ? false : null,
+      lawSchoolYear: isLawStudent ? (form.lawSchoolYear || undefined) : undefined,
+      isCaliforniaLicensed: isAttorney ? form.isCaliforniaLicensed : false,
+      stateBarCertificate: isAttorney && form.isCaliforniaLicensed ? "California" : undefined,
+      stateBarNumber: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || undefined) : undefined,
+      isNotary: form.notaryStatus === "active",
+      notaryStatus: form.notaryStatus || undefined,
     });
     } catch (err) {
       console.error("Failed to save volunteer:", err);
@@ -399,20 +474,112 @@ export const VolunteerProfilePanel = ({
         <Tabs.Content value="profile" pt={6}>
           {isEditing ? (
             <SimpleGrid columns={2} gap={4} maxW="560px">
-              {(["firstName", "lastName", "phoneNumber", "email"] as const).map((key) => (
-                <Box key={key}>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>
-                    {key === "phoneNumber" ? "Phone Number" : key === "firstName" ? "First Name" : key === "lastName" ? "Last Name" : "Email"}
-                  </Text>
-                  <Input
-                    size="sm"
-                    borderColor="#E4E4E7"
-                    value={form[key]}
-                    onChange={setField(key)}
-                    _placeholder={{ color: "#A1A1AA" }}
-                  />
-                </Box>
-              ))}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>First Name</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.firstName}
+                  onChange={setField("firstName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Last Name</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.lastName}
+                  onChange={setField("lastName")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+
+              {/* Primary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Primary Phone</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.phoneNumber}
+                  onChange={setField("phoneNumber")}
+                  placeholder="Primary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isPrimaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isPrimaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Secondary Phone */}
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Secondary Phone (Optional)</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.secondaryPhoneNumber}
+                  onChange={setField("secondaryPhoneNumber")}
+                  placeholder="Secondary phone number"
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+                <Checkbox.Root
+                  checked={form.isSecondaryMobile}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, isSecondaryMobile: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                  mt={1.5}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.600">
+                    Mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              {/* Permission to text */}
+              <Box gridColumn="span 2" p={2.5} bg="gray.50" borderRadius="md" border="1px solid" borderColor="#E4E4E7">
+                <Checkbox.Root
+                  checked={form.canText}
+                  onCheckedChange={(e) =>
+                    setForm((prev) => ({ ...prev, canText: !!e.checked }))
+                  }
+                  colorPalette="blue"
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label fontSize="xs" color="gray.700">
+                    Permission to text (applies to callable/textable numbers for California compliance)
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+
+              <Box gridColumn="span 2">
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Email</Text>
+                <Input
+                  size="sm"
+                  borderColor="#E4E4E7"
+                  value={form.email}
+                  onChange={setField("email")}
+                  _placeholder={{ color: "#A1A1AA" }}
+                />
+              </Box>
+
               <Box gridColumn="span 2">
                 <Text fontSize="sm" fontWeight="bold" mb={2}>Role</Text>
                 <Flex gap={2} wrap="wrap" mb={2}>
@@ -459,9 +626,30 @@ export const VolunteerProfilePanel = ({
             <SimpleGrid columns={2} gap={6} maxW="560px">
               <ProfileField label="First Name" value={volunteer.firstName} />
               <ProfileField label="Last Name" value={volunteer.lastName} />
-              <ProfileField label="Phone Number" value={volunteer.phoneNumber || ""} />
-              <ProfileField label="Email" value={volunteer.email} />
               <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Primary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{volunteer.phoneNumber || "—"}</Text>
+                  {volunteer.isPrimaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Secondary Phone</Text>
+                <HStack gap={2}>
+                  <Text fontSize="sm" color="gray.500">{volunteer.secondaryPhoneNumber || "—"}</Text>
+                  {volunteer.isSecondaryMobile && (
+                    <Badge size="xs" colorPalette="blue" variant="subtle">Mobile</Badge>
+                  )}
+                </HStack>
+              </Box>
+              <Box>
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Permission to Text</Text>
+                <Text fontSize="sm" color="gray.500">{volunteer.canText ? "Yes" : "No"}</Text>
+              </Box>
+              <ProfileField label="Email" value={volunteer.email} />
+              <Box gridColumn="span 2">
                 <Text fontSize="sm" fontWeight="bold" mb={1}>Role</Text>
                 <Text fontSize="sm" color="gray.500">{volunteer.roles?.join(", ") || volunteer.role || "—"}</Text>
               </Box>
@@ -473,13 +661,14 @@ export const VolunteerProfilePanel = ({
         <Tabs.Content value="occupation" pt={6}>
           {isEditing ? (
             <Box>
-              {/* Affiliated Employer/Education */}
+              {/* Employer or School */}
               <Box mb={5}>
-                <Text fontSize="sm" fontWeight="bold" mb={1}>Affiliated Employer/Education</Text>
+                <Text fontSize="sm" fontWeight="bold" mb={0.5}>Employer or School</Text>
+                <Text fontSize="xs" color="gray.500" mb={1.5}>Current workplace or school, not educational history</Text>
                 <Input
                   size="sm"
                   borderColor="#E4E4E7"
-                  placeholder="Type here"
+                  placeholder="e.g. UC Irvine, Legal Aid Foundation"
                   _placeholder={{ color: "#A1A1AA" }}
                   value={form.affiliated}
                   onChange={setField("affiliated")}
@@ -489,7 +678,7 @@ export const VolunteerProfilePanel = ({
               {/* Notary / Law School Year */}
               <SimpleGrid columns={2} gap={4} maxW="560px" mb={5}>
                 <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Are you a notary?</Text>
                   <NativeSelect.Root borderColor="#E4E4E7" size="sm">
                     <NativeSelect.Field
                       placeholder="Select"
@@ -497,53 +686,67 @@ export const VolunteerProfilePanel = ({
                       value={form.notaryStatus}
                       onChange={setField("notaryStatus")}
                     >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="none">None</option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
-                  <NativeSelect.Root borderColor="#E4E4E7" size="sm">
-                    <NativeSelect.Field
-                      placeholder="Select"
-                      color={!form.lawSchoolYear ? "#A1A1AA" : "inherit"}
-                      value={form.lawSchoolYear}
-                      onChange={setField("lawSchoolYear")}
-                    >
-                      {LAW_SCHOOL_YEARS.map((y) => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
+                      <option value="active">Yes (active)</option>
+                      <option value="inactive">Yes (inactive)</option>
+                      <option value="no">No</option>
                     </NativeSelect.Field>
                     <NativeSelect.Indicator />
                   </NativeSelect.Root>
                 </Box>
 
-                {/* State Bar Certificate / Number */}
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
-                  <Input
-                    size="sm"
-                    borderColor="#E4E4E7"
-                    placeholder="e.g. California, United States"
-                    _placeholder={{ color: "#A1A1AA" }}
-                    value={form.stateBarCertState}
-                    onChange={setField("stateBarCertState")}
-                  />
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
-                  <Input
-                    size="sm"
-                    borderColor="#E4E4E7"
-                    placeholder="Enter number"
-                    _placeholder={{ color: "#A1A1AA" }}
-                    value={form.stateBarNumber}
-                    onChange={setField("stateBarNumber")}
-                  />
-                </Box>
+                {/* Show Law School Year only if role is Law Student */}
+                {isLawStudent && (
+                  <Box>
+                    <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
+                    <NativeSelect.Root borderColor="#E4E4E7" size="sm">
+                      <NativeSelect.Field
+                        placeholder="Select"
+                        color={!form.lawSchoolYear ? "#A1A1AA" : "inherit"}
+                        value={form.lawSchoolYear}
+                        onChange={setField("lawSchoolYear")}
+                      >
+                        {LAW_SCHOOL_YEARS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                  </Box>
+                )}
+
+                {/* California Bar Admission (toggle + number if active) */}
+                {isAttorney && (
+                  <Box gridColumn="span 2" p={3} borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" bg="#FAFAFA">
+                    <Checkbox.Root
+                      checked={form.isCaliforniaLicensed}
+                      onCheckedChange={(e) =>
+                        setForm((prev) => ({ ...prev, isCaliforniaLicensed: !!e.checked }))
+                      }
+                      colorPalette="blue"
+                      size="sm"
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                        Licensed to practice law in California?
+                      </Checkbox.Label>
+                    </Checkbox.Root>
+                    {form.isCaliforniaLicensed && (
+                      <Box mt={3} maxW="280px">
+                        <Text fontSize="xs" fontWeight="bold" mb={1} color="gray.700">State Bar Number</Text>
+                        <Input
+                          size="sm"
+                          borderColor="#E4E4E7"
+                          bg="white"
+                          placeholder="Enter bar number"
+                          _placeholder={{ color: "#A1A1AA" }}
+                          value={form.stateBarNumber}
+                          onChange={setField("stateBarNumber")}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </SimpleGrid>
 
               {/* Languages */}
@@ -666,9 +869,10 @@ export const VolunteerProfilePanel = ({
                 </Box>
               </Box>
 
-              {/* Interests */}
-              <Box>
-                <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
+              {/* Practice Areas & Interests */}
+              <Box position="relative">
+                <Text fontSize="sm" fontWeight="bold" mb={1}>Practice Areas & Interests</Text>
+                <Text fontSize="xs" color="gray.400" mb={2}>Select or type areas of law, subjects, and interests</Text>
                 <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={3}>
                   <Flex gap={2} wrap="wrap" align="center">
                     {editInterests.map((interest, idx) => (
@@ -693,24 +897,35 @@ export const VolunteerProfilePanel = ({
                         />
                       </Flex>
                     ))}
-                    <Flex align="center" gap={1}>
+                    <Flex align="center" gap={1} flex={1} minW="160px">
                       <Input
                         size="xs"
-                        placeholder="Add tag..."
+                        placeholder="Add tag (type to search existing)..."
                         border="none"
                         value={interestInput}
-                        onChange={(e) => setInterestInput(e.target.value)}
+                        onFocus={() => setShowInterestSuggestions(true)}
+                        onChange={(e) => {
+                          setInterestInput(e.target.value);
+                          setShowInterestSuggestions(true);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && interestInput.trim()) {
                             e.preventDefault();
                             const name = interestInput.trim();
+                            const match = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === name.toLowerCase());
                             if (!editInterests.some((i) => i.name.toLowerCase() === name.toLowerCase())) {
-                              setEditInterests((prev) => [...prev, { id: null, name }]);
+                              setEditInterests((prev) => [
+                                ...prev,
+                                match ? { id: match.id, name: match.areasOfPractice } : { id: null, name },
+                              ]);
                             }
                             setInterestInput("");
+                            setShowInterestSuggestions(false);
+                          } else if (e.key === "Escape") {
+                            setShowInterestSuggestions(false);
                           }
                         }}
-                        w="100px"
+                        w="100%"
                         color="black"
                         _placeholder={{ color: "#A1A1AA" }}
                       />
@@ -720,40 +935,111 @@ export const VolunteerProfilePanel = ({
                           boxSize={3}
                           cursor="pointer"
                           color="gray.400"
-                          onClick={() => setInterestInput("")}
+                          onClick={() => {
+                            setInterestInput("");
+                            setShowInterestSuggestions(false);
+                          }}
                         />
                       )}
                     </Flex>
                   </Flex>
                 </Box>
+
+                {showInterestSuggestions && interestSuggestions.length > 0 && (
+                  <Box
+                    position="absolute"
+                    top="calc(100% + 4px)"
+                    left={0}
+                    right={0}
+                    bg="white"
+                    borderWidth="1px"
+                    borderColor="#E4E4E7"
+                    borderRadius="md"
+                    boxShadow="md"
+                    zIndex={50}
+                    maxH="180px"
+                    overflowY="auto"
+                    py={1}
+                  >
+                    {interestSuggestions.map((opt) => {
+                      const match = areaOptions.find((a) => a.areasOfPractice.toLowerCase() === opt.toLowerCase());
+                      return (
+                        <Box
+                          key={opt}
+                          px={3}
+                          py={2}
+                          fontSize="sm"
+                          cursor="pointer"
+                          _hover={{ bg: "skyBlue.100", color: "brand.navy" }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (!editInterests.some((i) => i.name.toLowerCase() === opt.toLowerCase())) {
+                              setEditInterests((prev) => [
+                                ...prev,
+                                match ? { id: match.id, name: match.areasOfPractice } : { id: null, name: opt },
+                              ]);
+                            }
+                            setInterestInput("");
+                            setShowInterestSuggestions(false);
+                          }}
+                        >
+                          {opt}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
               </Box>
             </Box>
           ) : (
             <Box>
               <Box mb={6}>
-                <Text fontSize="sm" fontWeight="bold" mb={1}>Affiliated Employer/Education</Text>
+                <Text fontSize="sm" fontWeight="bold" mb={0.5}>Employer or School</Text>
+                <Text fontSize="xs" color="gray.400" mb={1}>Current workplace or school</Text>
                 <Text fontSize="sm" color="gray.500">{volunteer.affiliatedEmployer || "—"}</Text>
               </Box>
 
               <SimpleGrid columns={2} gap={6} maxW="560px" mb={6}>
                 <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>Notary Status</Text>
+                  <Text fontSize="sm" fontWeight="bold" mb={1}>Are you a notary?</Text>
                   <Text fontSize="sm" color="gray.500">
-                    {volunteer.isNotary === true ? "Active" : volunteer.isNotary === false ? "Inactive" : "—"}
+                    {volunteer.notaryStatus === "active" || (volunteer.notaryStatus === undefined && volunteer.isNotary === true)
+                      ? "Yes (active)"
+                      : volunteer.notaryStatus === "inactive"
+                        ? "Yes (inactive)"
+                        : volunteer.notaryStatus === "no" || (volunteer.notaryStatus === undefined && volunteer.isNotary === false)
+                          ? "No"
+                          : "—"}
                   </Text>
                 </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
-                  <Text fontSize="sm" color="gray.500">{volunteer.lawSchoolYear || "—"}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Certificate</Text>
-                  <Text fontSize="sm" color="gray.500">{volunteer.stateBarCertificate || "—"}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
-                  <Text fontSize="sm" color="gray.500">{volunteer.stateBarNumber || "—"}</Text>
-                </Box>
+                {isLawStudent && (
+                  <Box>
+                    <Text fontSize="sm" fontWeight="bold" mb={1}>Law School Year</Text>
+                    <Text fontSize="sm" color="gray.500">{volunteer.lawSchoolYear || "—"}</Text>
+                  </Box>
+                )}
+                {isAttorney && (
+                  <>
+                    <Box>
+                      <Text fontSize="sm" fontWeight="bold" mb={1}>Licensed in California?</Text>
+                      <Text fontSize="sm" color="gray.500">
+                        {volunteer.isCaliforniaLicensed ||
+                        volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+                        volunteer.stateBarCertificate?.toLowerCase() === "ca"
+                          ? "Yes"
+                          : "No"}
+                      </Text>
+                    </Box>
+                    {(volunteer.isCaliforniaLicensed ||
+                      volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+                      volunteer.stateBarCertificate?.toLowerCase() === "ca") && (
+                      <Box>
+                        <Text fontSize="sm" fontWeight="bold" mb={1}>State Bar Number</Text>
+                        <Text fontSize="sm" color="gray.500">{volunteer.stateBarNumber || "—"}</Text>
+                      </Box>
+                    )}
+                  </>
+                )}
               </SimpleGrid>
 
               {/* Languages */}
@@ -781,9 +1067,9 @@ export const VolunteerProfilePanel = ({
                 </Box>
               </Box>
 
-              {/* Interests */}
+              {/* Practice Areas & Interests */}
               <Box>
-                <Text fontSize="sm" fontWeight="bold" mb={2}>Interest(s)</Text>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Practice Areas & Interests</Text>
                 <Box borderWidth="1px" borderColor="#E4E4E7" borderRadius="md" p={4} maxW="400px">
                   {interests.length > 0 ? (
                     <Flex gap={2} wrap="wrap">

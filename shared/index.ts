@@ -9,6 +9,21 @@ export type ProficiencyLevel = (typeof PROFICIENCY_OPTIONS)[number];
 
 export const DEFAULT_PROFICIENCY: ProficiencyLevel = "Professional";
 
+export const DEFAULT_TOP_LANGUAGES = [
+  "English",
+  "Spanish",
+  "Mandarin",
+  "Cantonese",
+  "Vietnamese",
+  "Tagalog",
+  "Korean",
+  "Arabic",
+  "Armenian",
+  "Farsi",
+] as const;
+
+export type TopLanguage = (typeof DEFAULT_TOP_LANGUAGES)[number];
+
 /**
  * Normalizes an arbitrary proficiency string or value to a canonical ProficiencyLevel.
  * Mappings align with the database migration:
