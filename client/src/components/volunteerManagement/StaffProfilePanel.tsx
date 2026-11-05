@@ -47,6 +47,7 @@ export const StaffProfilePanel = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -71,6 +72,7 @@ export const StaffProfilePanel = ({
   const enterEditMode = () => {
     if (!staff) return;
     setEmailError(null);
+    setSaveError(null);
     setForm({
       firstName: staff.firstName,
       lastName: staff.lastName,
@@ -102,34 +104,48 @@ export const StaffProfilePanel = ({
       return;
     }
     setEmailError(null);
+    setSaveError(null);
 
-    await backend.put(`/admins/${staff.id}`, {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: nextEmail,
-      phoneNumber: form.phoneNumber || null,
-      secondaryPhoneNumber: form.secondaryPhoneNumber || null,
-      isPrimaryMobile: form.isPrimaryMobile,
-      isSecondaryMobile: form.isSecondaryMobile,
-      canText: form.canText,
-      isSupervisor: editRole === "supervisor",
-      startDate: form.startDate || null,
-    });
-    const resolvedRole = editRole === "supervisor" ? "Supervisor" : "Staff";
-    setIsEditing(false);
-    setIsSaved(true);
-    onSaved?.({
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: nextEmail,
-      phoneNumber: form.phoneNumber || undefined,
-      secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
-      isPrimaryMobile: form.isPrimaryMobile,
-      isSecondaryMobile: form.isSecondaryMobile,
-      canText: form.canText,
-      role: resolvedRole,
-      startDate: form.startDate || undefined,
-    });
+    try {
+      await backend.put(`/admins/${staff.id}`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: nextEmail,
+        phoneNumber: form.phoneNumber || null,
+        secondaryPhoneNumber: form.secondaryPhoneNumber || null,
+        isPrimaryMobile: form.isPrimaryMobile,
+        isSecondaryMobile: form.isSecondaryMobile,
+        canText: form.canText,
+        isSupervisor: editRole === "supervisor",
+        startDate: form.startDate || null,
+      });
+      const resolvedRole = editRole === "supervisor" ? "Supervisor" : "Staff";
+      setIsEditing(false);
+      setIsSaved(true);
+      onSaved?.({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: nextEmail,
+        phoneNumber: form.phoneNumber || undefined,
+        secondaryPhoneNumber: form.secondaryPhoneNumber || undefined,
+        isPrimaryMobile: form.isPrimaryMobile,
+        isSecondaryMobile: form.isSecondaryMobile,
+        canText: form.canText,
+        role: resolvedRole,
+        startDate: form.startDate || undefined,
+      });
+    } catch (err: unknown) {
+      console.error("Failed to save staff profile:", err);
+      const axiosErr = err as { response?: { data?: { message?: string } | string } };
+      const data = axiosErr?.response?.data;
+      const msg =
+        data && typeof data === "object"
+          ? data.message
+          : data;
+      setSaveError(
+        typeof msg === "string" ? msg : "Failed to save staff profile. Please try again."
+      );
+    }
   };
 
   const setField =
@@ -150,6 +166,11 @@ export const StaffProfilePanel = ({
       onEditToggle={enterEditMode}
       onSave={handleSave}
     >
+      {saveError && (
+        <Text fontSize="sm" color="red.500" mb={3}>
+          {saveError}
+        </Text>
+      )}
       <Tabs.Root
         defaultValue="profile"
         variant="enclosed"

@@ -76,10 +76,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password
     );
 
-    await backend.post("/users/create", {
-      email: email,
-      firebaseUid: userCredential.user.uid,
-    });
+    try {
+      await backend.post("/users/create", {
+        email: email,
+        firebaseUid: userCredential.user.uid,
+      });
+    } catch (err) {
+      await userCredential.user.delete().catch(() => {});
+      throw err;
+    }
 
     return userCredential;
   };

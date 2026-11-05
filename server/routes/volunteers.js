@@ -153,14 +153,27 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
     const normalizedListedExperience = normalizeNullableText(listed_experience);
 
-    const effectiveIsAttorney = is_attorney === true;
-    const effectiveIsCalLicensed = effectiveIsAttorney && is_california_licensed === true;
-    const resolvedStateBarCertificate = effectiveIsCalLicensed
-      ? (normalizedStateBarCertificate || "California")
-      : null;
-    const resolvedStateBarNumber = effectiveIsCalLicensed
-      ? normalizedStateBarNumber
-      : null;
+    let effectiveIsAttorney = null;
+    if (is_attorney !== undefined && is_attorney !== null) {
+      effectiveIsAttorney = Boolean(is_attorney);
+    }
+
+    let effectiveIsCalLicensed = null;
+    if (is_california_licensed !== undefined && is_california_licensed !== null) {
+      effectiveIsCalLicensed = effectiveIsAttorney === false ? false : Boolean(is_california_licensed);
+    } else if (effectiveIsAttorney === false) {
+      effectiveIsCalLicensed = false;
+    }
+
+    const resolvedStateBarCertificate =
+      effectiveIsAttorney === false || effectiveIsCalLicensed === false
+        ? null
+        : (normalizedStateBarCertificate || (effectiveIsCalLicensed === true ? "California" : null));
+
+    const resolvedStateBarNumber =
+      effectiveIsAttorney === false || effectiveIsCalLicensed === false
+        ? null
+        : normalizedStateBarNumber;
 
     const result = await db.tx(async (t) => {
       const userResult = await t.one(
@@ -426,51 +439,60 @@ volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-// Delete a volunteer via ID (staff/supervisors can delete any volunteer; volunteers can delete self during signup rollback)
+// Delete a volunteer via ID (staff/supervisors can delete any volunteer; uncompleted volunteers can delete self during signup rollback)
 volunteersRouter.delete("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const volunteerId = Number(id);
+    if (!Number.isInteger(volunteerId)) {
+      return res.status(400).send("Invalid volunteer id");
+    }
+
+    const callerUid = res.locals.decodedToken?.uid;
+    const callerUsers = await db.query(
+      `SELECT u.id, u.role, v.form_completed
+       FROM users u
+       LEFT JOIN volunteers v ON u.id = v.id
+       WHERE u.firebase_uid = $1`,
+      [callerUid]
+    );
+    const caller = callerUsers.at(0);
+    const isStaffOrSupervisor = caller?.role === "staff" || caller?.role === "supervisor";
+    const isSelfRollback = Boolean(caller && caller.id === volunteerId && caller.form_completed !== true);
+
+    if (!isStaffOrSupervisor && !isSelfRollback) {
+      return res.status(403).send("Forbidden");
+    }
 
     const userRow = await db.query(
       `SELECT firebase_uid FROM users WHERE id = $1`,
-      [id]
+      [volunteerId]
     );
 
     if (!userRow.length) {
-      return res.status(404).send(`Volunteer ${id} not found`);
-    }
-
-    if (process.env.NODE_ENV === "production") {
-      const callerUid = res.locals.decodedToken?.uid;
-      const callerUsers = await db.query(
-        "SELECT role FROM users WHERE firebase_uid = $1",
-        [callerUid]
-      );
-      const callerRole = callerUsers.at(0)?.role;
-      const isStaffOrSupervisor = callerRole === "staff" || callerRole === "supervisor";
-      const isSelf = callerUid && callerUid === userRow[0].firebase_uid;
-
-      if (!isStaffOrSupervisor && !isSelf) {
-        return res.status(403).send("Forbidden");
-      }
+      return res.status(404).send(`Volunteer ${volunteerId} not found`);
     }
 
     await db.tx(async (t) => {
       await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
-        id,
+        volunteerId,
       ]);
-      await t.query(`DELETE FROM volunteers WHERE id = $1`, [id]);
-      await t.query(`DELETE FROM users WHERE id = $1`, [id]);
+      await t.query(`DELETE FROM volunteers WHERE id = $1`, [volunteerId]);
+      await t.query(`DELETE FROM users WHERE id = $1`, [volunteerId]);
     });
 
     if (userRow.length && userRow[0].firebase_uid) {
       await admin
         .auth()
         .deleteUser(userRow[0].firebase_uid)
-        .catch((err) => console.error("Failed to delete Firebase user:", err));
+        .catch((err) => {
+          if (err?.code !== "auth/user-not-found") {
+            console.error("Failed to delete Firebase user:", err);
+          }
+        });
     }
 
-    res.status(200).send(`Volunteer ${id} deleted successfully`);
+    res.status(200).send(`Volunteer ${volunteerId} deleted successfully`);
   } catch (e) {
     res.status(500).send(e.message);
   }
