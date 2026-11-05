@@ -82,7 +82,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         firebaseUid: userCredential.user.uid,
       });
     } catch (err) {
-      await userCredential.user.delete().catch(() => {});
+      try {
+        await userCredential.user.delete();
+      } catch (deleteErr) {
+        console.error("Client-side Firebase user deletion failed during signup rollback:", deleteErr);
+        // Fall back to server-side admin deletion to prevent orphaned Firebase Auth account
+        await backend.delete(`/users/${userCredential.user.uid}`).catch((serverDelErr) => {
+          console.error("Server-side cleanup failed during signup rollback:", serverDelErr);
+        });
+      }
       throw err;
     }
 

@@ -7,6 +7,13 @@ import { Router } from "express";
 
 export const volunteersRouter = Router();
 
+const parseOptionalBoolean = (value, field) => {
+  if (value === undefined || value === null) return null;
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  throw new Error(`${field} must be a boolean`);
+};
+
 const normalizeNullableText = (value) => {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
@@ -57,7 +64,6 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     let is_attorney = reqIsAttorney;
     let is_notary = reqIsNotary;
     let notary_status = reqNotaryStatus;
-    let is_california_licensed = reqIsCaliforniaLicensed;
     let state_bar_certificate = reqStateBarCertificate;
     let state_bar_number = reqStateBarNumber;
     let law_school_year = reqLawSchoolYear;
@@ -73,10 +79,20 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     is_notary = notary_status === "active";
 
     const normalizedSecondaryPhone = normalizeNullableText(secondary_phone_number);
-    const isPrimaryMobile = Boolean(is_primary_mobile);
-    const isSecondaryMobile = Boolean(is_secondary_mobile);
-    const canText = Boolean(can_text);
-    is_california_licensed = Boolean(is_california_licensed);
+    let parsedIsCaliforniaLicensed;
+    let parsedIsAttorney;
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsCaliforniaLicensed = parseOptionalBoolean(reqIsCaliforniaLicensed, "is_california_licensed");
+      parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
+      parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile") ?? false;
+      parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile") ?? false;
+      parsedCanText = parseOptionalBoolean(can_text, "can_text") ?? false;
+    } catch (valErr) {
+      return res.status(400).send(valErr.message);
+    }
 
     const callerUid = res.locals.decodedToken?.uid;
     const callerEmail = res.locals.decodedToken?.email;
@@ -104,9 +120,10 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
 
       // Prevent self-asserting credentials/confidentiality fields during self-registration
       is_attorney = false;
+      parsedIsAttorney = false;
       is_notary = false;
       notary_status = "no";
-      is_california_licensed = false;
+      parsedIsCaliforniaLicensed = false;
       state_bar_certificate = null;
       state_bar_number = null;
       law_school_year = null;
@@ -153,15 +170,9 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     const normalizedStateBarNumber = normalizeNullableText(state_bar_number);
     const normalizedListedExperience = normalizeNullableText(listed_experience);
 
-    let effectiveIsAttorney = null;
-    if (is_attorney !== undefined && is_attorney !== null) {
-      effectiveIsAttorney = Boolean(is_attorney);
-    }
-
-    let effectiveIsCalLicensed = null;
-    if (is_california_licensed !== undefined && is_california_licensed !== null) {
-      effectiveIsCalLicensed = effectiveIsAttorney === false ? false : Boolean(is_california_licensed);
-    } else if (effectiveIsAttorney === false) {
+    const effectiveIsAttorney = parsedIsAttorney;
+    let effectiveIsCalLicensed = parsedIsCaliforniaLicensed;
+    if (effectiveIsAttorney === false) {
       effectiveIsCalLicensed = false;
     }
 
@@ -263,9 +274,9 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           emailToUse,
           normalizedPhoneNumber,
           normalizedSecondaryPhone,
-          isPrimaryMobile,
-          isSecondaryMobile,
-          canText,
+          parsedIsPrimaryMobile,
+          parsedIsSecondaryMobile,
+          parsedCanText,
           form_completed ?? null,
           normalizeNullableText(form_link),
           is_signed_confidentiality ?? null,
@@ -473,6 +484,16 @@ volunteersRouter.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).send(`Volunteer ${volunteerId} not found`);
     }
 
+    if (userRow.length && userRow[0].firebase_uid) {
+      try {
+        await admin.auth().deleteUser(userRow[0].firebase_uid);
+      } catch (fbErr) {
+        if (fbErr?.code !== "auth/user-not-found") {
+          throw fbErr;
+        }
+      }
+    }
+
     await db.tx(async (t) => {
       await t.query(`DELETE FROM volunteer_archived WHERE volunteer_id = $1`, [
         volunteerId,
@@ -480,17 +501,6 @@ volunteersRouter.delete("/:id", verifyToken, async (req, res) => {
       await t.query(`DELETE FROM volunteers WHERE id = $1`, [volunteerId]);
       await t.query(`DELETE FROM users WHERE id = $1`, [volunteerId]);
     });
-
-    if (userRow.length && userRow[0].firebase_uid) {
-      await admin
-        .auth()
-        .deleteUser(userRow[0].firebase_uid)
-        .catch((err) => {
-          if (err?.code !== "auth/user-not-found") {
-            console.error("Failed to delete Firebase user:", err);
-          }
-        });
-    }
 
     res.status(200).send(`Volunteer ${volunteerId} deleted successfully`);
   } catch (e) {
@@ -537,6 +547,21 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       req.body,
       "secondary_phone_number"
     );
+
+    let parsedIsCaliforniaLicensed;
+    let parsedIsAttorney;
+    let parsedIsPrimaryMobile;
+    let parsedIsSecondaryMobile;
+    let parsedCanText;
+    try {
+      parsedIsCaliforniaLicensed = parseOptionalBoolean(is_california_licensed, "is_california_licensed");
+      parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
+      parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile");
+      parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile");
+      parsedCanText = parseOptionalBoolean(can_text, "can_text");
+    } catch (valErr) {
+      return res.status(400).send(valErr.message);
+    }
 
     const resolvedNotaryStatus =
       notary_status ??
@@ -589,16 +614,16 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         email,
         phone_number,
         hasSecondaryPhone ? normalizeNullableText(secondary_phone_number) : null,
-        is_primary_mobile !== undefined ? Boolean(is_primary_mobile) : null,
-        is_secondary_mobile !== undefined ? Boolean(is_secondary_mobile) : null,
-        can_text !== undefined ? Boolean(can_text) : null,
+        parsedIsPrimaryMobile,
+        parsedIsSecondaryMobile,
+        parsedCanText,
         form_completed,
         form_link,
         is_signed_confidentiality,
-        is_attorney,
+        parsedIsAttorney,
         resolvedIsNotary,
         resolvedNotaryStatus,
-        is_california_licensed !== undefined ? Boolean(is_california_licensed) : null,
+        parsedIsCaliforniaLicensed,
         affiliated_employer ?? null,
         law_school_year ?? null,
         state_bar_certificate ?? null,

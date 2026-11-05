@@ -67,6 +67,8 @@ export const StaffProfilePanel = ({
   useEffect(() => {
     setIsEditing(false);
     setIsSaved(false);
+    setSaveError(null);
+    setEmailError(null);
   }, [staffId]);
 
   const enterEditMode = () => {
@@ -136,15 +138,26 @@ export const StaffProfilePanel = ({
       });
     } catch (err: unknown) {
       console.error("Failed to save staff profile:", err);
-      const axiosErr = err as { response?: { data?: { message?: string } | string } };
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string } | string;
+        };
+      };
+      const status = axiosErr?.response?.status;
       const data = axiosErr?.response?.data;
-      const msg =
+      const backendMessage =
         data && typeof data === "object"
           ? data.message
-          : data;
-      setSaveError(
-        typeof msg === "string" ? msg : "Failed to save staff profile. Please try again."
-      );
+          : typeof data === "string"
+            ? data
+            : null;
+
+      if (status && status >= 400 && status < 500 && backendMessage) {
+        setSaveError(backendMessage);
+      } else {
+        setSaveError("Failed to save staff profile. Please try again.");
+      }
     }
   };
 
