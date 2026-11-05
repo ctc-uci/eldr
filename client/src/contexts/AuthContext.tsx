@@ -90,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await backend.delete(`/users/${userCredential.user.uid}`).catch((serverDelErr) => {
           console.error("Server-side cleanup failed during signup rollback:", serverDelErr);
         });
+        await signOut(auth).catch(() => {});
       }
       throw err;
     }
