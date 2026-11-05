@@ -69,11 +69,6 @@ async function saveGoogleEventId(clinicId, googleEventId) {
 }
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
-const allowedClinicTypes = [
-  "Estate Planning",
-  "Limited Conservatorship",
-  "Probate Note Clearing",
-];
 
 // Create a workshop
 clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {

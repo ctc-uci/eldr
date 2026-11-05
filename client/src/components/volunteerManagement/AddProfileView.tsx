@@ -124,8 +124,9 @@ const TagInput = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && tagInput.trim()) {
                   e.preventDefault();
-                  if (filteredOptions.length > 0 && filteredOptions[0].toLowerCase() === tagInput.trim().toLowerCase()) {
-                    handleSelect(filteredOptions[0]);
+                  const firstOption = filteredOptions[0];
+                  if (firstOption && firstOption.toLowerCase() === tagInput.trim().toLowerCase()) {
+                    handleSelect(firstOption);
                   } else {
                     onAddTag(tagInput.trim());
                     onTagInputChange("");
