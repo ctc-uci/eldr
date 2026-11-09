@@ -22,6 +22,15 @@ export interface Volunteer {
   lawSchoolYear?: string;
   stateBarCertificate?: string;
   stateBarNumber?: string;
+  profilePictureUrl?: string | null;
+  firebaseUid?: string | null;
+  formReceived?: boolean;
+  formLink?: string | null;
+  handbookUrl?: string | null;
+  handbookUploadedAt?: string | null;
+  handbookAcknowledged?: boolean;
+  emergencyContactVerified?: boolean;
+  confidentialityWaiverVerified?: boolean;
 }
 
 export interface StaffMember {
@@ -36,6 +45,8 @@ export interface StaffMember {
   isSecondaryMobile?: boolean;
   canText?: boolean;
   startDate?: string;
+  profilePictureUrl?: string | null;
+  firebaseUid?: string | null;
 }
 
 export interface ArchivedVolunteer {

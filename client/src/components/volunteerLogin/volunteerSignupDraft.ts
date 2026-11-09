@@ -25,6 +25,8 @@ export type VolunteerSignupDraft = {
   roleLabel: string;
   lawSchoolYear: string;
   affiliatedEmployer: string;
+  handbookFileKey?: string | null;
+  handbookUploaded?: boolean;
 };
 
 export function defaultDraft(): VolunteerSignupDraft {
@@ -49,6 +51,8 @@ export function defaultDraft(): VolunteerSignupDraft {
     roleLabel: "",
     lawSchoolYear: "",
     affiliatedEmployer: "",
+    handbookFileKey: null,
+    handbookUploaded: false,
   };
 }
 

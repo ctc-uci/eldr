@@ -9,6 +9,7 @@ export const VOLUNTEER_LOGIN_STEPS = [
   "notary",
   "role",
   "background",
+  "handbook",
   "success",
 ] as const;
 

@@ -19,21 +19,15 @@ import LoginLayout from "./BackgroundLayout";
 import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
-  onComplete: () => Promise<void>;
+  onNext: () => void;
   onBack?: () => void;
-  isSubmitting: boolean;
-  submitError?: string | null;
-  onDismissError: () => void;
 };
 
 const LAW_SCHOOL_YEARS = ["1L", "2L", "3L", "Graduate"];
 
 const BackgroundStep = ({
-  onComplete,
+  onNext,
   onBack,
-  isSubmitting,
-  submitError,
-  onDismissError,
 }: Props) => {
   const navigate = useNavigate();
   const [roleLabel, setRoleLabel] = useState("");
@@ -70,8 +64,6 @@ const BackgroundStep = ({
     : undefined;
 
   const handleSubmit = async () => {
-    onDismissError();
-
     if (!employer.trim()) {
       setEmployerError(true);
       return;
@@ -86,7 +78,7 @@ const BackgroundStep = ({
       stateBarNumber: isAttorney && isCaliforniaLicensed ? stateBarNumber.trim() : "",
     });
 
-    await onComplete();
+    onNext();
   };
 
   return (
@@ -110,7 +102,7 @@ const BackgroundStep = ({
           align="center"
           px={{ base: "16px", md: "24px" }}
         >
-          <TopBackButton onClick={handleBack} disabled={isSubmitting} />
+          <TopBackButton onClick={handleBack} />
         </Flex>
 
         <Flex
@@ -156,43 +148,13 @@ const BackgroundStep = ({
             gap={{ base: "20px", md: "24px" }}
           >
             <Progress.Root
-              value={90}
+              value={80}
               size="xs"
             >
               <Progress.Track>
                 <Progress.Range bg="#0088FF" />
               </Progress.Track>
             </Progress.Root>
-
-            {submitError && (
-              <Box
-                w="100%"
-                border="1px solid"
-                borderColor="red.200"
-                bg="red.50"
-                p="10px"
-                borderRadius="8px"
-              >
-                <Text
-                  color="red.700"
-                  fontSize="14px"
-                >
-                  {submitError}
-                </Text>
-                <Link
-                  color="blue.600"
-                  textDecoration="underline"
-                  fontSize="14px"
-                  mt="8px"
-                  display="inline-block"
-                  onClick={() =>
-                    navigate("/login/volunteer", { replace: true })
-                  }
-                >
-                  Go to login
-                </Link>
-              </Box>
-            )}
 
             {/* Employer or School (Required) */}
             <Box>
@@ -324,9 +286,7 @@ const BackgroundStep = ({
             <StepNavButtons
               onBack={handleBack}
               onContinue={handleSubmit}
-              continueLabel="Create Account"
-              isLoading={isSubmitting}
-              isDisabled={isSubmitting}
+              continueLabel="Continue"
             />
           </Flex>
         </Flex>

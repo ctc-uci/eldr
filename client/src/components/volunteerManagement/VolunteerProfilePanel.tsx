@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Badge,
@@ -14,11 +14,20 @@ import {
   Tabs,
   Text,
 } from "@chakra-ui/react";
-import { FiCheck, FiX } from "react-icons/fi";
+import {
+  FiAlertTriangle,
+  FiCheck,
+  FiDownload,
+  FiExternalLink,
+  FiFileText,
+  FiUploadCloud,
+  FiX,
+} from "react-icons/fi";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { Volunteer } from "@/types/volunteer";
 import { ProfileField, ProfilePanelShell } from "./ProfilePanelShell";
+import { uploadHandbookToS3, validateHandbookFile } from "@/utils/uploadHandbook";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -139,6 +148,7 @@ export const VolunteerProfilePanel = ({
   // Reference data
   const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
   const [areaOptions, setAreaOptions] = useState<AreaOption[]>([]);
+  const [templateUrl, setTemplateUrl] = useState<string>("/templates/volunteer_handbook_packet.pdf");
 
   useEffect(() => {
     backend.get<LanguageOption[]>("/languages")
@@ -149,6 +159,11 @@ export const VolunteerProfilePanel = ({
       .catch(() => {});
     backend.get<RoleOption[]>("/roles")
       .then((res) => setRoleOptions(res.data))
+      .catch(() => {});
+    backend.get<{ downloadUrl: string }>("/users/handbook/template-url")
+      .then((res) => {
+        if (res.data?.downloadUrl) setTemplateUrl(res.data.downloadUrl);
+      })
       .catch(() => {});
   }, [backend]);
 
@@ -166,6 +181,153 @@ export const VolunteerProfilePanel = ({
   }, [areaOptions, interestInput, editInterests]);
 
   const volunteerId = volunteer?.id;
+
+  const [formReceived, setFormReceived] = useState(false);
+  const [handbookAcknowledged, setHandbookAcknowledged] = useState(false);
+  const [emergencyContactVerified, setEmergencyContactVerified] = useState(false);
+  const [confidentialityWaiverVerified, setConfidentialityWaiverVerified] = useState(false);
+  const [isSignedConfidentiality, setIsSignedConfidentiality] = useState(false);
+  const [handbookUrl, setHandbookUrl] = useState<string | null>(null);
+  const [handbookUploadedAt, setHandbookUploadedAt] = useState<string | null>(null);
+  const [isUpdatingVerification, setIsUpdatingVerification] = useState(false);
+  const [isUploadingHandbook, setIsUploadingHandbook] = useState(false);
+  const [handbookError, setHandbookError] = useState<string | null>(null);
+  const adminFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!volunteer) return;
+    setFormReceived(Boolean(volunteer.formReceived));
+    setHandbookAcknowledged(Boolean(volunteer.handbookAcknowledged));
+    setEmergencyContactVerified(Boolean(volunteer.emergencyContactVerified));
+    setConfidentialityWaiverVerified(Boolean(volunteer.confidentialityWaiverVerified));
+    setIsSignedConfidentiality(Boolean(volunteer.isSignedConfidentiality));
+    setHandbookUrl(volunteer.handbookUrl ?? null);
+    setHandbookUploadedAt(volunteer.handbookUploadedAt ?? null);
+    setHandbookError(null);
+  }, [volunteer]);
+
+  const updateVerification = async (patch: {
+    form_received?: boolean;
+    handbook_acknowledged?: boolean;
+    emergency_contact_verified?: boolean;
+    confidentiality_waiver_verified?: boolean;
+    is_signed_confidentiality?: boolean | string | null;
+  }) => {
+    if (!volunteerId) return;
+    setIsUpdatingVerification(true);
+    setHandbookError(null);
+    try {
+      await backend.put(`/volunteers/${volunteerId}`, patch);
+      if (patch.form_received !== undefined) setFormReceived(patch.form_received);
+      if (patch.handbook_acknowledged !== undefined) setHandbookAcknowledged(patch.handbook_acknowledged);
+      if (patch.emergency_contact_verified !== undefined) setEmergencyContactVerified(patch.emergency_contact_verified);
+      if (patch.confidentiality_waiver_verified !== undefined) setConfidentialityWaiverVerified(patch.confidentiality_waiver_verified);
+      if (patch.is_signed_confidentiality !== undefined) {
+        setIsSignedConfidentiality(Boolean(patch.is_signed_confidentiality));
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update verification status";
+      setHandbookError(msg);
+    } finally {
+      setIsUpdatingVerification(false);
+    }
+  };
+
+  const handleToggleComponent = (
+    field: "handbookAcknowledged" | "emergencyContactVerified" | "confidentialityWaiverVerified",
+    newVal: boolean
+  ) => {
+    const nextAck = field === "handbookAcknowledged" ? newVal : handbookAcknowledged;
+    const nextEmerg = field === "emergencyContactVerified" ? newVal : emergencyContactVerified;
+    const nextWaiver = field === "confidentialityWaiverVerified" ? newVal : confidentialityWaiverVerified;
+    const allThree = nextAck && nextEmerg && nextWaiver;
+
+    const patch: Record<string, unknown> = {
+      [field === "handbookAcknowledged"
+        ? "handbook_acknowledged"
+        : field === "emergencyContactVerified"
+        ? "emergency_contact_verified"
+        : "confidentiality_waiver_verified"]: newVal,
+    };
+
+    if (allThree && !isSignedConfidentiality) {
+      patch.is_signed_confidentiality = true;
+    } else if (!allThree && isSignedConfidentiality) {
+      patch.is_signed_confidentiality = false;
+    }
+
+    updateVerification(patch);
+  };
+
+  const handleToggleVerified = (newVal: boolean) => {
+    updateVerification({
+      is_signed_confidentiality: newVal,
+      ...(newVal
+        ? {
+            form_received: true,
+            handbook_acknowledged: true,
+            emergency_contact_verified: true,
+            confidentiality_waiver_verified: true,
+          }
+        : {}),
+    });
+  };
+
+  const handleToggleFormReceived = (newVal: boolean) => {
+    updateVerification({
+      form_received: newVal,
+      ...(!newVal
+        ? {
+            handbook_acknowledged: false,
+            emergency_contact_verified: false,
+            confidentiality_waiver_verified: false,
+            is_signed_confidentiality: false,
+          }
+        : {}),
+    });
+  };
+
+  const handleAdminHandbookUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !volunteerId) return;
+    const validationError = validateHandbookFile(file);
+    if (validationError) {
+      setHandbookError(validationError);
+      return;
+    }
+    setHandbookError(null);
+    setIsUploadingHandbook(true);
+    try {
+      const fbUid = volunteer?.firebaseUid || `volunteer-${volunteerId}`;
+      const key = await uploadHandbookToS3(backend, file, fbUid);
+      const uploadedAt = new Date().toISOString();
+      await backend.put(`/volunteers/${volunteerId}`, {
+        form_received: true,
+        form_link: key,
+        handbook_uploaded_at: uploadedAt,
+      });
+
+      let viewUrl = "";
+      try {
+        const viewResp = await backend.get("/users/document/view-url", {
+          params: { key },
+        });
+        viewUrl = viewResp.data?.viewUrl ?? "";
+      } catch {
+        /* ignore */
+      }
+
+      setFormReceived(true);
+      setHandbookUrl(viewUrl || key);
+      setHandbookUploadedAt(uploadedAt);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to upload handbook document";
+      setHandbookError(msg);
+    } finally {
+      setIsUploadingHandbook(false);
+      if (adminFileInputRef.current) adminFileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!volunteerId) return;
@@ -297,6 +459,11 @@ export const VolunteerProfilePanel = ({
       is_california_licensed: isAttorney ? form.isCaliforniaLicensed : false,
       state_bar_certificate: isAttorney && form.isCaliforniaLicensed ? "California" : null,
       state_bar_number: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || null) : null,
+      form_received: formReceived,
+      handbook_acknowledged: handbookAcknowledged,
+      emergency_contact_verified: emergencyContactVerified,
+      confidentiality_waiver_verified: confidentialityWaiverVerified,
+      is_signed_confidentiality: isSignedConfidentiality,
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);
@@ -432,6 +599,7 @@ export const VolunteerProfilePanel = ({
   return (
     <ProfilePanelShell
       name={`${volunteer.firstName} ${volunteer.lastName}`}
+      photoUrl={volunteer.profilePictureUrl}
       onBack={onBack}
       isEditing={isEditing}
       isSaved={isSaved}
@@ -441,28 +609,231 @@ export const VolunteerProfilePanel = ({
       {saveError && (
         <Text fontSize="sm" color="red.500" mb={3}>{saveError}</Text>
       )}
-      {/* Confidential Form Verified */}
-      <Flex
+
+      {/* Volunteer Handbook & Confidentiality Verification Card */}
+      <Box
         borderWidth="1px"
-        borderColor={volunteer.isSignedConfidentiality ? "gray.300" : "orange.300"}
-        bg={volunteer.isSignedConfidentiality ? "white" : "orange.50"}
-        borderRadius="md"
-        w="fit-content"
-        px={3}
-        py={2}
-        mb={4}
-        align="center"
-        gap={2}
+        borderColor="#E4E4E7"
+        bg="#FAFAFA"
+        borderRadius="lg"
+        p={4}
+        mb={5}
       >
-        <Icon
-          as={volunteer.isSignedConfidentiality ? FiCheck : FiX}
-          boxSize={4}
-          color={volunteer.isSignedConfidentiality ? "inherit" : "orange.500"}
-        />
-        <Text fontWeight="bold" fontSize="sm" color={volunteer.isSignedConfidentiality ? "inherit" : "orange.600"}>
-          {volunteer.isSignedConfidentiality ? "Confidential Form Verified" : "Confidential Form Not Signed"}
-        </Text>
-      </Flex>
+        <Flex
+          justify="space-between"
+          align={{ base: "start", md: "center" }}
+          direction={{ base: "column", md: "row" }}
+          gap={3}
+          mb={3}
+        >
+          <HStack gap={2}>
+            <Icon
+              as={isSignedConfidentiality ? FiCheck : formReceived ? FiFileText : FiAlertTriangle}
+              boxSize={5}
+              color={isSignedConfidentiality ? "green.600" : formReceived ? "blue.600" : "orange.500"}
+            />
+            <Box>
+              <Text fontWeight="bold" fontSize="sm" color="gray.900">
+                Volunteer Handbook &amp; Confidentiality Form
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                Single unified packet: Handbook acknowledgment, Emergency contact, Confidentiality waiver
+              </Text>
+            </Box>
+          </HStack>
+
+          <HStack gap={2}>
+            {isSignedConfidentiality ? (
+              <Badge colorPalette="green" size="md">
+                ✓ Confidential Form Verified
+              </Badge>
+            ) : formReceived ? (
+              <Badge colorPalette="blue" size="md">
+                Handbook Received — Pending Verification
+              </Badge>
+            ) : (
+              <Badge colorPalette="orange" size="md">
+                Handbook Not Received
+              </Badge>
+            )}
+          </HStack>
+        </Flex>
+
+        {/* Action Row */}
+        <Flex
+          justify="space-between"
+          align={{ base: "start", sm: "center" }}
+          direction={{ base: "column", sm: "row" }}
+          gap={3}
+          py={2}
+          borderTopWidth="1px"
+          borderColor="#E4E4E7"
+        >
+          <HStack gap={2} flexWrap="wrap">
+            <Button
+              as="a"
+              href={templateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download="ELDR_Volunteer_Handbook_Packet.pdf"
+              size="xs"
+              variant="outline"
+              bg="white"
+              gap={1}
+            >
+              <Icon as={FiDownload} />
+              Download Blank Template
+            </Button>
+
+            {handbookUrl && (
+              <Button
+                as="a"
+                href={handbookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="xs"
+                variant="outline"
+                bg="white"
+                color="blue.600"
+                gap={1}
+              >
+                <Icon as={FiExternalLink} />
+                View Uploaded PDF
+              </Button>
+            )}
+
+            <input
+              ref={adminFileInputRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              hidden
+              onChange={handleAdminHandbookUpload}
+            />
+
+            <Button
+              size="xs"
+              variant="outline"
+              bg="white"
+              gap={1}
+              onClick={() => adminFileInputRef.current?.click()}
+              loading={isUploadingHandbook}
+              disabled={isUploadingHandbook}
+            >
+              <Icon as={FiUploadCloud} />
+              {formReceived ? "Replace PDF" : "Upload Signed PDF"}
+            </Button>
+          </HStack>
+
+          {handbookUploadedAt && (
+            <Text fontSize="xs" color="gray.500">
+              Uploaded: {new Date(handbookUploadedAt).toLocaleDateString()}
+            </Text>
+          )}
+        </Flex>
+
+        {/* Admin Checkbox Controls */}
+        <Box
+          mt={3}
+          pt={3}
+          borderTopWidth="1px"
+          borderColor="#E4E4E7"
+          bg="white"
+          p={3}
+          borderRadius="md"
+        >
+          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500" mb={2}>
+            Admin Verification Checklist
+          </Text>
+          <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={3} mb={3}>
+            {/* Checkbox 1 */}
+            <Checkbox.Root
+              checked={handbookAcknowledged}
+              onCheckedChange={(e) =>
+                handleToggleComponent("handbookAcknowledged", !!e.checked)
+              }
+              colorPalette="blue"
+              size="sm"
+              disabled={isUpdatingVerification}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+                1. Handbook Acknowledged
+              </Checkbox.Label>
+            </Checkbox.Root>
+
+            {/* Checkbox 2 */}
+            <Checkbox.Root
+              checked={emergencyContactVerified}
+              onCheckedChange={(e) =>
+                handleToggleComponent("emergencyContactVerified", !!e.checked)
+              }
+              colorPalette="blue"
+              size="sm"
+              disabled={isUpdatingVerification}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+                2. Emergency Contact Info
+              </Checkbox.Label>
+            </Checkbox.Root>
+
+            {/* Checkbox 3 */}
+            <Checkbox.Root
+              checked={confidentialityWaiverVerified}
+              onCheckedChange={(e) =>
+                handleToggleComponent("confidentialityWaiverVerified", !!e.checked)
+              }
+              colorPalette="blue"
+              size="sm"
+              disabled={isUpdatingVerification}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+                3. Confidentiality / Waiver
+              </Checkbox.Label>
+            </Checkbox.Root>
+          </SimpleGrid>
+
+          <HStack justify="space-between" pt={2} borderTopWidth="1px" borderColor="#F4F4F5" flexWrap="wrap" gap={2}>
+            <Checkbox.Root
+              checked={formReceived}
+              onCheckedChange={(e) => handleToggleFormReceived(!!e.checked)}
+              colorPalette="blue"
+              size="sm"
+              disabled={isUpdatingVerification}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label fontSize="xs" color="gray.600">
+                Form Received Marked
+              </Checkbox.Label>
+            </Checkbox.Root>
+
+            <Checkbox.Root
+              checked={isSignedConfidentiality}
+              onCheckedChange={(e) => handleToggleVerified(!!e.checked)}
+              colorPalette="green"
+              size="sm"
+              disabled={isUpdatingVerification}
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control />
+              <Checkbox.Label fontSize="xs" fontWeight="bold" color="green.700">
+                Mark as Fully Verified
+              </Checkbox.Label>
+            </Checkbox.Root>
+          </HStack>
+
+          {handbookError && (
+            <Text fontSize="xs" color="red.500" mt={2}>
+              {handbookError}
+            </Text>
+          )}
+        </Box>
+      </Box>
 
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>
         <Tabs.List w="100%">

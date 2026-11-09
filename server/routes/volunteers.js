@@ -1,3 +1,4 @@
+import { getS3ViewURL } from "@/common/s3";
 import { keysToCamel, normalizeProficiency } from "@/common/utils";
 import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { admin } from "@/config/firebase";
@@ -18,6 +19,51 @@ const normalizeNullableText = (value) => {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim();
   return normalized === "" ? null : normalized;
+};
+
+const enrichVolunteerUrls = async (volunteer) => {
+  if (!volunteer) return volunteer;
+  let profilePictureUrl = null;
+  let handbookUrl = null;
+
+  const storedPic = volunteer.profilePictureUrl;
+  if (storedPic && typeof storedPic === "string" && storedPic.trim()) {
+    const trimmed = storedPic.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      profilePictureUrl = trimmed;
+    } else {
+      try {
+        profilePictureUrl = await getS3ViewURL(trimmed);
+      } catch (err) {
+        console.error("Failed to sign profile picture URL:", err.message);
+      }
+    }
+  }
+
+  const storedHandbook = volunteer.formLink;
+  if (storedHandbook && typeof storedHandbook === "string" && storedHandbook.trim()) {
+    const trimmed = storedHandbook.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      handbookUrl = trimmed;
+    } else {
+      try {
+        handbookUrl = await getS3ViewURL(trimmed);
+      } catch (err) {
+        console.error("Failed to sign handbook URL:", err.message);
+      }
+    }
+  }
+
+  return {
+    ...volunteer,
+    profilePictureUrl: profilePictureUrl ?? (volunteer.profilePictureUrl || null),
+    handbookUrl: handbookUrl ?? null,
+  };
+};
+
+const enrichVolunteersUrls = async (volunteers) => {
+  if (!Array.isArray(volunteers)) return volunteers;
+  return Promise.all(volunteers.map(enrichVolunteerUrls));
 };
 
 const canModifyVolunteer = (res, volunteerId) => {
@@ -47,6 +93,11 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       can_text,
       form_completed,
       form_link,
+      form_received: reqFormReceived,
+      handbook_uploaded_at: reqHandbookUploadedAt,
+      handbook_acknowledged: reqHandbookAcknowledged,
+      emergency_contact_verified: reqEmergencyContactVerified,
+      confidentiality_waiver_verified: reqConfidentialityWaiverVerified,
       is_signed_confidentiality: reqIsSignedConfidentiality,
       is_attorney: reqIsAttorney,
       is_notary: reqIsNotary,
@@ -84,15 +135,28 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     let parsedIsPrimaryMobile;
     let parsedIsSecondaryMobile;
     let parsedCanText;
+    let parsedFormReceived;
+    let parsedHandbookAcknowledged;
+    let parsedEmergencyContactVerified;
+    let parsedConfidentialityWaiverVerified;
     try {
       parsedIsCaliforniaLicensed = parseOptionalBoolean(reqIsCaliforniaLicensed, "is_california_licensed");
       parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
       parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile") ?? false;
       parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile") ?? false;
       parsedCanText = parseOptionalBoolean(can_text, "can_text") ?? false;
+      parsedFormReceived = parseOptionalBoolean(reqFormReceived, "form_received");
+      parsedHandbookAcknowledged = parseOptionalBoolean(reqHandbookAcknowledged, "handbook_acknowledged") ?? false;
+      parsedEmergencyContactVerified = parseOptionalBoolean(reqEmergencyContactVerified, "emergency_contact_verified") ?? false;
+      parsedConfidentialityWaiverVerified = parseOptionalBoolean(reqConfidentialityWaiverVerified, "confidentiality_waiver_verified") ?? false;
     } catch (valErr) {
       return res.status(400).send(valErr.message);
     }
+
+    if (parsedFormReceived === null) {
+      parsedFormReceived = Boolean(form_link);
+    }
+    const handbook_uploaded_at = reqHandbookUploadedAt ?? (parsedFormReceived ? new Date().toISOString() : null);
 
     const callerUid = res.locals.decodedToken?.uid;
     const callerEmail = res.locals.decodedToken?.email;
@@ -127,7 +191,19 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       state_bar_certificate = null;
       state_bar_number = null;
       law_school_year = null;
-      is_signed_confidentiality = false;
+      parsedHandbookAcknowledged = false;
+      parsedEmergencyContactVerified = false;
+      parsedConfidentialityWaiverVerified = false;
+      is_signed_confidentiality = null;
+    }
+
+    let resolvedSignedConfidentiality = null;
+    if (is_signed_confidentiality === true) {
+      resolvedSignedConfidentiality = new Date().toISOString();
+    } else if (typeof is_signed_confidentiality === "string" && is_signed_confidentiality.trim() !== "") {
+      resolvedSignedConfidentiality = is_signed_confidentiality.trim();
+    } else {
+      resolvedSignedConfidentiality = null;
     }
 
     const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
@@ -223,6 +299,11 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
             can_text,
             form_completed,
             form_link,
+            form_received,
+            handbook_uploaded_at,
+            handbook_acknowledged,
+            emergency_contact_verified,
+            confidentiality_waiver_verified,
             is_signed_confidentiality,
             is_attorney,
             is_notary,
@@ -234,7 +315,7 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
             state_bar_number,
             listed_experience
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
           ON CONFLICT (id) DO UPDATE
             SET first_name = COALESCE(EXCLUDED.first_name, volunteers.first_name),
                 last_name = COALESCE(EXCLUDED.last_name, volunteers.last_name),
@@ -246,6 +327,11 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
                 can_text = COALESCE(EXCLUDED.can_text, volunteers.can_text),
                 form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
                 form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
+                form_received = COALESCE(EXCLUDED.form_received, volunteers.form_received),
+                handbook_uploaded_at = COALESCE(EXCLUDED.handbook_uploaded_at, volunteers.handbook_uploaded_at),
+                handbook_acknowledged = COALESCE(EXCLUDED.handbook_acknowledged, volunteers.handbook_acknowledged),
+                emergency_contact_verified = COALESCE(EXCLUDED.emergency_contact_verified, volunteers.emergency_contact_verified),
+                confidentiality_waiver_verified = COALESCE(EXCLUDED.confidentiality_waiver_verified, volunteers.confidentiality_waiver_verified),
                 is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
                 is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
                 is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
@@ -279,7 +365,12 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           parsedCanText,
           form_completed ?? null,
           normalizeNullableText(form_link),
-          is_signed_confidentiality ?? null,
+          parsedFormReceived ?? false,
+          handbook_uploaded_at ?? null,
+          parsedHandbookAcknowledged ?? false,
+          parsedEmergencyContactVerified ?? false,
+          parsedConfidentialityWaiverVerified ?? false,
+          resolvedSignedConfidentiality,
           is_attorney ?? null,
           is_notary ?? null,
           notary_status ?? "no",
@@ -298,7 +389,12 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       };
     });
 
-    res.status(201).json(keysToCamel(result.volunteer));
+    const enriched = await enrichVolunteerUrls({
+      ...keysToCamel(result.volunteer),
+      profilePictureUrl: result.user?.profile_picture_url ?? null,
+      firebaseUid: result.user?.firebase_uid ?? null,
+    });
+    res.status(201).json(enriched);
   } catch (e) {
     if (e.message?.includes("Conflict:")) {
       return res.status(409).send(e.message);
@@ -313,6 +409,8 @@ volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
     const volunteersQuery = await db.query(
       `
         SELECT v.*,
+          u.profile_picture_url,
+          u.firebase_uid,
           COALESCE(
             array_agg(DISTINCT r.role_name) FILTER (WHERE r.role_name IS NOT NULL),
             '{}'::text[]
@@ -335,6 +433,7 @@ volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
             LIMIT 1
           ) AS most_recent_event
         FROM volunteers v
+        LEFT JOIN users u ON v.id = u.id
         LEFT JOIN volunteer_roles vr ON v.id = vr.volunteer_id
         LEFT JOIN roles r ON vr.role_id = r.id
         LEFT JOIN volunteer_areas_of_practice vaop ON v.id = vaop.volunteer_id
@@ -344,10 +443,10 @@ volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
         WHERE NOT EXISTS (
           SELECT 1 FROM volunteer_archived av WHERE av.volunteer_id = v.id
         )
-        GROUP BY v.id;
+        GROUP BY v.id, u.profile_picture_url, u.firebase_uid;
       `
     );
-    res.status(200).json(keysToCamel(volunteersQuery));
+    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteersQuery)));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -437,14 +536,15 @@ volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
 
     const volunteerQuery = await db.query(
       `
-        SELECT *
-        FROM volunteers
-        WHERE id = $1;
+        SELECT v.*, u.profile_picture_url, u.firebase_uid
+        FROM volunteers v
+        LEFT JOIN users u ON v.id = u.id
+        WHERE v.id = $1;
       `,
       [id]
     );
 
-    res.status(200).json(keysToCamel(volunteerQuery));
+    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteerQuery)));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -524,6 +624,11 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       can_text,
       form_completed,
       form_link,
+      form_received,
+      handbook_uploaded_at,
+      handbook_acknowledged,
+      emergency_contact_verified,
+      confidentiality_waiver_verified,
       is_signed_confidentiality,
       is_attorney,
       is_notary,
@@ -547,20 +652,63 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       req.body,
       "secondary_phone_number"
     );
+    const hasFormLink = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "form_link"
+    );
+    const hasFormReceived = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "form_received"
+    );
+    const hasHandbookUploadedAt = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "handbook_uploaded_at"
+    );
+    const hasHandbookAcknowledged = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "handbook_acknowledged"
+    );
+    const hasEmergencyContactVerified = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "emergency_contact_verified"
+    );
+    const hasConfidentialityWaiverVerified = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "confidentiality_waiver_verified"
+    );
+    const hasIsSignedConfidentiality = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "is_signed_confidentiality"
+    );
 
     let parsedIsCaliforniaLicensed;
     let parsedIsAttorney;
     let parsedIsPrimaryMobile;
     let parsedIsSecondaryMobile;
     let parsedCanText;
+    let parsedFormReceived;
+    let parsedHandbookAcknowledged;
+    let parsedEmergencyContactVerified;
+    let parsedConfidentialityWaiverVerified;
     try {
       parsedIsCaliforniaLicensed = parseOptionalBoolean(is_california_licensed, "is_california_licensed");
       parsedIsAttorney = parseOptionalBoolean(is_attorney, "is_attorney");
       parsedIsPrimaryMobile = parseOptionalBoolean(is_primary_mobile, "is_primary_mobile");
       parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile");
       parsedCanText = parseOptionalBoolean(can_text, "can_text");
+      parsedFormReceived = parseOptionalBoolean(form_received, "form_received");
+      parsedHandbookAcknowledged = parseOptionalBoolean(handbook_acknowledged, "handbook_acknowledged");
+      parsedEmergencyContactVerified = parseOptionalBoolean(emergency_contact_verified, "emergency_contact_verified");
+      parsedConfidentialityWaiverVerified = parseOptionalBoolean(confidentiality_waiver_verified, "confidentiality_waiver_verified");
     } catch (valErr) {
       return res.status(400).send(valErr.message);
+    }
+
+    let resolvedSignedConfidentiality = is_signed_confidentiality;
+    if (is_signed_confidentiality === true) {
+      resolvedSignedConfidentiality = new Date().toISOString();
+    } else if (is_signed_confidentiality === false) {
+      resolvedSignedConfidentiality = null;
     }
 
     const resolvedNotaryStatus =
@@ -585,8 +733,13 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
             is_secondary_mobile = COALESCE($8, is_secondary_mobile),
             can_text = COALESCE($9, can_text),
             form_completed = COALESCE($10, form_completed),
-            form_link = COALESCE($11, form_link),
-            is_signed_confidentiality = COALESCE($12, is_signed_confidentiality),
+            form_link = CASE WHEN $23 THEN $24 ELSE form_link END,
+            form_received = CASE WHEN $25 THEN $26 ELSE form_received END,
+            handbook_uploaded_at = CASE WHEN $27 THEN $28 ELSE handbook_uploaded_at END,
+            handbook_acknowledged = CASE WHEN $29 THEN $30 ELSE handbook_acknowledged END,
+            emergency_contact_verified = CASE WHEN $31 THEN $32 ELSE emergency_contact_verified END,
+            confidentiality_waiver_verified = CASE WHEN $33 THEN $34 ELSE confidentiality_waiver_verified END,
+            is_signed_confidentiality = CASE WHEN $35 THEN $36 ELSE is_signed_confidentiality END,
             is_attorney = COALESCE($13, is_attorney),
             is_notary = COALESCE($14, is_notary),
             notary_status = COALESCE($15, notary_status),
@@ -618,8 +771,8 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         parsedIsSecondaryMobile,
         parsedCanText,
         form_completed,
-        form_link,
-        is_signed_confidentiality,
+        null, // placeholder for legacy $11
+        null, // placeholder for legacy $12
         parsedIsAttorney,
         resolvedIsNotary,
         resolvedNotaryStatus,
@@ -630,6 +783,20 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         state_bar_number ?? null,
         hasListedExperience ? normalizeNullableText(listed_experience) : null,
         hasSecondaryPhone,
+        hasFormLink,
+        normalizeNullableText(form_link),
+        hasFormReceived,
+        parsedFormReceived,
+        hasHandbookUploadedAt,
+        handbook_uploaded_at ?? null,
+        hasHandbookAcknowledged,
+        parsedHandbookAcknowledged,
+        hasEmergencyContactVerified,
+        parsedEmergencyContactVerified,
+        hasConfidentialityWaiverVerified,
+        parsedConfidentialityWaiverVerified,
+        hasIsSignedConfidentiality,
+        resolvedSignedConfidentiality,
       ]
     );
 

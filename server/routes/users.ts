@@ -1,6 +1,8 @@
 import {
+  getHandbookUploadURL,
   getProfilePictureGetURL,
   getProfilePictureUploadURL,
+  getS3ViewURL,
 } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
@@ -194,6 +196,8 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
       typeof req.query.contentType === "string" ? req.query.contentType : "";
     const firebaseUid =
       typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+    const role =
+      typeof req.query.role === "string" ? req.query.role.trim() : "volunteer";
 
     if (!firebaseUid) {
       return res.status(400).json({ message: "firebaseUid is required" });
@@ -202,11 +206,47 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
     const { uploadUrl, key } = await getProfilePictureUploadURL(
       contentType,
       firebaseUid,
+      role,
     );
 
     return res.status(200).json({ uploadUrl, key });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create upload URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for handbook PDF upload
+usersRouter.get("/handbook/upload-url", async (req, res) => {
+  try {
+    const contentType =
+      typeof req.query.contentType === "string" ? req.query.contentType : "application/pdf";
+    const firebaseUid =
+      typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+
+    if (!firebaseUid) {
+      return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    const { uploadUrl, key } = await getHandbookUploadURL(
+      contentType,
+      firebaseUid,
+    );
+
+    return res.status(200).json({ uploadUrl, key });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create handbook upload URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for downloading the blank volunteer handbook template from S3
+usersRouter.get("/handbook/template-url", async (_req, res) => {
+  try {
+    const downloadUrl = await getS3ViewURL("templates/handbook.pdf", 3600);
+    return res.status(200).json({ downloadUrl });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create template download URL";
     return res.status(400).json({ message });
   }
 });
@@ -224,6 +264,23 @@ usersRouter.get("/profile-picture/view-url", async (req, res) => {
     return res.status(200).json({ viewUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create view URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for viewing or downloading any document (e.g. handbook PDF)
+usersRouter.get("/document/view-url", async (req, res) => {
+  try {
+    const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
+
+    if (!key) {
+      return res.status(400).json({ message: "key is required" });
+    }
+
+    const viewUrl = await getS3ViewURL(key);
+    return res.status(200).json({ viewUrl });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create document view URL";
     return res.status(400).json({ message });
   }
 });

@@ -1,3 +1,4 @@
+import { getProfilePictureGetURL } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { db } from "@/db/db-pgp";
 import { admin } from "@/config/firebase";
@@ -16,6 +17,33 @@ const parseOptionalBoolean = (value, field) => {
   if (value === true || value === "true") return true;
   if (value === false || value === "false") return false;
   throw new InvalidBooleanError(`${field} must be a boolean`);
+};
+
+const enrichAdminUrls = async (member) => {
+  if (!member) return member;
+  let profilePictureUrl = null;
+  const storedPic = member.profilePictureUrl;
+  if (storedPic && typeof storedPic === "string" && storedPic.trim()) {
+    const trimmed = storedPic.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      profilePictureUrl = trimmed;
+    } else {
+      try {
+        profilePictureUrl = await getProfilePictureGetURL(trimmed);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return {
+    ...member,
+    profilePictureUrl: profilePictureUrl ?? (member.profilePictureUrl || null),
+  };
+};
+
+const enrichAdminsUrls = async (members) => {
+  if (!Array.isArray(members)) return members;
+  return Promise.all(members.map(enrichAdminUrls));
 };
 
 // POST /admins - create a new staff/supervisor
@@ -164,15 +192,18 @@ adminsRouter.get("/staff", verifyRole(["staff", "supervisor"]), async (req, res)
           a.is_secondary_mobile,
           a.can_text,
           a.start_date,
+          u.profile_picture_url,
+          u.firebase_uid,
           CASE WHEN a.is_supervisor THEN 'Supervisor' ELSE 'Staff' END AS role
         FROM admins a
+        LEFT JOIN users u ON a.id = u.id
         WHERE NOT EXISTS (
           SELECT 1 FROM admin_archived aa WHERE aa.admin_id = a.id
         )
         ORDER BY a.last_name ASC, a.first_name ASC;
       `
     );
-    res.status(200).json(keysToCamel(staff));
+    res.status(200).json(await enrichAdminsUrls(keysToCamel(staff)));
   } catch (err) {
     res.status(400).send(err.message);
   }
@@ -261,7 +292,12 @@ adminsRouter.get("/id/:id", verifyRole(["staff", "supervisor"]), async (req, res
     }
 
     const admin = await db.query(
-      "SELECT * FROM admins WHERE id = $1",
+      `
+        SELECT a.*, u.profile_picture_url, u.firebase_uid
+        FROM admins a
+        LEFT JOIN users u ON a.id = u.id
+        WHERE a.id = $1
+      `,
       [adminId]
     );
 
@@ -269,7 +305,7 @@ adminsRouter.get("/id/:id", verifyRole(["staff", "supervisor"]), async (req, res
       return res.status(404).json({ error: "Staff profile not found" });
     }
 
-    res.status(200).json(keysToCamel(admin[0]));
+    res.status(200).json(await enrichAdminUrls(keysToCamel(admin[0])));
   } catch (err) {
     res.status(400).send(err.message);
   }

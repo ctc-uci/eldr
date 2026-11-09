@@ -8,6 +8,10 @@ import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import {
+  uploadHandbookToS3,
+  validateHandbookFile,
+} from "@/utils/uploadHandbook";
+import {
   uploadProfilePictureToS3,
   validateProfilePictureFile,
 } from "@/utils/uploadProfilePicture";
@@ -183,6 +187,14 @@ export const ProfileManagement = () => {
             ),
           })),
           interests: volunteerAreas.map((row) => row.areasOfPractice),
+          formReceived: Boolean(volunteer.formReceived),
+          formLink: volunteer.formLink ?? null,
+          handbookUrl: volunteer.handbookUrl ?? null,
+          handbookUploadedAt: volunteer.handbookUploadedAt ?? null,
+          handbookAcknowledged: Boolean(volunteer.handbookAcknowledged),
+          emergencyContactVerified: Boolean(volunteer.emergencyContactVerified),
+          confidentialityWaiverVerified: Boolean(volunteer.confidentialityWaiverVerified),
+          isSignedConfidentiality: volunteer.isSignedConfidentiality ?? null,
         }));
       } catch (error) {
         console.error("Failed to load volunteer profile", error);
@@ -233,6 +245,68 @@ export const ProfileManagement = () => {
       setDraft((prev) => (prev ? { ...prev, photoUrl: previewUrl } : prev));
     },
     [revokePhotoPreview],
+  );
+
+  const [isUploadingHandbook, setIsUploadingHandbook] = useState(false);
+  const [handbookUploadError, setHandbookUploadError] = useState("");
+
+  const handleHandbookUpload = useCallback(
+    async (file) => {
+      if (!volunteerId || !currentUser?.uid) return;
+      const validationError = validateHandbookFile(file);
+      if (validationError) {
+        setHandbookUploadError(validationError);
+        return;
+      }
+      setHandbookUploadError("");
+      setIsUploadingHandbook(true);
+      try {
+        const key = await uploadHandbookToS3(backend, file, currentUser.uid);
+        const uploadedAt = new Date().toISOString();
+        await backend.put(`/volunteers/${volunteerId}`, {
+          form_received: true,
+          form_link: key,
+          handbook_uploaded_at: uploadedAt,
+        });
+
+        let viewUrl = "";
+        try {
+          const viewResp = await backend.get("/users/document/view-url", {
+            params: { key },
+          });
+          viewUrl = viewResp.data?.viewUrl ?? "";
+        } catch {
+          /* fallback */
+        }
+
+        setProfile((prev) => ({
+          ...prev,
+          formReceived: true,
+          formLink: key,
+          handbookUrl: viewUrl || prev.handbookUrl,
+          handbookUploadedAt: uploadedAt,
+        }));
+        setDraft((prev) =>
+          prev
+            ? {
+                ...prev,
+                formReceived: true,
+                formLink: key,
+                handbookUrl: viewUrl || prev.handbookUrl,
+                handbookUploadedAt: uploadedAt,
+              }
+            : prev
+        );
+      } catch (err) {
+        console.error("Failed to upload handbook", err);
+        setHandbookUploadError(
+          err.message || "Failed to upload handbook document. Please try again."
+        );
+      } finally {
+        setIsUploadingHandbook(false);
+      }
+    },
+    [backend, volunteerId, currentUser?.uid]
   );
 
   const saveEdit = useCallback(async () => {
@@ -556,6 +630,9 @@ export const ProfileManagement = () => {
                 onSave={saveEdit}
                 onCancel={cancelEdit}
                 onPhotoSelect={handlePhotoSelect}
+                onHandbookUpload={handleHandbookUpload}
+                isUploadingHandbook={isUploadingHandbook}
+                handbookError={handbookUploadError}
                 isSaving={isSavingProfile}
                 photoError={photoError}
                 errorMessage={loadError}
