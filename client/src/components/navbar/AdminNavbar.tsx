@@ -5,10 +5,8 @@ TODO: Implement on all associated admin pages
 
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { Avatar, Box, Flex, HStack, IconButton, Image, Text, VStack } from "@chakra-ui/react";
-import { ClipboardList, Users } from "lucide-react";
-import { LuTags, LuMails } from "react-icons/lu";
 import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
-import { getLogoRootPath } from "@/utils/navigation";
+import { getLogoRootPath, STAFF_NAV_ITEMS } from "@/utils/navigation";
 
 type AdminNavbarProps = {
   onCollapse: () => void;
@@ -16,14 +14,6 @@ type AdminNavbarProps = {
 
 export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
   const location = useLocation();
-
-  // Array of mapping icons
-  const navItems = [
-    { name: "Event Catalog", icon: ClipboardList, path: "/events" },
-    { name: "Email Templates", icon: LuMails, path: "/email" },
-    { name: "Profiles", icon: Users, path: "/volunteer-management" },
-    { name: "Tags", icon: LuTags, path: "/manage-tags" }
-  ];
 
   return (
     <Flex
@@ -59,7 +49,7 @@ export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
 
         {/* Nav Links */}
         <VStack gap={8} w="full" px={4} align="stretch">
-          {navItems.map((item) => {
+          {STAFF_NAV_ITEMS.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const IconComponent = item.icon;
 
@@ -68,6 +58,7 @@ export const AdminNavbar = ({ onCollapse }: AdminNavbarProps) => {
               <RouterLink
                 to={item.path}
                 key={item.name}
+                aria-current={isActive ? "page" : undefined}
                 style={{ textDecoration: "none", display: "block" }}
               >
                 <HStack

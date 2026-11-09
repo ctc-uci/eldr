@@ -12,11 +12,9 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
-import { ClipboardList, Users } from "lucide-react";
-import { LuMails, LuTags } from "react-icons/lu";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 
-import { getLogoRootPath } from "@/utils/navigation";
+import { getLogoRootPath, STAFF_NAV_ITEMS } from "@/utils/navigation";
 
 type CollapsedNavbarProps = {
   onExpand: () => void;
@@ -24,13 +22,6 @@ type CollapsedNavbarProps = {
 
 export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
   const location = useLocation();
-
-  const navItems = [
-    { name: "Event Catalog", icon: ClipboardList, path: "/events" },
-    { name: "Email Templates", icon: LuMails, path: "/email" },
-    { name: "Profiles", icon: Users, path: "/volunteer-management" },
-    { name: "Tags", icon: LuTags, path: "/manage-tags" },
-  ];
 
   return (
     <Flex
@@ -78,7 +69,7 @@ export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
 
         {/* Nav Links */}
         <VStack gap={8} w="full" px={2} align="center">
-          {navItems.map((item) => {
+          {STAFF_NAV_ITEMS.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const IconComponent = item.icon;
 
@@ -87,6 +78,8 @@ export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
                 to={item.path}
                 key={item.name}
                 title={item.name}
+                aria-label={item.name}
+                aria-current={isActive ? "page" : undefined}
                 style={{ textDecoration: "none", display: "block" }}
               >
                 <Flex
@@ -130,6 +123,8 @@ export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
 
         <RouterLink
           to="/admin-profile"
+          aria-label="Profile"
+          title="Profile"
           style={{ textDecoration: "none", display: "block" }}
         >
           <Box cursor="pointer">

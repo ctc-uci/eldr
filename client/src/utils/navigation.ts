@@ -1,3 +1,20 @@
+import type { ComponentType } from "react";
+import { ClipboardList, Users } from "lucide-react";
+import { LuMails, LuTags } from "react-icons/lu";
+
+export type NavItem = {
+  name: string;
+  icon: ComponentType<{ size?: number | string; color?: string; className?: string }>;
+  path: string;
+};
+
+export const STAFF_NAV_ITEMS: NavItem[] = [
+  { name: "Event Catalog", icon: ClipboardList, path: "/events" },
+  { name: "Email Templates", icon: LuMails, path: "/email" },
+  { name: "Profiles", icon: Users, path: "/volunteer-management" },
+  { name: "Tags", icon: LuTags, path: "/manage-tags" },
+];
+
 /**
  * Returns the section root URL based on the current pathname for logo click navigation.
  */
