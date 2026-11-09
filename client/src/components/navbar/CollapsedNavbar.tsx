@@ -54,14 +54,24 @@ export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
         <Box h="72px" display="flex" alignItems="center" justifyContent="center" w="full">
           <RouterLink
             to={getLogoRootPath(location.pathname)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "48px",
+              height: "48px",
+            }}
           >
             <Image
               src="/cc-logo.svg"
-              alt="Logo"
-              maxH="44px"
-              maxW="44px"
+              alt="Community Counsel"
+              boxSize="44px"
+              w="44px"
+              h="44px"
+              minW="44px"
+              minH="44px"
               objectFit="contain"
+              display="block"
             />
           </RouterLink>
         </Box>
