@@ -21,7 +21,7 @@ const normalizeNullableText = (value) => {
   return normalized === "" ? null : normalized;
 };
 
-const enrichVolunteerUrls = async (volunteer) => {
+const enrichVolunteerUrls = async (volunteer, allowHandbook = false) => {
   if (!volunteer) return volunteer;
   let profilePictureUrl = null;
   let handbookUrl = null;
@@ -40,42 +40,98 @@ const enrichVolunteerUrls = async (volunteer) => {
     }
   }
 
-  const storedHandbook = volunteer.formLink;
-  if (storedHandbook && typeof storedHandbook === "string" && storedHandbook.trim()) {
-    const trimmed = storedHandbook.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      handbookUrl = trimmed;
-    } else {
-      try {
-        handbookUrl = await getS3ViewURL(trimmed);
-      } catch (err) {
-        console.error("Failed to sign handbook URL:", err.message);
+  if (allowHandbook) {
+    const storedHandbook = volunteer.formLink;
+    if (storedHandbook && typeof storedHandbook === "string" && storedHandbook.trim()) {
+      const trimmed = storedHandbook.trim();
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        handbookUrl = trimmed;
+      } else {
+        try {
+          handbookUrl = await getS3ViewURL(trimmed);
+        } catch (err) {
+          console.error("Failed to sign handbook URL:", err.message);
+        }
       }
     }
   }
 
   return {
     ...volunteer,
-    profilePictureUrl: profilePictureUrl ?? (volunteer.profilePictureUrl || null),
+    profilePictureUrl: profilePictureUrl ?? null,
     handbookUrl: handbookUrl ?? null,
   };
 };
 
-const enrichVolunteersUrls = async (volunteers) => {
+const enrichVolunteersUrls = async (volunteers, allowHandbook = false) => {
   if (!Array.isArray(volunteers)) return volunteers;
-  return Promise.all(volunteers.map(enrichVolunteerUrls));
+  return Promise.all(volunteers.map((v) => enrichVolunteerUrls(v, allowHandbook)));
 };
 
-const canModifyVolunteer = (res, volunteerId) => {
-  if (process.env.NODE_ENV !== "production") return true;
+const getCallerInfo = async (req, res) => {
+  let user = res.locals.user;
+  let decodedToken = res.locals.decodedToken;
 
-  const user = res.locals.user;
-  return (
-    user &&
-    (user.role === "staff" ||
-      user.role === "supervisor" ||
-      String(user.id) === volunteerId)
-  );
+  if (!decodedToken && req.cookies?.accessToken) {
+    try {
+      decodedToken = await admin.auth().verifyIdToken(req.cookies.accessToken);
+      res.locals.decodedToken = decodedToken;
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  if (!user && decodedToken?.uid) {
+    const userRows = await db.query(
+      "SELECT id, role, firebase_uid FROM users WHERE firebase_uid = $1 LIMIT 1",
+      [decodedToken.uid]
+    );
+    if (userRows.length > 0) {
+      user = userRows[0];
+      res.locals.user = user;
+    }
+  }
+
+  const role = user?.role;
+  const isStaffOrSupervisor = role === "staff" || role === "supervisor";
+
+  return {
+    isStaffOrSupervisor,
+    callerUid: decodedToken?.uid ?? user?.firebase_uid ?? null,
+    callerDbId: user?.id ? String(user.id) : null,
+    callerRole: role ?? null,
+  };
+};
+
+const canModifyVolunteer = async (req, res, volunteerId, targetFirebaseUid = null) => {
+  if (process.env.NODE_ENV !== "production" && !res.locals.decodedToken && !req.cookies?.accessToken) {
+    return true;
+  }
+
+  const callerInfo = await getCallerInfo(req, res);
+  if (callerInfo.isStaffOrSupervisor) {
+    return true;
+  }
+
+  if (callerInfo.callerDbId === String(volunteerId)) {
+    return true;
+  }
+
+  if (callerInfo.callerUid) {
+    let fbUid = targetFirebaseUid;
+    if (!fbUid) {
+      const uRows = await db.query(
+        "SELECT firebase_uid FROM users WHERE id = $1 LIMIT 1",
+        [volunteerId]
+      );
+      fbUid = uRows[0]?.firebase_uid;
+    }
+    if (fbUid && callerInfo.callerUid === fbUid) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 // Create a new volunteer
@@ -146,17 +202,17 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       parsedIsSecondaryMobile = parseOptionalBoolean(is_secondary_mobile, "is_secondary_mobile") ?? false;
       parsedCanText = parseOptionalBoolean(can_text, "can_text") ?? false;
       parsedFormReceived = parseOptionalBoolean(reqFormReceived, "form_received");
-      parsedHandbookAcknowledged = parseOptionalBoolean(reqHandbookAcknowledged, "handbook_acknowledged") ?? false;
-      parsedEmergencyContactVerified = parseOptionalBoolean(reqEmergencyContactVerified, "emergency_contact_verified") ?? false;
-      parsedConfidentialityWaiverVerified = parseOptionalBoolean(reqConfidentialityWaiverVerified, "confidentiality_waiver_verified") ?? false;
+      parsedHandbookAcknowledged = parseOptionalBoolean(reqHandbookAcknowledged, "handbook_acknowledged");
+      parsedEmergencyContactVerified = parseOptionalBoolean(reqEmergencyContactVerified, "emergency_contact_verified");
+      parsedConfidentialityWaiverVerified = parseOptionalBoolean(reqConfidentialityWaiverVerified, "confidentiality_waiver_verified");
     } catch (valErr) {
       return res.status(400).send(valErr.message);
     }
 
-    if (parsedFormReceived === null) {
-      parsedFormReceived = Boolean(form_link);
+    if (parsedFormReceived === null && form_link) {
+      parsedFormReceived = true;
     }
-    const handbook_uploaded_at = reqHandbookUploadedAt ?? (parsedFormReceived ? new Date().toISOString() : null);
+    const handbook_uploaded_at = reqHandbookUploadedAt ?? (form_link ? new Date().toISOString() : null);
 
     const callerUid = res.locals.decodedToken?.uid;
     const callerEmail = res.locals.decodedToken?.email;
@@ -174,6 +230,8 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       }
     }
 
+    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
+
     if (!isStaffOrSupervisor) {
       // Self-registration: override request body inputs with token details to prevent account manipulation/hijacking
       if (!callerUid || !callerEmail) {
@@ -181,6 +239,15 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       }
       firebaseUid = callerUid;
       email = callerEmail;
+
+      // Look up whether this is a returning user
+      const existingDbUser = normalizedEmail
+        ? await db.query(
+            "SELECT id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+            [normalizedEmail]
+          )
+        : [];
+      const isNewUser = existingDbUser.length === 0;
 
       // Prevent self-asserting credentials/confidentiality fields during self-registration
       is_attorney = false;
@@ -191,10 +258,22 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       state_bar_certificate = null;
       state_bar_number = null;
       law_school_year = null;
-      parsedHandbookAcknowledged = false;
-      parsedEmergencyContactVerified = false;
-      parsedConfidentialityWaiverVerified = false;
-      is_signed_confidentiality = null;
+
+      if (isNewUser) {
+        parsedHandbookAcknowledged = false;
+        parsedEmergencyContactVerified = false;
+        parsedConfidentialityWaiverVerified = false;
+        is_signed_confidentiality = null;
+        if (parsedFormReceived === null) {
+          parsedFormReceived = false;
+        }
+      } else {
+        // Returning user upsert (e.g. SSO redirect): keep verification fields as null so COALESCE preserves them
+        parsedHandbookAcknowledged = null;
+        parsedEmergencyContactVerified = null;
+        parsedConfidentialityWaiverVerified = null;
+        is_signed_confidentiality = null;
+      }
     }
 
     let resolvedSignedConfidentiality = null;
@@ -206,7 +285,6 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       resolvedSignedConfidentiality = null;
     }
 
-    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
     if (!normalizedEmail) {
       return res.status(400).send("email are required");
     }
@@ -446,7 +524,10 @@ volunteersRouter.get("/", verifyRole("volunteer"), async (req, res) => {
         GROUP BY v.id, u.profile_picture_url, u.firebase_uid;
       `
     );
-    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteersQuery)));
+    const callerInfo = await getCallerInfo(req, res);
+    const allowHandbook =
+      callerInfo.isStaffOrSupervisor || (process.env.NODE_ENV !== "production" && !callerInfo.callerUid);
+    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteersQuery), allowHandbook));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -544,7 +625,19 @@ volunteersRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
       [id]
     );
 
-    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteerQuery)));
+    if (!volunteerQuery.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
+
+    const callerInfo = await getCallerInfo(req, res);
+    const target = volunteerQuery[0];
+    const isOwner =
+      callerInfo.callerDbId === String(id) ||
+      (Boolean(callerInfo.callerUid) && Boolean(target.firebase_uid) && target.firebase_uid === callerInfo.callerUid);
+    const allowHandbook =
+      callerInfo.isStaffOrSupervisor || isOwner || (process.env.NODE_ENV !== "production" && !callerInfo.callerUid);
+
+    res.status(200).json(await enrichVolunteersUrls(keysToCamel(volunteerQuery), allowHandbook));
   } catch (e) {
     res.status(500).send(e.message);
   }
@@ -613,6 +706,23 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
   try {
     const { id } = req.params;
 
+    const targetUsers = await db.query(
+      "SELECT id, firebase_uid FROM users WHERE id = $1 LIMIT 1",
+      [id]
+    );
+    if (!targetUsers.length) {
+      return res.status(404).send(`Volunteer ${id} not found`);
+    }
+    const targetUser = targetUsers[0];
+
+    if (!(await canModifyVolunteer(req, res, id, targetUser.firebase_uid))) {
+      return res.status(403).send("Forbidden: Cannot modify another volunteer's record");
+    }
+
+    const callerInfo = await getCallerInfo(req, res);
+    const canUpdateVerification =
+      callerInfo.isStaffOrSupervisor || (process.env.NODE_ENV !== "production" && !callerInfo.callerUid);
+
     const {
       first_name,
       last_name,
@@ -664,19 +774,19 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       req.body,
       "handbook_uploaded_at"
     );
-    const hasHandbookAcknowledged = Object.prototype.hasOwnProperty.call(
+    const hasHandbookAcknowledged = canUpdateVerification && Object.prototype.hasOwnProperty.call(
       req.body,
       "handbook_acknowledged"
     );
-    const hasEmergencyContactVerified = Object.prototype.hasOwnProperty.call(
+    const hasEmergencyContactVerified = canUpdateVerification && Object.prototype.hasOwnProperty.call(
       req.body,
       "emergency_contact_verified"
     );
-    const hasConfidentialityWaiverVerified = Object.prototype.hasOwnProperty.call(
+    const hasConfidentialityWaiverVerified = canUpdateVerification && Object.prototype.hasOwnProperty.call(
       req.body,
       "confidentiality_waiver_verified"
     );
-    const hasIsSignedConfidentiality = Object.prototype.hasOwnProperty.call(
+    const hasIsSignedConfidentiality = canUpdateVerification && Object.prototype.hasOwnProperty.call(
       req.body,
       "is_signed_confidentiality"
     );

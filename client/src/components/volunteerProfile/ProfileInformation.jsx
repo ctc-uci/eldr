@@ -393,6 +393,29 @@ export const ProfileInformation = ({
 
   const photoInputRef = useRef(null);
   const handbookFileInputRef = useRef(null);
+  const [isResolvingHandbookUrl, setIsResolvingHandbookUrl] = useState(false);
+
+  const handleViewHandbook = async () => {
+    if (data.formLink) {
+      setIsResolvingHandbookUrl(true);
+      try {
+        const resp = await backend.get("/users/document/view-url", {
+          params: { key: data.formLink },
+        });
+        if (resp.data?.viewUrl) {
+          window.open(resp.data.viewUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to get fresh handbook view URL:", e);
+      } finally {
+        setIsResolvingHandbookUrl(false);
+      }
+    }
+    if (data.handbookUrl) {
+      window.open(data.handbookUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   const handleHandbookInputChange = (event) => {
     const file = event.target.files?.[0];
@@ -659,17 +682,16 @@ export const ProfileInformation = ({
                 Download Form
               </Button>
 
-              {data.handbookUrl && (
+              {(data.formLink || data.handbookUrl) && (
                 <Button
-                  as="a"
-                  href={data.handbookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   size="sm"
                   variant="outline"
                   borderColor="gray.300"
                   bg="white"
                   gap={1.5}
+                  onClick={handleViewHandbook}
+                  loading={isResolvingHandbookUrl}
+                  disabled={isResolvingHandbookUrl}
                 >
                   <LuExternalLink size={14} />
                   View Uploaded PDF

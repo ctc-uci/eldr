@@ -8,11 +8,12 @@ ALTER TABLE public.volunteers
     ADD COLUMN IF NOT EXISTS emergency_contact_verified BOOLEAN DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS confidentiality_waiver_verified BOOLEAN DEFAULT FALSE;
 
--- If a volunteer already had is_signed_confidentiality set, backfill verification flags
+-- If a volunteer already had is_signed_confidentiality set, backfill known verification flags.
+-- Emergency contacts were not collected previously, so emergency_contact_verified remains FALSE until staff verifies it.
 UPDATE public.volunteers
 SET form_received = TRUE,
     handbook_acknowledged = TRUE,
-    emergency_contact_verified = TRUE,
+    emergency_contact_verified = FALSE,
     confidentiality_waiver_verified = TRUE
 WHERE is_signed_confidentiality IS NOT NULL
   AND form_received = FALSE;

@@ -25,8 +25,16 @@ export async function completeVolunteerSignup(
   let firebaseUid: string | null = null;
   let volunteerId: number | null = null;
   let authUser: UserCredential["user"] | null = null;
+  let handbookKey: string | null = null;
 
   const rollback = async () => {
+    if (handbookKey) {
+      try {
+        await backend.delete("/users/document", { params: { key: handbookKey } });
+      } catch {
+        /* ignore */
+      }
+    }
     if (volunteerId !== null) {
       try {
         await backend.delete(`/volunteers/${volunteerId}`);
@@ -58,7 +66,6 @@ export async function completeVolunteerSignup(
     authUser = userCredential.user;
     firebaseUid = userCredential.user.uid;
 
-    let handbookKey: string | null = null;
     let handbookUploadedAt: string | null = null;
     if (handbookFile) {
       try {
@@ -66,6 +73,9 @@ export async function completeVolunteerSignup(
         handbookUploadedAt = new Date().toISOString();
       } catch (uploadErr) {
         console.error("Failed to upload handbook file:", uploadErr);
+        if (uploadErr instanceof Error && uploadErr.message) {
+          throw uploadErr;
+        }
         throw new Error("Failed to upload handbook document to S3. Please try again.");
       }
     }

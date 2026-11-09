@@ -147,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           phone_number: null,
           form_completed: false,
           form_link: null,
-          form_received: false,
           is_signed_confidentiality: null,
           is_attorney: null,
           is_notary: null,

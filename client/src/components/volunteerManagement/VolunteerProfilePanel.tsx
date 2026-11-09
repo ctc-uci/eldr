@@ -251,8 +251,13 @@ export const VolunteerProfilePanel = ({
         : "confidentiality_waiver_verified"]: newVal,
     };
 
-    if (allThree && !isSignedConfidentiality) {
-      patch.is_signed_confidentiality = true;
+    if (allThree) {
+      if (!isSignedConfidentiality) {
+        patch.is_signed_confidentiality = true;
+      }
+      if (!formReceived) {
+        patch.form_received = true;
+      }
     } else if (!allThree && isSignedConfidentiality) {
       patch.is_signed_confidentiality = false;
     }
@@ -270,7 +275,11 @@ export const VolunteerProfilePanel = ({
             emergency_contact_verified: true,
             confidentiality_waiver_verified: true,
           }
-        : {}),
+        : {
+            handbook_acknowledged: false,
+            emergency_contact_verified: false,
+            confidentiality_waiver_verified: false,
+          }),
     });
   };
 
@@ -320,7 +329,7 @@ export const VolunteerProfilePanel = ({
 
       setFormReceived(true);
       setFormLink(key);
-      setHandbookUrl(viewUrl || key);
+      setHandbookUrl(viewUrl || null);
       setHandbookUploadedAt(uploadedAt);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to upload handbook document";
@@ -489,11 +498,6 @@ export const VolunteerProfilePanel = ({
       is_california_licensed: isAttorney ? form.isCaliforniaLicensed : false,
       state_bar_certificate: isAttorney && form.isCaliforniaLicensed ? "California" : null,
       state_bar_number: isAttorney && form.isCaliforniaLicensed ? (form.stateBarNumber || null) : null,
-      form_received: formReceived,
-      handbook_acknowledged: handbookAcknowledged,
-      emergency_contact_verified: emergencyContactVerified,
-      confidentiality_waiver_verified: confidentialityWaiverVerified,
-      is_signed_confidentiality: isSignedConfidentiality,
     });
 
     const validLanguages = editLanguages.filter((l) => l.languageId !== 0);

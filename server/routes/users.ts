@@ -1,4 +1,6 @@
 import {
+  checkS3ObjectExists,
+  deleteS3Object,
   getHandbookUploadURL,
   getProfilePictureGetURL,
   getProfilePictureUploadURL,
@@ -194,19 +196,40 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
   try {
     const contentType =
       typeof req.query.contentType === "string" ? req.query.contentType : "";
-    const firebaseUid =
+    const requestedUid =
       typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
-    const role =
-      typeof req.query.role === "string" ? req.query.role.trim() : "volunteer";
+    const callerUid = res.locals.decodedToken?.uid;
 
-    if (!firebaseUid) {
+    const targetUid = requestedUid || callerUid;
+    if (!targetUid) {
       return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    // Look up target user's role from database
+    const targetRows = await db.query(
+      "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+      [targetUid]
+    );
+    const targetDbRole = targetRows[0]?.role;
+    // Server derives role: "admin" prefix ONLY for staff/supervisor users in DB
+    const derivedRole = targetDbRole === "staff" || targetDbRole === "supervisor" ? "admin" : "volunteer";
+
+    // Authorize caller if uploading for a different user
+    if (callerUid && targetUid !== callerUid) {
+      const callerRows = await db.query(
+        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+        [callerUid]
+      );
+      const callerRole = callerRows[0]?.role;
+      if (callerRole !== "staff" && callerRole !== "supervisor") {
+        return res.status(403).json({ message: "Forbidden: Cannot upload profile picture for another user" });
+      }
     }
 
     const { uploadUrl, key } = await getProfilePictureUploadURL(
       contentType,
-      firebaseUid,
-      role,
+      targetUid,
+      derivedRole,
     );
 
     return res.status(200).json({ uploadUrl, key });
@@ -221,16 +244,30 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
   try {
     const contentType =
       typeof req.query.contentType === "string" ? req.query.contentType : "application/pdf";
-    const firebaseUid =
+    const requestedUid =
       typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+    const callerUid = res.locals.decodedToken?.uid;
 
-    if (!firebaseUid) {
+    const targetUid = requestedUid || callerUid;
+    if (!targetUid) {
       return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    // If uploading for another user, caller must be staff or supervisor
+    if (callerUid && requestedUid && requestedUid !== callerUid) {
+      const callerRows = await db.query(
+        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+        [callerUid]
+      );
+      const callerRole = callerRows[0]?.role;
+      if (callerRole !== "staff" && callerRole !== "supervisor") {
+        return res.status(403).json({ message: "Forbidden: Cannot upload handbook for another user" });
+      }
     }
 
     const { uploadUrl, key } = await getHandbookUploadURL(
       contentType,
-      firebaseUid,
+      targetUid,
     );
 
     return res.status(200).json({ uploadUrl, key });
@@ -243,6 +280,10 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
 // Presigned URL for downloading the blank volunteer handbook template from S3
 usersRouter.get("/handbook/template-url", async (_req, res) => {
   try {
+    const exists = await checkS3ObjectExists("templates/handbook.pdf");
+    if (!exists) {
+      return res.status(404).json({ message: "Handbook template does not exist in S3" });
+    }
     const downloadUrl = await getS3ViewURL("templates/handbook.pdf", 3600);
     return res.status(200).json({ downloadUrl });
   } catch (err) {
@@ -278,10 +319,61 @@ usersRouter.get("/document/view-url", async (req, res) => {
       return res.status(400).json({ message: "key is required" });
     }
 
+    // Authorize access to documents:
+    // templates/ and profiles/ are public for app usage
+    const isPublicPrefix = key.startsWith("templates/") || key.startsWith("profiles/");
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (!isPublicPrefix && callerUid) {
+      const isOwner = key.startsWith(`handbooks/${callerUid}/`);
+      if (!isOwner) {
+        const callerRows = await db.query(
+          "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+          [callerUid]
+        );
+        const callerRole = callerRows[0]?.role;
+        if (callerRole !== "staff" && callerRole !== "supervisor") {
+          return res.status(403).json({ message: "Forbidden: Not authorized to view this document" });
+        }
+      }
+    }
+
     const viewUrl = await getS3ViewURL(key, 3600, download);
     return res.status(200).json({ viewUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create document view URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Delete a document from S3 (used during signup rollback or document replacement)
+usersRouter.delete("/document", async (req, res) => {
+  try {
+    const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
+    const callerUid = res.locals.decodedToken?.uid;
+
+    if (!key) {
+      return res.status(400).json({ message: "key is required" });
+    }
+
+    if (callerUid) {
+      const isOwner = key.startsWith(`handbooks/${callerUid}/`);
+      if (!isOwner) {
+        const callerRows = await db.query(
+          "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+          [callerUid]
+        );
+        const callerRole = callerRows[0]?.role;
+        if (callerRole !== "staff" && callerRole !== "supervisor") {
+          return res.status(403).json({ message: "Forbidden: Not authorized to delete this document" });
+        }
+      }
+    }
+
+    await deleteS3Object(key);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete document";
     return res.status(400).json({ message });
   }
 });

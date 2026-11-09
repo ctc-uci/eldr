@@ -283,7 +283,7 @@ export const ProfileManagement = () => {
           ...prev,
           formReceived: true,
           formLink: key,
-          handbookUrl: viewUrl || prev.handbookUrl,
+          handbookUrl: viewUrl || null,
           handbookUploadedAt: uploadedAt,
         }));
         setDraft((prev) =>
@@ -292,7 +292,7 @@ export const ProfileManagement = () => {
                 ...prev,
                 formReceived: true,
                 formLink: key,
-                handbookUrl: viewUrl || prev.handbookUrl,
+                handbookUrl: viewUrl || null,
                 handbookUploadedAt: uploadedAt,
               }
             : prev

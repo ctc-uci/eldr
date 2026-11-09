@@ -30,14 +30,14 @@ const enrichAdminUrls = async (member) => {
     } else {
       try {
         profilePictureUrl = await getProfilePictureGetURL(trimmed);
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error("Failed to sign admin profile picture URL:", err.message);
       }
     }
   }
   return {
     ...member,
-    profilePictureUrl: profilePictureUrl ?? (member.profilePictureUrl || null),
+    profilePictureUrl: profilePictureUrl ?? (storedPic.startsWith("http") ? storedPic : null),
   };
 };
 

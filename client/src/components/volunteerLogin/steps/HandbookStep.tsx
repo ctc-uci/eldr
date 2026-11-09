@@ -279,6 +279,8 @@ const HandbookStep = ({
 
               {!selectedFile ? (
                 <Box
+                  role="button"
+                  tabIndex={0}
                   borderWidth="2px"
                   borderStyle="dashed"
                   borderColor="#D4D4D8"
@@ -288,7 +290,14 @@ const HandbookStep = ({
                   bg="white"
                   cursor="pointer"
                   _hover={{ borderColor: "#0088FF", bg: "#F8FAFC" }}
+                  _focusVisible={{ outline: "2px solid #0088FF", outlineOffset: "2px" }}
                   onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
                 >
                   <VStack gap={2}>
                     <Icon as={FiUploadCloud} boxSize={8} color="gray.400" />
@@ -316,7 +325,7 @@ const HandbookStep = ({
                         fontSize="14px"
                         fontWeight="semibold"
                         color="green.900"
-                        isTruncated
+                        truncate
                       >
                         {selectedFile.name}
                       </Text>
@@ -330,6 +339,7 @@ const HandbookStep = ({
                     size="xs"
                     variant="ghost"
                     color="gray.600"
+                    aria-label="Remove selected file"
                     onClick={handleRemoveFile}
                   >
                     <Icon as={FiX} boxSize={4} />

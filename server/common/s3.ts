@@ -153,6 +153,25 @@ const getHandbookGetURL = async (key: string) => {
   return getS3ViewURL(key, 3600);
 };
 
+const deleteS3Object = async (key: string) => {
+  assertS3Configured();
+  return s3.deleteObject({ Bucket: bucket!, Key: key }).promise();
+};
+
+const checkS3ObjectExists = async (key: string): Promise<boolean> => {
+  assertS3Configured();
+  try {
+    await s3.headObject({ Bucket: bucket!, Key: key }).promise();
+    return true;
+  } catch (err: unknown) {
+    const s3Err = err as { code?: string; statusCode?: number };
+    if (s3Err?.code === "NotFound" || s3Err?.statusCode === 404) {
+      return false;
+    }
+    throw err;
+  }
+};
+
 export {
   s3,
   getProfilePictureUploadURL,
@@ -160,4 +179,6 @@ export {
   getHandbookUploadURL,
   getHandbookGetURL,
   getS3ViewURL,
+  deleteS3Object,
+  checkS3ObjectExists,
 };
