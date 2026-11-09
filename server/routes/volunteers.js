@@ -47,10 +47,16 @@ const enrichVolunteerUrls = async (volunteer, allowHandbook = false) => {
       if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         handbookUrl = trimmed;
       } else {
-        try {
-          handbookUrl = await getS3ViewURL(trimmed);
-        } catch (err) {
-          console.error("Failed to sign handbook URL:", err.message);
+        const isSafeKey =
+          !volunteer.firebaseUid ||
+          trimmed.startsWith(`handbooks/${volunteer.firebaseUid}/`) ||
+          trimmed.startsWith("templates/");
+        if (isSafeKey) {
+          try {
+            handbookUrl = await getS3ViewURL(trimmed);
+          } catch (err) {
+            console.error("Failed to sign handbook URL:", err.message);
+          }
         }
       }
     }
@@ -230,7 +236,7 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       }
     }
 
-    const normalizedEmail = normalizeNullableText(email)?.toLowerCase();
+    let normalizedEmail = normalizeNullableText(email)?.toLowerCase();
 
     if (!isStaffOrSupervisor) {
       // Self-registration: override request body inputs with token details to prevent account manipulation/hijacking
@@ -239,6 +245,17 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       }
       firebaseUid = callerUid;
       email = callerEmail;
+      normalizedEmail = normalizeNullableText(callerEmail)?.toLowerCase();
+
+      // Validate handbook key belongs to this caller
+      if (form_link) {
+        const trimmedFormLink = String(form_link).trim();
+        const isExternalUrl = trimmedFormLink.startsWith("http://") || trimmedFormLink.startsWith("https://");
+        const expectedPrefix = `handbooks/${callerUid}/`;
+        if (!isExternalUrl && !trimmedFormLink.startsWith(expectedPrefix)) {
+          return res.status(403).send("Forbidden: Handbook key must belong to your account");
+        }
+      }
 
       // Look up whether this is a returning user
       const existingDbUser = normalizedEmail
@@ -766,6 +783,16 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       req.body,
       "form_link"
     );
+
+    if (hasFormLink && form_link && !callerInfo.isStaffOrSupervisor) {
+      const trimmedFormLink = String(form_link).trim();
+      const isExternalUrl = trimmedFormLink.startsWith("http://") || trimmedFormLink.startsWith("https://");
+      const targetUid = targetUser.firebase_uid;
+      const expectedPrefix = targetUid ? `handbooks/${targetUid}/` : null;
+      if (!isExternalUrl && (!expectedPrefix || !trimmedFormLink.startsWith(expectedPrefix))) {
+        return res.status(403).send("Forbidden: Handbook key must belong to your account");
+      }
+    }
     const hasFormReceived = Object.prototype.hasOwnProperty.call(
       req.body,
       "form_received"

@@ -10,9 +10,35 @@ import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp"; // TODO: replace this db with
 import { verifyRole, verifyToken } from "@/middleware";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 
 export const usersRouter = Router();
+
+const getCallerUid = async (req: Request, res: Response): Promise<string | null> => {
+  if (res.locals.decodedToken?.uid) {
+    return res.locals.decodedToken.uid;
+  }
+  if (req.cookies?.accessToken) {
+    try {
+      const decoded = await admin.auth().verifyIdToken(req.cookies.accessToken);
+      res.locals.decodedToken = decoded;
+      return decoded.uid;
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+};
+
+const isStaffOrSupervisor = async (uid?: string | null): Promise<boolean> => {
+  if (!uid) return false;
+  const rows = await db.query(
+    "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+    [uid]
+  );
+  const role = rows[0]?.role;
+  return role === "staff" || role === "supervisor";
+};
 
 type UserRecord = Record<string, unknown>;
 
@@ -215,13 +241,9 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
     const derivedRole = targetDbRole === "staff" || targetDbRole === "supervisor" ? "admin" : "volunteer";
 
     // Authorize caller if uploading for a different user
-    if (callerUid && targetUid !== callerUid) {
-      const callerRows = await db.query(
-        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
-        [callerUid]
-      );
-      const callerRole = callerRows[0]?.role;
-      if (callerRole !== "staff" && callerRole !== "supervisor") {
+    if (requestedUid && callerUid && requestedUid !== callerUid) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
         return res.status(403).json({ message: "Forbidden: Cannot upload profile picture for another user" });
       }
     }
@@ -254,13 +276,9 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
     }
 
     // If uploading for another user, caller must be staff or supervisor
-    if (callerUid && requestedUid && requestedUid !== callerUid) {
-      const callerRows = await db.query(
-        "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
-        [callerUid]
-      );
-      const callerRole = callerRows[0]?.role;
-      if (callerRole !== "staff" && callerRole !== "supervisor") {
+    if (requestedUid && callerUid && requestedUid !== callerUid) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
         return res.status(403).json({ message: "Forbidden: Cannot upload handbook for another user" });
       }
     }
@@ -322,17 +340,17 @@ usersRouter.get("/document/view-url", async (req, res) => {
     // Authorize access to documents:
     // templates/ and profiles/ are public for app usage
     const isPublicPrefix = key.startsWith("templates/") || key.startsWith("profiles/");
-    const callerUid = res.locals.decodedToken?.uid;
+    const callerUid = await getCallerUid(req, res);
 
-    if (!isPublicPrefix && callerUid) {
+    if (!isPublicPrefix) {
+      if (!callerUid) {
+        return res.status(401).json({ message: "Authentication required to view private documents" });
+      }
+
       const isOwner = key.startsWith(`handbooks/${callerUid}/`);
       if (!isOwner) {
-        const callerRows = await db.query(
-          "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
-          [callerUid]
-        );
-        const callerRole = callerRows[0]?.role;
-        if (callerRole !== "staff" && callerRole !== "supervisor") {
+        const isStaff = await isStaffOrSupervisor(callerUid);
+        if (!isStaff) {
           return res.status(403).json({ message: "Forbidden: Not authorized to view this document" });
         }
       }
@@ -350,23 +368,21 @@ usersRouter.get("/document/view-url", async (req, res) => {
 usersRouter.delete("/document", async (req, res) => {
   try {
     const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
-    const callerUid = res.locals.decodedToken?.uid;
+    const callerUid = await getCallerUid(req, res);
 
     if (!key) {
       return res.status(400).json({ message: "key is required" });
     }
 
-    if (callerUid) {
-      const isOwner = key.startsWith(`handbooks/${callerUid}/`);
-      if (!isOwner) {
-        const callerRows = await db.query(
-          "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
-          [callerUid]
-        );
-        const callerRole = callerRows[0]?.role;
-        if (callerRole !== "staff" && callerRole !== "supervisor") {
-          return res.status(403).json({ message: "Forbidden: Not authorized to delete this document" });
-        }
+    if (!callerUid) {
+      return res.status(401).json({ message: "Authentication required to delete documents" });
+    }
+
+    const isOwner = key.startsWith(`handbooks/${callerUid}/`);
+    if (!isOwner) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
+        return res.status(403).json({ message: "Forbidden: Not authorized to delete this document" });
       }
     }
 

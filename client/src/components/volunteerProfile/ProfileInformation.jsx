@@ -394,8 +394,11 @@ export const ProfileInformation = ({
   const photoInputRef = useRef(null);
   const handbookFileInputRef = useRef(null);
   const [isResolvingHandbookUrl, setIsResolvingHandbookUrl] = useState(false);
+  const [viewError, setViewError] = useState("");
 
   const handleViewHandbook = async () => {
+    setViewError("");
+    let opened = false;
     if (data.formLink) {
       setIsResolvingHandbookUrl(true);
       try {
@@ -404,6 +407,7 @@ export const ProfileInformation = ({
         });
         if (resp.data?.viewUrl) {
           window.open(resp.data.viewUrl, "_blank", "noopener,noreferrer");
+          opened = true;
           return;
         }
       } catch (e) {
@@ -412,8 +416,13 @@ export const ProfileInformation = ({
         setIsResolvingHandbookUrl(false);
       }
     }
-    if (data.handbookUrl) {
+    if (!opened && data.handbookUrl) {
       window.open(data.handbookUrl, "_blank", "noopener,noreferrer");
+      opened = true;
+      return;
+    }
+    if (!opened) {
+      setViewError("Failed to open handbook. The document could not be retrieved.");
     }
   };
 
@@ -722,9 +731,9 @@ export const ProfileInformation = ({
             </HStack>
           </Flex>
 
-          {handbookError && (
+          {(viewError || handbookError) && (
             <Text fontSize="xs" color="red.600" mt={2}>
-              {handbookError}
+              {viewError || handbookError}
             </Text>
           )}
         </Box>

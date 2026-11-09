@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { Box, Flex } from "@chakra-ui/react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -23,7 +23,7 @@ export const StaffLayout = ({ navbar = "expanded" }: StaffLayoutProps) => {
   const location = useLocation();
 
   // Enforce the route's designated layout whenever the route or navbar prop changes
-  useEffect(() => {
+  useLayoutEffect(() => {
     setCurrentNavbar(navbar);
   }, [navbar, location.pathname]);
 

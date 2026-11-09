@@ -37,7 +37,7 @@ const enrichAdminUrls = async (member) => {
   }
   return {
     ...member,
-    profilePictureUrl: profilePictureUrl ?? (storedPic.startsWith("http") ? storedPic : null),
+    profilePictureUrl: profilePictureUrl ?? null,
   };
 };
 
