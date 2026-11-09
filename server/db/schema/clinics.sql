@@ -23,7 +23,7 @@ CREATE TABLE clinics (
     zip TEXT,
     meeting_link TEXT,
     location_type location_type,
-    type TEXT,
+    type clinic_type,
     google_event_id TEXT
 );
 

@@ -28,5 +28,5 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     state_bar_certificate TEXT,
     state_bar_number TEXT,
     listed_experience TEXT,
-    FOREIGN KEY (id) REFERENCES users(id)
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );
