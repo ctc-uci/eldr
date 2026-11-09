@@ -15,8 +15,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import {
-  FiAlertTriangle,
-  FiCheck,
   FiDownload,
   FiExternalLink,
   FiFileText,
@@ -188,9 +186,11 @@ export const VolunteerProfilePanel = ({
   const [confidentialityWaiverVerified, setConfidentialityWaiverVerified] = useState(false);
   const [isSignedConfidentiality, setIsSignedConfidentiality] = useState(false);
   const [handbookUrl, setHandbookUrl] = useState<string | null>(null);
+  const [formLink, setFormLink] = useState<string | null>(null);
   const [handbookUploadedAt, setHandbookUploadedAt] = useState<string | null>(null);
   const [isUpdatingVerification, setIsUpdatingVerification] = useState(false);
   const [isUploadingHandbook, setIsUploadingHandbook] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [handbookError, setHandbookError] = useState<string | null>(null);
   const adminFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,6 +202,7 @@ export const VolunteerProfilePanel = ({
     setConfidentialityWaiverVerified(Boolean(volunteer.confidentialityWaiverVerified));
     setIsSignedConfidentiality(Boolean(volunteer.isSignedConfidentiality));
     setHandbookUrl(volunteer.handbookUrl ?? null);
+    setFormLink(volunteer.formLink ?? null);
     setHandbookUploadedAt(volunteer.handbookUploadedAt ?? null);
     setHandbookError(null);
   }, [volunteer]);
@@ -318,6 +319,7 @@ export const VolunteerProfilePanel = ({
       }
 
       setFormReceived(true);
+      setFormLink(key);
       setHandbookUrl(viewUrl || key);
       setHandbookUploadedAt(uploadedAt);
     } catch (err: unknown) {
@@ -326,6 +328,34 @@ export const VolunteerProfilePanel = ({
     } finally {
       setIsUploadingHandbook(false);
       if (adminFileInputRef.current) adminFileInputRef.current.value = "";
+    }
+  };
+
+  const handleDownloadVolunteerHandbook = async () => {
+    if (!formLink && !handbookUrl) return;
+    setIsDownloading(true);
+    try {
+      const fileName = `${volunteer?.firstName ?? "Volunteer"}_${volunteer?.lastName ?? ""}_Handbook.pdf`
+        .trim()
+        .replace(/\s+/g, "_");
+      if (formLink) {
+        const resp = await backend.get<{ viewUrl: string }>("/users/document/view-url", {
+          params: { key: formLink, download: fileName },
+        });
+        if (resp.data?.viewUrl) {
+          window.open(resp.data.viewUrl, "_blank");
+          return;
+        }
+      }
+      if (handbookUrl) {
+        window.open(handbookUrl, "_blank");
+      }
+    } catch {
+      if (handbookUrl) {
+        window.open(handbookUrl, "_blank");
+      }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -610,96 +640,86 @@ export const VolunteerProfilePanel = ({
         <Text fontSize="sm" color="red.500" mb={3}>{saveError}</Text>
       )}
 
-      {/* Volunteer Handbook & Confidentiality Verification Card */}
+      {/* Volunteer Handbook & Confidentiality Card */}
       <Box
         borderWidth="1px"
         borderColor="#E4E4E7"
-        bg="#FAFAFA"
-        borderRadius="lg"
-        p={4}
-        mb={5}
+        bg="white"
+        borderRadius="md"
+        p={3.5}
+        mb={4}
       >
+        {/* Header & Actions Row */}
         <Flex
           justify="space-between"
-          align={{ base: "start", md: "center" }}
-          direction={{ base: "column", md: "row" }}
-          gap={3}
-          mb={3}
+          align="center"
+          flexWrap="wrap"
+          gap={2.5}
+          mb={2.5}
         >
-          <HStack gap={2}>
-            <Icon
-              as={isSignedConfidentiality ? FiCheck : formReceived ? FiFileText : FiAlertTriangle}
-              boxSize={5}
-              color={isSignedConfidentiality ? "green.600" : formReceived ? "blue.600" : "orange.500"}
-            />
-            <Box>
-              <Text fontWeight="bold" fontSize="sm" color="gray.900">
-                Volunteer Handbook &amp; Confidentiality Form
-              </Text>
-              <Text fontSize="xs" color="gray.500">
-                Single unified packet: Handbook acknowledgment, Emergency contact, Confidentiality waiver
-              </Text>
-            </Box>
-          </HStack>
-
-          <HStack gap={2}>
+          <HStack gap={2} align="center" flexWrap="wrap">
+            <Icon as={FiFileText} boxSize={4} color="gray.600" />
+            <Text fontSize="sm" fontWeight="bold" color="gray.900">
+              Volunteer Handbook &amp; Confidentiality Form
+            </Text>
             {isSignedConfidentiality ? (
-              <Badge colorPalette="green" size="md">
-                ✓ Confidential Form Verified
+              <Badge size="xs" colorPalette="green" variant="subtle">
+                Verified
               </Badge>
             ) : formReceived ? (
-              <Badge colorPalette="blue" size="md">
-                Handbook Received — Pending Verification
+              <Badge size="xs" colorPalette="blue" variant="subtle">
+                Pending Review
               </Badge>
             ) : (
-              <Badge colorPalette="orange" size="md">
-                Handbook Not Received
+              <Badge size="xs" colorPalette="orange" variant="subtle">
+                Not Received
               </Badge>
             )}
+            {handbookUploadedAt && (
+              <Text fontSize="xs" color="gray.500">
+                • Uploaded {new Date(handbookUploadedAt).toLocaleDateString()}
+              </Text>
+            )}
           </HStack>
-        </Flex>
 
-        {/* Action Row */}
-        <Flex
-          justify="space-between"
-          align={{ base: "start", sm: "center" }}
-          direction={{ base: "column", sm: "row" }}
-          gap={3}
-          py={2}
-          borderTopWidth="1px"
-          borderColor="#E4E4E7"
-        >
-          <HStack gap={2} flexWrap="wrap">
-            <Button
-              as="a"
-              href={templateUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              download="ELDR_Volunteer_Handbook_Packet.pdf"
-              size="xs"
-              variant="outline"
-              bg="white"
-              gap={1}
-            >
-              <Icon as={FiDownload} />
-              Download Blank Template
-            </Button>
-
+          {/* Action Buttons */}
+          <HStack gap={1.5} flexWrap="wrap">
             {handbookUrl && (
-              <Button
-                as="a"
-                href={handbookUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="xs"
-                variant="outline"
-                bg="white"
-                color="blue.600"
-                gap={1}
-              >
-                <Icon as={FiExternalLink} />
-                View Uploaded PDF
-              </Button>
+              <>
+                <Button
+                  as="a"
+                  href={handbookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                  variant="outline"
+                  borderColor="#E4E4E7"
+                  bg="white"
+                  color="#2563EB"
+                  gap={1}
+                  h="7"
+                  px={2.5}
+                >
+                  <Icon as={FiExternalLink} boxSize={3} />
+                  View PDF
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  borderColor="#E4E4E7"
+                  bg="white"
+                  color="#2563EB"
+                  gap={1}
+                  h="7"
+                  px={2.5}
+                  onClick={handleDownloadVolunteerHandbook}
+                  loading={isDownloading}
+                  disabled={isDownloading}
+                >
+                  <Icon as={FiDownload} boxSize={3} />
+                  Download PDF
+                </Button>
+              </>
             )}
 
             <input
@@ -713,39 +733,94 @@ export const VolunteerProfilePanel = ({
             <Button
               size="xs"
               variant="outline"
+              borderColor="#E4E4E7"
               bg="white"
               gap={1}
+              h="7"
+              px={2.5}
               onClick={() => adminFileInputRef.current?.click()}
               loading={isUploadingHandbook}
               disabled={isUploadingHandbook}
             >
-              <Icon as={FiUploadCloud} />
-              {formReceived ? "Replace PDF" : "Upload Signed PDF"}
+              <Icon as={FiUploadCloud} boxSize={3} />
+              {formReceived ? "Replace" : "Upload Signed PDF"}
+            </Button>
+
+            <Button
+              as="a"
+              href={templateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download="ELDR_Volunteer_Handbook_Packet.pdf"
+              size="xs"
+              variant="ghost"
+              color="gray.600"
+              gap={1}
+              h="7"
+              px={2}
+            >
+              <Icon as={FiDownload} boxSize={3} />
+              Blank Template
             </Button>
           </HStack>
-
-          {handbookUploadedAt && (
-            <Text fontSize="xs" color="gray.500">
-              Uploaded: {new Date(handbookUploadedAt).toLocaleDateString()}
-            </Text>
-          )}
         </Flex>
 
-        {/* Admin Checkbox Controls */}
+        {/* Admin Verification Checklist Container */}
         <Box
-          mt={3}
-          pt={3}
-          borderTopWidth="1px"
-          borderColor="#E4E4E7"
-          bg="white"
           p={3}
+          bg="gray.50"
           borderRadius="md"
+          borderWidth="1px"
+          borderColor="#E4E4E7"
         >
-          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color="gray.500" mb={2}>
-            Admin Verification Checklist
-          </Text>
-          <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} gap={3} mb={3}>
-            {/* Checkbox 1 */}
+          <Flex
+            justify="space-between"
+            align={{ base: "start", sm: "center" }}
+            direction={{ base: "column", sm: "row" }}
+            gap={2}
+            mb={2.5}
+          >
+            <Text fontSize="xs" fontWeight="semibold" color="gray.700">
+              Admin Verification Checklist
+            </Text>
+            <HStack gap={3}>
+              <Checkbox.Root
+                checked={formReceived}
+                onCheckedChange={(e) => handleToggleFormReceived(!!e.checked)}
+                colorPalette="blue"
+                size="sm"
+                disabled={isUpdatingVerification}
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control />
+                <Checkbox.Label fontSize="xs" color="gray.700">
+                  Form Received
+                </Checkbox.Label>
+              </Checkbox.Root>
+
+              <Checkbox.Root
+                checked={isSignedConfidentiality}
+                onCheckedChange={(e) => handleToggleVerified(!!e.checked)}
+                colorPalette="blue"
+                size="sm"
+                disabled={isUpdatingVerification}
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control />
+                <Checkbox.Label fontSize="xs" fontWeight="semibold" color="gray.800">
+                  Fully Verified
+                </Checkbox.Label>
+              </Checkbox.Root>
+            </HStack>
+          </Flex>
+
+          <SimpleGrid
+            columns={{ base: 1, sm: 3 }}
+            gap={2.5}
+            pt={2.5}
+            borderTopWidth="1px"
+            borderColor="#E4E4E7"
+          >
             <Checkbox.Root
               checked={handbookAcknowledged}
               onCheckedChange={(e) =>
@@ -757,12 +832,11 @@ export const VolunteerProfilePanel = ({
             >
               <Checkbox.HiddenInput />
               <Checkbox.Control />
-              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+              <Checkbox.Label fontSize="xs" color="gray.700">
                 1. Handbook Acknowledged
               </Checkbox.Label>
             </Checkbox.Root>
 
-            {/* Checkbox 2 */}
             <Checkbox.Root
               checked={emergencyContactVerified}
               onCheckedChange={(e) =>
@@ -774,12 +848,11 @@ export const VolunteerProfilePanel = ({
             >
               <Checkbox.HiddenInput />
               <Checkbox.Control />
-              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+              <Checkbox.Label fontSize="xs" color="gray.700">
                 2. Emergency Contact Info
               </Checkbox.Label>
             </Checkbox.Root>
 
-            {/* Checkbox 3 */}
             <Checkbox.Root
               checked={confidentialityWaiverVerified}
               onCheckedChange={(e) =>
@@ -791,48 +864,18 @@ export const VolunteerProfilePanel = ({
             >
               <Checkbox.HiddenInput />
               <Checkbox.Control />
-              <Checkbox.Label fontSize="xs" fontWeight="medium" color="gray.800">
+              <Checkbox.Label fontSize="xs" color="gray.700">
                 3. Confidentiality / Waiver
               </Checkbox.Label>
             </Checkbox.Root>
           </SimpleGrid>
-
-          <HStack justify="space-between" pt={2} borderTopWidth="1px" borderColor="#F4F4F5" flexWrap="wrap" gap={2}>
-            <Checkbox.Root
-              checked={formReceived}
-              onCheckedChange={(e) => handleToggleFormReceived(!!e.checked)}
-              colorPalette="blue"
-              size="sm"
-              disabled={isUpdatingVerification}
-            >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label fontSize="xs" color="gray.600">
-                Form Received Marked
-              </Checkbox.Label>
-            </Checkbox.Root>
-
-            <Checkbox.Root
-              checked={isSignedConfidentiality}
-              onCheckedChange={(e) => handleToggleVerified(!!e.checked)}
-              colorPalette="green"
-              size="sm"
-              disabled={isUpdatingVerification}
-            >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control />
-              <Checkbox.Label fontSize="xs" fontWeight="bold" color="green.700">
-                Mark as Fully Verified
-              </Checkbox.Label>
-            </Checkbox.Root>
-          </HStack>
-
-          {handbookError && (
-            <Text fontSize="xs" color="red.500" mt={2}>
-              {handbookError}
-            </Text>
-          )}
         </Box>
+
+        {handbookError && (
+          <Text fontSize="xs" color="red.500" mt={2}>
+            {handbookError}
+          </Text>
+        )}
       </Box>
 
       <Tabs.Root defaultValue="profile" variant="enclosed" mb={4}>

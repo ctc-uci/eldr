@@ -272,12 +272,13 @@ usersRouter.get("/profile-picture/view-url", async (req, res) => {
 usersRouter.get("/document/view-url", async (req, res) => {
   try {
     const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
+    const download = typeof req.query.download === "string" ? req.query.download.trim() : undefined;
 
     if (!key) {
       return res.status(400).json({ message: "key is required" });
     }
 
-    const viewUrl = await getS3ViewURL(key);
+    const viewUrl = await getS3ViewURL(key, 3600, download);
     return res.status(200).json({ viewUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create document view URL";

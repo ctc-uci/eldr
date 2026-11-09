@@ -122,14 +122,25 @@ const getHandbookUploadURL = async (
 /**
  * Generates presigned GET URL for viewing or downloading any S3 object.
  */
-const getS3ViewURL = async (key: string, expiresInSeconds: number = 3600) => {
+const getS3ViewURL = async (
+  key: string,
+  expiresInSeconds: number = 3600,
+  downloadFilename?: string,
+) => {
   assertS3Configured();
 
-  const viewUrl = s3.getSignedUrl("getObject", {
-    Bucket: bucket,
+  const params: AWS.S3.GetObjectRequest = {
+    Bucket: bucket!,
     Key: key,
     Expires: expiresInSeconds,
-  });
+  };
+
+  if (downloadFilename) {
+    const safeName = downloadFilename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    params.ResponseContentDisposition = `attachment; filename="${safeName}"`;
+  }
+
+  const viewUrl = s3.getSignedUrl("getObject", params);
 
   return viewUrl;
 };
