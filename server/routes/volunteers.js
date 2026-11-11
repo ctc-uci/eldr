@@ -820,15 +820,17 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
         if (!targetUser.firebase_uid && targetUser.email) {
           try {
             const fbUser = await admin.auth().getUserByEmail(targetUser.email);
-            if (fbUser?.uid) {
+            if (fbUser?.uid && fbUser.emailVerified) {
               targetUser.firebase_uid = fbUser.uid;
               await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
                 fbUser.uid,
                 targetUser.id,
               ]);
             }
-          } catch {
-            // Not registered in Firebase Auth
+          } catch (err) {
+            if (err?.code !== "auth/user-not-found") {
+              throw err;
+            }
           }
         }
 

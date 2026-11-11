@@ -286,33 +286,37 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
 
     // If a legacy volunteer identifier (volunteer-<id>) was supplied, resolve the actual Firebase UID
     if (targetUid.startsWith("volunteer-")) {
-      const volId = parseInt(targetUid.replace("volunteer-", ""), 10);
-      if (Number.isInteger(volId)) {
-        const userRow = await db.oneOrNone(
-          "SELECT id, firebase_uid, email FROM users WHERE id = $1 LIMIT 1",
-          [volId]
-        );
-        if (userRow?.firebase_uid) {
-          targetUid = userRow.firebase_uid;
-        } else if (userRow?.email) {
-          try {
-            const fbUser = await admin.auth().getUserByEmail(userRow.email);
-            if (fbUser?.uid) {
-              targetUid = fbUser.uid;
-              await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
-                targetUid,
-                userRow.id,
-              ]);
-            }
-          } catch {
-            // Volunteer is not in Firebase Auth
+      const match = targetUid.match(/^volunteer-(\d+)$/);
+      if (!match) {
+        return res.status(400).json({
+          message: "Invalid volunteer identifier format. Expected 'volunteer-<digits>'.",
+        });
+      }
+
+      const volId = parseInt(match[1], 10);
+      const userRow = await db.oneOrNone(
+        "SELECT id, firebase_uid, email FROM users WHERE id = $1 LIMIT 1",
+        [volId]
+      );
+      if (userRow?.firebase_uid) {
+        targetUid = userRow.firebase_uid;
+      } else if (userRow?.email) {
+        try {
+          const fbUser = await admin.auth().getUserByEmail(userRow.email);
+          if (fbUser?.uid && fbUser.emailVerified) {
+            targetUid = fbUser.uid;
+          }
+        } catch (err: unknown) {
+          const fbErr = err as { code?: string };
+          if (fbErr?.code !== "auth/user-not-found") {
+            throw err;
           }
         }
       }
       if (targetUid.startsWith("volunteer-")) {
         return res.status(400).json({
           message:
-            "Cannot upload handbook: Volunteer does not have a linked Firebase account. The volunteer must create or sign in to their account before a handbook can be uploaded.",
+            "Cannot upload handbook: Volunteer does not have a verified Firebase account. The volunteer must verify and sign in to their account before a handbook can be uploaded.",
         });
       }
     }
