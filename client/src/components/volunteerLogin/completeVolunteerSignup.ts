@@ -2,6 +2,7 @@ import type { UserCredential } from "firebase/auth";
 import type { AxiosInstance } from "axios";
 
 import type { VolunteerSignupDraft } from "./volunteerSignupDraft";
+import { uploadHandbookToS3 } from "@/utils/uploadHandbook";
 
 type SignupFn = (args: {
   email: string;
@@ -17,14 +18,23 @@ type RoleRow = { id?: number; roleName?: string; role_name?: string };
 export async function completeVolunteerSignup(
   backend: AxiosInstance,
   signup: SignupFn,
-  draft: VolunteerSignupDraft
+  draft: VolunteerSignupDraft,
+  handbookFile: File | null = null,
 ): Promise<number> {
   const normalizedEmail = draft.email.trim().toLowerCase();
   let firebaseUid: string | null = null;
   let volunteerId: number | null = null;
   let authUser: UserCredential["user"] | null = null;
+  let handbookKey: string | null = null;
 
   const rollback = async () => {
+    if (handbookKey) {
+      try {
+        await backend.delete("/users/document", { params: { key: handbookKey } });
+      } catch {
+        /* ignore */
+      }
+    }
     if (volunteerId !== null) {
       try {
         await backend.delete(`/volunteers/${volunteerId}`);
@@ -56,6 +66,20 @@ export async function completeVolunteerSignup(
     authUser = userCredential.user;
     firebaseUid = userCredential.user.uid;
 
+    let handbookUploadedAt: string | null = null;
+    if (handbookFile) {
+      try {
+        handbookKey = await uploadHandbookToS3(backend, handbookFile, firebaseUid);
+        handbookUploadedAt = new Date().toISOString();
+      } catch (uploadErr) {
+        console.error("Failed to upload handbook file:", uploadErr);
+        if (uploadErr instanceof Error) {
+          throw uploadErr;
+        }
+        throw new Error("Failed to upload handbook document to S3. Please try again.");
+      }
+    }
+
     const isAttorney = (draft.roleLabel ?? "").toLowerCase().includes("attorney");
 
     const resp = await backend.post("/volunteers", {
@@ -69,8 +93,13 @@ export async function completeVolunteerSignup(
       is_secondary_mobile: draft.isSecondaryMobile ?? false,
       can_text: draft.canText ?? false,
       form_completed: true,
-      form_link: null,
-      is_signed_confidentiality: new Date().toISOString(),
+      form_link: handbookKey,
+      form_received: Boolean(handbookKey),
+      handbook_uploaded_at: handbookUploadedAt,
+      handbook_acknowledged: false,
+      emergency_contact_verified: false,
+      confidentiality_waiver_verified: false,
+      is_signed_confidentiality: null,
       is_attorney: isAttorney,
       is_notary: draft.isNotary === true,
       notary_status: draft.notaryStatus ?? (draft.isNotary ? "active" : "no"),

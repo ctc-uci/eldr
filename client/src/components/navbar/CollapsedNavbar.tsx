@@ -1,6 +1,6 @@
 /*
 Collapsed Navbar
-Implement on event creation ONLY (potentially case creation too??)
+Staff portal collapsed navigation sidebar
 */
 
 import {
@@ -9,35 +9,18 @@ import {
   Flex,
   IconButton,
   Image,
-  Link,
   VStack,
 } from "@chakra-ui/react";
-
-import { getLogoRootPath } from "@/utils/navigation";
-import { ClipboardList, Users } from "lucide-react";
-import { LuMails, LuTags } from "react-icons/lu";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
-import { useLocation, useNavigate } from "react-router-dom";
 
-const navIconButtonProps = {
-  variant: "ghost" as const,
-  boxSize: "40px",
-  minW: "40px",
-  p: 2,
-  borderRadius: "md",
-  color: "#4A5568",
-  _hover: {
-    bg: "#E8F6FC",
-    color: "#002992",
-  },
-};
+import { getLogoRootPath, STAFF_NAV_ITEMS } from "@/utils/navigation";
 
 type CollapsedNavbarProps = {
   onExpand: () => void;
 };
 
 export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
-  const navigate = useNavigate();
   const location = useLocation();
 
   return (
@@ -45,97 +28,115 @@ export const CollapsedNavbar = ({ onExpand }: CollapsedNavbarProps) => {
       direction="column"
       w="80px"
       h="100vh"
+      flexShrink={0}
       borderRight="1px solid"
       borderColor="gray.200"
       bg="white"
-      py={6}
-      align="center"
+      px={2}
+      py={8}
       justify="space-between"
     >
       <VStack
-        gap={10}
+        gap={8}
         w="full"
-        justifyContent="left"
+        align="center"
       >
-        <Box
-          cursor="pointer"
-          onClick={() => navigate(getLogoRootPath(location.pathname))}
-        >
-          <Image
-            src="/cc-logo.svg"
-            alt="Logo"
-            h="44px"
-            maxW="full"
-            objectFit="contain"
-          />
-          <Box
-            w="32px"
-            h="32px"
-          />
+        {/* ELDR Logo */}
+        <Box h="72px" display="flex" alignItems="center" justifyContent="center" w="full">
+          <RouterLink
+            to={getLogoRootPath(location.pathname)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "48px",
+              height: "48px",
+            }}
+          >
+            <Image
+              src="/cc-logo.svg"
+              alt="Community Counsel"
+              boxSize="44px"
+              w="44px"
+              h="44px"
+              minW="44px"
+              minH="44px"
+              objectFit="contain"
+              display="block"
+            />
+          </RouterLink>
         </Box>
 
-        <VStack
-          gap={10}
-          w="full"
-        >
-          <IconButton
-            title="Event Catalog"
-            aria-label="Event Catalog"
-            {...navIconButtonProps}
-            onClick={() => navigate("/events")}
-          >
-            <ClipboardList size={22} />
-          </IconButton>
+        {/* Nav Links */}
+        <VStack gap={8} w="full" px={2} align="center">
+          {STAFF_NAV_ITEMS.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            const IconComponent = item.icon;
 
-          <IconButton
-            title="Email Templates"
-            aria-label="Email Templates"
-            {...navIconButtonProps}
-            onClick={() => navigate("/email")}
-          >
-            <LuMails size={22} />
-          </IconButton>
-
-          <IconButton
-            title="Profiles"
-            aria-label="Profiles"
-            {...navIconButtonProps}
-            onClick={() => navigate("/volunteer-management")}
-          >
-            <Users size={22} />
-          </IconButton>
-
-          <IconButton
-            title="Tags"
-            aria-label="Tags"
-            {...navIconButtonProps}
-            onClick={() => navigate("/manage-tags")}
-          >
-            <LuTags size={22} />
-          </IconButton>
+            return (
+              <RouterLink
+                to={item.path}
+                key={item.name}
+                title={item.name}
+                aria-label={item.name}
+                aria-current={isActive ? "page" : undefined}
+                style={{ textDecoration: "none", display: "block" }}
+              >
+                <Flex
+                  w="48px"
+                  h="56px"
+                  borderRadius="md"
+                  cursor="pointer"
+                  align="center"
+                  justify="center"
+                  bg={isActive ? "#E8F6FC" : "transparent"}
+                  color={isActive ? "#002992" : "#4A5568"}
+                  _hover={{
+                    bg: isActive ? "#E8F6FC" : "gray.100",
+                  }}
+                  transition="background-color 0.15s ease"
+                >
+                  <IconComponent
+                    size="clamp(18px, 1.5vw, 20px)"
+                    color={isActive ? "#002992" : "#4A5568"}
+                  />
+                </Flex>
+              </RouterLink>
+            );
+          })}
         </VStack>
       </VStack>
 
-      <VStack gap={3}>
+      <VStack gap={4} align="center">
         <IconButton
           aria-label="Expand navigation button"
           title="Expand navigation button"
-          {...navIconButtonProps}
+          variant="ghost"
           onClick={onExpand}
+          color="#4A5568"
+          _hover={{
+            bg: "gray.100",
+          }}
         >
           <TbLayoutSidebarLeftExpand size={22} />
         </IconButton>
 
-        {/* PLACEHOLDER REPLACE WITH ACTUAL PFP */}
-        <Link
-          href="/admin-profile"
+        <RouterLink
+          to="/admin-profile"
+          aria-label="Profile"
           title="Profile"
+          style={{ textDecoration: "none", display: "block" }}
         >
-          <Avatar.Root size="sm">
-            <Avatar.Fallback name="User" />
-            <Avatar.Image src="" />
-          </Avatar.Root>
-        </Link>
+          <Box cursor="pointer">
+            <Avatar.Root
+              w="clamp(40px, 4vw, 48px)"
+              h="clamp(40px, 4vw, 48px)"
+            >
+              <Avatar.Fallback name="Admin User" />
+              <Avatar.Image src="" />
+            </Avatar.Root>
+          </Box>
+        </RouterLink>
       </VStack>
     </Flex>
   );

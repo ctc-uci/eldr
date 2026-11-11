@@ -19,11 +19,15 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import {
+  LuCheck,
   LuChevronDown,
+  LuDownload,
+  LuExternalLink,
   LuFileText,
   LuPencil,
   LuPlus,
   LuTriangleAlert,
+  LuUpload,
   LuX,
 } from "react-icons/lu";
 import InputMask from "react-input-mask";
@@ -33,6 +37,7 @@ import {
   PROFICIENCY_OPTIONS,
   DEFAULT_PROFICIENCY,
 } from "./profileState.js";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 const ModernDropdown = ({
   value,
@@ -361,6 +366,9 @@ export const ProfileInformation = ({
   onSave,
   onCancel,
   onPhotoSelect,
+  onHandbookUpload,
+  isUploadingHandbook = false,
+  handbookError = "",
   isSaving = false,
   photoError = "",
   errorMessage = "",
@@ -371,7 +379,98 @@ export const ProfileInformation = ({
   const isLawStudent = roleLabel.includes("law student");
   const isAttorney = roleLabel.includes("attorney");
 
+  const { backend } = useBackendContext();
+  const [templateUrl, setTemplateUrl] = useState("/templates/volunteer_handbook_packet.pdf");
+
+  useEffect(() => {
+    backend
+      ?.get?.("/users/handbook/template-url")
+      .then((res) => {
+        if (res.data?.downloadUrl) setTemplateUrl(res.data.downloadUrl);
+      })
+      .catch(() => {});
+  }, [backend]);
+
   const photoInputRef = useRef(null);
+  const handbookFileInputRef = useRef(null);
+  const [isResolvingHandbookUrl, setIsResolvingHandbookUrl] = useState(false);
+  const [viewError, setViewError] = useState("");
+
+  const handleViewHandbook = async () => {
+    setViewError("");
+    let opened = false;
+    let placeholder = null;
+
+    if (data.formLink) {
+      // Synchronously open a placeholder window to preserve transient user activation
+      placeholder = window.open("", "_blank");
+      setIsResolvingHandbookUrl(true);
+      try {
+        const resp = await backend.get("/users/document/view-url", {
+          params: { key: data.formLink },
+        });
+        if (resp.data?.viewUrl) {
+          if (placeholder && !placeholder.closed) {
+            try {
+              placeholder.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            placeholder.location.href = resp.data.viewUrl;
+            opened = true;
+            return;
+          }
+          const win = window.open(resp.data.viewUrl, "_blank");
+          if (win && !win.closed) {
+            try {
+              win.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            opened = true;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to get fresh handbook view URL:", e);
+      } finally {
+        setIsResolvingHandbookUrl(false);
+        if (!opened && placeholder && !placeholder.closed) {
+          placeholder.close();
+        }
+      }
+    }
+    if (!opened && data.handbookUrl) {
+      const win = window.open(data.handbookUrl, "_blank");
+      if (win && !win.closed) {
+        try {
+          win.opener = null;
+        } catch {
+          // Ignore cross-origin access restriction
+        }
+        opened = true;
+        return;
+      }
+    }
+    if (!opened) {
+      setViewError("Failed to open handbook. If you have a popup blocker enabled, please allow popups for this site.");
+    }
+  };
+
+  useEffect(() => {
+    if (isUploadingHandbook) {
+      setViewError("");
+    }
+  }, [isUploadingHandbook]);
+
+  const handleHandbookInputChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file && onHandbookUpload) {
+      setViewError("");
+      onHandbookUpload(file);
+    }
+  };
   const [localLanguageOptions, setLocalLanguageOptions] = useState(languageOptions);
   useEffect(() => {
     setLocalLanguageOptions(languageOptions);
@@ -476,21 +575,55 @@ export const ProfileInformation = ({
             ) : null}
           </HStack>
 
-          <HStack
-            gap={2}
-            px={2.5}
-            py={1}
-            borderRadius="4px"
-            borderWidth="1px"
-            borderColor="skyBlue.200"
-            w="fit-content"
-            bg="skyBlue.100"
-          >
-            <LuFileText size={14} color="var(--chakra-colors-brand-navy)" />
-            <Text fontSize="xs" fontWeight="semibold" color="brand.navy">
-              Confidential Form Verified
-            </Text>
-          </HStack>
+          {data.isSignedConfidentiality ? (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="green.300"
+              w="fit-content"
+              bg="green.50"
+            >
+              <LuCheck size={14} color="var(--chakra-colors-green-700)" />
+              <Text fontSize="xs" fontWeight="semibold" color="green.800">
+                Confidential Form Verified
+              </Text>
+            </HStack>
+          ) : data.formReceived ? (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="skyBlue.200"
+              w="fit-content"
+              bg="skyBlue.100"
+            >
+              <LuFileText size={14} color="var(--chakra-colors-brand-navy)" />
+              <Text fontSize="xs" fontWeight="semibold" color="brand.navy">
+                Handbook Received — Pending Verification
+              </Text>
+            </HStack>
+          ) : (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="orange.300"
+              w="fit-content"
+              bg="orange.50"
+            >
+              <LuTriangleAlert size={14} color="var(--chakra-colors-orange-600)" />
+              <Text fontSize="xs" fontWeight="semibold" color="orange.800">
+                Handbook Not Received
+              </Text>
+            </HStack>
+          )}
         </Box>
 
         <HStack gap={2} flexShrink={0} pt={{ base: 0, md: 1 }}>
@@ -548,6 +681,100 @@ export const ProfileInformation = ({
       </Flex>
 
       <VStack gap={8} align="stretch">
+        {/* Volunteer Handbook & Confidentiality Packet Section */}
+        <Box
+          p={5}
+          borderWidth="1px"
+          borderColor="#E4E4E7"
+          borderRadius="lg"
+          bg="#FAFAFA"
+        >
+          <Flex
+            justify="space-between"
+            align={{ base: "start", md: "center" }}
+            direction={{ base: "column", md: "row" }}
+            gap={4}
+          >
+            <Box>
+              <HStack gap={2} mb={1}>
+                <LuFileText size={18} color="var(--chakra-colors-brand-navy)" />
+                <Text fontWeight="semibold" fontSize="md" color="gray.900">
+                  Volunteer Handbook &amp; Confidentiality Form
+                </Text>
+              </HStack>
+              <Text fontSize="xs" color="gray.600">
+                Covers Handbook Acknowledgment, Emergency Contact, and Confidentiality Waiver.
+              </Text>
+              {data.handbookUploadedAt && (
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Last uploaded: {new Date(data.handbookUploadedAt).toLocaleDateString()}
+                </Text>
+              )}
+            </Box>
+
+            <HStack gap={2} flexWrap="wrap">
+              <Button
+                as="a"
+                href={templateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download="ELDR_Volunteer_Handbook_Packet.pdf"
+                size="sm"
+                variant="outline"
+                borderColor="gray.300"
+                bg="white"
+                gap={1.5}
+              >
+                <LuDownload size={14} />
+                Download Form
+              </Button>
+
+              {(data.formLink || data.handbookUrl) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  borderColor="gray.300"
+                  bg="white"
+                  gap={1.5}
+                  onClick={handleViewHandbook}
+                  loading={isResolvingHandbookUrl}
+                  disabled={isResolvingHandbookUrl}
+                >
+                  <LuExternalLink size={14} />
+                  View Uploaded PDF
+                </Button>
+              )}
+
+              <input
+                ref={handbookFileInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                hidden
+                onChange={handleHandbookInputChange}
+              />
+
+              <Button
+                size="sm"
+                bg="brand.navy"
+                color="white"
+                _hover={{ bg: "brand.navyHover" }}
+                gap={1.5}
+                onClick={() => handbookFileInputRef.current?.click()}
+                loading={isUploadingHandbook}
+                disabled={isUploadingHandbook}
+              >
+                <LuUpload size={14} />
+                {data.formReceived ? "Upload New Version" : "Upload Signed PDF"}
+              </Button>
+            </HStack>
+          </Flex>
+
+          {(handbookError || viewError) && (
+            <Text fontSize="xs" color="red.600" mt={2}>
+              {handbookError || viewError}
+            </Text>
+          )}
+        </Box>
         {/* Personal Info — 3 columns: Photo | First+Phone | Last+Email */}
         <Box>
           <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">

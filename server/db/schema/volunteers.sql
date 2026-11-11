@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     can_text BOOLEAN DEFAULT FALSE,
     form_completed BOOLEAN,
     form_link TEXT,
+    form_received BOOLEAN DEFAULT FALSE,
+    handbook_uploaded_at TIMESTAMP WITH TIME ZONE,
+    handbook_acknowledged BOOLEAN DEFAULT FALSE,
+    emergency_contact_verified BOOLEAN DEFAULT FALSE,
+    confidentiality_waiver_verified BOOLEAN DEFAULT FALSE,
     is_signed_confidentiality TIMESTAMP,
     is_attorney BOOLEAN,
     is_notary BOOLEAN,
@@ -23,5 +28,5 @@ CREATE TABLE IF NOT EXISTS public.volunteers
     state_bar_certificate TEXT,
     state_bar_number TEXT,
     listed_experience TEXT,
-    FOREIGN KEY (id) REFERENCES users(id)
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );

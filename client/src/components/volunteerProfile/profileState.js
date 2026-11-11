@@ -17,6 +17,14 @@ export const createInitialProfile = () => ({
   affiliatedEmployer: "",
   languages: [],
   interests: [],
+  formReceived: false,
+  formLink: null,
+  handbookUrl: null,
+  handbookUploadedAt: null,
+  handbookAcknowledged: false,
+  emergencyContactVerified: false,
+  confidentialityWaiverVerified: false,
+  isSignedConfidentiality: null,
 });
 
 import {

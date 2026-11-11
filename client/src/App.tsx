@@ -110,7 +110,7 @@ const App = () => {
                 <Route
                   element={
                     <ProtectedRoute
-                      element={<StaffLayout navbar="expanded" />}
+                      element={<StaffLayout key="staff-expanded" navbar="expanded" />}
                       allowedRoles={["staff", "supervisor"]}
                     />
                   }
@@ -144,7 +144,7 @@ const App = () => {
                 <Route
                   element={
                     <ProtectedRoute
-                      element={<StaffLayout navbar="collapsed" />}
+                      element={<StaffLayout key="staff-collapsed" navbar="collapsed" />}
                       allowedRoles={["staff", "supervisor"]}
                     />
                   }

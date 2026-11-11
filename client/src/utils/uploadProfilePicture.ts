@@ -22,6 +22,7 @@ export const uploadProfilePictureToS3 = async (
   backend: AxiosInstance,
   file: File,
   firebaseUid: string,
+  role: "volunteer" | "admin" = "volunteer",
 ): Promise<string> => {
   const validationError = validateProfilePictureFile(file);
   if (validationError) {
@@ -31,7 +32,7 @@ export const uploadProfilePictureToS3 = async (
   const contentType = file.type;
 
   const uploadUrlResp = await backend.get("/users/profile-picture/upload-url", {
-    params: { contentType, firebaseUid },
+    params: { contentType, firebaseUid, role },
   });
 
   const { uploadUrl, key } = uploadUrlResp.data as {

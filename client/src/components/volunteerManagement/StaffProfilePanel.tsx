@@ -170,6 +170,7 @@ export const StaffProfilePanel = ({
   return (
     <ProfilePanelShell
       name={`${staff.firstName} ${staff.lastName}`}
+      photoUrl={staff.profilePictureUrl}
       breadcrumbLabel="Staff Profile"
       onBack={onBack}
       roles={[staff.role]}
