@@ -298,25 +298,65 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
         "SELECT id, firebase_uid, email FROM users WHERE id = $1 LIMIT 1",
         [volId]
       );
+
+      let resolvedUid: string | null = null;
+      let isUnverified = false;
+
+      // Validate stored UID with Firebase if present
       if (userRow?.firebase_uid) {
-        targetUid = userRow.firebase_uid;
-      } else if (userRow?.email) {
         try {
-          const fbUser = await admin.auth().getUserByEmail(userRow.email);
-          if (fbUser?.uid && fbUser.emailVerified) {
-            targetUid = fbUser.uid;
+          const fbUser = await admin.auth().getUser(userRow.firebase_uid);
+          if (fbUser?.emailVerified) {
+            resolvedUid = fbUser.uid;
+          } else {
+            isUnverified = true;
           }
         } catch (err: unknown) {
           const fbErr = err as { code?: string };
           if (fbErr?.code !== "auth/user-not-found") {
-            throw err;
+            console.error("Failed to verify user by UID in Firebase Auth:", err);
+            return res.status(500).json({
+              message: "Failed to verify account authentication status. Please try again.",
+            });
           }
         }
       }
-      if (targetUid.startsWith("volunteer-")) {
+
+      // If no verified UID from stored UID, attempt lookup by email
+      if (!resolvedUid && userRow?.email) {
+        try {
+          const fbUser = await admin.auth().getUserByEmail(userRow.email);
+          if (fbUser?.uid) {
+            if (fbUser.emailVerified) {
+              resolvedUid = fbUser.uid;
+              isUnverified = false;
+            } else {
+              isUnverified = true;
+            }
+          }
+        } catch (err: unknown) {
+          const fbErr = err as { code?: string };
+          if (fbErr?.code !== "auth/user-not-found") {
+            console.error("Failed to lookup user by email in Firebase Auth:", err);
+            return res.status(500).json({
+              message: "Failed to verify account authentication status. Please try again.",
+            });
+          }
+        }
+      }
+
+      if (resolvedUid) {
+        targetUid = resolvedUid;
+      } else {
+        if (isUnverified) {
+          return res.status(400).json({
+            message:
+              "Cannot upload handbook: Volunteer does not have a verified Firebase account. The volunteer must verify and sign in to their account before a handbook can be uploaded.",
+          });
+        }
         return res.status(400).json({
           message:
-            "Cannot upload handbook: Volunteer does not have a verified Firebase account. The volunteer must verify and sign in to their account before a handbook can be uploaded.",
+            "Cannot upload handbook: Volunteer does not have a linked Firebase account. The volunteer must create or sign in to their account before a handbook can be uploaded.",
         });
       }
     }

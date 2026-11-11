@@ -816,26 +816,59 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       const trimmedFormLink = String(form_link).trim();
       const isExternalUrl = trimmedFormLink.startsWith("http://") || trimmedFormLink.startsWith("https://");
       if (!isExternalUrl) {
-        // Resolve target user's Firebase UID if not set yet
+        let isUnverified = false;
+
+        // If target user already has a firebase_uid, verify it's still valid & verified
+        if (targetUser.firebase_uid) {
+          try {
+            const fbUser = await admin.auth().getUser(targetUser.firebase_uid);
+            if (!fbUser?.emailVerified) {
+              isUnverified = true;
+              targetUser.firebase_uid = null;
+            }
+          } catch (err) {
+            if (err?.code === "auth/user-not-found") {
+              targetUser.firebase_uid = null;
+            } else {
+              console.error("Failed to verify target user Firebase account:", err);
+              return res.status(500).send("Failed to verify account authentication status. Please try again.");
+            }
+          }
+        }
+
+        // Resolve target user's Firebase UID via email if not set yet (or stale)
         if (!targetUser.firebase_uid && targetUser.email) {
           try {
             const fbUser = await admin.auth().getUserByEmail(targetUser.email);
-            if (fbUser?.uid && fbUser.emailVerified) {
-              targetUser.firebase_uid = fbUser.uid;
-              await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
-                fbUser.uid,
-                targetUser.id,
-              ]);
+            if (fbUser?.uid) {
+              if (fbUser.emailVerified) {
+                targetUser.firebase_uid = fbUser.uid;
+                await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
+                  fbUser.uid,
+                  targetUser.id,
+                ]);
+                isUnverified = false;
+              } else {
+                isUnverified = true;
+              }
             }
           } catch (err) {
             if (err?.code !== "auth/user-not-found") {
-              throw err;
+              console.error("Failed to lookup user by email in Firebase Auth:", err);
+              return res.status(500).send("Failed to verify account authentication status. Please try again.");
             }
           }
         }
 
         if (!targetUser.firebase_uid) {
-          return res.status(400).send("Cannot upload handbook: Volunteer does not have a linked Firebase account.");
+          if (isUnverified) {
+            return res.status(400).send(
+              "Cannot upload handbook: Volunteer does not have a verified Firebase account. The volunteer must verify and sign in to their account before a handbook can be uploaded."
+            );
+          }
+          return res.status(400).send(
+            "Cannot upload handbook: Volunteer does not have a linked Firebase account. The volunteer must create or sign in to their account before a handbook can be uploaded."
+          );
         }
 
         const expectedPrefix = `handbooks/${targetUser.firebase_uid}/`;
