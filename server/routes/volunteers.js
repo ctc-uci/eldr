@@ -192,6 +192,19 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
     is_notary = notary_status === "active";
 
     const normalizedSecondaryPhone = normalizeNullableText(secondary_phone_number);
+    const hasFormReceived =
+      Object.prototype.hasOwnProperty.call(req.body, "form_received") &&
+      reqFormReceived !== undefined;
+    const hasHandbookAcknowledged =
+      Object.prototype.hasOwnProperty.call(req.body, "handbook_acknowledged") &&
+      reqHandbookAcknowledged !== undefined;
+    const hasEmergencyContactVerified =
+      Object.prototype.hasOwnProperty.call(req.body, "emergency_contact_verified") &&
+      reqEmergencyContactVerified !== undefined;
+    const hasConfidentialityWaiverVerified =
+      Object.prototype.hasOwnProperty.call(req.body, "confidentiality_waiver_verified") &&
+      reqConfidentialityWaiverVerified !== undefined;
+
     let parsedIsCaliforniaLicensed;
     let parsedIsAttorney;
     let parsedIsPrimaryMobile;
@@ -215,9 +228,6 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
       return res.status(400).send(valErr.message);
     }
 
-    if (parsedFormReceived === null && form_link) {
-      parsedFormReceived = true;
-    }
     const handbook_uploaded_at = reqHandbookUploadedAt ?? (form_link ? new Date().toISOString() : null);
 
     const callerUid = res.locals.decodedToken?.uid;
@@ -422,11 +432,23 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
                 can_text = COALESCE(EXCLUDED.can_text, volunteers.can_text),
                 form_completed = COALESCE(EXCLUDED.form_completed, volunteers.form_completed),
                 form_link = COALESCE(EXCLUDED.form_link, volunteers.form_link),
-                form_received = COALESCE(EXCLUDED.form_received, volunteers.form_received),
+                form_received = CASE
+                  WHEN $27 THEN EXCLUDED.form_received
+                  ELSE volunteers.form_received
+                END,
                 handbook_uploaded_at = COALESCE(EXCLUDED.handbook_uploaded_at, volunteers.handbook_uploaded_at),
-                handbook_acknowledged = COALESCE(EXCLUDED.handbook_acknowledged, volunteers.handbook_acknowledged),
-                emergency_contact_verified = COALESCE(EXCLUDED.emergency_contact_verified, volunteers.emergency_contact_verified),
-                confidentiality_waiver_verified = COALESCE(EXCLUDED.confidentiality_waiver_verified, volunteers.confidentiality_waiver_verified),
+                handbook_acknowledged = CASE
+                  WHEN $28 THEN EXCLUDED.handbook_acknowledged
+                  ELSE volunteers.handbook_acknowledged
+                END,
+                emergency_contact_verified = CASE
+                  WHEN $29 THEN EXCLUDED.emergency_contact_verified
+                  ELSE volunteers.emergency_contact_verified
+                END,
+                confidentiality_waiver_verified = CASE
+                  WHEN $30 THEN EXCLUDED.confidentiality_waiver_verified
+                  ELSE volunteers.confidentiality_waiver_verified
+                END,
                 is_signed_confidentiality = COALESCE(EXCLUDED.is_signed_confidentiality, volunteers.is_signed_confidentiality),
                 is_attorney = COALESCE(EXCLUDED.is_attorney, volunteers.is_attorney),
                 is_notary = COALESCE(EXCLUDED.is_notary, volunteers.is_notary),
@@ -475,6 +497,10 @@ volunteersRouter.post("/", verifyToken, async (req, res) => {
           resolvedStateBarCertificate,
           resolvedStateBarNumber,
           normalizedListedExperience,
+          hasFormReceived,
+          hasHandbookAcknowledged,
+          hasEmergencyContactVerified,
+          hasConfidentialityWaiverVerified,
         ]
       );
 

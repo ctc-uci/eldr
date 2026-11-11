@@ -73,7 +73,7 @@ export async function completeVolunteerSignup(
         handbookUploadedAt = new Date().toISOString();
       } catch (uploadErr) {
         console.error("Failed to upload handbook file:", uploadErr);
-        if (uploadErr instanceof Error && uploadErr.message) {
+        if (uploadErr instanceof Error) {
           throw uploadErr;
         }
         throw new Error("Failed to upload handbook document to S3. Please try again.");
