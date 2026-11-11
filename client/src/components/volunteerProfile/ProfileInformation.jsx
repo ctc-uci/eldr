@@ -399,37 +399,75 @@ export const ProfileInformation = ({
   const handleViewHandbook = async () => {
     setViewError("");
     let opened = false;
+    let placeholder = null;
+
     if (data.formLink) {
+      // Synchronously open a placeholder window to preserve transient user activation
+      placeholder = window.open("", "_blank");
       setIsResolvingHandbookUrl(true);
       try {
         const resp = await backend.get("/users/document/view-url", {
           params: { key: data.formLink },
         });
         if (resp.data?.viewUrl) {
-          window.open(resp.data.viewUrl, "_blank", "noopener,noreferrer");
-          opened = true;
-          return;
+          if (placeholder && !placeholder.closed) {
+            try {
+              placeholder.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            placeholder.location.href = resp.data.viewUrl;
+            opened = true;
+            return;
+          }
+          const win = window.open(resp.data.viewUrl, "_blank");
+          if (win && !win.closed) {
+            try {
+              win.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            opened = true;
+            return;
+          }
         }
       } catch (e) {
         console.error("Failed to get fresh handbook view URL:", e);
       } finally {
         setIsResolvingHandbookUrl(false);
+        if (!opened && placeholder && !placeholder.closed) {
+          placeholder.close();
+        }
       }
     }
     if (!opened && data.handbookUrl) {
-      window.open(data.handbookUrl, "_blank", "noopener,noreferrer");
-      opened = true;
-      return;
+      const win = window.open(data.handbookUrl, "_blank");
+      if (win && !win.closed) {
+        try {
+          win.opener = null;
+        } catch {
+          // Ignore cross-origin access restriction
+        }
+        opened = true;
+        return;
+      }
     }
     if (!opened) {
-      setViewError("Failed to open handbook. The document could not be retrieved.");
+      setViewError("Failed to open handbook. If you have a popup blocker enabled, please allow popups for this site.");
     }
   };
+
+  useEffect(() => {
+    if (isUploadingHandbook) {
+      setViewError("");
+    }
+  }, [isUploadingHandbook]);
 
   const handleHandbookInputChange = (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (file && onHandbookUpload) {
+      setViewError("");
       onHandbookUpload(file);
     }
   };
@@ -731,9 +769,9 @@ export const ProfileInformation = ({
             </HStack>
           </Flex>
 
-          {(viewError || handbookError) && (
+          {(handbookError || viewError) && (
             <Text fontSize="xs" color="red.600" mt={2}>
-              {viewError || handbookError}
+              {handbookError || viewError}
             </Text>
           )}
         </Box>
