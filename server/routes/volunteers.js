@@ -47,9 +47,11 @@ const enrichVolunteerUrls = async (volunteer, allowHandbook = false) => {
       if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         handbookUrl = trimmed;
       } else {
+        const expectedPrefix = volunteer.firebaseUid
+          ? `handbooks/${volunteer.firebaseUid}/`
+          : null;
         const isSafeKey =
-          !volunteer.firebaseUid ||
-          trimmed.startsWith(`handbooks/${volunteer.firebaseUid}/`) ||
+          (expectedPrefix && trimmed.startsWith(expectedPrefix)) ||
           trimmed.startsWith("templates/");
         if (isSafeKey) {
           try {
