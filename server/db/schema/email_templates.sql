@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.folders (
 );
 
 CREATE TABLE IF NOT EXISTS public.email_template_folders (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     email_template_id INTEGER NOT NULL REFERENCES public.email_templates(id) ON DELETE CASCADE,
     folder_id INTEGER NOT NULL REFERENCES public.folders(id) ON DELETE CASCADE,
-    PRIMARY KEY (email_template_id, folder_id)
+    UNIQUE(email_template_id, folder_id)
 );

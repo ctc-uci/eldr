@@ -1,4 +1,8 @@
-CREATE TYPE experience_level AS ENUM ('beginner', 'intermediate', 'advanced');
+DO $$ BEGIN
+    CREATE TYPE experience_level AS ENUM ('beginner', 'intermediate', 'advanced');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.areas_of_practice (
     id SERIAL PRIMARY KEY,
