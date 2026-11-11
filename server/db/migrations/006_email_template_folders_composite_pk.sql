@@ -18,8 +18,10 @@ BEGIN
             SELECT c.conname
             FROM pg_constraint c
             JOIN pg_class t ON c.conrelid = t.oid
+            JOIN pg_namespace n ON t.relnamespace = n.oid
             JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(c.conkey)
-            WHERE t.relname = 'email_template_folders'
+            WHERE n.nspname = 'public'
+              AND t.relname = 'email_template_folders'
               AND c.contype = 'p'
               AND a.attname = 'id'
         ) LOOP
@@ -34,7 +36,9 @@ BEGIN
         SELECT c.conname
         FROM pg_constraint c
         JOIN pg_class t ON c.conrelid = t.oid
-        WHERE t.relname = 'email_template_folders'
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        WHERE n.nspname = 'public'
+          AND t.relname = 'email_template_folders'
           AND c.contype = 'u'
     ) LOOP
         EXECUTE format('ALTER TABLE public.email_template_folders DROP CONSTRAINT %I', r.conname);
@@ -45,7 +49,9 @@ BEGIN
         SELECT 1
         FROM pg_constraint c
         JOIN pg_class t ON c.conrelid = t.oid
-        WHERE t.relname = 'email_template_folders'
+        JOIN pg_namespace n ON t.relnamespace = n.oid
+        WHERE n.nspname = 'public'
+          AND t.relname = 'email_template_folders'
           AND c.contype = 'p'
     ) THEN
         ALTER TABLE public.email_template_folders
