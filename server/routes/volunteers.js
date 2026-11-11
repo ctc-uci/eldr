@@ -752,7 +752,7 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
     const { id } = req.params;
 
     const targetUsers = await db.query(
-      "SELECT id, firebase_uid FROM users WHERE id = $1 LIMIT 1",
+      "SELECT id, firebase_uid, email FROM users WHERE id = $1 LIMIT 1",
       [id]
     );
     if (!targetUsers.length) {
@@ -812,13 +812,34 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
       "form_link"
     );
 
-    if (hasFormLink && form_link && !callerInfo.isStaffOrSupervisor) {
+    if (hasFormLink && form_link) {
       const trimmedFormLink = String(form_link).trim();
       const isExternalUrl = trimmedFormLink.startsWith("http://") || trimmedFormLink.startsWith("https://");
-      const targetUid = targetUser.firebase_uid;
-      const expectedPrefix = targetUid ? `handbooks/${targetUid}/` : null;
-      if (!isExternalUrl && (!expectedPrefix || !trimmedFormLink.startsWith(expectedPrefix))) {
-        return res.status(403).send("Forbidden: Handbook key must belong to your account");
+      if (!isExternalUrl) {
+        // Resolve target user's Firebase UID if not set yet
+        if (!targetUser.firebase_uid && targetUser.email) {
+          try {
+            const fbUser = await admin.auth().getUserByEmail(targetUser.email);
+            if (fbUser?.uid) {
+              targetUser.firebase_uid = fbUser.uid;
+              await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
+                fbUser.uid,
+                targetUser.id,
+              ]);
+            }
+          } catch {
+            // Not registered in Firebase Auth
+          }
+        }
+
+        if (!targetUser.firebase_uid) {
+          return res.status(400).send("Cannot upload handbook: Volunteer does not have a linked Firebase account.");
+        }
+
+        const expectedPrefix = `handbooks/${targetUser.firebase_uid}/`;
+        if (!trimmedFormLink.startsWith(expectedPrefix)) {
+          return res.status(403).send("Forbidden: Handbook key must belong to the volunteer's account");
+        }
       }
     }
     const hasFormReceived = Object.prototype.hasOwnProperty.call(

@@ -310,6 +310,10 @@ export const VolunteerProfilePanel = ({
     try {
       const fbUid = volunteer?.firebaseUid || `volunteer-${volunteerId}`;
       const key = await uploadHandbookToS3(backend, file, fbUid);
+      const keyMatch = key.match(/^handbooks\/([^/]+)\//);
+      if (keyMatch && keyMatch[1] && volunteer && !volunteer.firebaseUid) {
+        volunteer.firebaseUid = keyMatch[1];
+      }
       const uploadedAt = new Date().toISOString();
       await backend.put(`/volunteers/${volunteerId}`, {
         form_received: true,
