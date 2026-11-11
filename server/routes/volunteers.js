@@ -838,15 +838,12 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
 
         // Resolve target user's Firebase UID via email if not set yet (or stale)
         if (!targetUser.firebase_uid && targetUser.email) {
+          let resolvedFbUid = null;
           try {
             const fbUser = await admin.auth().getUserByEmail(targetUser.email);
             if (fbUser?.uid) {
               if (fbUser.emailVerified) {
-                targetUser.firebase_uid = fbUser.uid;
-                await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
-                  fbUser.uid,
-                  targetUser.id,
-                ]);
+                resolvedFbUid = fbUser.uid;
                 isUnverified = false;
               } else {
                 isUnverified = true;
@@ -857,6 +854,14 @@ volunteersRouter.put("/:id", verifyRole("volunteer"), async (req, res) => {
               console.error("Failed to lookup user by email in Firebase Auth:", err);
               return res.status(500).send("Failed to verify account authentication status. Please try again.");
             }
+          }
+
+          if (resolvedFbUid) {
+            targetUser.firebase_uid = resolvedFbUid;
+            await db.none("UPDATE users SET firebase_uid = $1 WHERE id = $2", [
+              resolvedFbUid,
+              targetUser.id,
+            ]);
           }
         }
 
