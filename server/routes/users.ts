@@ -5,6 +5,7 @@ import {
   getProfilePictureGetURL,
   getProfilePictureUploadURL,
   getS3ViewURL,
+  isS3Configured,
 } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
@@ -376,15 +377,20 @@ usersRouter.get("/handbook/upload-url", async (req, res) => {
 // Presigned URL for downloading the blank volunteer handbook template from S3
 usersRouter.get("/handbook/template-url", async (_req, res) => {
   try {
-    const exists = await checkS3ObjectExists("templates/handbook.pdf");
-    if (!exists) {
-      return res.status(404).json({ message: "Handbook template does not exist in S3" });
+    if (isS3Configured()) {
+      const exists = await checkS3ObjectExists("templates/handbook.pdf");
+      if (exists) {
+        const downloadUrl = await getS3ViewURL("templates/handbook.pdf", 3600);
+        return res.status(200).json({ downloadUrl });
+      }
     }
-    const downloadUrl = await getS3ViewURL("templates/handbook.pdf", 3600);
-    return res.status(200).json({ downloadUrl });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to create template download URL";
-    return res.status(400).json({ message });
+    return res.status(200).json({
+      downloadUrl: "/templates/volunteer_handbook_packet.pdf",
+    });
+  } catch (_err) {
+    return res.status(200).json({
+      downloadUrl: "/templates/volunteer_handbook_packet.pdf",
+    });
   }
 });
 

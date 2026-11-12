@@ -3,21 +3,29 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const isDevelopment = process.env.NODE_ENV?.toLowerCase() === "development";
+const region =
+  process.env.PROD_S3_REGION ??
+  process.env.DEV_S3_REGION ??
+  process.env.S3_REGION ??
+  process.env.AWS_REGION;
 
-const region = isDevelopment
-  ? process.env.DEV_S3_REGION ?? process.env.AWS_REGION
-  : process.env.PROD_S3_REGION ?? process.env.AWS_REGION;
+const accessKeyId =
+  process.env.PROD_S3_ACCESS_KEY_ID ??
+  process.env.DEV_S3_ACCESS_KEY_ID ??
+  process.env.S3_ACCESS_KEY_ID ??
+  process.env.AWS_ACCESS_KEY_ID;
 
-const accessKeyId = isDevelopment
-  ? process.env.DEV_S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID
-  : process.env.PROD_S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID;
+const secretAccessKey =
+  process.env.PROD_S3_SECRET_ACCESS_KEY ??
+  process.env.DEV_S3_SECRET_ACCESS_KEY ??
+  process.env.S3_SECRET_ACCESS_KEY ??
+  process.env.AWS_SECRET_ACCESS_KEY;
 
-const secretAccessKey = isDevelopment
-  ? process.env.DEV_S3_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY
-  : process.env.PROD_S3_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY;
-
-const bucket = process.env.S3_BUCKET_NAME ?? process.env.AWS_BUCKET_NAME;
+const bucket =
+  process.env.PROD_S3_BUCKET_NAME ??
+  process.env.S3_BUCKET_NAME ??
+  process.env.DEV_S3_BUCKET_NAME ??
+  process.env.AWS_BUCKET_NAME;
 
 // initialize a S3 instance
 const s3 = new aws.S3({
@@ -45,6 +53,10 @@ const extensionForContentType = (contentType: string) => {
     default:
       return "jpg";
   }
+};
+
+const isS3Configured = () => {
+  return Boolean(bucket && region && accessKeyId && secretAccessKey);
 };
 
 const assertS3Configured = () => {
@@ -174,6 +186,7 @@ const checkS3ObjectExists = async (key: string): Promise<boolean> => {
 
 export {
   s3,
+  isS3Configured,
   getProfilePictureUploadURL,
   getProfilePictureGetURL,
   getHandbookUploadURL,
