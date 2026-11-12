@@ -11,6 +11,7 @@ const config = defineConfig({
         // Community Counsel Brand Guidelines (July 2026)
         brand: {
           navy: { value: "#002992" },
+          navyHover: { value: "#001E6C" },
           skyBlue: { value: "#15A9EA" },
           purple: { value: "#A64CED" },
         },

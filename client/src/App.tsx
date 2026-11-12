@@ -110,7 +110,7 @@ const App = () => {
                 <Route
                   element={
                     <ProtectedRoute
-                      element={<StaffLayout navbar="expanded" />}
+                      element={<StaffLayout key="staff-expanded" navbar="expanded" />}
                       allowedRoles={["staff", "supervisor"]}
                     />
                   }
@@ -144,7 +144,7 @@ const App = () => {
                 <Route
                   element={
                     <ProtectedRoute
-                      element={<StaffLayout navbar="collapsed" />}
+                      element={<StaffLayout key="staff-collapsed" navbar="collapsed" />}
                       allowedRoles={["staff", "supervisor"]}
                     />
                   }
@@ -177,7 +177,14 @@ const App = () => {
                 </Route>
 
                 {/* Volunteer shell: catalog + profile */}
-                <Route element={<VolunteerLayout />}>
+                <Route
+                  element={
+                    <ProtectedRoute
+                      element={<VolunteerLayout />}
+                      allowedRoles={["volunteer"]}
+                    />
+                  }
+                >
                   <Route
                     path="/event-catalog/*"
                     element={<EventCatalog />}
@@ -193,12 +200,7 @@ const App = () => {
                   />
                   <Route
                     path="/volunteer-profile/:tab"
-                    element={
-                      <ProtectedRoute
-                        element={<VolunteerProfile />}
-                        allowedRoles={["volunteer"]}
-                      />
-                    }
+                    element={<VolunteerProfile />}
                   />
                 </Route>
 

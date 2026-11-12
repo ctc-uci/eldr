@@ -29,6 +29,8 @@
       "@/common/*": ["common/*"],
       "@/config/*": ["config/*"],
       "@/routes/*": ["routes/*"],
+      "@eldr/shared": ["../shared/index.ts"],
+      "@eldr/shared/*": ["../shared/*"],
       "@/*": ["src/*"]
     }
   }

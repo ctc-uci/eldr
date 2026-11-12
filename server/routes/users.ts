@@ -1,14 +1,45 @@
 import {
+  checkS3ObjectExists,
+  deleteS3Object,
+  getHandbookUploadURL,
   getProfilePictureGetURL,
   getProfilePictureUploadURL,
+  getS3ViewURL,
 } from "@/common/s3";
 import { keysToCamel } from "@/common/utils";
 import { admin } from "@/config/firebase";
 import { db } from "@/db/db-pgp"; // TODO: replace this db with
 import { verifyRole, verifyToken } from "@/middleware";
+import type { Request, Response } from "express";
 import { Router } from "express";
 
 export const usersRouter = Router();
+
+const getCallerUid = async (req: Request, res: Response): Promise<string | null> => {
+  if (res.locals.decodedToken?.uid) {
+    return res.locals.decodedToken.uid;
+  }
+  if (req.cookies?.accessToken) {
+    try {
+      const decoded = await admin.auth().verifyIdToken(req.cookies.accessToken);
+      res.locals.decodedToken = decoded;
+      return decoded.uid;
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+};
+
+const isStaffOrSupervisor = async (uid?: string | null): Promise<boolean> => {
+  if (!uid) return false;
+  const rows = await db.query(
+    "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+    [uid]
+  );
+  const role = rows[0]?.role;
+  return role === "staff" || role === "supervisor";
+};
 
 type UserRecord = Record<string, unknown>;
 
@@ -129,6 +160,53 @@ usersRouter.post("/custom-token", async (req, res) => {
   }
 });
 
+// Check whether an email is already in use by a user in DB or Firebase Auth
+usersRouter.post("/check-email", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body?.email === "string"
+        ? req.body.email
+        : typeof req.query?.email === "string"
+        ? req.query.email
+        : "";
+    const email = rawEmail.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ message: "Email parameter is required" });
+    }
+
+    // 1. Check PostgreSQL users table
+    const existingDbUser = await db.query(
+      "SELECT id, role FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+      [email]
+    );
+
+    if (existingDbUser.length > 0) {
+      return res.status(200).json({ exists: true, message: "Email is already registered" });
+    }
+
+    // 2. Check Firebase Auth
+    try {
+      const fbUser = await admin.auth().getUserByEmail(email);
+      if (fbUser) {
+        return res.status(200).json({ exists: true, message: "Email is already registered in auth" });
+      }
+    } catch (e: unknown) {
+      const fbErr = e as { code?: string };
+      if (fbErr.code === "auth/user-not-found") {
+        // User not found in Firebase Auth; email is free to use
+      } else {
+        throw e;
+      }
+    }
+
+    return res.status(200).json({ exists: false });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error checking email";
+    return res.status(500).json({ message });
+  }
+});
+
 // Get all users
 usersRouter.get("/", verifyRole("staff"), async (req, res) => {
   try {
@@ -145,21 +223,167 @@ usersRouter.get("/profile-picture/upload-url", async (req, res) => {
   try {
     const contentType =
       typeof req.query.contentType === "string" ? req.query.contentType : "";
-    const firebaseUid =
+    const requestedUid =
       typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+    const callerUid = res.locals.decodedToken?.uid;
 
-    if (!firebaseUid) {
+    const targetUid = requestedUid || callerUid;
+    if (!targetUid) {
       return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    // Look up target user's role from database
+    const targetRows = await db.query(
+      "SELECT role FROM users WHERE firebase_uid = $1 LIMIT 1",
+      [targetUid]
+    );
+    const targetDbRole = targetRows[0]?.role;
+    // Server derives role: "admin" prefix ONLY for staff/supervisor users in DB
+    const derivedRole = targetDbRole === "staff" || targetDbRole === "supervisor" ? "admin" : "volunteer";
+
+    // Authorize caller if uploading for a different user
+    if (requestedUid && callerUid && requestedUid !== callerUid) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
+        return res.status(403).json({ message: "Forbidden: Cannot upload profile picture for another user" });
+      }
     }
 
     const { uploadUrl, key } = await getProfilePictureUploadURL(
       contentType,
-      firebaseUid,
+      targetUid,
+      derivedRole,
     );
 
     return res.status(200).json({ uploadUrl, key });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create upload URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for handbook PDF upload
+usersRouter.get("/handbook/upload-url", async (req, res) => {
+  try {
+    const contentType =
+      typeof req.query.contentType === "string" ? req.query.contentType : "application/pdf";
+    const requestedUid =
+      typeof req.query.firebaseUid === "string" ? req.query.firebaseUid.trim() : "";
+    const callerUid = res.locals.decodedToken?.uid;
+
+    let targetUid = requestedUid || callerUid;
+    if (!targetUid) {
+      return res.status(400).json({ message: "firebaseUid is required" });
+    }
+
+    // If uploading for another user, caller must be staff or supervisor
+    if (requestedUid && callerUid && requestedUid !== callerUid) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
+        return res.status(403).json({ message: "Forbidden: Cannot upload handbook for another user" });
+      }
+    }
+
+    // If a legacy volunteer identifier (volunteer-<id>) was supplied, resolve the actual Firebase UID
+    if (targetUid.startsWith("volunteer-")) {
+      const match = targetUid.match(/^volunteer-(\d+)$/);
+      if (!match) {
+        return res.status(400).json({
+          message: "Invalid volunteer identifier format. Expected 'volunteer-<digits>'.",
+        });
+      }
+
+      const volId = parseInt(match[1], 10);
+      const userRow = await db.oneOrNone(
+        "SELECT id, firebase_uid, email FROM users WHERE id = $1 LIMIT 1",
+        [volId]
+      );
+
+      let resolvedUid: string | null = null;
+      let isUnverified = false;
+
+      // Validate stored UID with Firebase if present
+      if (userRow?.firebase_uid) {
+        try {
+          const fbUser = await admin.auth().getUser(userRow.firebase_uid);
+          if (fbUser?.emailVerified) {
+            resolvedUid = fbUser.uid;
+          } else {
+            isUnverified = true;
+          }
+        } catch (err: unknown) {
+          const fbErr = err as { code?: string };
+          if (fbErr?.code !== "auth/user-not-found") {
+            console.error("Failed to verify user by UID in Firebase Auth:", err);
+            return res.status(500).json({
+              message: "Failed to verify account authentication status. Please try again.",
+            });
+          }
+        }
+      }
+
+      // If no verified UID from stored UID, attempt lookup by email
+      if (!resolvedUid && userRow?.email) {
+        try {
+          const fbUser = await admin.auth().getUserByEmail(userRow.email);
+          if (fbUser?.uid) {
+            if (fbUser.emailVerified) {
+              resolvedUid = fbUser.uid;
+              isUnverified = false;
+            } else {
+              isUnverified = true;
+            }
+          }
+        } catch (err: unknown) {
+          const fbErr = err as { code?: string };
+          if (fbErr?.code !== "auth/user-not-found") {
+            console.error("Failed to lookup user by email in Firebase Auth:", err);
+            return res.status(500).json({
+              message: "Failed to verify account authentication status. Please try again.",
+            });
+          }
+        }
+      }
+
+      if (resolvedUid) {
+        targetUid = resolvedUid;
+      } else {
+        if (isUnverified) {
+          return res.status(400).json({
+            message:
+              "Cannot upload handbook: Volunteer does not have a verified Firebase account. The volunteer must verify and sign in to their account before a handbook can be uploaded.",
+          });
+        }
+        return res.status(400).json({
+          message:
+            "Cannot upload handbook: Volunteer does not have a linked Firebase account. The volunteer must create or sign in to their account before a handbook can be uploaded.",
+        });
+      }
+    }
+
+    const { uploadUrl, key } = await getHandbookUploadURL(
+      contentType,
+      targetUid,
+    );
+
+    return res.status(200).json({ uploadUrl, key });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create handbook upload URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for downloading the blank volunteer handbook template from S3
+usersRouter.get("/handbook/template-url", async (_req, res) => {
+  try {
+    const exists = await checkS3ObjectExists("templates/handbook.pdf");
+    if (!exists) {
+      return res.status(404).json({ message: "Handbook template does not exist in S3" });
+    }
+    const downloadUrl = await getS3ViewURL("templates/handbook.pdf", 3600);
+    return res.status(200).json({ downloadUrl });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create template download URL";
     return res.status(400).json({ message });
   }
 });
@@ -177,6 +401,73 @@ usersRouter.get("/profile-picture/view-url", async (req, res) => {
     return res.status(200).json({ viewUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create view URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Presigned URL for viewing or downloading any document (e.g. handbook PDF)
+usersRouter.get("/document/view-url", async (req, res) => {
+  try {
+    const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
+    const download = typeof req.query.download === "string" ? req.query.download.trim() : undefined;
+
+    if (!key) {
+      return res.status(400).json({ message: "key is required" });
+    }
+
+    // Authorize access to documents:
+    // templates/ and profiles/ are public for app usage
+    const isPublicPrefix = key.startsWith("templates/") || key.startsWith("profiles/");
+    const callerUid = await getCallerUid(req, res);
+
+    if (!isPublicPrefix) {
+      if (!callerUid) {
+        return res.status(401).json({ message: "Authentication required to view private documents" });
+      }
+
+      const isOwner = key.startsWith(`handbooks/${callerUid}/`);
+      if (!isOwner) {
+        const isStaff = await isStaffOrSupervisor(callerUid);
+        if (!isStaff) {
+          return res.status(403).json({ message: "Forbidden: Not authorized to view this document" });
+        }
+      }
+    }
+
+    const viewUrl = await getS3ViewURL(key, 3600, download);
+    return res.status(200).json({ viewUrl });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create document view URL";
+    return res.status(400).json({ message });
+  }
+});
+
+// Delete a document from S3 (used during signup rollback or document replacement)
+usersRouter.delete("/document", async (req, res) => {
+  try {
+    const key = typeof req.query.key === "string" ? req.query.key.trim() : "";
+    const callerUid = await getCallerUid(req, res);
+
+    if (!key) {
+      return res.status(400).json({ message: "key is required" });
+    }
+
+    if (!callerUid) {
+      return res.status(401).json({ message: "Authentication required to delete documents" });
+    }
+
+    const isOwner = key.startsWith(`handbooks/${callerUid}/`);
+    if (!isOwner) {
+      const isStaff = await isStaffOrSupervisor(callerUid);
+      if (!isStaff) {
+        return res.status(403).json({ message: "Forbidden: Not authorized to delete this document" });
+      }
+    }
+
+    await deleteS3Object(key);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete document";
     return res.status(400).json({ message });
   }
 });
@@ -202,12 +493,38 @@ usersRouter.get("/:firebaseUid", verifyRole("volunteer"), async (req, res) => {
   }
 });
 
-// Delete a user by ID, both in Firebase and NPO DB
-usersRouter.delete("/:firebaseUid", verifyRole("supervisor"), async (req, res) => {
+// Delete a user by ID, both in Firebase and NPO DB (supervisors can delete any user; uncompleted volunteers can delete self during signup rollback)
+usersRouter.delete("/:firebaseUid", verifyToken, async (req, res) => {
   try {
     const { firebaseUid } = req.params;
+    const callerUid = res.locals.decodedToken?.uid;
 
-    await admin.auth().deleteUser(firebaseUid);
+    const userResult = await db.query(
+      `SELECT u.role, v.form_completed
+       FROM users u
+       LEFT JOIN volunteers v ON u.id = v.id
+       WHERE u.firebase_uid = $1`,
+      [callerUid]
+    );
+    const callerRecord = userResult.at(0) as { role?: string; form_completed?: boolean } | undefined;
+    const isSupervisor = callerRecord?.role === "supervisor";
+    const isSelf = Boolean(callerUid && callerUid === firebaseUid);
+    const isRollbackSelfDelete = isSelf && callerRecord?.form_completed !== true;
+
+    if (!isSupervisor && !isRollbackSelfDelete) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // Ignore only the expected auth/user-not-found case, propagate other Firebase errors
+    try {
+      await admin.auth().deleteUser(firebaseUid);
+    } catch (fbErr: unknown) {
+      const errWithCode = fbErr as { code?: string };
+      if (errWithCode?.code !== "auth/user-not-found") {
+        throw fbErr;
+      }
+    }
+
     const user = await db.query("DELETE FROM users WHERE firebase_uid = $1", [
       firebaseUid,
     ]);

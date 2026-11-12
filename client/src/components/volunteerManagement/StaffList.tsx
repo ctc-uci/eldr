@@ -1,6 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 
-import { Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
+import { Avatar, Box, Checkbox, Flex, Table, Text } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 import { StaffMember } from "@/types/volunteer";
@@ -234,13 +234,10 @@ export const StaffList = ({
                   align="center"
                   gap={3}
                 >
-                  <Box
-                    w="36px"
-                    h="36px"
-                    borderRadius="full"
-                    bg="gray.200"
-                    flexShrink={0}
-                  />
+                  <Avatar.Root size="sm" flexShrink={0}>
+                    <Avatar.Fallback name={`${member.firstName} ${member.lastName}`} />
+                    <Avatar.Image src={member.profilePictureUrl || undefined} />
+                  </Avatar.Root>
                   <Box>
                     <Text
                       fontSize="sm"

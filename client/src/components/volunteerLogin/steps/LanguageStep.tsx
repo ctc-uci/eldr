@@ -12,12 +12,15 @@ import {
 } from "@chakra-ui/react";
  
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuArrowRight, LuSearch, LuX } from "react-icons/lu";
+import { LuPlus, LuSearch, LuX } from "react-icons/lu";
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
+import { DEFAULT_TOP_LANGUAGES } from "@eldr/shared";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
  
 type LanguageRow = {
@@ -42,6 +45,7 @@ const LanguageMultiSelect = ({
   items,
   selected,
   onChange,
+  onAddCustomLanguage,
   disabled,
   placeholder,
 }: {
@@ -49,16 +53,20 @@ const LanguageMultiSelect = ({
   items: string[];
   selected: string[];
   onChange: (val: string[]) => void;
+  onAddCustomLanguage?: (name: string) => void;
   disabled?: boolean;
   placeholder?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [customLanguageInput, setCustomLanguageInput] = useState("");
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = items.filter((l) =>
     l.toLowerCase().includes(search.toLowerCase())
@@ -111,6 +119,7 @@ const LanguageMultiSelect = ({
       ) {
         setOpen(false);
         setSearch("");
+        setIsAddingCustom(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -127,6 +136,32 @@ const LanguageMultiSelect = ({
       window.removeEventListener("resize", handleReposition);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (isAddingCustom) {
+      setTimeout(() => customInputRef.current?.focus(), 50);
+    }
+  }, [isAddingCustom]);
+
+  const handleAddCustom = () => {
+    const trimmed = customLanguageInput.trim();
+    if (!trimmed) return;
+
+    const canonical =
+      items.find((item) => item.toLowerCase() === trimmed.toLowerCase()) ??
+      DEFAULT_TOP_LANGUAGES.find(
+        (lang) => lang.toLowerCase() === trimmed.toLowerCase()
+      ) ??
+      trimmed;
+
+    if (!selected.some((s) => s.toLowerCase() === canonical.toLowerCase())) {
+      onChange([...selected, canonical]);
+    }
+    onAddCustomLanguage?.(canonical);
+    setCustomLanguageInput("");
+    setIsAddingCustom(false);
+    setSearch("");
+  };
  
   return (
     <Box position="relative" ref={containerRef}>
@@ -248,7 +283,7 @@ const LanguageMultiSelect = ({
           borderColor="#E4E4E7"
           borderRadius="6px"
           boxShadow="lg"
-          maxH="240px"
+          maxH="280px"
           overflowY="auto"
         >
           {filtered.length === 0 ? (
@@ -288,21 +323,94 @@ const LanguageMultiSelect = ({
               </Flex>
             ))
           )}
+
+          {/* Add language option at the bottom */}
+          <Box borderTop="1px solid #E4E4E7" bg="#FAFAFA">
+            {!isAddingCustom ? (
+              <Flex
+                align="center"
+                gap="8px"
+                px="12px"
+                py="10px"
+                cursor="pointer"
+                color="brand.navy"
+                _hover={{ bg: "#EDF2F7" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAddingCustom(true);
+                }}
+              >
+                <LuPlus size={15} />
+                <Text fontSize="13px" fontWeight={600}>
+                  Add other language...
+                </Text>
+              </Flex>
+            ) : (
+              <Flex
+                p="8px 12px"
+                gap="8px"
+                align="center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Input
+                  ref={customInputRef}
+                  size="sm"
+                  h="32px"
+                  bg="white"
+                  borderColor="#CBD5E0"
+                  fontSize="13px"
+                  placeholder="Type language name..."
+                  value={customLanguageInput}
+                  onChange={(e) => setCustomLanguageInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCustom();
+                    } else if (e.key === "Escape") {
+                      setIsAddingCustom(false);
+                    }
+                  }}
+                />
+                <Button
+                  size="xs"
+                  h="32px"
+                  px="12px"
+                  bg="brand.navy"
+                  color="white"
+                  fontWeight={600}
+                  _hover={{ bg: "brand.navyHover" }}
+                  onClick={handleAddCustom}
+                >
+                  Add
+                </Button>
+                <Button
+                  size="xs"
+                  h="32px"
+                  variant="ghost"
+                  color="gray.600"
+                  onClick={() => {
+                    setIsAddingCustom(false);
+                    setCustomLanguageInput("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Flex>
+            )}
+          </Box>
         </Box>
       )}
     </Box>
   );
 };
  
-const LanguageStep = ({ onNext }: Props) => {
+const LanguageStep = ({ onNext, onBack }: Props) => {
   const { backend } = useBackendContext();
 
   const [allLanguages, setAllLanguages] = useState<LanguageRow[]>([]);
+  const [customAddedLanguages, setCustomAddedLanguages] = useState<string[]>([]);
   const [selectedLanguageNames, setSelectedLanguageNames] = useState<string[]>(
     () => loadDraft()?.selectedLanguageNames ?? []
-  );
-  const [literateLanguageNames, setLiterateLanguageNames] = useState<string[]>(
-    () => loadDraft()?.literateLanguageNames ?? []
   );
 
   const [isLoading, setIsLoading] = useState(false);
@@ -334,63 +442,90 @@ const LanguageStep = ({ onNext }: Props) => {
     fetchLanguages();
   }, [backend]);
  
-  const nameToId = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const row of allLanguages) m.set(row.language, row.id);
-    return m;
-  }, [allLanguages]);
- 
+  // Narrow default list to roughly the 10 most-used languages first, followed by others and custom added
   const allLanguageNames = useMemo(() => {
-    return [...new Set(allLanguages.map((l) => l.language))].sort((a, b) =>
-      a.localeCompare(b)
+    const topSet = new Set(DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase()));
+    const fetched = allLanguages.map((l) => l.language);
+
+    const seen = new Map<string, string>();
+    for (const lang of [
+      ...fetched,
+      ...customAddedLanguages,
+      ...selectedLanguageNames,
+    ]) {
+      const key = lang.toLowerCase();
+      if (!seen.has(key)) {
+        const topMatch = DEFAULT_TOP_LANGUAGES.find(
+          (t) => t.toLowerCase() === key
+        );
+        seen.set(key, topMatch ?? lang);
+      }
+    }
+
+    const combined = Array.from(seen.values());
+
+    // Sort so top 10 appear first in their defined order, others alphabetically
+    const topList = DEFAULT_TOP_LANGUAGES.filter((t) =>
+      combined.some((c) => c.toLowerCase() === t.toLowerCase())
     );
+    const remaining = combined
+      .filter((c) => !topSet.has(c.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
+
+    return [...topList, ...remaining];
+  }, [allLanguages, customAddedLanguages, selectedLanguageNames]);
+
+  useEffect(() => {
+    if (allLanguages.length === 0) return;
+    setSelectedLanguageNames((prev) => {
+      let changed = false;
+      const seen = new Set<string>();
+      const next: string[] = [];
+      for (const name of prev) {
+        const lower = name.toLowerCase();
+        if (seen.has(lower)) {
+          changed = true;
+          continue;
+        }
+        seen.add(lower);
+        const canonical =
+          DEFAULT_TOP_LANGUAGES.find((t) => t.toLowerCase() === lower) ??
+          allLanguages.find((l) => l.language.toLowerCase() === lower)
+            ?.language ??
+          name;
+        if (canonical !== name) changed = true;
+        next.push(canonical);
+      }
+      return changed ? next : prev;
+    });
   }, [allLanguages]);
 
-  // "Literate in" must be a subset of the selected languages
-  const literateOptions = useMemo(
-    () => selectedLanguageNames,
-    [selectedLanguageNames]
-  );
-
-  // If selected languages change, keep literate selections valid.
-  useEffect(() => {
-    setLiterateLanguageNames((prev) =>
-      prev.filter((n) => selectedLanguageNames.includes(n))
+  const handleAddCustomLanguage = (name: string) => {
+    const canonical =
+      DEFAULT_TOP_LANGUAGES.find(
+        (l) => l.toLowerCase() === name.toLowerCase()
+      ) ??
+      allLanguages.find((l) => l.language.toLowerCase() === name.toLowerCase())
+        ?.language ??
+      name;
+    setCustomAddedLanguages((prev) =>
+      prev.some((l) => l.toLowerCase() === canonical.toLowerCase())
+        ? prev
+        : [...prev, canonical]
     );
-  }, [selectedLanguageNames]);
- 
-  const handleContinue = () => {
-    setErrorMsg(null);
+  };
 
-    if (selectedLanguageNames.length === 0) {
-      saveDraft({
-        selectedLanguageNames: [],
-        literateLanguageNames: [],
-      });
-      onNext();
-      return;
-    }
-
-    const mapped = selectedLanguageNames
-      .map((name) => {
-        const languageId = nameToId.get(name);
-        if (!languageId) return null;
-        return { languageId, isLiterate: literateLanguageNames.includes(name) };
-      })
-      .filter(Boolean);
-
-    if (!mapped.length) {
-      saveDraft({
-        selectedLanguageNames: [],
-        literateLanguageNames: [],
-      });
-      onNext();
-      return;
-    }
-
+  const handleBack = () => {
     saveDraft({
       selectedLanguageNames,
-      literateLanguageNames,
+    });
+    onBack?.();
+  };
+
+  const handleContinue = () => {
+    setErrorMsg(null);
+    saveDraft({
+      selectedLanguageNames,
     });
     onNext();
   };
@@ -408,7 +543,16 @@ const LanguageStep = ({ onNext }: Props) => {
         direction="column"
         overflow="hidden"
       >
-        <Flex w="100%" h="70px" bg="#F6F6F6" flexShrink={0} align="center" px="2%" py="1%" />
+        <Flex
+          w="100%"
+          h="70px"
+          bg="#F6F6F6"
+          flexShrink={0}
+          align="center"
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton onClick={handleBack} />
+        </Flex>
  
         <Flex flex="1" direction={{ base: "column", md: "row" }}>
           {/* Left */}
@@ -473,46 +617,12 @@ const LanguageStep = ({ onNext }: Props) => {
               items={allLanguageNames}
               selected={selectedLanguageNames}
               onChange={setSelectedLanguageNames}
+              onAddCustomLanguage={handleAddCustomLanguage}
               disabled={isLoading}
               placeholder={isLoading ? "Loading..." : "Search for languages"}
             />
  
-            <LanguageMultiSelect
-              label={
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>Indicate in which you are literate</span>
-                  <span style={{ backgroundColor: "#F4F4F5", color: "black", fontSize: 12, padding: "2px 6px", borderRadius: 4 }}>
-                    optional
-                  </span>
-                </span>
-              }
-              items={literateOptions}
-              selected={literateLanguageNames}
-              onChange={setLiterateLanguageNames}
-              disabled={isLoading}
-              placeholder={isLoading ? "Loading..." : "Search for languages"}
-            />
- 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "16px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{ bg: "#F4F4F5", _active: { bg: "black", color: "white" } }}
-              position="relative"
-              w="100%"
-              px="20px"
-              onClick={handleContinue}
-            >
-              <Box w="100%" textAlign="center">Continue</Box>
-              <Box position="absolute" right="12px">
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            <StepNavButtons onBack={handleBack} onContinue={handleContinue} />
 
           </Flex>
         </Flex>

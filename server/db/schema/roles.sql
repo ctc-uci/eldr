@@ -1,7 +1,7 @@
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     role_name TEXT UNIQUE NOT NULL
-)
+);
 
 CREATE TABLE volunteer_roles (
     volunteer_id INT NOT NULL REFERENCES volunteers(id) ON DELETE CASCADE,

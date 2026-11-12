@@ -17,10 +17,19 @@ import {
 } from "@chakra-ui/react";
 
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
-import { LuMail, LuImageUp, LuTriangleAlert, LuChevronDown } from "react-icons/lu";
+import { toaster } from "@/components/ui/toaster";
+import {
+  LuMail,
+  LuImageUp,
+  LuTriangleAlert,
+  LuChevronDown,
+  LuPlus,
+  LuTrash2,
+} from "react-icons/lu";
 import { useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { EmailNotificationTimeline } from "./EmailNotificationTimeline";
+import { isOneOffType } from "./oneOffWorkshop";
 
 const parseTimeField = (ts) => {
   if (!ts) return { time: "", period: "AM" };
@@ -33,11 +42,31 @@ const parseTimeField = (ts) => {
   return { time: `${h}:${String(m).padStart(2, "0")}`, period };
 };
 
+const parseMeetingLinks = (raw) => {
+  if (!raw) return [""];
+  const parts = raw
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [""];
+};
+
+const serializeMeetingLinks = (links) => {
+  return links
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join("\n");
+};
+
 const buildEditBaseline = (c, langNames) => {
   const start = parseTimeField(c.startTime);
   const end = parseTimeField(c.endTime);
   const dateStr = c.date ? c.date.split("T")[0].split(" ")[0] : "";
+  const isOneOff = isOneOffType(c.type);
   return {
+    isCustomWorkshop: isOneOff,
+    selectedWorkshopType: isOneOff ? "" : (c.type || c.name || ""),
+    customWorkshopName: isOneOff ? (c.name ?? "") : "",
     type: c.type ?? "",
     eventName: c.name ?? "",
     locationType: c.locationType ?? "in-person",
@@ -45,7 +74,7 @@ const buildEditBaseline = (c, langNames) => {
     city: c.city ?? "",
     state: c.state ?? "",
     zip: c.zip ?? "",
-    zoomLink: c.meetingLink ?? "",
+    meetingLinksKey: serializeMeetingLinks(parseMeetingLinks(c.meetingLink)),
     date: dateStr,
     startTime: start.time,
     startPeriod: start.period,
@@ -127,6 +156,14 @@ export const CreateEvent = () => {
   const isEditing = !!eventId;
   const isDuplicating = !!sourceId;
   const activeTab = tab === "header" ? "details" : (tab ?? "details");
+  const [isCustomWorkshop, setIsCustomWorkshop] = useState(false);
+  const [selectedWorkshopType, setSelectedWorkshopType] = useState("");
+  const [customWorkshopName, setCustomWorkshopName] = useState("");
+  const [availableWorkshopTypes, setAvailableWorkshopTypes] = useState([
+    "Estate Planning",
+    "Limited Conservatorship",
+    "Probate Note Clearing",
+  ]);
   const [type, setType] = useState("");
   const [eventName, setEventName] = useState("");
   const [locationType, setLocationType] = useState("in-person");
@@ -134,7 +171,8 @@ export const CreateEvent = () => {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
-  const [zoomLink, setZoomLink] = useState("");
+  const [meetingLinks, setMeetingLinks] = useState([""]);
+  const [addressSubmitted, setAddressSubmitted] = useState(false);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [startPeriod, setStartPeriod] = useState("AM");
@@ -149,8 +187,47 @@ export const CreateEvent = () => {
   const [initialForm, setInitialForm] = useState(null);
   const [discardOpen, setDiscardOpen] = useState(false);
 
+  const handleAddMeetingLink = () => {
+    setMeetingLinks((prev) => [...prev, ""]);
+  };
+
+  const handleMeetingLinkChange = (index, value) => {
+    setMeetingLinks((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
+
+  const handleRemoveMeetingLink = (index) => {
+    setMeetingLinks((prev) => {
+      if (prev.length <= 1) return [""];
+      return prev.filter((_, idx) => idx !== index);
+    });
+  };
+
   useEffect(() => {
     backend.get("/languages").then((res) => setAllLanguages(res.data)).catch(() => {});
+  }, [backend]);
+
+  useEffect(() => {
+    backend
+      .get("/workshop-types")
+      .then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const names = res.data.map((w) => w.workshopType || w.name).filter(Boolean);
+          const combined = Array.from(
+            new Set([
+              "Estate Planning",
+              "Limited Conservatorship",
+              "Probate Note Clearing",
+              ...names,
+            ])
+          );
+          setAvailableWorkshopTypes(combined);
+        }
+      })
+      .catch(() => {});
   }, [backend]);
 
   useEffect(() => {
@@ -166,6 +243,15 @@ export const CreateEvent = () => {
         ]);
         const c = clinicRes.data;
         const langNames = langRes.data.map((l) => l.language);
+        const isOneOff = isOneOffType(c.type);
+        setIsCustomWorkshop(isOneOff);
+        if (isOneOff) {
+          setCustomWorkshopName(c.name ?? "");
+          setSelectedWorkshopType("");
+        } else {
+          setSelectedWorkshopType(c.type || c.name || "");
+          setCustomWorkshopName("");
+        }
         setType(c.type ?? "");
         setEventName(c.name ?? "");
         setLocationType(c.locationType ?? "in-person");
@@ -173,7 +259,7 @@ export const CreateEvent = () => {
         setCity(c.city ?? "");
         setState(c.state ?? "");
         setZip(c.zip ?? "");
-        setZoomLink(c.meetingLink ?? "");
+        setMeetingLinks(parseMeetingLinks(c.meetingLink));
         setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
         setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
         setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
@@ -203,6 +289,15 @@ export const CreateEvent = () => {
         ]);
         const c = clinicRes.data;
         const langNames = langRes.data.map((l) => l.language);
+        const isOneOff = isOneOffType(c.type);
+        setIsCustomWorkshop(isOneOff);
+        if (isOneOff) {
+          setCustomWorkshopName(c.name ?? "");
+          setSelectedWorkshopType("");
+        } else {
+          setSelectedWorkshopType(c.type || c.name || "");
+          setCustomWorkshopName("");
+        }
         setType(c.type ?? "");
         setEventName(c.name ?? "");
         setLocationType(c.locationType ?? "in-person");
@@ -210,7 +305,7 @@ export const CreateEvent = () => {
         setCity(c.city ?? "");
         setState(c.state ?? "");
         setZip(c.zip ?? "");
-        setZoomLink(c.meetingLink ?? "");
+        setMeetingLinks(parseMeetingLinks(c.meetingLink));
         setDate(c.date ? c.date.split("T")[0].split(" ")[0] : "");
         setTargetNumber(c.minAttendees !== null && c.minAttendees !== undefined ? String(c.minAttendees) : "");
         setMaximum(c.capacity !== null && c.capacity !== undefined ? String(c.capacity) : "");
@@ -234,10 +329,18 @@ export const CreateEvent = () => {
     [languages]
   );
 
+  const currentMeetingLinksKey = useMemo(
+    () => serializeMeetingLinks(meetingLinks),
+    [meetingLinks]
+  );
+
   const isDirty = useMemo(() => {
     if (!isEditing || !initialForm) return false;
     const b = initialForm;
     return (
+      isCustomWorkshop !== b.isCustomWorkshop ||
+      selectedWorkshopType !== b.selectedWorkshopType ||
+      customWorkshopName !== b.customWorkshopName ||
       type !== b.type ||
       eventName !== b.eventName ||
       locationType !== b.locationType ||
@@ -245,7 +348,7 @@ export const CreateEvent = () => {
       city !== b.city ||
       state !== b.state ||
       zip !== b.zip ||
-      zoomLink !== b.zoomLink ||
+      currentMeetingLinksKey !== b.meetingLinksKey ||
       date !== b.date ||
       startTime !== b.startTime ||
       startPeriod !== b.startPeriod ||
@@ -259,6 +362,9 @@ export const CreateEvent = () => {
   }, [
     isEditing,
     initialForm,
+    isCustomWorkshop,
+    selectedWorkshopType,
+    customWorkshopName,
     type,
     eventName,
     locationType,
@@ -266,7 +372,7 @@ export const CreateEvent = () => {
     city,
     state,
     zip,
-    zoomLink,
+    currentMeetingLinksKey,
     date,
     startTime,
     startPeriod,
@@ -348,8 +454,30 @@ export const CreateEvent = () => {
 
   const handleSubmit = async () => {
     try {
+      const finalName = isCustomWorkshop ? customWorkshopName.trim() : selectedWorkshopType.trim();
+      const finalType = isCustomWorkshop ? null : selectedWorkshopType.trim();
+
+      if (!finalName) {
+        toaster.error({
+          title: isCustomWorkshop
+            ? "Workshop name is required for one-off workshops."
+            : "Please select a workshop type.",
+        });
+        return;
+      }
+
+      if (locationType === "in-person" && !address.trim()) {
+        setAddressSubmitted(true);
+        toaster.error({
+          title: "Location address is required for in-person events.",
+        });
+        return;
+      }
+
+      const combinedMeetingLinks = serializeMeetingLinks(meetingLinks);
+
       const payload = {
-        name: eventName,
+        name: finalName,
         date,
         start_time: toTimestamp(startTime, startPeriod, date),
         end_time: toTimestamp(endTime, endPeriod, date),
@@ -357,13 +485,13 @@ export const CreateEvent = () => {
         capacity: parseInt(maximum) || 1,
         max_target_roles: null,
         description,
-        address,
-        city,
-        state,
-        zip,
-        meeting_link: zoomLink,
+        address: locationType === "online" ? "" : address,
+        city: locationType === "online" ? "" : city,
+        state: locationType === "online" ? "" : state,
+        zip: locationType === "online" ? "" : zip,
+        meeting_link: locationType === "in-person" ? "" : combinedMeetingLinks,
         location_type: locationType,
-        type,
+        type: finalType,
       };
 
       let clinicId;
@@ -392,7 +520,8 @@ export const CreateEvent = () => {
           if (!lang) return;
           await backend.post(`/clinics/${clinicId}/languages`, {
             languageId: lang.id,
-            proficiency: "proficient",
+            verbalProficiency: "Professional",
+            writtenProficiency: "Professional",
           });
         })
       );
@@ -405,15 +534,25 @@ export const CreateEvent = () => {
       });
     } catch (err) {
       console.error(err);
+      toaster.error({
+        title: "Failed to save event.",
+        description: err.response?.data?.message || err.message,
+      });
     }
   };
 
-  const Label = ({ children }) => (
-    <HStack gap={0} mb={1}>
+  const Label = ({ children, required = true }) => (
+    <HStack gap={1} mb={1} align="center">
       <Text fontSize="sm" fontWeight="semibold" color="gray.700">
         {children}
       </Text>
-      <Text color="red.500" ml="2px">*</Text>
+      {required ? (
+        <Text color="red.500" ml="2px">*</Text>
+      ) : (
+        <Text fontSize="xs" color="gray.400" fontWeight="normal" ml={1}>
+          (Optional)
+        </Text>
+      )}
     </HStack>
   );
 
@@ -450,11 +589,10 @@ export const CreateEvent = () => {
     { value: "PM", label: "PM" },
   ];
 
-  const CLINIC_TYPE_OPTIONS = [
-    { value: "Estate Planning", label: "Estate Planning" },
-    { value: "Limited Conservatorship", label: "Limited Conservatorship" },
-    { value: "Probate Note Clearing", label: "Probate Note Clearing" },
-  ];
+  const workshopTypeOptions = useMemo(
+    () => availableWorkshopTypes.map((t) => ({ value: t, label: t })),
+    [availableWorkshopTypes]
+  );
 
   const EVENT_FORMAT_OPTIONS = [
     { value: "in-person", label: "In-Person" },
@@ -480,13 +618,13 @@ export const CreateEvent = () => {
         </Text>
         <Text color="gray.400">›</Text>
         {isEditing ? (
-          <Text color="blue.600">Edit Event</Text>
+          <Text color="brand.navy" fontWeight="semibold">Edit Event</Text>
         ) : isDuplicating ? (
-          <Text color="blue.500" cursor="pointer" onClick={() => navigate("/events")}>
+          <Text color="brand.navy" fontWeight="semibold" cursor="pointer" onClick={() => navigate("/events")}>
             Duplicate Event
           </Text>
         ) : (
-          <Text color="blue.600">Create New Event</Text>
+          <Text color="brand.navy" fontWeight="semibold">Create New Event</Text>
         )}
       </HStack>
 
@@ -520,13 +658,13 @@ export const CreateEvent = () => {
             key={tab.key}
             variant="ghost"
             borderRadius="6px 6px 0 0"
-            borderTop={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
+            borderTop={activeTab === tab.key ? "2px solid var(--chakra-colors-brand-navy, #002992)" : "2px solid transparent"}
             borderLeft={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
             borderRight={activeTab === tab.key ? "1px solid #E2E8F0" : "1px solid transparent"}
             borderBottom={activeTab === tab.key ? "1px solid transparent" : "1px solid transparent"}
-            color={activeTab === tab.key ? "#2D3748" : "gray.600"}
+            color={activeTab === tab.key ? "brand.navy" : "gray.600"}
             bg={activeTab === tab.key ? "white" : "transparent"}
-            fontWeight={activeTab === tab.key ? "medium" : "normal"}
+            fontWeight={activeTab === tab.key ? "semibold" : "normal"}
             px={{ base: 3, md: 4 }}
             py={{ base: 2, md: 2.5 }}
             fontSize={{ base: "xs", md: "sm" }}
@@ -543,62 +681,138 @@ export const CreateEvent = () => {
       {/* Form card */}
       {activeTab === "details" && (
         <VStack w="100%" align="start" gap={8} pt={{ base: 2, md: 4 }}>
-          {/* Row 1: Clinic Type + Event Name */}
-          <Flex
-            w="100%"
-            gap={{ base: 4, lg: 8 }}
-            direction={{ base: "column", lg: "row" }}
-            align={{ base: "stretch", lg: "end" }}
-          >
-            <VStack align="start" gap={1} w={{ base: "100%", lg: "30%" }} flexShrink={0}>
-              <Label>Clinic Type</Label>
-              <StyledSelect
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                options={CLINIC_TYPE_OPTIONS}
-                placeholder="Select"
-              />
-            </VStack>
+          {/* Row 1: Single Required Field: Workshop Type */}
+          <VStack align="start" gap={2} w={{ base: "100%", lg: "65%" }}>
+            <Flex w="100%" justify="space-between" align="center" wrap="wrap" gap={2}>
+              <Label required={true}>Workshop Type</Label>
+              <HStack gap={2}>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant={!isCustomWorkshop ? "solid" : "outline"}
+                  bg={!isCustomWorkshop ? "brand.navy" : "transparent"}
+                  color={!isCustomWorkshop ? "white" : "#4A5568"}
+                  borderColor="#CBD5E0"
+                  borderRadius="4px"
+                  fontWeight="medium"
+                  fontSize="xs"
+                  h="26px"
+                  px={2.5}
+                  _hover={!isCustomWorkshop ? { bg: "brand.navyHover" } : { bg: "#F7FAFC" }}
+                  onClick={() => setIsCustomWorkshop(false)}
+                >
+                  Select Type
+                </Button>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant={isCustomWorkshop ? "solid" : "outline"}
+                  bg={isCustomWorkshop ? "brand.navy" : "transparent"}
+                  color={isCustomWorkshop ? "white" : "#4A5568"}
+                  borderColor="#CBD5E0"
+                  borderRadius="4px"
+                  fontWeight="medium"
+                  fontSize="xs"
+                  h="26px"
+                  px={2.5}
+                  _hover={isCustomWorkshop ? { bg: "brand.navyHover" } : { bg: "#F7FAFC" }}
+                  onClick={() => setIsCustomWorkshop(true)}
+                >
+                  Custom / One-off
+                </Button>
+              </HStack>
+            </Flex>
 
-            <VStack align="start" gap={1} flex={1} w="100%">
-              <Label>Event Name</Label>
-              <Input
-                placeholder="Type here"
-                value={eventName}
-                onChange={(e) => setEventName(e.target.value)}
-                {...fieldStyle}
-                w="100%"
-              />
-            </VStack>
-          </Flex>
+            {!isCustomWorkshop ? (
+              <Box w="100%">
+                <StyledSelect
+                  value={selectedWorkshopType}
+                  onChange={(e) => {
+                    if (e.target.value === "__CUSTOM__") {
+                      setIsCustomWorkshop(true);
+                    } else {
+                      setSelectedWorkshopType(e.target.value);
+                    }
+                  }}
+                  options={[
+                    ...workshopTypeOptions,
+                    {
+                      value: "__CUSTOM__",
+                      label: "+ Enter custom name for one-off workshop...",
+                    },
+                  ]}
+                  placeholder="Select workshop type"
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Select an established workshop type or choose custom name for one-off workshops.
+                </Text>
+              </Box>
+            ) : (
+              <Box w="100%">
+                <Input
+                  placeholder="Enter custom workshop name for one-off workshop"
+                  value={customWorkshopName}
+                  onChange={(e) => setCustomWorkshopName(e.target.value)}
+                  {...fieldStyle}
+                  color="gray.800"
+                  w="100%"
+                  autoFocus
+                />
+                <HStack justify="space-between" align="center" mt={1}>
+                  <Text fontSize="xs" color="gray.500">
+                    This one-off workshop will be recorded without being tied to a recurring type.
+                  </Text>
+                  <Text
+                    fontSize="xs"
+                    color="brand.navy"
+                    cursor="pointer"
+                    textDecoration="underline"
+                    onClick={() => setIsCustomWorkshop(false)}
+                  >
+                    Select from standard types
+                  </Text>
+                </HStack>
+              </Box>
+            )}
+          </VStack>
 
           {/* Row 2: Event Format + Location */}
           <Flex
             w="100%"
             gap={{ base: 4, lg: 8 }}
             direction={{ base: "column", lg: "row" }}
-            align={{ base: "stretch", lg: "end" }}
+            align={{ base: "stretch", lg: "start" }}
           >
             <VStack align="start" gap={1} flexShrink={0} w={{ base: "100%", lg: "15%" }}>
               <Label>Event Format</Label>
               <StyledSelect
                 value={locationType}
-                onChange={(e) => setLocationType(e.target.value)}
+                onChange={(e) => {
+                  setLocationType(e.target.value);
+                  setAddressSubmitted(false);
+                }}
                 options={EVENT_FORMAT_OPTIONS}
                 color="black"
               />
             </VStack>
 
-            <VStack align="start" gap={1} flex={1} w="100%">
-              <Label>Location</Label>
-              <HStack w="100%" gap={2} flexWrap="wrap" align="start">
-                {(locationType === "in-person" || locationType === "hybrid") && (
-                  <>
+            <VStack align="start" gap={4} flex={1} w="100%">
+              {/* In-Person: Location is required */}
+              {locationType === "in-person" && (
+                <VStack align="start" gap={1} w="100%">
+                  <Label required={true}>Location</Label>
+                  <HStack w="100%" gap={2} flexWrap="wrap" align="start">
                     <Input
                       placeholder="Address"
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      onChange={(e) => {
+                        setAddress(e.target.value);
+                        if (addressSubmitted) setAddressSubmitted(false);
+                      }}
                       {...fieldStyle}
+                      borderColor={
+                        addressSubmitted && !address.trim() ? "red.500" : "#CBD5E0"
+                      }
                       flex={{ base: "1 1 100%", lg: 2 }}
                       minW={0}
                     />
@@ -625,19 +839,165 @@ export const CreateEvent = () => {
                       {...fieldStyle}
                       w={{ base: "calc(25% - 6px)", md: "15%" }}
                     />
-                  </>
-                )}
-                {(locationType === "online" || locationType === "hybrid") && (
-                  <Input
-                    placeholder="Zoom Link"
-                    value={zoomLink}
-                    onChange={(e) => setZoomLink(e.target.value)}
-                    {...fieldStyle}
-                    flex="1 1 220px"
-                    minW="120px"
-                  />
-                )}
-              </HStack>
+                  </HStack>
+                  {addressSubmitted && !address.trim() && (
+                    <Text fontSize="xs" color="red.500" mt={1}>
+                      Location address is required for in-person events.
+                    </Text>
+                  )}
+                </VStack>
+              )}
+
+              {/* Online: Meeting links are optional */}
+              {locationType === "online" && (
+                <VStack align="start" gap={2} w="100%">
+                  <Label required={false}>Meeting Links</Label>
+                  {meetingLinks.map((link, idx) => (
+                    <HStack key={idx} w="100%" gap={2} align="center">
+                      <Input
+                        placeholder={
+                          meetingLinks.length > 1
+                            ? `Meeting Link #${idx + 1} (e.g., Zoom, Google Meet)`
+                            : "Meeting Link (e.g., Zoom, Google Meet)"
+                        }
+                        value={link}
+                        onChange={(e) => handleMeetingLinkChange(idx, e.target.value)}
+                        {...fieldStyle}
+                        flex={1}
+                      />
+                      {meetingLinks.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          h="44px"
+                          px={2.5}
+                          color="gray.400"
+                          _hover={{ color: "red.500", bg: "red.50" }}
+                          onClick={() => handleRemoveMeetingLink(idx)}
+                          aria-label={`Remove meeting link ${idx + 1}`}
+                          title="Remove link"
+                        >
+                          <LuTrash2 size={16} />
+                        </Button>
+                      )}
+                    </HStack>
+                  ))}
+                  <HStack justify="flex-start" w="100%" pt={1}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      h="34px"
+                      px={3}
+                      borderColor="#CBD5E0"
+                      color="brand.navy"
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      borderRadius="4px"
+                      _hover={{ bg: "#F0F7FF", borderColor: "brand.navy" }}
+                      onClick={handleAddMeetingLink}
+                    >
+                      <LuPlus size={14} /> Add Meeting Link
+                    </Button>
+                  </HStack>
+                </VStack>
+              )}
+
+              {/* Hybrid: Both Physical Location and Meeting Links are optional */}
+              {locationType === "hybrid" && (
+                <VStack align="start" gap={4} w="100%">
+                  <VStack align="start" gap={1} w="100%">
+                    <Label required={false}>Physical Location</Label>
+                    <HStack w="100%" gap={2} flexWrap="wrap" align="start">
+                      <Input
+                        placeholder="Address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        {...fieldStyle}
+                        flex={{ base: "1 1 100%", lg: 2 }}
+                        minW={0}
+                      />
+                      <Input
+                        placeholder="City"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        {...fieldStyle}
+                        w={{ base: "calc(50% - 4px)", md: "20%" }}
+                      />
+                      <Box w={{ base: "calc(25% - 6px)", md: "95px" }}>
+                        <StyledSelect
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          options={US_STATES}
+                          placeholder="State"
+                          color={state ? "black" : undefined}
+                        />
+                      </Box>
+                      <Input
+                        placeholder="Zip Code"
+                        value={zip}
+                        onChange={(e) => setZip(e.target.value)}
+                        {...fieldStyle}
+                        w={{ base: "calc(25% - 6px)", md: "15%" }}
+                      />
+                    </HStack>
+                  </VStack>
+
+                  <VStack align="start" gap={2} w="100%">
+                    <Label required={false}>Meeting Links</Label>
+                    {meetingLinks.map((link, idx) => (
+                      <HStack key={idx} w="100%" gap={2} align="center">
+                        <Input
+                          placeholder={
+                            meetingLinks.length > 1
+                              ? `Meeting Link #${idx + 1} (e.g., Zoom, Google Meet)`
+                              : "Meeting Link (e.g., Zoom, Google Meet)"
+                          }
+                          value={link}
+                          onChange={(e) => handleMeetingLinkChange(idx, e.target.value)}
+                          {...fieldStyle}
+                          flex={1}
+                        />
+                        {meetingLinks.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            h="44px"
+                            px={2.5}
+                            color="gray.400"
+                            _hover={{ color: "red.500", bg: "red.50" }}
+                            onClick={() => handleRemoveMeetingLink(idx)}
+                            aria-label={`Remove meeting link ${idx + 1}`}
+                            title="Remove link"
+                          >
+                            <LuTrash2 size={16} />
+                          </Button>
+                        )}
+                      </HStack>
+                    ))}
+                    <HStack justify="flex-start" w="100%" pt={1}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        h="34px"
+                        px={3}
+                        borderColor="#CBD5E0"
+                        color="brand.navy"
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        borderRadius="4px"
+                        _hover={{ bg: "#F0F7FF", borderColor: "brand.navy" }}
+                        onClick={handleAddMeetingLink}
+                      >
+                        <LuPlus size={14} /> Add Meeting Link
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </VStack>
+              )}
             </VStack>
           </Flex>
 
@@ -860,23 +1220,27 @@ export const CreateEvent = () => {
       {/* Action buttons */}
       <HStack w="100%" justify="flex-end" gap={3} pt={0}>
         <Button
-          bg="#4A7FA5"
+          bg="brand.navy"
           color="white"
-          borderRadius="4px"
+          borderRadius="6px"
           px={6}
           fontSize="sm"
-          _hover={{ bg: "#2C5282" }}
+          fontWeight="semibold"
+          _hover={{ bg: "brand.navyHover" }}
+          _active={{ bg: "#00154E" }}
           onClick={handleSubmit}
         >
           {isEditing ? "Save Event" : "Create & Save Event"}
         </Button>
         <Button
           variant="outline"
-          borderRadius="4px"
+          borderRadius="6px"
           px={6}
           fontSize="sm"
+          fontWeight="medium"
           border="1px solid #CBD5E0"
-          color="gray.600"
+          color="#4A5568"
+          _hover={{ bg: "#F7FAFC", borderColor: "#A0AEC0" }}
           onClick={handleCancelClick}
         >
           Cancel

@@ -89,6 +89,13 @@ const keysToCamel = (data: object | string[] | string) => {
   return data;
 };
 
+import {
+  PROFICIENCY_OPTIONS,
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  type ProficiencyLevel,
+} from "@eldr/shared";
+
 export {
   isNumeric,
   isBoolean,
@@ -96,4 +103,9 @@ export {
   isAlphaNumeric,
   isPhoneNumber,
   keysToCamel,
+  PROFICIENCY_OPTIONS,
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  type ProficiencyLevel,
 };
+

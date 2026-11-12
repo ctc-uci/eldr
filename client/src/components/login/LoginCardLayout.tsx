@@ -1,13 +1,21 @@
 import { Box, Flex, Heading, Link, Text } from "@chakra-ui/react";
 import React from "react";
 import { LuExternalLink } from "react-icons/lu";
+import { TopBackButton } from "@/components/volunteerLogin/NavigationButtons";
 
 type Props = {
   children: React.ReactNode;
   rightPy?: string | object;
+  onBack?: () => void;
+  backLabel?: string;
 };
 
-export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) => {
+export const LoginCardLayout: React.FC<Props> = ({
+  children,
+  rightPy = "10%",
+  onBack,
+  backLabel = "Back to Login",
+}) => {
   return (
     <Flex
       w="80vw"
@@ -26,9 +34,12 @@ export const LoginCardLayout: React.FC<Props> = ({ children, rightPy = "10%" }) 
         bg="#F6F6F6"
         flexShrink={0}
         align="center"
-        px="2%"
-        py="1%"
-      />
+        px={{ base: "16px", md: "24px" }}
+      >
+        {onBack && (
+          <TopBackButton label={backLabel} onClick={onBack} />
+        )}
+      </Flex>
 
       <Flex flex="1" direction={{ base: "column", md: "row" }}>
         <Flex

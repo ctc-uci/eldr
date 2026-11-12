@@ -7,6 +7,7 @@ import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import { completeVolunteerSignup } from "./completeVolunteerSignup";
 import BackgroundStep from "./steps/BackgroundStep";
+import HandbookStep from "./steps/HandbookStep";
 import CreateAccountStep from "./steps/CreateAccountStep";
 import LanguageStep from "./steps/LanguageStep";
 import LanguageProficiencyStep from "./steps/LanguageProficiencyStep";
@@ -22,6 +23,7 @@ import {
 } from "./volunteerSignupDraft";
 import {
   nextStep,
+  prevStep,
   pathForStep,
   type VolunteerLoginStep,
   VOLUNTEER_LOGIN_BASE,
@@ -65,7 +67,7 @@ export const VolunteerLogin = () => {
   }, [location.pathname, navigate]);
 
   useEffect(() => {
-    if (step !== "background") {
+    if (step !== "handbook") {
       setCompleteError(null);
     }
   }, [step]);
@@ -73,9 +75,9 @@ export const VolunteerLogin = () => {
   useEffect(() => {
     if (step === "success") return;
     if (step === "login" || step === "create-account") return;
-    // Draft is cleared after success while URL can still be `background` briefly;
+    // Draft is cleared after success while URL can still be `handbook` briefly;
     // do not redirect here or we race past `/success` to `create-account`.
-    if (step === "background") return;
+    if (step === "handbook") return;
     if (!hasSignupBasics(loadDraft())) {
       navigate(pathForStep("create-account"), { replace: true });
     }
@@ -93,6 +95,22 @@ export const VolunteerLogin = () => {
     if (n) goToStep(n);
   }, [step, goToStep]);
 
+  const goBack = useCallback(() => {
+    if (step === "create-account") {
+      goToStep("login");
+      return;
+    }
+    if (step === "law-interests") {
+      const d = loadDraft();
+      if (!d?.selectedLanguageNames?.length) {
+        goToStep("languages");
+        return;
+      }
+    }
+    const p = prevStep(step);
+    if (p) goToStep(p);
+  }, [step, goToStep]);
+
   const emailAlreadyInUseError = (e: unknown): boolean => {  
     const err = e as {
       code?: string;
@@ -101,7 +119,7 @@ export const VolunteerLogin = () => {
     return (err.code === "auth/email-already-in-use") || (err.message?.toLowerCase().includes("email already in use") ?? false);
   };
 
-  const handleCompleteSignup = useCallback(async () => {
+  const handleCompleteSignup = useCallback(async (handbookFile: File | null = null) => {
     const d = loadDraft();
     if (!d || !hasSignupBasics(d)) {
       navigate(pathForStep("create-account"), { replace: true });
@@ -110,7 +128,7 @@ export const VolunteerLogin = () => {
     setCompleteError(null);
     setIsCompleting(true);
     try {
-      await completeVolunteerSignup(backend, signup, d);
+      await completeVolunteerSignup(backend, signup, d, handbookFile);
       navigate(pathForStep("success"), { replace: true });
       clearDraft();
     } catch (e: unknown) {
@@ -148,26 +166,33 @@ export const VolunteerLogin = () => {
         <LoginStep onNavigateToCreateAccount={() => goToStep("create-account")} />
       )}
       {step === "create-account" && (
-        <CreateAccountStep onNext={goNext} />
+        <CreateAccountStep onNext={goNext} onBack={goBack} />
       )}
       {step === "languages" && (
-        <LanguageStep onNext={goNext} />
+        <LanguageStep onNext={goNext} onBack={goBack} />
       )}
       {step === "language-proficiency" && (
-        <LanguageProficiencyStep onNext={goNext} />
+        <LanguageProficiencyStep onNext={goNext} onBack={goBack} />
       )}
       {step === "law-interests" && (
-        <LawInterestStep onNext={goNext} />
+        <LawInterestStep onNext={goNext} onBack={goBack} />
       )}
       {step === "notary" && (
-        <NotaryStep onNext={goNext} />
+        <NotaryStep onNext={goNext} onBack={goBack} />
       )}
       {step === "role" && (
-        <RoleStep onNext={goNext} />
+        <RoleStep onNext={goNext} onBack={goBack} />
       )}
       {step === "background" && (
         <BackgroundStep
+          onNext={goNext}
+          onBack={goBack}
+        />
+      )}
+      {step === "handbook" && (
+        <HandbookStep
           onComplete={handleCompleteSignup}
+          onBack={goBack}
           isSubmitting={isCompleting}
           submitError={completeError}
           onDismissError={() => setCompleteError(null)}

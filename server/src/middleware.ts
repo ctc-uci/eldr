@@ -12,6 +12,16 @@ export const verifyToken = async (
   next: NextFunction
 ) => {
   try {
+    const requestPath = (req.originalUrl || req.url || req.path || "").split("?")[0];
+    if (
+      requestPath === "/users/check-email" ||
+      req.path === "/check-email" ||
+      // Pre-signup volunteer flow needs the role catalog before an account exists
+      (req.method === "GET" && requestPath === "/roles/public")
+    ) {
+      return next();
+    }
+
     const { cookies } = req;
     const token =
       cookies.accessToken ??

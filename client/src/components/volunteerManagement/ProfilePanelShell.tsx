@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import {
+  Avatar,
   Box,
   Breadcrumb,
   Button,
@@ -37,6 +38,7 @@ export const ProfileField = ({
 interface ProfilePanelShellProps {
   name: string;
   breadcrumbLabel?: string;
+  photoUrl?: string | null;
   onBack?: () => void;
   roles?: string[];
   children: ReactNode;
@@ -52,6 +54,7 @@ interface ProfilePanelShellProps {
 export const ProfilePanelShell = ({
   name,
   breadcrumbLabel = "Volunteer Profile",
+  photoUrl,
   onBack,
   roles,
   children,
@@ -77,6 +80,10 @@ export const ProfilePanelShell = ({
     </Breadcrumb.Root>
 
     <Flex align="center" mb={4} gap={3}>
+      <Avatar.Root size="lg">
+        <Avatar.Fallback name={name} />
+        <Avatar.Image src={photoUrl || undefined} />
+      </Avatar.Root>
       <Heading size="xl" fontWeight="bold">{name}</Heading>
       {isEditing && (
         <Flex
@@ -114,10 +121,10 @@ export const ProfilePanelShell = ({
       {isEditing ? (
         <Button
           size="sm"
-          bg="#002992"
+          bg="brand.navy"
           color="white"
           fontFamily="heading"
-          _hover={{ bg: "#001E6C" }}
+          _hover={{ bg: "brand.navyHover" }}
           gap={2}
           onClick={onSave}
         >
@@ -128,10 +135,10 @@ export const ProfilePanelShell = ({
         <Button
           type="button"
           size="sm"
-          bg="#002992"
+          bg="brand.navy"
           color="white"
           fontFamily="heading"
-          _hover={{ bg: "#001E6C" }}
+          _hover={{ bg: "brand.navyHover" }}
           gap={2}
           onClick={onEditToggle}
         >

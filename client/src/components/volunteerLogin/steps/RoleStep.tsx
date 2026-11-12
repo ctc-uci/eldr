@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Box,
-  Button,
   Select,
   Flex,
   Heading,
@@ -11,29 +10,60 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 
-import { LuArrowRight, LuChevronDown } from "react-icons/lu";
+import { LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
-const RoleStep = ({ onNext }: Props) => {
+const DEFAULT_ROLES = ["Volunteer", "Law Student", "Paralegal", "Attorney"];
+
+const RoleStep = ({ onNext, onBack }: Props) => {
+  const { backend } = useBackendContext();
+  const [roles, setRoles] = useState<string[]>(DEFAULT_ROLES);
   const [selected, setSelected] = useState<string>(
     () => loadDraft()?.roleLabel ?? ""
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const collection = createListCollection({
-      items: [
-        "Volunteer",
-        "Law Student",
-        "Paralegal",
-        "Attorney",
-      ],
-    })
+  useEffect(() => {
+    let active = true;
+    const fetchRoles = async () => {
+      try {
+        // Applicants are not signed in yet, so use the public catalog endpoint.
+        const res = await backend.get<
+          Array<{ id: number; roleName?: string; name?: string; role_name?: string }>
+        >("/roles/public");
+        if (!active) return;
+        const fetchedNames = (res.data || [])
+          .map((r) => r.roleName || r.name || r.role_name || "")
+          .filter(Boolean);
+        if (fetchedNames.length > 0) {
+          setRoles(fetchedNames);
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles:", err);
+      }
+    };
+    fetchRoles();
+    return () => {
+      active = false;
+    };
+  }, [backend]);
+
+  const collection = useMemo(
+    () =>
+      createListCollection({
+        items: roles,
+      }),
+    [roles]
+  );
 
   const handleContinue = () => {
     setErrorMsg(null);
@@ -68,9 +98,9 @@ const RoleStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
+          px={{ base: "16px", md: "24px" }}
         >
+          <TopBackButton onClick={onBack} />
         </Flex>
 
         <Flex
@@ -205,36 +235,13 @@ const RoleStep = ({ onNext }: Props) => {
               </Box>
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
+            <StepNavButtons
+              onBack={onBack}
+              onContinue={handleContinue}
               w="30vw"
               minW="320px"
               maxW="460px"
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "16px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5", 
-                _active: {
-                  bg: "black", 
-                  color: "white",
-                },
-              }}
-              position="relative"
-              px="20px"
-              onClick={handleContinue}
-            >
-              <Box w="100%" textAlign="center">
-                Continue
-              </Box>
-              <Box position="absolute" right="12px">
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            />
 
           </Flex>
         </Flex>

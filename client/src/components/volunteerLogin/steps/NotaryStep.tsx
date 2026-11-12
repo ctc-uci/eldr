@@ -11,22 +11,27 @@ import {
   useListCollection,
 } from "@chakra-ui/react";
 
-import { LuArrowRight, LuChevronDown } from "react-icons/lu";
+import { LuChevronDown } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { TopBackButton, StepNavButtons } from "../NavigationButtons";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
-const NOTARY_STATUSES = ["Active Notary", "Non-Active (Not a Notary)"];
+const NOTARY_STATUSES = ["Yes (active)", "Yes (inactive)", "No"];
 
-const NotaryStep = ({ onNext }: Props) => {
+const NotaryStep = ({ onNext, onBack }: Props) => {
   const [selected, setSelected] = useState<string>(() => {
-    const n = loadDraft()?.isNotary;
-    if (n === true) return "Active Notary";
-    if (n === false) return "Non-Active (Not a Notary)";
+    const draft = loadDraft();
+    if (draft?.notaryStatus === "active") return "Yes (active)";
+    if (draft?.notaryStatus === "inactive") return "Yes (inactive)";
+    if (draft?.notaryStatus === "no") return "No";
+    if (draft?.isNotary === true) return "Yes (active)";
+    if (draft?.isNotary === false) return "No";
     return "";
   });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -37,18 +42,30 @@ const NotaryStep = ({ onNext }: Props) => {
       item.toLowerCase().includes(inputValue.toLowerCase()),
   });
 
-  const isNotary = useMemo(() => selected === "Active Notary", [selected]);
-
   const handleContinue = () => {
     setErrorMsg(null);
 
     if (!selected) {
-      saveDraft({ isNotary: null });
+      saveDraft({ isNotary: null, notaryStatus: null });
       onNext();
       return;
     }
 
-    saveDraft({ isNotary: isNotary });
+    let status: "active" | "inactive" | "no" | null = null;
+    let isNotary: boolean | null = null;
+
+    if (selected === "Yes (active)") {
+      status = "active";
+      isNotary = true;
+    } else if (selected === "Yes (inactive)") {
+      status = "inactive";
+      isNotary = false;
+    } else if (selected === "No") {
+      status = "no";
+      isNotary = false;
+    }
+
+    saveDraft({ isNotary, notaryStatus: status });
     onNext();
   };
 
@@ -72,9 +89,9 @@ const NotaryStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
+          px={{ base: "16px", md: "24px" }}
         >
+          <TopBackButton onClick={onBack} />
         </Flex>
 
         <Flex
@@ -106,7 +123,7 @@ const NotaryStep = ({ onNext }: Props) => {
                 fontSize={{ base: "14px", md: "16px", lg: "20px" }}
                 color="gray.600"
               >
-                Please indicate whether or not you are an active notary.
+                Please indicate whether or not you are a notary.
               </Text>
             </Box>
           </Flex>
@@ -161,7 +178,7 @@ const NotaryStep = ({ onNext }: Props) => {
                 color="black"
                 mb="6px"
               >
-                Notary Status
+                Are you a notary?
               </Text>
 
               <Box position="relative">
@@ -208,7 +225,7 @@ const NotaryStep = ({ onNext }: Props) => {
                       fontSize="14px"
                       _hover={{ bg: "gray.50" }}
                     >
-                      {item === "Active Notary" ? "Active" : "Inactive"}
+                      <Select.ItemText>{item}</Select.ItemText>
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -217,36 +234,13 @@ const NotaryStep = ({ onNext }: Props) => {
               </Box>
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
+            <StepNavButtons
+              onBack={onBack}
+              onContinue={handleContinue}
               w="30vw"
               minW="320px"
               maxW="460px"
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "16px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5", 
-                _active: {
-                  bg: "black", 
-                  color: "white",
-                },
-              }}
-              position="relative"
-              px="20px"
-              onClick={handleContinue}
-            >
-              <Box w="100%" textAlign="center">
-                Continue
-              </Box>
-              <Box position="absolute" right="12px">
-                <LuArrowRight size={16} />
-              </Box>
-            </Button>
+            />
 
           </Flex>
         </Flex>

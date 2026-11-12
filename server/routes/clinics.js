@@ -5,7 +5,8 @@ import {
   removeAttendee,
   updateCalendarEvent,
 } from "@/common/calendar";
-import { keysToCamel } from "@/common/utils";
+import { keysToCamel, normalizeProficiency } from "@/common/utils";
+import { registerWorkshopTypeAssignmentRoutes } from "@/common/workshopTypeAssignments";
 import { db } from "@/db/db-pgp";
 import { verifyRole } from "@/middleware";
 import { Router } from "express";
@@ -68,11 +69,6 @@ async function saveGoogleEventId(clinicId, googleEventId) {
 }
 
 const allowedLocationTypes = ["in-person", "hybrid", "online"];
-const allowedClinicTypes = [
-  "Estate Planning",
-  "Limited Conservatorship",
-  "Probate Note Clearing",
-];
 
 // Create a workshop
 clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
@@ -103,12 +99,11 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
       });
     }
 
-    if (type && !allowedClinicTypes.includes(type)) {
-      return res.status(400).json({
-        message:
-          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
-      });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Workshop name is required" });
     }
+
+    const normalizedType = type && typeof type === "string" && type.trim() ? type.trim() : null;
 
     const clinic = await db.query(
       `INSERT INTO clinics (name, description, start_time, end_time, date, min_attendees, capacity, max_target_roles, parking, address, city, state, zip, meeting_link, location_type, type)
@@ -129,7 +124,7 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
         zip,
         meeting_link,
         location_type,
-        type,
+        normalizedType,
       ]
     );
 
@@ -143,7 +138,9 @@ clinicsRouter.post("/", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(created));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -153,7 +150,9 @@ clinicsRouter.get("/", verifyRole("volunteer"), async (req, res) => {
     const clinics = await db.query("SELECT * FROM clinics");
     res.status(200).json(keysToCamel(clinics));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -214,7 +213,9 @@ clinicsRouter.get("/search", verifyRole("volunteer"), async (req, res) => {
     );
     res.status(200).json(keysToCamel(clinics));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -231,8 +232,7 @@ clinicsRouter.get("/with-languages", async (req, res) => {
           json_agg(
             json_build_object(
               'id', l.id,
-              'language', l.language,
-              'proficiency', wl.proficiency
+              'language', l.language
             )
             ORDER BY l.language
           ) FILTER (WHERE l.id IS NOT NULL),
@@ -260,7 +260,8 @@ clinicsRouter.get("/with-languages", async (req, res) => {
 
     res.status(200).json(payload);
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error("[ERROR in /with-languages]:", e);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -274,7 +275,9 @@ clinicsRouter.get("/:id", verifyRole("volunteer"), async (req, res) => {
     }
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (e) {
-    res.status(500).send(e.message);
+    console.error(e);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -308,12 +311,11 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
       });
     }
 
-    if (type && !allowedClinicTypes.includes(type)) {
-      return res.status(400).json({
-        message:
-          "Invalid type. Must be 'Estate Planning', 'Limited Conservatorship', or 'Probate Note Clearing'.",
-      });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Workshop name is required" });
     }
+
+    const normalizedType = type && typeof type === "string" && type.trim() ? type.trim() : null;
 
     const clinic = await db.query(
       `UPDATE clinics SET
@@ -350,7 +352,7 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
         zip,
         meeting_link,
         location_type,
-        type,
+        normalizedType,
         id,
       ]
     );
@@ -390,7 +392,9 @@ clinicsRouter.put("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -412,7 +416,9 @@ clinicsRouter.delete("/:id", verifyRole("staff"), async (req, res) => {
 
     res.status(200).json(keysToCamel(clinic[0]));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -424,18 +430,46 @@ clinicsRouter.post(
   async (req, res) => {
     try {
       const { clinicId } = req.params;
-      const { languageId, proficiency } = req.body;
+      const {
+        languageId,
+        verbalProficiency,
+        writtenProficiency,
+        proficiency,
+      } = req.body;
 
-      const result = await db.query(
-        `INSERT INTO clinic_languages (clinic_id, language_id, proficiency)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-        [clinicId, languageId, proficiency]
+      const verbal = normalizeProficiency(
+        verbalProficiency ?? req.body.verbal_proficiency ?? proficiency
       );
+      const written = normalizeProficiency(
+        writtenProficiency ?? req.body.written_proficiency ?? proficiency
+      );
+
+      let result;
+      try {
+        result = await db.query(
+          `INSERT INTO clinic_languages (clinic_id, language_id, verbal_proficiency, written_proficiency)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+          [clinicId, languageId, verbal, written]
+        );
+      } catch (insertErr) {
+        if (insertErr.message && insertErr.message.includes("verbal_proficiency")) {
+          result = await db.query(
+            `INSERT INTO clinic_languages (clinic_id, language_id)
+           VALUES ($1, $2)
+           RETURNING *`,
+            [clinicId, languageId]
+          );
+        } else {
+          throw insertErr;
+        }
+      }
 
       res.status(201).json(keysToCamel(result[0]));
     } catch (e) {
-      res.status(500).send(e.message);
+      console.error(e);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -462,7 +496,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(result[0]));
     } catch (e) {
-      res.status(500).send(e.message);
+      console.error(e);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -476,7 +512,7 @@ clinicsRouter.get(
       const { clinicId } = req.params;
 
       const languages = await db.query(
-        `SELECT l.*, wl.proficiency
+        `SELECT l.*
        FROM languages l
        JOIN clinic_languages wl ON wl.language_id = l.id
        WHERE wl.clinic_id = $1`,
@@ -485,7 +521,8 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(languages));
     } catch (e) {
-      res.status(500).send(e.message);
+      console.error("[ERROR in /:clinicId/languages]:", e);
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -538,7 +575,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -562,11 +601,9 @@ clinicsRouter.post(
           caller?.role === "volunteer" &&
           String(caller.id) !== String(volunteerId)
         ) {
-          return res
-            .status(403)
-            .json({
-              message: "Forbidden: cannot register for another volunteer",
-            });
+          return res.status(403).json({
+            message: "Forbidden: cannot register for another volunteer",
+          });
         }
       }
 
@@ -679,7 +716,9 @@ clinicsRouter.post(
         );
       }
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -702,12 +741,10 @@ clinicsRouter.delete(
           caller?.role === "volunteer" &&
           String(caller.id) !== String(volunteerId)
         ) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "Forbidden: cannot cancel registration for another volunteer",
-            });
+          return res.status(403).json({
+            message:
+              "Forbidden: cannot cancel registration for another volunteer",
+          });
         }
       }
 
@@ -745,7 +782,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(data));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -774,7 +813,9 @@ clinicsRouter.patch(
 
       res.status(200).json(keysToCamel(data[0]));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -803,7 +844,9 @@ clinicsRouter.post(
 
       res.status(200).json(keysToCamel(newRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -828,7 +871,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -852,7 +897,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -879,7 +926,9 @@ clinicsRouter.post(
 
       res.status(201).json(keysToCamel(newRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -906,7 +955,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -930,10 +981,14 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
+
+registerWorkshopTypeAssignmentRoutes(clinicsRouter, "clinic");
 
 // Clinic Tags Routes
 // POST: assign a tag to a clinic
@@ -954,7 +1009,9 @@ clinicsRouter.post("/:clinicId/tags", verifyRole("staff"), async (req, res) => {
 
     res.status(201).json(keysToCamel(newRelationship));
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -980,7 +1037,9 @@ clinicsRouter.delete(
 
       res.status(200).json(keysToCamel(deletedRelationship));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -1003,7 +1062,9 @@ clinicsRouter.get(
 
       res.status(200).json(keysToCamel(listAll));
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 );

@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Avatar,
   Badge,
   Box,
   Button,
+  Checkbox,
   Field,
   Flex,
   Heading,
@@ -17,13 +18,331 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuFileText, LuPencil, LuTriangleAlert, LuX } from "react-icons/lu";
+import {
+  LuCheck,
+  LuChevronDown,
+  LuDownload,
+  LuExternalLink,
+  LuFileText,
+  LuPencil,
+  LuPlus,
+  LuTriangleAlert,
+  LuUpload,
+  LuX,
+} from "react-icons/lu";
 import InputMask from "react-input-mask";
 
 import {
   NOTARY_OPTIONS,
   PROFICIENCY_OPTIONS,
+  DEFAULT_PROFICIENCY,
 } from "./profileState.js";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+
+const ModernDropdown = ({
+  value,
+  options = [],
+  placeholder = "Select...",
+  onChange,
+  onAddCustom,
+  allowCustom = false,
+  flex = 1,
+  minW = 0,
+  "aria-label": ariaLabelProp,
+  ariaLabel,
+}) => {
+  const accessibleLabel = ariaLabel || ariaLabelProp;
+  const [open, setOpen] = useState(false);
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [customInput, setCustomInput] = useState("");
+  const containerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const listRef = useRef(null);
+  const customButtonRef = useRef(null);
+  const customInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) {
+      setIsAddingCustom(false);
+      setCustomInput("");
+      return;
+    }
+
+    const onPointerDown = (e) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+        setIsAddingCustom(false);
+        setCustomInput("");
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (isAddingCustom) {
+      setTimeout(() => customInputRef.current?.focus(), 50);
+    }
+  }, [isAddingCustom]);
+
+  const handleAddCustom = () => {
+    const trimmed = customInput.trim();
+    if (!trimmed) return;
+    onAddCustom?.(trimmed);
+    onChange(trimmed);
+    setCustomInput("");
+    setIsAddingCustom(false);
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  return (
+    <Box position="relative" ref={containerRef} flex={flex} minW={minW} w="100%">
+      <Flex
+        ref={triggerRef}
+        role="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={accessibleLabel}
+        tabIndex={0}
+        align="center"
+        justify="space-between"
+        border="1px solid"
+        borderColor={open ? "#3182CE" : "#E4E4E7"}
+        borderRadius="6px"
+        px="12px"
+        h="42px"
+        cursor="pointer"
+        bg="white"
+        userSelect="none"
+        gap="8px"
+        w="100%"
+        minW={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            setOpen(false);
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!open) {
+              setOpen(true);
+            } else {
+              const firstOption = listRef.current?.querySelector('[role="option"]');
+              firstOption?.focus();
+            }
+          }
+        }}
+        _hover={{ borderColor: open ? "#3182CE" : "#D4D4D8" }}
+        transition="border-color 0.15s ease"
+      >
+        <Text fontSize="14px" color={value ? "#27272A" : "#A1A1AA"} truncate>
+          {value || placeholder}
+        </Text>
+        <LuChevronDown
+          size={16}
+          color="#9CA3AF"
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            flexShrink: 0,
+          }}
+        />
+      </Flex>
+
+      {open && (
+        <Box
+          position="absolute"
+          top="calc(100% + 4px)"
+          left={0}
+          right={0}
+          bg="white"
+          border="1px solid"
+          borderColor="#E4E4E7"
+          borderRadius="6px"
+          boxShadow="lg"
+          zIndex={9999}
+          overflow="hidden"
+        >
+          <Box
+            ref={listRef}
+            role="listbox"
+            aria-label={accessibleLabel}
+            maxH="220px"
+            overflowY="auto"
+            py={1}
+          >
+            {options.map((opt) => (
+              <Flex
+                key={opt}
+                role="option"
+                aria-selected={opt === value}
+                tabIndex={0}
+                px="12px"
+                py="9px"
+                cursor="pointer"
+                align="center"
+                bg={opt === value ? "#F4F4F5" : "white"}
+                fontWeight={opt === value ? "semibold" : "normal"}
+                _hover={{ bg: "#F4F4F5" }}
+                _focus={{ bg: "#F4F4F5", outline: "none" }}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onChange(opt);
+                    setOpen(false);
+                    triggerRef.current?.focus();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    setOpen(false);
+                    triggerRef.current?.focus();
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const next = e.currentTarget.nextElementSibling;
+                    if (next && next.focus) {
+                      next.focus();
+                    } else {
+                      customButtonRef.current?.focus();
+                    }
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const prev = e.currentTarget.previousElementSibling;
+                    if (prev && prev.focus) {
+                      prev.focus();
+                    } else {
+                      triggerRef.current?.focus();
+                    }
+                  }
+                }}
+              >
+                <Text fontSize="14px" color="#27272A" truncate>
+                  {opt}
+                </Text>
+              </Flex>
+            ))}
+          </Box>
+
+          {allowCustom && (
+            <Box borderTop="1px solid #E4E4E7" bg="#FAFAFA">
+              {!isAddingCustom ? (
+                <Button
+                  ref={customButtonRef}
+                  type="button"
+                  variant="ghost"
+                  w="100%"
+                  justifyContent="flex-start"
+                  gap="8px"
+                  px="12px"
+                  py="8px"
+                  h="auto"
+                  borderRadius="0"
+                  color="brand.navy"
+                  fontWeight="semibold"
+                  fontSize="13px"
+                  _hover={{ bg: "#EDF2F7" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAddingCustom(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setOpen(false);
+                      triggerRef.current?.focus();
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      const opts = listRef.current?.querySelectorAll('[role="option"]');
+                      const lastOption = opts?.[opts.length - 1];
+                      if (lastOption?.focus) {
+                        lastOption.focus();
+                      } else {
+                        triggerRef.current?.focus();
+                      }
+                    }
+                  }}
+                >
+                  <LuPlus size={15} />
+                  <Text as="span" fontSize="13px" fontWeight="semibold">
+                    Add other language...
+                  </Text>
+                </Button>
+              ) : (
+                <Flex
+                  p="8px 12px"
+                  gap="6px"
+                  align="center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Input
+                    ref={customInputRef}
+                    size="sm"
+                    h="30px"
+                    bg="white"
+                    borderColor="#CBD5E0"
+                    fontSize="13px"
+                    placeholder="Type language..."
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustom();
+                      } else if (e.key === "Escape") {
+                        setIsAddingCustom(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="xs"
+                    h="30px"
+                    px="10px"
+                    bg="brand.navy"
+                    color="white"
+                    fontWeight="semibold"
+                    _hover={{ bg: "brand.navyHover" }}
+                    onClick={handleAddCustom}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    type="button"
+                    size="xs"
+                    h="30px"
+                    variant="ghost"
+                    color="gray.600"
+                    onClick={() => {
+                      setIsAddingCustom(false);
+                      setCustomInput("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Flex>
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 
 const FieldLabel = ({ children }) => (
@@ -38,8 +357,6 @@ const ReadValue = ({ children, muted }) => (
   </Text>
 );
 
-const editBlue = "#3B6F8F";
-
 export const ProfileInformation = ({
   data,
   setData,
@@ -49,14 +366,116 @@ export const ProfileInformation = ({
   onSave,
   onCancel,
   onPhotoSelect,
+  onHandbookUpload,
+  isUploadingHandbook = false,
+  handbookError = "",
   isSaving = false,
   photoError = "",
   errorMessage = "",
   languageOptions = [],
   areaOptions = [],
 }) => {
+  const roleLabel = (data.occupation || data.role || "").toLowerCase();
+  const isLawStudent = roleLabel.includes("law student");
+  const isAttorney = roleLabel.includes("attorney");
+
+  const { backend } = useBackendContext();
+  const [templateUrl, setTemplateUrl] = useState("/templates/volunteer_handbook_packet.pdf");
+
+  useEffect(() => {
+    backend
+      ?.get?.("/users/handbook/template-url")
+      .then((res) => {
+        if (res.data?.downloadUrl) setTemplateUrl(res.data.downloadUrl);
+      })
+      .catch(() => {});
+  }, [backend]);
+
   const photoInputRef = useRef(null);
-  const defaultLanguage = languageOptions[0] ?? "";
+  const handbookFileInputRef = useRef(null);
+  const [isResolvingHandbookUrl, setIsResolvingHandbookUrl] = useState(false);
+  const [viewError, setViewError] = useState("");
+
+  const handleViewHandbook = async () => {
+    setViewError("");
+    let opened = false;
+    let placeholder = null;
+
+    if (data.formLink) {
+      // Synchronously open a placeholder window to preserve transient user activation
+      placeholder = window.open("", "_blank");
+      setIsResolvingHandbookUrl(true);
+      try {
+        const resp = await backend.get("/users/document/view-url", {
+          params: { key: data.formLink },
+        });
+        if (resp.data?.viewUrl) {
+          if (placeholder && !placeholder.closed) {
+            try {
+              placeholder.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            placeholder.location.href = resp.data.viewUrl;
+            opened = true;
+            return;
+          }
+          const win = window.open(resp.data.viewUrl, "_blank");
+          if (win && !win.closed) {
+            try {
+              win.opener = null;
+            } catch {
+              // Ignore cross-origin access restriction
+            }
+            opened = true;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to get fresh handbook view URL:", e);
+      } finally {
+        setIsResolvingHandbookUrl(false);
+        if (!opened && placeholder && !placeholder.closed) {
+          placeholder.close();
+        }
+      }
+    }
+    if (!opened && data.handbookUrl) {
+      const win = window.open(data.handbookUrl, "_blank");
+      if (win && !win.closed) {
+        try {
+          win.opener = null;
+        } catch {
+          // Ignore cross-origin access restriction
+        }
+        opened = true;
+        return;
+      }
+    }
+    if (!opened) {
+      setViewError("Failed to open handbook. If you have a popup blocker enabled, please allow popups for this site.");
+    }
+  };
+
+  useEffect(() => {
+    if (isUploadingHandbook) {
+      setViewError("");
+    }
+  }, [isUploadingHandbook]);
+
+  const handleHandbookInputChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file && onHandbookUpload) {
+      setViewError("");
+      onHandbookUpload(file);
+    }
+  };
+  const [localLanguageOptions, setLocalLanguageOptions] = useState(languageOptions);
+  useEffect(() => {
+    setLocalLanguageOptions(languageOptions);
+  }, [languageOptions]);
+  const defaultLanguage = localLanguageOptions[0] ?? "";
 
   const handlePhotoInputChange = (event) => {
     const file = event.target.files?.[0];
@@ -90,7 +509,8 @@ export const ProfileInformation = ({
         {
           id: `lang-${Date.now()}`,
           language: defaultLanguage,
-          proficiency: PROFICIENCY_OPTIONS[0],
+          verbalProficiency: DEFAULT_PROFICIENCY,
+          writtenProficiency: DEFAULT_PROFICIENCY,
         },
       ],
     }));
@@ -155,33 +575,69 @@ export const ProfileInformation = ({
             ) : null}
           </HStack>
 
-          <HStack
-            gap={2}
-            px={2}
-            py={1}
-            borderRadius="2px"
-            borderWidth="1px"
-            borderColor="gray.300"
-            w="fit-content"
-            bg="white"
-          >
-            <LuFileText size={14} color="var(--chakra-colors-gray-600)" />
-            <Text fontSize="xs" color="gray.700">
-              Confidential Form Verified
-            </Text>
-          </HStack>
+          {data.isSignedConfidentiality ? (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="green.300"
+              w="fit-content"
+              bg="green.50"
+            >
+              <LuCheck size={14} color="var(--chakra-colors-green-700)" />
+              <Text fontSize="xs" fontWeight="semibold" color="green.800">
+                Confidential Form Verified
+              </Text>
+            </HStack>
+          ) : data.formReceived ? (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="skyBlue.200"
+              w="fit-content"
+              bg="skyBlue.100"
+            >
+              <LuFileText size={14} color="var(--chakra-colors-brand-navy)" />
+              <Text fontSize="xs" fontWeight="semibold" color="brand.navy">
+                Handbook Received — Pending Verification
+              </Text>
+            </HStack>
+          ) : (
+            <HStack
+              gap={2}
+              px={2.5}
+              py={1}
+              borderRadius="4px"
+              borderWidth="1px"
+              borderColor="orange.300"
+              w="fit-content"
+              bg="orange.50"
+            >
+              <LuTriangleAlert size={14} color="var(--chakra-colors-orange-600)" />
+              <Text fontSize="xs" fontWeight="semibold" color="orange.800">
+                Handbook Not Received
+              </Text>
+            </HStack>
+          )}
         </Box>
 
         <HStack gap={2} flexShrink={0} pt={{ base: 0, md: 1 }}>
           {isEditing ? (
             <>
               <Button
-                bg={editBlue}
+                bg="brand.navy"
                 color="white"
                 size="sm"
                 minW="120px"
                 borderRadius="md"
-                _hover={{ bg: "#2B6CB0" }}
+                fontFamily="heading"
+                fontWeight="600"
+                _hover={{ bg: "brand.navyHover" }}
                 onClick={onSave}
                 loading={isSaving}
                 disabled={isSaving}
@@ -192,10 +648,12 @@ export const ProfileInformation = ({
                 variant="outline"
                 size="sm"
                 borderRadius="md"
-                bg="gray.100"
-                borderColor="gray.200"
+                bg="white"
+                borderColor="#E4E4E7"
                 color="gray.800"
-                _hover={{ bg: "gray.200" }}
+                fontFamily="heading"
+                fontWeight="500"
+                _hover={{ bg: "#F4F4F5" }}
                 onClick={onCancel}
                 disabled={isSaving}
               >
@@ -204,11 +662,13 @@ export const ProfileInformation = ({
             </>
           ) : (
             <Button
-              bg={editBlue}
+              bg="brand.navy"
               color="white"
               size="sm"
               borderRadius="md"
-              _hover={{ bg: "#2B6CB0" }}
+              fontFamily="heading"
+              fontWeight="600"
+              _hover={{ bg: "brand.navyHover" }}
               onClick={onEdit}
             >
               <HStack gap={2}>
@@ -221,6 +681,100 @@ export const ProfileInformation = ({
       </Flex>
 
       <VStack gap={8} align="stretch">
+        {/* Volunteer Handbook & Confidentiality Packet Section */}
+        <Box
+          p={5}
+          borderWidth="1px"
+          borderColor="#E4E4E7"
+          borderRadius="lg"
+          bg="#FAFAFA"
+        >
+          <Flex
+            justify="space-between"
+            align={{ base: "start", md: "center" }}
+            direction={{ base: "column", md: "row" }}
+            gap={4}
+          >
+            <Box>
+              <HStack gap={2} mb={1}>
+                <LuFileText size={18} color="var(--chakra-colors-brand-navy)" />
+                <Text fontWeight="semibold" fontSize="md" color="gray.900">
+                  Volunteer Handbook &amp; Confidentiality Form
+                </Text>
+              </HStack>
+              <Text fontSize="xs" color="gray.600">
+                Covers Handbook Acknowledgment, Emergency Contact, and Confidentiality Waiver.
+              </Text>
+              {data.handbookUploadedAt && (
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Last uploaded: {new Date(data.handbookUploadedAt).toLocaleDateString()}
+                </Text>
+              )}
+            </Box>
+
+            <HStack gap={2} flexWrap="wrap">
+              <Button
+                as="a"
+                href={templateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download="ELDR_Volunteer_Handbook_Packet.pdf"
+                size="sm"
+                variant="outline"
+                borderColor="gray.300"
+                bg="white"
+                gap={1.5}
+              >
+                <LuDownload size={14} />
+                Download Form
+              </Button>
+
+              {(data.formLink || data.handbookUrl) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  borderColor="gray.300"
+                  bg="white"
+                  gap={1.5}
+                  onClick={handleViewHandbook}
+                  loading={isResolvingHandbookUrl}
+                  disabled={isResolvingHandbookUrl}
+                >
+                  <LuExternalLink size={14} />
+                  View Uploaded PDF
+                </Button>
+              )}
+
+              <input
+                ref={handbookFileInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                hidden
+                onChange={handleHandbookInputChange}
+              />
+
+              <Button
+                size="sm"
+                bg="brand.navy"
+                color="white"
+                _hover={{ bg: "brand.navyHover" }}
+                gap={1.5}
+                onClick={() => handbookFileInputRef.current?.click()}
+                loading={isUploadingHandbook}
+                disabled={isUploadingHandbook}
+              >
+                <LuUpload size={14} />
+                {data.formReceived ? "Upload New Version" : "Upload Signed PDF"}
+              </Button>
+            </HStack>
+          </Flex>
+
+          {(handbookError || viewError) && (
+            <Text fontSize="xs" color="red.600" mt={2}>
+              {handbookError || viewError}
+            </Text>
+          )}
+        </Box>
         {/* Personal Info — 3 columns: Photo | First+Phone | Last+Email */}
         <Box>
           <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
@@ -266,8 +820,10 @@ export const ProfileInformation = ({
                     <Button
                       size="xs"
                       variant="solid"
-                      bg={editBlue}
+                      bg="brand.navy"
                       color="white"
+                      fontWeight="semibold"
+                      _hover={{ bg: "brand.navyHover" }}
                       onClick={() => photoInputRef.current?.click()}
                       disabled={isSaving}
                     >
@@ -283,7 +839,7 @@ export const ProfileInformation = ({
               </VStack>
             </Box>
 
-            <VStack gap={8} align="stretch">
+            <VStack gap={6} align="stretch">
               <Box>
                 <FieldLabel>First Name</FieldLabel>
                 {isEditing ? (
@@ -298,12 +854,13 @@ export const ProfileInformation = ({
                   <ReadValue>{data.firstName}</ReadValue>
                 )}
               </Box>
+
               <Box>
-                <FieldLabel>Phone Number</FieldLabel>
+                <FieldLabel>Primary Phone</FieldLabel>
                 {isEditing ? (
                   <Field.Root>
                     <InputMask
-                      mask="(999) 999-9999" // can change mask if designer's input mask changes
+                      mask="(999) 999-9999"
                       value={data.phone ?? ""}
                       onChange={(e) => update({ phone: e.target.value })}
                     >
@@ -315,14 +872,51 @@ export const ProfileInformation = ({
                         />
                       )}
                     </InputMask>
+                    <Checkbox.Root
+                      checked={data.isPrimaryMobile}
+                      onCheckedChange={(e) => update({ isPrimaryMobile: !!e.checked })}
+                      colorPalette="blue"
+                      size="sm"
+                      mt={1.5}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                    </Checkbox.Root>
                   </Field.Root>
                 ) : (
-                  <ReadValue>{data.phone}</ReadValue>
+                  <HStack gap={2}>
+                    <ReadValue>{data.phone || "—"}</ReadValue>
+                    {data.isPrimaryMobile && (
+                      <Badge size="xs" bg="skyBlue.100" color="brand.navy" fontWeight="semibold">Mobile</Badge>
+                    )}
+                  </HStack>
+                )}
+              </Box>
+
+              <Box>
+                <FieldLabel>Permission to Text</FieldLabel>
+                {isEditing ? (
+                  <Checkbox.Root
+                    checked={data.canText}
+                    onCheckedChange={(e) => update({ canText: !!e.checked })}
+                    colorPalette="blue"
+                    size="sm"
+                    mt={1}
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label fontSize="xs" color="gray.700">
+                      Permission to text (applies to callable/textable numbers)
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                ) : (
+                  <ReadValue>{data.canText ? "Yes" : "No"}</ReadValue>
                 )}
               </Box>
             </VStack>
 
-            <VStack gap={8} align="stretch">
+            <VStack gap={6} align="stretch">
               <Box>
                 <FieldLabel>Last Name</FieldLabel>
                 {isEditing ? (
@@ -337,6 +931,46 @@ export const ProfileInformation = ({
                   <ReadValue>{data.lastName}</ReadValue>
                 )}
               </Box>
+
+              <Box>
+                <FieldLabel>Secondary Phone (Optional)</FieldLabel>
+                {isEditing ? (
+                  <Field.Root>
+                    <InputMask
+                      mask="(999) 999-9999"
+                      value={data.secondaryPhone ?? ""}
+                      onChange={(e) => update({ secondaryPhone: e.target.value })}
+                    >
+                      {(inputProps) => (
+                        <Input
+                          {...inputProps}
+                          size="sm"
+                          placeholder="(___) ___-____"
+                        />
+                      )}
+                    </InputMask>
+                    <Checkbox.Root
+                      checked={data.isSecondaryMobile}
+                      onCheckedChange={(e) => update({ isSecondaryMobile: !!e.checked })}
+                      colorPalette="blue"
+                      size="sm"
+                      mt={1.5}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label fontSize="xs" color="gray.600">Mobile number</Checkbox.Label>
+                    </Checkbox.Root>
+                  </Field.Root>
+                ) : (
+                  <HStack gap={2}>
+                    <ReadValue>{data.secondaryPhone || "—"}</ReadValue>
+                    {data.isSecondaryMobile && (
+                      <Badge size="xs" bg="skyBlue.100" color="brand.navy" fontWeight="semibold">Mobile</Badge>
+                    )}
+                  </HStack>
+                )}
+              </Box>
+
               <Box>
                 <FieldLabel>Email</FieldLabel>
                 {isEditing ? (
@@ -361,9 +995,26 @@ export const ProfileInformation = ({
           <Text fontWeight="semibold" fontSize="lg" mb={4} color="gray.900">
             Occupation & Credentials
           </Text>
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={12}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6} mb={8}>
             <Box>
-              <FieldLabel>Notary Status</FieldLabel>
+              <FieldLabel>Employer or School</FieldLabel>
+              <Text fontSize="xs" color="gray.500" mb={1}>Current workplace or school</Text>
+              {isEditing ? (
+                <Field.Root>
+                  <Input
+                    size="sm"
+                    placeholder="e.g. UC Irvine, Legal Aid"
+                    value={data.affiliatedEmployer ?? ""}
+                    onChange={(e) => update({ affiliatedEmployer: e.target.value })}
+                  />
+                </Field.Root>
+              ) : (
+                <ReadValue>{data.affiliatedEmployer || "—"}</ReadValue>
+              )}
+            </Box>
+
+            <Box>
+              <FieldLabel>Are you a notary?</FieldLabel>
               {isEditing ? (
                 <NativeSelect.Root size="sm">
                   <NativeSelect.Field
@@ -379,28 +1030,88 @@ export const ProfileInformation = ({
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
               ) : (
-                <ReadValue>{data.notary}</ReadValue>
+                <ReadValue>{data.notary || "—"}</ReadValue>
               )}
             </Box>
+
             <Box>
               <FieldLabel>Occupation</FieldLabel>
               <ReadValue>{data.occupation}</ReadValue>
             </Box>
-            <Box>
-              <FieldLabel>Law School Year</FieldLabel>
-              <ReadValue muted>{data.lawSchoolYear}</ReadValue>
-            </Box>
+
+            {/* Show Law School Year only if role is Law Student */}
+            {isLawStudent && (
+              <Box>
+                <FieldLabel>Law School Year</FieldLabel>
+                {isEditing ? (
+                  <NativeSelect.Root size="sm">
+                    <NativeSelect.Field
+                      value={data.lawSchoolYear || ""}
+                      onChange={(e) => update({ lawSchoolYear: e.target.value })}
+                    >
+                      <option value="">Select Year</option>
+                      {["1L", "2L", "3L", "Graduate"].map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                ) : (
+                  <ReadValue>{data.lawSchoolYear || "—"}</ReadValue>
+                )}
+              </Box>
+            )}
           </SimpleGrid>
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
-            <Box>
-              <FieldLabel>State Bar Certificate State</FieldLabel>
-              <ReadValue muted>{data.stateBarState}</ReadValue>
+
+          {/* California Bar Admission for Attorneys */}
+          {isAttorney && (
+            <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md" bg="gray.50" maxW="560px">
+              {isEditing ? (
+                <>
+                  <Checkbox.Root
+                    checked={data.isCaliforniaLicensed}
+                    onCheckedChange={(e) => update({ isCaliforniaLicensed: !!e.checked })}
+                    colorPalette="blue"
+                    size="sm"
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label fontSize="sm" fontWeight="semibold" color="gray.800">
+                      Licensed to practice law in California?
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                  {data.isCaliforniaLicensed && (
+                    <Box mt={3} maxW="280px">
+                      <FieldLabel>California State Bar Number</FieldLabel>
+                      <Input
+                        size="sm"
+                        bg="white"
+                        borderColor="gray.300"
+                        placeholder="Enter bar number"
+                        value={data.stateBarNumber || ""}
+                        onChange={(e) => update({ stateBarNumber: e.target.value })}
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <SimpleGrid columns={2} gap={4}>
+                  <Box>
+                    <FieldLabel>Licensed in California?</FieldLabel>
+                    <ReadValue>{data.isCaliforniaLicensed ? "Yes" : "No"}</ReadValue>
+                  </Box>
+                  {data.isCaliforniaLicensed && (
+                    <Box>
+                      <FieldLabel>State Bar Number</FieldLabel>
+                      <ReadValue>{data.stateBarNumber || "—"}</ReadValue>
+                    </Box>
+                  )}
+                </SimpleGrid>
+              )}
             </Box>
-            <Box>
-              <FieldLabel>State Bar Number</FieldLabel>
-              <ReadValue muted>{data.stateBarNumber}</ReadValue>
-            </Box>
-          </SimpleGrid>
+          )}
         </Box>
 
         {/* Experience: Languages + Listed Experience */}
@@ -409,7 +1120,7 @@ export const ProfileInformation = ({
             Experience
           </Text>
           <Flex direction={{ base: "column", md: "row" }} gap={6} align="flex-start" minW={0}>
-          <Box flex="1" minW={0} w="100%">
+          <Box flex={{ base: "1", md: "1.75" }} minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Languages
             </Text>
@@ -421,7 +1132,7 @@ export const ProfileInformation = ({
             >
             {isEditing ? (
               <Text fontSize="sm" color="#A1A1AA" mb={3} fontWeight="normal">
-                Select the languages and your proficiency level.
+                Select the languages and your verbal and written proficiency levels.
               </Text>
             ) : null}
             {!isEditing && data.languages.length === 0 ? (
@@ -430,87 +1141,167 @@ export const ProfileInformation = ({
               </Text>
             ) : (
             <VStack gap={2} align="stretch">
+              {isEditing && data.languages.length > 0 ? (
+                <Flex gap={2} mb={1} px={1} align="center" display={{ base: "none", md: "flex" }}>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1.2}>
+                    Language
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1}>
+                    Verbal
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A" flex={1}>
+                    Written
+                  </Text>
+                  <Box w="36px" flexShrink={0} />
+                </Flex>
+              ) : null}
+              {!isEditing && data.languages.length > 0 ? (
+                <SimpleGrid columns={{ base: 1, sm: 3 }} gap={2} mb={1} px={1}>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Language
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Verbal
+                  </Text>
+                  <Text fontSize="12px" fontWeight="semibold" color="#71717A">
+                    Written
+                  </Text>
+                </SimpleGrid>
+              ) : null}
               {data.languages.map((row) =>
                 isEditing ? (
-                  <Flex key={row.id} gap={2} align="center" minW={0}>
-                    <NativeSelect.Root size="sm" flex={1} minW={0}>
-                      <NativeSelect.Field
+                  <Flex
+                    key={row.id}
+                    direction={{ base: "column", md: "row" }}
+                    gap={2}
+                    align={{ base: "stretch", md: "center" }}
+                    minW={0}
+                    p={{ base: 3, md: 0 }}
+                    bg={{ base: "#F9FAFB", md: "transparent" }}
+                    border={{ base: "1px solid #E4E4E7", md: "none" }}
+                    borderRadius={{ base: "8px", md: "0" }}
+                  >
+                    <Box flex={{ base: "none", md: 1.2 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Language
+                      </Text>
+                      <ModernDropdown
                         value={row.language}
-                        onChange={(e) =>
+                        options={localLanguageOptions}
+                        placeholder="Select language"
+                        allowCustom={true}
+                        onAddCustom={(newLang) => {
+                          if (!localLanguageOptions.includes(newLang)) {
+                            setLocalLanguageOptions((prev) => [...prev, newLang]);
+                          }
+                        }}
+                        aria-label={`Language${row.language ? `: ${row.language}` : ""}`}
+                        onChange={(val) =>
                           updateLanguage(row.id, {
-                            language: e.target.value,
+                            language: val,
                           })
                         }
-                      >
-                        {languageOptions.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                    <NativeSelect.Root size="sm" flex={1} minW={0}>
-                      <NativeSelect.Field
-                        value={row.proficiency}
-                        onChange={(e) =>
+                      />
+                    </Box>
+                    <Box flex={{ base: "none", md: 1 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Verbal
+                      </Text>
+                      <ModernDropdown
+                        value={row.verbalProficiency ?? DEFAULT_PROFICIENCY}
+                        options={PROFICIENCY_OPTIONS}
+                        aria-label={`Verbal proficiency${row.language ? ` for ${row.language}` : ""}`}
+                        onChange={(val) =>
                           updateLanguage(row.id, {
-                            proficiency: e.target.value,
+                            verbalProficiency: val,
                           })
                         }
+                      />
+                    </Box>
+                    <Box flex={{ base: "none", md: 1 }}>
+                      <Text display={{ base: "block", md: "none" }} fontSize="12px" fontWeight="semibold" color="#71717A" mb={1}>
+                        Written
+                      </Text>
+                      <ModernDropdown
+                        value={row.writtenProficiency ?? DEFAULT_PROFICIENCY}
+                        options={PROFICIENCY_OPTIONS}
+                        aria-label={`Written proficiency${row.language ? ` for ${row.language}` : ""}`}
+                        onChange={(val) =>
+                          updateLanguage(row.id, {
+                            writtenProficiency: val,
+                          })
+                        }
+                      />
+                    </Box>
+                    <Flex justify={{ base: "flex-end", md: "center" }} align="center">
+                      <IconButton
+                        aria-label={`Remove ${row.language}`}
+                        variant="ghost"
+                        size="sm"
+                        h="42px"
+                        w="36px"
+                        color="gray.400"
+                        _hover={{ bg: "#F4F4F5", color: "red.500" }}
+                        borderRadius="6px"
+                        flexShrink={0}
+                        onClick={() => removeLanguageRow(row.id)}
                       >
-                        {PROFICIENCY_OPTIONS.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                    <IconButton
-                      aria-label={`Remove ${row.language}`}
-                      variant="ghost"
-                      size="xs"
-                      color="gray.500"
-                      flexShrink={0}
-                      onClick={() => removeLanguageRow(row.id)}
-                    >
-                      <LuX size={14} />
-                    </IconButton>
+                        <LuX size={16} />
+                      </IconButton>
+                    </Flex>
                   </Flex>
                 ) : (
                   <SimpleGrid
                     key={row.id}
-                    columns={2}
+                    columns={{ base: 1, sm: 3 }}
                     gap={2}
                     minChildWidth="0"
                   >
-                    <Field.Root>
-                      <Input
-                        size="sm"
-                        readOnly
-                        value={row.language}
-                        bg="white"
-                        borderColor="gray.200"
-                        color="gray.900"
-                        cursor="default"
-                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                        _readOnly={{ opacity: 1, cursor: "default" }}
-                      />
-                    </Field.Root>
-                    <Field.Root>
-                      <Input
-                        size="sm"
-                        readOnly
-                        value={row.proficiency}
-                        bg="white"
-                        borderColor="gray.200"
-                        color="gray.900"
-                        cursor="default"
-                        _focus={{ borderColor: "gray.200", boxShadow: "none" }}
-                        _readOnly={{ opacity: 1, cursor: "default" }}
-                      />
-                    </Field.Root>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="#FAFAFA"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" fontWeight="medium" color="#27272A" truncate>
+                        {row.language}
+                      </Text>
+                    </Flex>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="white"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" color="#27272A" truncate>
+                        {row.verbalProficiency || "—"}
+                      </Text>
+                    </Flex>
+                    <Flex
+                      align="center"
+                      px="12px"
+                      h="42px"
+                      border="1px solid"
+                      borderColor="#E4E4E7"
+                      borderRadius="6px"
+                      bg="white"
+                      overflow="hidden"
+                      minW={0}
+                    >
+                      <Text fontSize="14px" color="#27272A" truncate>
+                        {row.writtenProficiency || "—"}
+                      </Text>
+                    </Flex>
                   </SimpleGrid>
                 ),
               )}
@@ -518,13 +1309,17 @@ export const ProfileInformation = ({
             )}
             {isEditing ? (
               <Button
-                variant="plain"
+                variant="outline"
                 size="sm"
-                colorPalette="blue"
+                borderColor="brand.navy"
+                color="brand.navy"
+                bg="white"
                 fontWeight="semibold"
+                fontFamily="heading"
+                _hover={{ bg: "#F0F7FF", borderColor: "brand.navyHover" }}
                 mt={3}
-                px={0}
-                h="auto"
+                h="36px"
+                borderRadius="6px"
                 onClick={addLanguageRow}
               >
                 + Add Language
@@ -533,7 +1328,7 @@ export const ProfileInformation = ({
             </Box>
           </Box>
 
-          <Box flex="1" minW={0} w="100%">
+          <Box flex={{ base: "1", md: "1" }} minW={0} w="100%">
             <Text fontWeight="semibold" fontSize="md" mb={1} color="gray.900">
               Listed Experience
             </Text>
@@ -545,7 +1340,7 @@ export const ProfileInformation = ({
                 placeholder="Enter listed experience."
                 _placeholder={{ color: "#A1A1AA" }}
                 minH="96px"
-                resize="none"
+                resize="vertical"
                 p={4}
                 bg="white"
                 borderWidth="1px"
@@ -561,11 +1356,13 @@ export const ProfileInformation = ({
                 p={4}
                 w="100%"
                 minW={0}
+                minH="96px"
                 bg="white"
                 borderWidth="1px"
                 borderColor="gray.200"
                 borderRadius="md"
-                overflow="hidden"
+                overflow="auto"
+                resize="vertical"
               >
                 <Text
                   fontSize="sm"

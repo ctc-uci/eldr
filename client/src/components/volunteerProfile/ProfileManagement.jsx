@@ -8,14 +8,24 @@ import { useAuthContext } from "@/contexts/hooks/useAuthContext";
 import { useBackendContext } from "@/contexts/hooks/useBackendContext";
 
 import {
+  uploadHandbookToS3,
+  validateHandbookFile,
+} from "@/utils/uploadHandbook";
+import {
   uploadProfilePictureToS3,
   validateProfilePictureFile,
 } from "@/utils/uploadProfilePicture";
 
 import { Preferences } from "./Preferences";
 import { ProfileInformation } from "./ProfileInformation";
-import { PROFICIENCY_OPTIONS, createInitialProfile } from "./profileState.js";
+import { createInitialProfile } from "./profileState.js";
 import { VolunteerActivity, prefetchVolunteerActivity } from "./VolunteerActivity";
+
+import {
+  normalizeProficiency,
+  DEFAULT_PROFICIENCY,
+  DEFAULT_TOP_LANGUAGES,
+} from "@eldr/shared";
 
 const PROFILE_TABS = [
   { value: "information", label: "Profile Information", icon: LuUser },
@@ -24,29 +34,8 @@ const PROFILE_TABS = [
 ];
 
 const VALID_SECTIONS = new Set(["information", "activity", "preferences"]);
-const DEFAULT_PROFICIENCY = PROFICIENCY_OPTIONS[0] ?? "Proficient";
-const toDisplayProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return DEFAULT_PROFICIENCY;
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "Native/Fluent";
-  }
-  if (normalized === "professional") return "Professional";
-  if (normalized === "proficient") return "Proficient";
-  return normalized
-    .split("/")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("/");
-};
-const toBackendProficiency = (value) => {
-  const normalized = normalizeText(value);
-  if (!normalized) return "proficient";
-  if (normalized === "native/fluent" || normalized === "native" || normalized === "fluent") {
-    return "native/fluent";
-  }
-  if (normalized === "professional") return "professional";
-  return "proficient";
-};
+const toDisplayProficiency = (value) => normalizeProficiency(value, DEFAULT_PROFICIENCY);
+const toBackendProficiency = (value) => toDisplayProficiency(value);
 const readFirst = (value) => (Array.isArray(value) ? value[0] : value);
 const normalizeText = (value) => value?.trim().toLowerCase();
 
@@ -112,13 +101,19 @@ export const ProfileManagement = () => {
 
         const volunteerResp = await backend.get(`/volunteers/${id}`);
         const volunteer = volunteerResp?.data?.[0];
-        const [languageCatalogResp, areaCatalogResp, volunteerLanguagesResp, volunteerAreasResp] =
-          await Promise.all([
-            backend.get("/languages"),
-            backend.get("/areas-of-practice"),
-            backend.get(`/volunteers/${id}/languages`),
-            backend.get(`/volunteers/${id}/areas-of-practice`),
-          ]);
+        const [
+          languageCatalogResp,
+          areaCatalogResp,
+          volunteerLanguagesResp,
+          volunteerAreasResp,
+          volunteerRolesResp,
+        ] = await Promise.all([
+          backend.get("/languages"),
+          backend.get("/areas-of-practice"),
+          backend.get(`/volunteers/${id}/languages`),
+          backend.get(`/volunteers/${id}/areas-of-practice`),
+          backend.get(`/volunteers/${id}/roles`).catch(() => ({ data: [] })),
+        ]);
 
         if (!volunteer) {
           setLoadError("Unable to find volunteer information.");
@@ -129,6 +124,34 @@ export const ProfileManagement = () => {
         const allAreas = areaCatalogResp?.data ?? [];
         const volunteerLanguages = volunteerLanguagesResp?.data ?? [];
         const volunteerAreas = volunteerAreasResp?.data ?? [];
+        const userRoles = volunteerRolesResp?.data ?? [];
+        const rolePriority = (name) => {
+          const lower = name.toLowerCase();
+          if (lower.includes("attorney")) return 0;
+          if (lower.includes("law student")) return 1;
+          return 2;
+        };
+        const sortedRoleNames = userRoles
+          .map((r) => String(r?.roleName ?? r?.role_name ?? "").trim())
+          .filter(Boolean)
+          .sort((a, b) => {
+            const priorityDiff = rolePriority(a) - rolePriority(b);
+            return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
+          });
+        const primaryRole =
+          sortedRoleNames[0] ?? (volunteer.isAttorney ? "Attorney" : "Volunteer");
+
+        const notaryDisplay =
+          volunteer.notaryStatus === "active" || (volunteer.notaryStatus === undefined && volunteer.isNotary === true)
+            ? "Yes (active)"
+            : volunteer.notaryStatus === "inactive"
+              ? "Yes (inactive)"
+              : "No";
+
+        const isCalLicensed =
+          volunteer.isCaliforniaLicensed === true ||
+          volunteer.stateBarCertificate?.toLowerCase() === "california" ||
+          volunteer.stateBarCertificate?.toLowerCase() === "ca";
 
         setLanguageCatalog(allLanguages);
         setAreaCatalog(allAreas);
@@ -140,20 +163,38 @@ export const ProfileManagement = () => {
           firstName: volunteer.firstName ?? "",
           lastName: volunteer.lastName ?? "",
           phone: volunteer.phoneNumber ?? "",
+          secondaryPhone: volunteer.secondaryPhoneNumber ?? "",
+          isPrimaryMobile: Boolean(volunteer.isPrimaryMobile),
+          isSecondaryMobile: Boolean(volunteer.isSecondaryMobile),
+          canText: Boolean(volunteer.canText),
           email: volunteer.email ?? userRow.email ?? "",
           photoUrl: userRow.profilePictureUrl ?? "",
           listedExperience: volunteer.listedExperience ?? "",
-          notary: volunteer.isNotary ? "Active" : "Inactive",
-          occupation: "Volunteer",
-          lawSchoolYear: "N/A",
-          stateBarState: "N/A",
-          stateBarNumber: "N/A",
+          notary: notaryDisplay,
+          occupation: primaryRole,
+          lawSchoolYear: volunteer.lawSchoolYear ?? "",
+          isCaliforniaLicensed: isCalLicensed,
+          stateBarNumber: volunteer.stateBarNumber ?? "",
+          affiliatedEmployer: volunteer.affiliatedEmployer ?? "",
           languages: volunteerLanguages.map((row) => ({
             id: `lang-${row.id}`,
             language: row.language,
-            proficiency: toDisplayProficiency(row.proficiency),
+            verbalProficiency: toDisplayProficiency(
+              row.verbalProficiency ?? row.proficiency
+            ),
+            writtenProficiency: toDisplayProficiency(
+              row.writtenProficiency ?? row.proficiency
+            ),
           })),
           interests: volunteerAreas.map((row) => row.areasOfPractice),
+          formReceived: Boolean(volunteer.formReceived),
+          formLink: volunteer.formLink ?? null,
+          handbookUrl: volunteer.handbookUrl ?? null,
+          handbookUploadedAt: volunteer.handbookUploadedAt ?? null,
+          handbookAcknowledged: Boolean(volunteer.handbookAcknowledged),
+          emergencyContactVerified: Boolean(volunteer.emergencyContactVerified),
+          confidentialityWaiverVerified: Boolean(volunteer.confidentialityWaiverVerified),
+          isSignedConfidentiality: volunteer.isSignedConfidentiality ?? null,
         }));
       } catch (error) {
         console.error("Failed to load volunteer profile", error);
@@ -206,6 +247,68 @@ export const ProfileManagement = () => {
     [revokePhotoPreview],
   );
 
+  const [isUploadingHandbook, setIsUploadingHandbook] = useState(false);
+  const [handbookUploadError, setHandbookUploadError] = useState("");
+
+  const handleHandbookUpload = useCallback(
+    async (file) => {
+      if (!volunteerId || !currentUser?.uid) return;
+      const validationError = validateHandbookFile(file);
+      if (validationError) {
+        setHandbookUploadError(validationError);
+        return;
+      }
+      setHandbookUploadError("");
+      setIsUploadingHandbook(true);
+      try {
+        const key = await uploadHandbookToS3(backend, file, currentUser.uid);
+        const uploadedAt = new Date().toISOString();
+        await backend.put(`/volunteers/${volunteerId}`, {
+          form_received: true,
+          form_link: key,
+          handbook_uploaded_at: uploadedAt,
+        });
+
+        let viewUrl = "";
+        try {
+          const viewResp = await backend.get("/users/document/view-url", {
+            params: { key },
+          });
+          viewUrl = viewResp.data?.viewUrl ?? "";
+        } catch {
+          /* fallback */
+        }
+
+        setProfile((prev) => ({
+          ...prev,
+          formReceived: true,
+          formLink: key,
+          handbookUrl: viewUrl || null,
+          handbookUploadedAt: uploadedAt,
+        }));
+        setDraft((prev) =>
+          prev
+            ? {
+                ...prev,
+                formReceived: true,
+                formLink: key,
+                handbookUrl: viewUrl || null,
+                handbookUploadedAt: uploadedAt,
+              }
+            : prev
+        );
+      } catch (err) {
+        console.error("Failed to upload handbook", err);
+        setHandbookUploadError(
+          err.message || "Failed to upload handbook document. Please try again."
+        );
+      } finally {
+        setIsUploadingHandbook(false);
+      }
+    },
+    [backend, volunteerId, currentUser?.uid]
+  );
+
   const saveEdit = useCallback(async () => {
     if (!draft || !volunteerId || !currentUser?.uid) return;
 
@@ -220,12 +323,34 @@ export const ProfileManagement = () => {
           ? areaCatalog
           : (await backend.get("/areas-of-practice")).data ?? [];
 
+      const isNotaryActive = draft.notary === "Yes (active)";
+      const notaryStatusVal =
+        draft.notary === "Yes (active)"
+          ? "active"
+          : draft.notary === "Yes (inactive)"
+            ? "inactive"
+            : "no";
+
+      const roleLabel = (draft.occupation || draft.role || "").toLowerCase();
+      const isLawStudent = roleLabel.includes("law student");
+      const isAttorney = roleLabel.includes("attorney");
+
       await backend.put(`/volunteers/${volunteerId}`, {
         first_name: draft.firstName,
         last_name: draft.lastName,
         email: draft.email,
         phone_number: draft.phone,
-        is_notary: draft.notary === "Active",
+        secondary_phone_number: draft.secondaryPhone || null,
+        is_primary_mobile: Boolean(draft.isPrimaryMobile),
+        is_secondary_mobile: Boolean(draft.isSecondaryMobile),
+        can_text: Boolean(draft.canText),
+        is_notary: isNotaryActive,
+        notary_status: notaryStatusVal,
+        affiliated_employer: draft.affiliatedEmployer || null,
+        law_school_year: isLawStudent ? (draft.lawSchoolYear || null) : null,
+        is_california_licensed: isAttorney ? Boolean(draft.isCaliforniaLicensed) : false,
+        state_bar_certificate: isAttorney && draft.isCaliforniaLicensed ? "California" : null,
+        state_bar_number: isAttorney && draft.isCaliforniaLicensed ? (draft.stateBarNumber || null) : null,
         listed_experience: draft.listedExperience?.trim() ? draft.listedExperience.trim() : null,
       });
 
@@ -261,6 +386,29 @@ export const ProfileManagement = () => {
         uniqueLanguageRows.push(row);
       }
 
+      // Auto-create any custom language that does not exist yet in DB
+      for (const row of uniqueLanguageRows) {
+        const trimmed = row.language?.trim();
+        if (!trimmed) continue;
+        const exists = allLanguages.some(
+          (l) => normalizeText(l.language) === normalizeText(trimmed)
+        );
+        if (!exists) {
+          try {
+            const createResp = await backend.post("/languages", { language: trimmed });
+            const created = createResp?.data;
+            const newRecord = Array.isArray(created) ? created[0] : created;
+            if (!newRecord?.id) {
+              throw new Error(`Failed to create language "${trimmed}".`);
+            }
+            allLanguages.push(newRecord);
+          } catch (err) {
+            console.error("Failed to create language on save:", trimmed, err);
+            throw err;
+          }
+        }
+      }
+
       const nextLanguageIds = [];
       const languagePayload = uniqueLanguageRows
         .map((row) => {
@@ -271,8 +419,8 @@ export const ProfileManagement = () => {
           nextLanguageIds.push(match.id);
           return {
             languageId: match.id,
-            proficiency: toBackendProficiency(row.proficiency),
-            isLiterate: true,
+            verbalProficiency: toBackendProficiency(row.verbalProficiency),
+            writtenProficiency: toBackendProficiency(row.writtenProficiency),
           };
         })
         .filter(Boolean);
@@ -344,10 +492,10 @@ export const ProfileManagement = () => {
       setProfile({
         ...draft,
         photoUrl: savedPhotoUrl,
-        occupation: "Volunteer",
-        lawSchoolYear: "N/A",
-        stateBarState: "N/A",
-        stateBarNumber: "N/A",
+        occupation: draft.occupation || "Volunteer",
+        lawSchoolYear: isLawStudent ? (draft.lawSchoolYear ?? "") : "",
+        stateBarNumber: isAttorney && draft.isCaliforniaLicensed ? (draft.stateBarNumber ?? "") : "",
+        isCaliforniaLicensed: isAttorney ? Boolean(draft.isCaliforniaLicensed) : false,
         languages: normalizedLanguages,
         interests: resolvedAreas,
       });
@@ -425,10 +573,12 @@ export const ProfileManagement = () => {
                   px={4}
                   py={2}
                   fontSize="13px"
-                  fontWeight={400}
-                  color="gray.600"
+                  fontFamily="heading"
+                  fontWeight={isActive ? "600" : "500"}
+                  color={isActive ? "brand.navy" : "gray.600"}
                   bg={isActive ? "white" : "transparent"}
-                  borderTop={isActive ? "1px solid" : "none"}
+                  borderTop={isActive ? "2px solid" : "none"}
+                  borderTopColor={isActive ? "brand.navy" : "transparent"}
                   borderLeft={isActive ? "1px solid" : "none"}
                   borderRight={isActive ? "1px solid" : "none"}
                   borderBottom={isActive ? "1px solid white" : "none"}
@@ -438,12 +588,13 @@ export const ProfileManagement = () => {
                   mb="-1px"
                   position="relative"
                   zIndex={isActive ? 1 : 0}
-                  _hover={{ bg: isActive ? "white" : "gray.50" }}
+                  _hover={{ bg: isActive ? "white" : "gray.50", color: "brand.navy" }}
                   _selected={{
                     bg: "white",
-                    color: "gray.600",
-                    fontWeight: 400,
-                    borderTop: "1px solid",
+                    color: "brand.navy",
+                    fontWeight: "600",
+                    borderTop: "2px solid",
+                    borderTopColor: "brand.navy",
                     borderLeft: "1px solid",
                     borderRight: "1px solid",
                     borderBottom: "1px solid white",
@@ -452,8 +603,8 @@ export const ProfileManagement = () => {
                     boxShadow: "none",
                   }}
                 >
-                  <Icon size={16} />
-                  <Text as="span" fontSize="13px" fontWeight={400}>
+                  <Icon size={16} color={isActive ? "var(--chakra-colors-brand-navy)" : undefined} />
+                  <Text as="span" fontSize="13px" fontWeight={isActive ? "600" : "500"}>
                     {label}
                   </Text>
                 </Tabs.Trigger>
@@ -464,7 +615,7 @@ export const ProfileManagement = () => {
           <Tabs.Content value="information" p={0}>
             {isLoadingProfile ? (
               <VStack py={16} gap={3}>
-                <Spinner color="blue.500" />
+                <Spinner color="brand.navy" />
                 <Text color="gray.600" fontSize="sm">
                   Loading profile...
                 </Text>
@@ -479,15 +630,31 @@ export const ProfileManagement = () => {
                 onSave={saveEdit}
                 onCancel={cancelEdit}
                 onPhotoSelect={handlePhotoSelect}
+                onHandbookUpload={handleHandbookUpload}
+                isUploadingHandbook={isUploadingHandbook}
+                handbookError={handbookUploadError}
                 isSaving={isSavingProfile}
                 photoError={photoError}
                 errorMessage={loadError}
-                languageOptions={Array.from(
-                  new Set([
-                    ...languageCatalog.map((row) => row.language),
-                    ...display.languages.map((row) => row.language),
-                  ]),
-                )}
+                languageOptions={(() => {
+                  const combined = Array.from(
+                    new Set([
+                      ...DEFAULT_TOP_LANGUAGES,
+                      ...languageCatalog.map((row) => row.language),
+                      ...display.languages.map((row) => row.language),
+                    ])
+                  );
+                  const topSet = new Set(
+                    DEFAULT_TOP_LANGUAGES.map((l) => l.toLowerCase())
+                  );
+                  const topList = DEFAULT_TOP_LANGUAGES.filter((t) =>
+                    combined.some((c) => c.toLowerCase() === t.toLowerCase())
+                  );
+                  const remaining = combined
+                    .filter((c) => !topSet.has(c.toLowerCase()))
+                    .sort((a, b) => a.localeCompare(b));
+                  return [...topList, ...remaining];
+                })()}
                 areaOptions={Array.from(
                   new Set([
                     ...areaCatalog.map((row) => row.areasOfPractice),

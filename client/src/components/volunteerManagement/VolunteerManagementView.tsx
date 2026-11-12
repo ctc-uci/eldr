@@ -97,7 +97,11 @@ export const VolunteerManagementView = ({
       v.areasOfPractice?.some((a) => filters.interests.has(a));
     const matchesLanguages =
       filters.languages.size === 0 ||
-      v.languages?.some((l) => filters.languages.has(l));
+      v.languages?.some((l) =>
+        Array.from(filters.languages).some(
+          (fl) => fl.toLowerCase() === l.toLowerCase()
+        )
+      );
     return (
       matchesSearch && matchesRoles && matchesInterests && matchesLanguages
     );

@@ -4,16 +4,29 @@ export type VolunteerSignupDraft = {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
+  secondaryPhoneNumber: string;
+  isPrimaryMobile: boolean;
+  isSecondaryMobile: boolean;
+  canText: boolean;
   selectedLanguageNames: string[];
-  literateLanguageNames: string[];
-  /** language name -> proficiency */
+  /** language name -> verbal proficiency */
+  verbalProficiencies: Record<string, string>;
+  /** language name -> written proficiency */
+  writtenProficiencies: Record<string, string>;
+  /** legacy fallback: language name -> proficiency */
   languageProficiencies: Record<string, string>;
   selectedAreaLabels: string[];
   /** null = not answered yet */
   isNotary: boolean | null;
+  notaryStatus: "active" | "inactive" | "no" | null;
+  isCaliforniaLicensed: boolean;
+  stateBarNumber: string;
   roleLabel: string;
   lawSchoolYear: string;
   affiliatedEmployer: string;
+  handbookFileKey?: string | null;
+  handbookUploaded?: boolean;
 };
 
 export function defaultDraft(): VolunteerSignupDraft {
@@ -21,14 +34,25 @@ export function defaultDraft(): VolunteerSignupDraft {
     firstName: "",
     lastName: "",
     email: "",
+    phoneNumber: "",
+    secondaryPhoneNumber: "",
+    isPrimaryMobile: true,
+    isSecondaryMobile: false,
+    canText: false,
     selectedLanguageNames: [],
-    literateLanguageNames: [],
+    verbalProficiencies: {},
+    writtenProficiencies: {},
     languageProficiencies: {},
     selectedAreaLabels: [],
     isNotary: null,
+    notaryStatus: null,
+    isCaliforniaLicensed: false,
+    stateBarNumber: "",
     roleLabel: "",
     lawSchoolYear: "",
     affiliatedEmployer: "",
+    handbookFileKey: null,
+    handbookUploaded: false,
   };
 }
 
@@ -48,6 +72,14 @@ export function saveDraft(partial: Partial<VolunteerSignupDraft>): void {
   const next: VolunteerSignupDraft = {
     ...cur,
     ...partial,
+    verbalProficiencies:
+      partial.verbalProficiencies !== undefined
+        ? { ...cur.verbalProficiencies, ...partial.verbalProficiencies }
+        : cur.verbalProficiencies,
+    writtenProficiencies:
+      partial.writtenProficiencies !== undefined
+        ? { ...cur.writtenProficiencies, ...partial.writtenProficiencies }
+        : cur.writtenProficiencies,
     languageProficiencies:
       partial.languageProficiencies !== undefined
         ? { ...cur.languageProficiencies, ...partial.languageProficiencies }

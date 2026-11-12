@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Badge,
@@ -93,6 +93,16 @@ export const EventInfo = ({
     navigator.clipboard.writeText(window.location.href);
     setShowCopyMessage(true);
   };
+
+  const meetingLinksList = useMemo(() => {
+    if (!event) return [];
+    const { meetingLink } = getClinicLocationDisplay(event);
+    if (!meetingLink) return [];
+    return meetingLink
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }, [event]);
 
   if (!event) {
     return (
@@ -323,20 +333,35 @@ export const EventInfo = ({
             </Box>
             <VStack align="flex-start" gap="4px" flex="1" minW={0}>
               <Text lineHeight="1.4" wordBreak="break-word">{localityLine}</Text>
-              {showMeetingLink ? (
-                <Text
-                  as="a"
-                  href={meetingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="#2563EB"
-                  fontSize="13px"
-                  fontWeight={500}
-                  textDecoration="underline"
-                  wordBreak="break-all"
-                >
-                  Meeting link
-                </Text>
+              {showMeetingLink && meetingLinksList.length > 0 ? (
+                <VStack align="flex-start" gap="2px">
+                  {meetingLinksList.map((link, idx) => {
+                    const href =
+                      link.startsWith("http://") || link.startsWith("https://")
+                        ? link
+                        : `https://${link}`;
+                    const label =
+                      meetingLinksList.length === 1
+                        ? "Meeting link"
+                        : `Meeting link ${idx + 1}`;
+                    return (
+                      <Text
+                        key={idx}
+                        as="a"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        color="#2563EB"
+                        fontSize="13px"
+                        fontWeight={500}
+                        textDecoration="underline"
+                        wordBreak="break-all"
+                      >
+                        {label}
+                      </Text>
+                    );
+                  })}
+                </VStack>
               ) : null}
             </VStack>
           </Flex>
@@ -470,7 +495,10 @@ export const EventInfo = ({
             <Button
               variant="solid"
               colorPalette={event.isRegistered ? "red" : "blue"}
-              bg={!event.isRegistered && "#002992"}
+              bg={!event.isRegistered ? "brand.navy" : undefined}
+              _hover={!event.isRegistered ? { bg: "brand.navyHover" } : undefined}
+              fontFamily="heading"
+              fontWeight="600"
               px="18px"
               py="6px"
               onClick={handleRegistration}

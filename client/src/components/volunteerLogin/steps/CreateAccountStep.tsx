@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Box,
-  Button,
+  Checkbox,
   Flex,
   Heading,
   Input,
@@ -11,25 +11,46 @@ import {
 } from "@chakra-ui/react";
 
 import {
-  LuArrowRight,
   LuExternalLink,
 } from "react-icons/lu";
 
 import LoginLayout from "./BackgroundLayout";
 import { loadDraft, saveDraft } from "../volunteerSignupDraft";
+import { useBackendContext } from "@/contexts/hooks/useBackendContext";
+import { TopBackButton, ContinueButton } from "../NavigationButtons";
+import { formatPhoneNumber, isCompletePhoneNumber } from "@/utils/phoneNumber";
 
 type Props = {
   onNext: () => void;
+  onBack?: () => void;
 };
 
-const CreateAccountStep = ({ onNext }: Props) => {
+const CreateAccountStep = ({ onNext, onBack }: Props) => {
+  const { backend } = useBackendContext();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPrimaryMobile, setIsPrimaryMobile] = useState(true);
+  const [canText, setCanText] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const isCancelledRef = useRef(false);
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+
+  useEffect(() => {
+    isCancelledRef.current = false;
+    return () => {
+      isCancelledRef.current = true;
+    };
+  }, []);
+
+  const handleBack = () => {
+    isCancelledRef.current = true;
+    onBack?.();
+  };
 
   useEffect(() => {
     localStorage.removeItem("volunteerId");
@@ -38,6 +59,9 @@ const CreateAccountStep = ({ onNext }: Props) => {
       setFirstName(d.firstName);
       setLastName(d.lastName);
       setEmail(d.email);
+      setPhoneNumber(d.phoneNumber ?? "");
+      setIsPrimaryMobile(d.isPrimaryMobile ?? true);
+      setCanText(d.canText ?? false);
     }
   }, []);
 
@@ -45,11 +69,11 @@ const CreateAccountStep = ({ onNext }: Props) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setErrorMsg(null);
 
-    if (!firstName.trim() || !lastName.trim() || !normalizedEmail) {
-      setErrorMsg("Please fill out first name, last name, and email.");
+    if (!firstName.trim() || !lastName.trim() || !normalizedEmail || !phoneNumber.trim()) {
+      setErrorMsg("Please fill out first name, last name, email, and phone number.");
       return;
     }
 
@@ -58,10 +82,41 @@ const CreateAccountStep = ({ onNext }: Props) => {
       return;
     }
 
+    if (!isCompletePhoneNumber(phoneNumber)) {
+      setErrorMsg("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const checkResp = await backend.post("/users/check-email", {
+        email: normalizedEmail,
+      });
+      if (isCancelledRef.current) return;
+      if (checkResp.data?.exists) {
+        setErrorMsg(
+          "An account with this email already exists. Please log in instead, or use a different email."
+        );
+        setIsCheckingEmail(false);
+        return;
+      }
+    } catch {
+      // If check endpoint errors, do not block signup
+    } finally {
+      setIsCheckingEmail(false);
+    }
+
+    if (isCancelledRef.current) return;
+
     saveDraft({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
+      phoneNumber: phoneNumber.trim(),
+      secondaryPhoneNumber: "",
+      isPrimaryMobile,
+      isSecondaryMobile: false,
+      canText,
     });
     onNext();
   };
@@ -85,9 +140,10 @@ const CreateAccountStep = ({ onNext }: Props) => {
           bg="#F6F6F6"
           flexShrink={0}
           align="center"
-          px="2%"
-          py="1%"
-        />
+          px={{ base: "16px", md: "24px" }}
+        >
+          <TopBackButton label="Back to Login" onClick={handleBack} disabled={isCheckingEmail} />
+        </Flex>
 
         <Flex
           flex="1"
@@ -166,6 +222,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-first-name"
                 label={
                   <>
                     First Name <Box as="span" color="#991919"> *</Box>
@@ -173,6 +230,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Enter your first name"
@@ -193,6 +251,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-last-name"
                 label={
                   <>
                     Last Name <Box as="span" color="#991919"> *</Box>
@@ -200,6 +259,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter your last name"
@@ -220,6 +280,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
               maxW="460px"
             >
               <Field
+                htmlFor="create-account-email"
                 label={
                   <>
                     Email <Box as="span" color="#991919"> *</Box>
@@ -227,6 +288,7 @@ const CreateAccountStep = ({ onNext }: Props) => {
                 }
               >
                 <Input
+                  id="create-account-email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter an email"
@@ -242,33 +304,90 @@ const CreateAccountStep = ({ onNext }: Props) => {
               </Field>
             </Box>
 
-            <Button
-              bg="white"
-              borderColor="#E4E4E7"
-              color="black"
-              h={{ base: "40px", md: "48px" }}
+            <Box
               w="30vw"
               minW="320px"
               maxW="460px"
-              borderRadius="8px"
-              fontSize={{ base: "13px", md: "14px" }}
-              fontWeight={600}
-              _active={{ bg: "black", color: "white" }}
-              _hover={{
-                bg: "#F4F4F5",
-                _active: {
-                  bg: "black",
-                  color: "white",
-                },
-              }}
-              justifyContent="center"
-              px="20px"
-              mt="4px"
-              onClick={handleContinue}
             >
-              Continue
-              <LuArrowRight size={16} />
-            </Button>
+              <Field
+                htmlFor="create-account-phone"
+                label={
+                  <>
+                    Phone Number <Box as="span" color="#991919"> *</Box>
+                  </>
+                }
+              >
+                <Input
+                  id="create-account-phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                  placeholder="XXX-XXX-XXXX"
+                  type="tel"
+                  maxLength={14}
+                  border="none"
+                  p="0"
+                  h="100%"
+                  fontSize="14px"
+                  color="black"
+                  _placeholder={{ color: "gray.400" }}
+                  focusRingColor="transparent"
+                />
+              </Field>
+              <Box mt="6px">
+                <Checkbox.Root
+                  checked={isPrimaryMobile}
+                  onCheckedChange={(e) => setIsPrimaryMobile(!!e.checked)}
+                  size="sm"
+                  gap="6px"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control
+                    borderColor={isPrimaryMobile ? "brand.navy" : "#D1D5DB"}
+                    bg={isPrimaryMobile ? "brand.navy" : "white"}
+                  >
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label fontSize="12px" color="gray.600" fontWeight="normal">
+                    This is a mobile number
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              </Box>
+            </Box>
+
+            <Box
+              w="30vw"
+              minW="320px"
+              maxW="460px"
+              pt="2px"
+            >
+              <Checkbox.Root
+                checked={canText}
+                onCheckedChange={(e) => setCanText(!!e.checked)}
+                size="sm"
+                alignItems="flex-start"
+                gap="8px"
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control
+                  mt="2px"
+                  flexShrink={0}
+                  borderColor={canText ? "brand.navy" : "#D1D5DB"}
+                  bg={canText ? "brand.navy" : "white"}
+                >
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                <Checkbox.Label fontSize="12px" color="gray.600" lineHeight="1.4" fontWeight="normal">
+                  I give permission to receive SMS text messages at this number for clinic and volunteering communications.
+                </Checkbox.Label>
+              </Checkbox.Root>
+            </Box>
+
+            <ContinueButton
+              onClick={handleContinue}
+              loading={isCheckingEmail}
+              disabled={isCheckingEmail}
+              mt="4px"
+            />
 
           </Flex>
         </Flex>
@@ -286,21 +405,25 @@ const CreateAccountStep = ({ onNext }: Props) => {
 
 const Field = ({
   label,
+  htmlFor,
   icon,
   children,
 }: {
   label: React.ReactNode;
+  htmlFor?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <Box>
     <Text
+      asChild
+      display="block"
       fontSize="14px"
       fontWeight={600}
       color="black"
       mb="6px"
     >
-      {label}
+      <label htmlFor={htmlFor}>{label}</label>
     </Text>
     <Flex
       align="center"
