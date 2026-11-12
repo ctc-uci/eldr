@@ -1,11 +1,16 @@
 /// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
+import fs from "fs";
 import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
+
+  const rootSharedPath = path.resolve(__dirname, '../shared/index.ts');
+  const localSharedPath = path.resolve(__dirname, 'src/shared/index.ts');
+  const sharedPath = fs.existsSync(rootSharedPath) ? rootSharedPath : localSharedPath;
 
   return {
     plugins: [react()],
@@ -13,7 +18,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
-        '@eldr/shared': path.resolve(__dirname, '../shared/index.ts'),
+        '@eldr/shared': sharedPath,
       },
     },
 
