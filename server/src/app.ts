@@ -23,18 +23,44 @@ dotenv.config();
 
 // schedule.scheduleJob("0 0 0 0 0", () => console.info("Hello Cron Job!")); // TODO: delete sample cronjob
 
-const CLIENT_HOSTNAME =
-  process.env.NODE_ENV === "development"
-    ? `${process.env.DEV_CLIENT_HOSTNAME}:${process.env.DEV_CLIENT_PORT}`
-    : process.env.PROD_CLIENT_HOSTNAME;
+const allowedOrigins = [
+  "https://eldr.up.railway.app",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  process.env.PROD_CLIENT_HOSTNAME,
+  process.env.DEV_CLIENT_HOSTNAME
+    ? `${process.env.DEV_CLIENT_HOSTNAME}:${process.env.DEV_CLIENT_PORT || 3000}`
+    : null,
+].filter(Boolean) as string[];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".up.railway.app") ||
+      origin.includes("localhost")
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Cookie",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["Set-Cookie"],
+};
 
 export const app = express();
-app.use(
-  cors({
-    origin: CLIENT_HOSTNAME,
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -57,6 +83,10 @@ app.use("/email-templates", emailTemplatesRouter);
 app.use("/folders", foldersRouter);
 app.use("/emails", emailsRouter);
 app.use("/workshop-types", workshopTypesRouter);
+
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Hello, world!" });
+});
 
 // Listening is moved to server.ts to enable importing app in tests
 export default app;
