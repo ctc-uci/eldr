@@ -94,7 +94,7 @@ import {
   normalizeProficiency,
   DEFAULT_PROFICIENCY,
   type ProficiencyLevel,
-} from "@eldr/shared";
+} from "../shared/index.ts";
 
 export {
   isNumeric,
